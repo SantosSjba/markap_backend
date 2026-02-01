@@ -18,7 +18,16 @@ import {
 import { GetUserApplicationsUseCase } from '../../application/use-cases/applications';
 
 // Use Cases - Roles
-import { GetUserRolesUseCase } from '../../application/use-cases/roles';
+import { GetUserRolesUseCase, GetAllRolesUseCase } from '../../application/use-cases/roles';
+
+// Use Cases - Users
+import {
+  GetAllUsersUseCase,
+  UpdateUserUseCase,
+  ToggleUserActiveUseCase,
+  AssignUserRoleUseCase,
+  RevokeUserRoleUseCase,
+} from '../../application/use-cases/users';
 
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -26,10 +35,17 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 // Controllers
 import { AuthController } from './controllers/auth.controller';
 import { ApplicationsController } from './controllers/applications.controller';
+import { UsersController } from './controllers/users.controller';
+import { RolesController } from './controllers/roles.controller';
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [AuthController, ApplicationsController],
+  controllers: [
+    AuthController,
+    ApplicationsController,
+    UsersController,
+    RolesController,
+  ],
   providers: [
     // Services
     {
@@ -54,6 +70,14 @@ import { ApplicationsController } from './controllers/applications.controller';
 
     // Use Cases - Roles
     GetUserRolesUseCase,
+    GetAllRolesUseCase,
+
+    // Use Cases - Users
+    GetAllUsersUseCase,
+    UpdateUserUseCase,
+    ToggleUserActiveUseCase,
+    AssignUserRoleUseCase,
+    RevokeUserRoleUseCase,
   ],
   exports: [HashService, TokenService],
 })
