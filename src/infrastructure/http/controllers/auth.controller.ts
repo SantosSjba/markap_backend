@@ -40,7 +40,9 @@ export class AuthController {
   ) {}
 
   @Post('register')
-  @ApiOperation({ summary: 'Registrar un nuevo usuario' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Registrar un nuevo usuario (requiere autenticación)' })
   @ApiResponse({
     status: 201,
     description: 'Usuario registrado exitosamente',
@@ -51,15 +53,23 @@ export class AuthController {
     description: 'Datos de entrada inválidos',
   })
   @ApiResponse({
+    status: 401,
+    description: 'No autorizado - Se requiere autenticación',
+  })
+  @ApiResponse({
     status: 409,
     description: 'El email ya está registrado',
   })
-  async register(@Body() dto: RegisterDto): Promise<RegisterResponseDto> {
+  async register(
+    @Request() req: AuthenticatedRequest,
+    @Body() dto: RegisterDto,
+  ): Promise<RegisterResponseDto> {
     const user = await this.registerUserUseCase.execute({
       email: dto.email,
       password: dto.password,
       firstName: dto.firstName,
       lastName: dto.lastName,
+      createdBy: req.user.sub,
     });
 
     return {

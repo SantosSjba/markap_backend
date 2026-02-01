@@ -12,6 +12,7 @@ export interface RegisterUserInput {
   password: string;
   firstName: string;
   lastName: string;
+  createdBy: string;
 }
 
 /**
@@ -42,6 +43,7 @@ export class RegisterUserUseCase {
       password: hashedPassword,
       firstName: input.firstName,
       lastName: input.lastName,
+      createdBy: input.createdBy,
     });
 
     return user;
