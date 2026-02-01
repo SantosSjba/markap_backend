@@ -32,9 +32,127 @@ model User {
   deletedAt DateTime? @map("deleted_at")
   deletedBy String?   @map("deleted_by")
 
+  // Relaciones
+  userRoles UserRole[]
+
   // Índices para optimización
   @@index([email])
   @@index([isActive])
   @@index([deletedAt])
   @@map("users")
+}
+
+// ============================================
+// ROLE MODEL - Roles del sistema
+// ============================================
+model Role {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  code        String  @unique // Código único para identificar el rol (ADMIN, MANAGER, etc.)
+  description String?
+
+  // Estado
+  isActive Boolean @default(true) @map("is_active")
+
+  // Campos de auditoría
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relaciones
+  userRoles        UserRole[]
+  roleApplications RoleApplication[]
+
+  @@index([code])
+  @@index([isActive])
+  @@map("roles")
+}
+
+// ============================================
+// USER_ROLE MODEL - Relación muchos a muchos
+// ============================================
+model UserRole {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  roleId String @map("role_id")
+
+  // Estado
+  isActive Boolean @default(true) @map("is_active")
+
+  // Campos de auditoría
+  assignedAt DateTime  @default(now()) @map("assigned_at")
+  assignedBy String?   @map("assigned_by")
+  revokedAt  DateTime? @map("revoked_at")
+  revokedBy  String?   @map("revoked_by")
+
+  // Relaciones
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+// ============================================
+// APPLICATION MODEL - Aplicaciones del sistema
+// ============================================
+model Application {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique // Identificador único para URL (alquileres, ventas, etc.)
+  description String?
+  icon        String? // Nombre del ícono (home, building, chart, etc.)
+  color       String? // Color del ícono (#0BB0BE, #E5533D, etc.)
+  url         String? // URL de la aplicación (interna o externa)
+
+  // Estadísticas (pueden ser calculadas o almacenadas)
+  activeCount  Int @default(0) @map("active_count")  // Ej: propiedades activas
+  pendingCount Int @default(0) @map("pending_count") // Ej: tareas pendientes
+
+  // Estado y orden
+  isActive Boolean @default(true) @map("is_active")
+  order    Int     @default(0) // Orden de visualización
+
+  // Campos de auditoría
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relaciones
+  roleApplications RoleApplication[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([order])
+  @@map("applications")
+}
+
+// ============================================
+// ROLE_APPLICATION MODEL - Permisos de roles a aplicaciones
+// ============================================
+model RoleApplication {
+  id            String @id @default(uuid())
+  roleId        String @map("role_id")
+  applicationId String @map("application_id")
+
+  // Permisos específicos (opcional, para futuro)
+  canRead   Boolean @default(true) @map("can_read")
+  canWrite  Boolean @default(false) @map("can_write")
+  canDelete Boolean @default(false) @map("can_delete")
+  canAdmin  Boolean @default(false) @map("can_admin")
+
+  // Campos de auditoría
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relaciones
+  role        Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, applicationId])
+  @@index([roleId])
+  @@index([applicationId])
+  @@map("role_applications")
 }

@@ -7,22 +7,29 @@ import { TokenService } from '../../application/services/token.service';
 import { BcryptHashService } from '../services/bcrypt-hash.service';
 import { JwtTokenService } from '../services/jwt-token.service';
 
-// Use Cases
+// Use Cases - Auth
 import {
   RegisterUserUseCase,
   LoginUserUseCase,
   GetUserProfileUseCase,
 } from '../../application/use-cases/auth';
 
+// Use Cases - Applications
+import { GetUserApplicationsUseCase } from '../../application/use-cases/applications';
+
+// Use Cases - Roles
+import { GetUserRolesUseCase } from '../../application/use-cases/roles';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 // Controllers
 import { AuthController } from './controllers/auth.controller';
+import { ApplicationsController } from './controllers/applications.controller';
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [AuthController],
+  controllers: [AuthController, ApplicationsController],
   providers: [
     // Services
     {
@@ -37,10 +44,16 @@ import { AuthController } from './controllers/auth.controller';
     // Guards
     JwtAuthGuard,
 
-    // Use Cases
+    // Use Cases - Auth
     RegisterUserUseCase,
     LoginUserUseCase,
     GetUserProfileUseCase,
+
+    // Use Cases - Applications
+    GetUserApplicationsUseCase,
+
+    // Use Cases - Roles
+    GetUserRolesUseCase,
   ],
   exports: [HashService, TokenService],
 })

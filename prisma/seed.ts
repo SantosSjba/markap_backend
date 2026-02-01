@@ -9,44 +9,219 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
-async function main() {
-  console.log('🌱 Starting seed...');
+// Definición de roles
+const roles = [
+  {
+    name: 'Administrador',
+    code: 'ADMIN',
+    description: 'Acceso total al sistema',
+  },
+  {
+    name: 'Gerente',
+    code: 'MANAGER',
+    description: 'Acceso a gestión y reportes',
+  },
+  {
+    name: 'Usuario',
+    code: 'USER',
+    description: 'Acceso básico al sistema',
+  },
+];
 
-  // Configuración del admin por defecto
+// Definición de aplicaciones
+const applications = [
+  {
+    name: 'MARKAP Alquileres Inmobiliarios',
+    slug: 'alquileres',
+    description: 'Gestión de propiedades en alquiler, contratos y cobranzas',
+    icon: 'key',
+    color: '#0BB0BE',
+    url: '/alquileres',
+    activeCount: 45,
+    pendingCount: 8,
+    order: 1,
+  },
+  {
+    name: 'MARKAP Ventas Inmobiliarias',
+    slug: 'ventas',
+    description: 'Administración de propiedades en venta y seguimiento de clientes',
+    icon: 'home',
+    color: '#3B82F6',
+    url: '/ventas',
+    activeCount: 23,
+    pendingCount: 5,
+    order: 2,
+  },
+  {
+    name: 'Carolina Zavala Interiorismo',
+    slug: 'interiorismo',
+    description: 'Proyectos de diseño interior, presupuestos y seguimiento',
+    icon: 'palette',
+    color: '#E5533D',
+    url: '/interiorismo',
+    activeCount: 12,
+    pendingCount: 3,
+    order: 3,
+  },
+  {
+    name: 'HITO Arquitectura',
+    slug: 'arquitectura',
+    description: 'Gestión de proyectos arquitectónicos y planos',
+    icon: 'building',
+    color: '#2DBE7E',
+    url: '/arquitectura',
+    activeCount: 8,
+    pendingCount: 2,
+    order: 4,
+  },
+  {
+    name: 'Producción de Muebles',
+    slug: 'produccion',
+    description: 'Control de producción, inventario y órdenes de trabajo',
+    icon: 'package',
+    color: '#F4B740',
+    url: '/produccion',
+    activeCount: 34,
+    pendingCount: 12,
+    order: 5,
+  },
+  {
+    name: 'Sistema Contable',
+    slug: 'contabilidad',
+    description: 'Finanzas, reportes contables y gestión tributaria',
+    icon: 'calculator',
+    color: '#8B5CF6',
+    url: '/contabilidad',
+    activeCount: 156,
+    pendingCount: 24,
+    order: 6,
+  },
+];
+
+async function main() {
+  console.log('🌱 Starting seed...\n');
+
+  // 1. Crear Roles
+  console.log('📋 Creating roles...');
+  const createdRoles: { [key: string]: string } = {};
+  
+  for (const roleData of roles) {
+    const existingRole = await prisma.role.findUnique({
+      where: { code: roleData.code },
+    });
+
+    if (existingRole) {
+      console.log(`   ✓ Role "${roleData.name}" already exists`);
+      createdRoles[roleData.code] = existingRole.id;
+    } else {
+      const role = await prisma.role.create({ data: roleData });
+      console.log(`   ✅ Role "${roleData.name}" created`);
+      createdRoles[roleData.code] = role.id;
+    }
+  }
+
+  // 2. Crear Aplicaciones
+  console.log('\n📱 Creating applications...');
+  const createdApps: string[] = [];
+
+  for (const appData of applications) {
+    const existingApp = await prisma.application.findUnique({
+      where: { slug: appData.slug },
+    });
+
+    if (existingApp) {
+      console.log(`   ✓ Application "${appData.name}" already exists`);
+      createdApps.push(existingApp.id);
+    } else {
+      const app = await prisma.application.create({ data: appData });
+      console.log(`   ✅ Application "${appData.name}" created`);
+      createdApps.push(app.id);
+    }
+  }
+
+  // 3. Asignar todas las aplicaciones al rol ADMIN
+  console.log('\n🔗 Assigning applications to ADMIN role...');
+  const adminRoleId = createdRoles['ADMIN'];
+
+  for (const appId of createdApps) {
+    const existing = await prisma.roleApplication.findUnique({
+      where: {
+        roleId_applicationId: {
+          roleId: adminRoleId,
+          applicationId: appId,
+        },
+      },
+    });
+
+    if (!existing) {
+      await prisma.roleApplication.create({
+        data: {
+          roleId: adminRoleId,
+          applicationId: appId,
+          canRead: true,
+          canWrite: true,
+          canDelete: true,
+          canAdmin: true,
+        },
+      });
+    }
+  }
+  console.log('   ✅ All applications assigned to ADMIN role');
+
+  // 4. Crear usuario Admin
+  console.log('\n👤 Creating admin user...');
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@markap.com';
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123';
   const adminFirstName = process.env.ADMIN_FIRST_NAME || 'Admin';
   const adminLastName = process.env.ADMIN_LAST_NAME || 'Sistema';
 
-  // Verificar si ya existe el admin
-  const existingAdmin = await prisma.user.findUnique({
+  let adminUser = await prisma.user.findUnique({
     where: { email: adminEmail },
   });
 
-  if (existingAdmin) {
-    console.log(`✅ Admin user already exists: ${adminEmail}`);
-    return;
+  if (adminUser) {
+    console.log(`   ✓ Admin user already exists: ${adminEmail}`);
+  } else {
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    adminUser = await prisma.user.create({
+      data: {
+        email: adminEmail,
+        password: hashedPassword,
+        firstName: adminFirstName,
+        lastName: adminLastName,
+        isActive: true,
+        createdBy: 'system',
+      },
+    });
+    console.log(`   ✅ Admin user created: ${adminEmail}`);
+    console.log(`   🔑 Password: ${adminPassword}`);
   }
 
-  // Encriptar la contraseña
-  const hashedPassword = await bcrypt.hash(adminPassword, 10);
-
-  // Crear el usuario admin
-  const admin = await prisma.user.create({
-    data: {
-      email: adminEmail,
-      password: hashedPassword,
-      firstName: adminFirstName,
-      lastName: adminLastName,
-      isActive: true,
-      createdBy: 'system',
+  // 5. Asignar rol ADMIN al usuario admin
+  console.log('\n🔐 Assigning ADMIN role to admin user...');
+  const existingUserRole = await prisma.userRole.findUnique({
+    where: {
+      userId_roleId: {
+        userId: adminUser.id,
+        roleId: adminRoleId,
+      },
     },
   });
 
-  console.log(`✅ Admin user created successfully!`);
-  console.log(`   📧 Email: ${admin.email}`);
-  console.log(`   🔑 Password: ${adminPassword}`);
-  console.log(`   👤 Name: ${admin.firstName} ${admin.lastName}`);
+  if (!existingUserRole) {
+    await prisma.userRole.create({
+      data: {
+        userId: adminUser.id,
+        roleId: adminRoleId,
+        assignedBy: 'system',
+      },
+    });
+    console.log('   ✅ ADMIN role assigned to admin user');
+  } else {
+    console.log('   ✓ ADMIN role already assigned');
+  }
+
+  console.log('\n✨ Seed completed successfully!\n');
 }
 
 main()
