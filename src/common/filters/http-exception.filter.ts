@@ -10,6 +10,10 @@ import {
   DomainException,
   EntityNotFoundException,
   ValidationException,
+  InvalidCredentialsException,
+  UserInactiveException,
+  EmailAlreadyExistsException,
+  UnauthorizedException,
 } from '../../application/exceptions';
 
 @Catch()
@@ -36,6 +40,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
       status = HttpStatus.BAD_REQUEST;
       message = exception.message;
       errors = exception.errors;
+    } else if (
+      exception instanceof InvalidCredentialsException ||
+      exception instanceof UnauthorizedException
+    ) {
+      status = HttpStatus.UNAUTHORIZED;
+      message = exception.message;
+    } else if (exception instanceof UserInactiveException) {
+      status = HttpStatus.FORBIDDEN;
+      message = exception.message;
+    } else if (exception instanceof EmailAlreadyExistsException) {
+      status = HttpStatus.CONFLICT;
+      message = exception.message;
     } else if (exception instanceof DomainException) {
       status = HttpStatus.UNPROCESSABLE_ENTITY;
       message = exception.message;

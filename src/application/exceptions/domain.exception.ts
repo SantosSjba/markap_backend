@@ -42,3 +42,43 @@ export class ValidationException extends DomainException {
     this.errors = errorArray;
   }
 }
+
+// ============================================
+// Authentication Exceptions
+// ============================================
+
+/**
+ * Exception thrown when user credentials are invalid
+ */
+export class InvalidCredentialsException extends DomainException {
+  constructor() {
+    super('Email o contraseña incorrectos');
+  }
+}
+
+/**
+ * Exception thrown when a user account is inactive
+ */
+export class UserInactiveException extends DomainException {
+  constructor() {
+    super('La cuenta de usuario está desactivada');
+  }
+}
+
+/**
+ * Exception thrown when email is already registered
+ */
+export class EmailAlreadyExistsException extends DomainException {
+  constructor(email: string) {
+    super(`El email "${email}" ya está registrado`);
+  }
+}
+
+/**
+ * Exception thrown when authentication is required
+ */
+export class UnauthorizedException extends DomainException {
+  constructor(message: string = 'No autorizado') {
+    super(message);
+  }
+}

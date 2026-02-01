@@ -8,11 +8,13 @@ export const envConfig = () => ({
   database: {
     url: process.env.DATABASE_URL,
   },
-  // Add more configuration as needed
-  // jwt: {
-  //   secret: process.env.JWT_SECRET,
-  //   expiresIn: process.env.JWT_EXPIRES_IN || '1d',
-  // },
+  jwt: {
+    secret: process.env.JWT_SECRET || 'default-secret-change-in-production',
+    expiresIn: parseInt(process.env.JWT_EXPIRES_IN || '3600', 10), // en segundos (1 hora por defecto)
+  },
+  frontend: {
+    url: process.env.FRONTEND_URL || 'http://localhost:5173',
+  },
 });
 
 export type EnvConfig = ReturnType<typeof envConfig>;
