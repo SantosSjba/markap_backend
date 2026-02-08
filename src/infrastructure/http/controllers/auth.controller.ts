@@ -19,6 +19,7 @@ import {
   LoginUserUseCase,
   GetUserProfileUseCase,
 } from '../../../application/use-cases/auth';
+import { GetUserRolesUseCase } from '../../../application/use-cases/roles';
 import {
   RegisterDto,
   LoginDto,
@@ -37,6 +38,7 @@ export class AuthController {
     private readonly registerUserUseCase: RegisterUserUseCase,
     private readonly loginUserUseCase: LoginUserUseCase,
     private readonly getUserProfileUseCase: GetUserProfileUseCase,
+    private readonly getUserRolesUseCase: GetUserRolesUseCase,
   ) {}
 
   @Post('register')
@@ -96,8 +98,13 @@ export class AuthController {
       password: dto.password,
     });
 
+    const roles = await this.getUserRolesUseCase.execute(result.user.id);
+
     return {
-      user: UserHttpMapper.toResponse(result.user),
+      user: {
+        ...UserHttpMapper.toResponse(result.user),
+        roles: roles.map((r) => ({ id: r.id, name: r.name, code: r.code })),
+      },
       accessToken: result.accessToken,
       expiresIn: result.expiresIn,
     };
@@ -118,6 +125,11 @@ export class AuthController {
   })
   async getProfile(@Request() req: AuthenticatedRequest): Promise<UserResponseDto> {
     const user = await this.getUserProfileUseCase.execute(req.user.sub);
-    return UserHttpMapper.toResponse(user);
+    const roles = await this.getUserRolesUseCase.execute(user.id);
+
+    return {
+      ...UserHttpMapper.toResponse(user),
+      roles: roles.map((r) => ({ id: r.id, name: r.name, code: r.code })),
+    };
   }
 }

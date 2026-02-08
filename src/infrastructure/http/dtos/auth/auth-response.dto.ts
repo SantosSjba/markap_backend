@@ -1,6 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
+ * DTO para rol del usuario
+ */
+export class UserRoleDto {
+  @ApiProperty({ description: 'ID del rol' })
+  id: string;
+
+  @ApiProperty({ description: 'Nombre del rol', example: 'Administrador' })
+  name: string;
+
+  @ApiProperty({ description: 'Código del rol', example: 'ADMIN' })
+  code: string;
+}
+
+/**
  * DTO para la respuesta de usuario (sin contraseña)
  */
 export class UserResponseDto {
@@ -45,6 +59,13 @@ export class UserResponseDto {
     example: '2024-01-15T10:30:00.000Z',
   })
   createdAt: Date;
+
+  @ApiProperty({
+    description: 'Roles del usuario',
+    type: [UserRoleDto],
+    required: false,
+  })
+  roles?: UserRoleDto[];
 }
 
 /**
