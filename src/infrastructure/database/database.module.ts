@@ -3,9 +3,11 @@ import { PrismaService } from './prisma/prisma.service';
 import { UserPrismaRepository } from './prisma/repositories/user-prisma.repository';
 import { RolePrismaRepository } from './prisma/repositories/role-prisma.repository';
 import { ApplicationPrismaRepository } from './prisma/repositories/application-prisma.repository';
+import { PasswordResetCodePrismaRepository } from './prisma/repositories/password-reset-code-prisma.repository';
 import { UserRepository } from '../../application/repositories/user.repository';
 import { ROLE_REPOSITORY } from '../../application/repositories/role.repository';
 import { APPLICATION_REPOSITORY } from '../../application/repositories/application.repository';
+import { PasswordResetCodeRepository } from '../../application/repositories/password-reset-code.repository';
 
 @Module({
   providers: [
@@ -22,7 +24,17 @@ import { APPLICATION_REPOSITORY } from '../../application/repositories/applicati
       provide: APPLICATION_REPOSITORY,
       useClass: ApplicationPrismaRepository,
     },
+    {
+      provide: PasswordResetCodeRepository,
+      useClass: PasswordResetCodePrismaRepository,
+    },
   ],
-  exports: [PrismaService, UserRepository, ROLE_REPOSITORY, APPLICATION_REPOSITORY],
+  exports: [
+    PrismaService,
+    UserRepository,
+    ROLE_REPOSITORY,
+    APPLICATION_REPOSITORY,
+    PasswordResetCodeRepository,
+  ],
 })
 export class DatabaseModule {}

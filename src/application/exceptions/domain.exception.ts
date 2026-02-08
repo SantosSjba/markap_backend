@@ -82,3 +82,25 @@ export class UnauthorizedException extends DomainException {
     super(message);
   }
 }
+
+// ============================================
+// Password Reset Exceptions
+// ============================================
+
+/**
+ * Exception thrown when password reset code is invalid or expired
+ */
+export class InvalidPasswordResetCodeException extends DomainException {
+  constructor() {
+    super('El código de recuperación es inválido o ha expirado');
+  }
+}
+
+/**
+ * Exception thrown when user is not found for password reset
+ */
+export class UserNotFoundException extends DomainException {
+  constructor() {
+    super('No existe un usuario registrado con ese correo electrónico');
+  }
+}

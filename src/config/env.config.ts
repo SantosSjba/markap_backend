@@ -15,6 +15,20 @@ export const envConfig = () => ({
   frontend: {
     url: process.env.FRONTEND_URL || 'http://localhost:5173',
   },
+  mail: {
+    host: process.env.MAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.MAIL_PORT || '587', 10),
+    user: process.env.MAIL_USER || '',
+    password: process.env.MAIL_PASSWORD || '',
+    from: process.env.MAIL_FROM || '"MARKAP" <noreply@markap.com>',
+  },
+  passwordReset: {
+    codeExpiresInMinutes: parseInt(
+      process.env.PASSWORD_RESET_EXPIRES_MINUTES || '15',
+      10
+    ),
+    codeLength: 6,
+  },
 });
 
 export type EnvConfig = ReturnType<typeof envConfig>;

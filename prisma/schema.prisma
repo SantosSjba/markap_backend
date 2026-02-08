@@ -33,13 +33,35 @@ model User {
   deletedBy String?   @map("deleted_by")
 
   // Relaciones
-  userRoles UserRole[]
+  userRoles          UserRole[]
+  passwordResetCodes PasswordResetCode[]
 
   // Índices para optimización
   @@index([email])
   @@index([isActive])
   @@index([deletedAt])
   @@map("users")
+}
+
+// ============================================
+// PASSWORD RESET CODE - Recuperación de contraseña
+// ============================================
+model PasswordResetCode {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  code      String   // Código de 6 dígitos enviado por correo
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([code])
+  @@index([expiresAt])
+  @@map("password_reset_codes")
 }
 
 // ============================================

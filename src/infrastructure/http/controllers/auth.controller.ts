@@ -18,6 +18,8 @@ import {
   RegisterUserUseCase,
   LoginUserUseCase,
   GetUserProfileUseCase,
+  RequestPasswordResetUseCase,
+  ResetPasswordUseCase,
 } from '../../../application/use-cases/auth';
 import { GetUserRolesUseCase } from '../../../application/use-cases/roles';
 import {
@@ -26,6 +28,8 @@ import {
   LoginResponseDto,
   RegisterResponseDto,
   UserResponseDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
 } from '../dtos/auth';
 import { UserHttpMapper } from '../mappers/user-http.mapper';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
@@ -39,6 +43,8 @@ export class AuthController {
     private readonly loginUserUseCase: LoginUserUseCase,
     private readonly getUserProfileUseCase: GetUserProfileUseCase,
     private readonly getUserRolesUseCase: GetUserRolesUseCase,
+    private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
   ) {}
 
   @Post('register')
@@ -123,7 +129,9 @@ export class AuthController {
     status: 401,
     description: 'No autorizado',
   })
-  async getProfile(@Request() req: AuthenticatedRequest): Promise<UserResponseDto> {
+  async getProfile(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<UserResponseDto> {
     const user = await this.getUserProfileUseCase.execute(req.user.sub);
     const roles = await this.getUserRolesUseCase.execute(user.id);
 
@@ -131,5 +139,44 @@ export class AuthController {
       ...UserHttpMapper.toResponse(user),
       roles: roles.map((r) => ({ id: r.id, name: r.name, code: r.code })),
     };
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Solicitar recuperación de contraseña' })
+  @ApiResponse({
+    status: 200,
+    description: 'Si el email existe, se enviará un código por correo',
+  })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ message: string }> {
+    await this.requestPasswordResetUseCase.execute({ email: dto.email });
+    return {
+      message:
+        'Si el correo está registrado, recibirás un código de recuperación en unos momentos',
+    };
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Restablecer contraseña con código' })
+  @ApiResponse({
+    status: 200,
+    description: 'Contraseña actualizada correctamente',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Código inválido o expirado',
+  })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    await this.resetPasswordUseCase.execute({
+      email: dto.email,
+      code: dto.code,
+      newPassword: dto.newPassword,
+    });
+    return { message: 'Contraseña actualizada correctamente' };
   }
 }

@@ -14,6 +14,8 @@ import {
   UserInactiveException,
   EmailAlreadyExistsException,
   UnauthorizedException,
+  InvalidPasswordResetCodeException,
+  UserNotFoundException,
 } from '../../application/exceptions';
 
 @Catch()
@@ -33,7 +35,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
         typeof exceptionResponse === 'string'
           ? exceptionResponse
           : (exceptionResponse as any).message || exception.message;
-    } else if (exception instanceof EntityNotFoundException) {
+    } else if (
+      exception instanceof EntityNotFoundException ||
+      exception instanceof UserNotFoundException
+    ) {
       status = HttpStatus.NOT_FOUND;
       message = exception.message;
     } else if (exception instanceof ValidationException) {
@@ -48,6 +53,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message = exception.message;
     } else if (exception instanceof UserInactiveException) {
       status = HttpStatus.FORBIDDEN;
+      message = exception.message;
+    } else if (exception instanceof InvalidPasswordResetCodeException) {
+      status = HttpStatus.BAD_REQUEST;
       message = exception.message;
     } else if (exception instanceof EmailAlreadyExistsException) {
       status = HttpStatus.CONFLICT;

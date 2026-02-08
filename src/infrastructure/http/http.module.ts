@@ -4,14 +4,18 @@ import { DatabaseModule } from '../database/database.module';
 // Services
 import { HashService } from '../../application/services/hash.service';
 import { TokenService } from '../../application/services/token.service';
+import { MailService } from '../../application/services/mail.service';
 import { BcryptHashService } from '../services/bcrypt-hash.service';
 import { JwtTokenService } from '../services/jwt-token.service';
+import { NodemailerMailService } from '../services/nodemailer-mail.service';
 
 // Use Cases - Auth
 import {
   RegisterUserUseCase,
   LoginUserUseCase,
   GetUserProfileUseCase,
+  RequestPasswordResetUseCase,
+  ResetPasswordUseCase,
 } from '../../application/use-cases/auth';
 
 // Use Cases - Applications
@@ -56,6 +60,10 @@ import { RolesController } from './controllers/roles.controller';
       provide: TokenService,
       useClass: JwtTokenService,
     },
+    {
+      provide: MailService,
+      useClass: NodemailerMailService,
+    },
 
     // Guards
     JwtAuthGuard,
@@ -64,6 +72,8 @@ import { RolesController } from './controllers/roles.controller';
     RegisterUserUseCase,
     LoginUserUseCase,
     GetUserProfileUseCase,
+    RequestPasswordResetUseCase,
+    ResetPasswordUseCase,
 
     // Use Cases - Applications
     GetUserApplicationsUseCase,
@@ -79,6 +89,6 @@ import { RolesController } from './controllers/roles.controller';
     AssignUserRoleUseCase,
     RevokeUserRoleUseCase,
   ],
-  exports: [HashService, TokenService],
+  exports: [HashService, TokenService, MailService],
 })
 export class HttpModule {}
