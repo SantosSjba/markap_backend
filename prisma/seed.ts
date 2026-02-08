@@ -168,6 +168,86 @@ async function main() {
   }
   console.log('   ✅ All applications assigned to ADMIN role');
 
+  // 3.1 Crear menús para Alquileres
+  console.log('\n📂 Creating menus for Alquileres...');
+  const alquileresApp = await prisma.application.findUnique({
+    where: { slug: 'alquileres' },
+  });
+
+  if (alquileresApp) {
+    const parentMenus = [
+      { label: 'Dashboard', icon: 'layout-dashboard', path: '/alquileres', order: 0 },
+      { label: 'Propiedades', icon: 'building', path: null, order: 1 },
+      { label: 'Contratos', icon: 'file-text', path: '/alquileres/contratos', order: 2 },
+      { label: 'Inquilinos', icon: 'users', path: '/alquileres/inquilinos', order: 3 },
+      { label: 'Cobranzas', icon: 'dollar-sign', path: '/alquileres/cobranzas', order: 4 },
+      { label: 'Reportes', icon: 'bar-chart', path: '/alquileres/reportes', order: 5 },
+      { label: 'Configuración', icon: 'settings', path: '/alquileres/configuracion', order: 6 },
+    ];
+
+    const createdMenuIds: { [key: string]: string } = {};
+
+    for (const m of parentMenus) {
+      const existing = await prisma.menu.findFirst({
+        where: {
+          applicationId: alquileresApp.id,
+          label: m.label,
+          parentId: null,
+        },
+      });
+      if (!existing) {
+        const menu = await prisma.menu.create({
+          data: {
+            applicationId: alquileresApp.id,
+            parentId: null,
+            label: m.label,
+            icon: m.icon,
+            path: m.path,
+            order: m.order,
+            isActive: true,
+          },
+        });
+        createdMenuIds[m.label] = menu.id;
+        console.log(`   ✅ Menu "${m.label}" created`);
+      } else {
+        createdMenuIds[m.label] = existing.id;
+      }
+    }
+
+    const childMenus = [
+      { label: 'Listado de Propiedades', path: '/alquileres/propiedades', order: 0, parentLabel: 'Propiedades' },
+      { label: 'Nueva Propiedad', path: '/alquileres/propiedades/nueva', order: 1, parentLabel: 'Propiedades' },
+      { label: 'Disponibles', path: '/alquileres/propiedades/disponibles', order: 2, parentLabel: 'Propiedades' },
+    ];
+
+    for (const m of childMenus) {
+      const parentId = createdMenuIds[m.parentLabel];
+      if (!parentId) continue;
+
+      const existing = await prisma.menu.findFirst({
+        where: {
+          applicationId: alquileresApp.id,
+          label: m.label,
+          parentId,
+        },
+      });
+      if (!existing) {
+        await prisma.menu.create({
+          data: {
+            applicationId: alquileresApp.id,
+            parentId,
+            label: m.label,
+            icon: null,
+            path: m.path,
+            order: m.order,
+            isActive: true,
+          },
+        });
+        console.log(`   ✅ Submenu "${m.label}" created`);
+      }
+    }
+  }
+
   // 4. Crear usuario Admin
   console.log('\n👤 Creating admin user...');
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@markap.com';

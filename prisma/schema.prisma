@@ -144,11 +144,39 @@ model Application {
 
   // Relaciones
   roleApplications RoleApplication[]
+  menus           Menu[]
 
   @@index([slug])
   @@index([isActive])
   @@index([order])
   @@map("applications")
+}
+
+// ============================================
+// MENU MODEL - Menús dinámicos por aplicación
+// ============================================
+model Menu {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  parentId      String? @map("parent_id")
+  label         String
+  icon          String? // Nombre del ícono (home, building, document, etc.)
+  path          String? // Ruta para navegación (ej: /alquileres/propiedades)
+  order         Int     @default(0) @map("order")
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relaciones
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  parent      Menu?       @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Menu[]      @relation("MenuHierarchy")
+
+  @@index([applicationId])
+  @@index([parentId])
+  @@index([order])
+  @@map("menus")
 }
 
 // ============================================

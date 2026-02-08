@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Param,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { GetUserApplicationsUseCase } from '../../../application/use-cases/applications';
+import { GetMenusByApplicationUseCase } from '../../../application/use-cases/menus';
 import { ApplicationResponseDto } from '../dtos/applications';
 import { ApplicationHttpMapper } from '../mappers/application-http.mapper';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
@@ -23,6 +25,7 @@ import type { AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard
 export class ApplicationsController {
   constructor(
     private readonly getUserApplicationsUseCase: GetUserApplicationsUseCase,
+    private readonly getMenusByApplicationUseCase: GetMenusByApplicationUseCase,
   ) {}
 
   @Get('me')
@@ -43,5 +46,18 @@ export class ApplicationsController {
       req.user.sub,
     );
     return ApplicationHttpMapper.toResponseList(applications);
+  }
+
+  @Get(':slug/menus')
+  @ApiOperation({ summary: 'Obtener menús de una aplicación por slug' })
+  @ApiResponse({
+    status: 200,
+    description: 'Menús jerárquicos de la aplicación',
+  })
+  @ApiResponse({ status: 404, description: 'Aplicación no encontrada' })
+  async getMenus(@Param('slug') slug: string) {
+    return this.getMenusByApplicationUseCase.execute({
+      applicationSlug: slug,
+    });
   }
 }

@@ -21,6 +21,9 @@ import {
 // Use Cases - Applications
 import { GetUserApplicationsUseCase } from '../../application/use-cases/applications';
 
+// Use Cases - Menus
+import { GetMenusByApplicationUseCase } from '../../application/use-cases/menus';
+
 // Use Cases - Roles
 import { GetUserRolesUseCase, GetAllRolesUseCase } from '../../application/use-cases/roles';
 
@@ -77,6 +80,9 @@ import { RolesController } from './controllers/roles.controller';
 
     // Use Cases - Applications
     GetUserApplicationsUseCase,
+
+    // Use Cases - Menus
+    GetMenusByApplicationUseCase,
 
     // Use Cases - Roles
     GetUserRolesUseCase,
