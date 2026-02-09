@@ -7,7 +7,8 @@ const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
 
-const prisma = new PrismaClient({ adapter });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const prisma = new PrismaClient({ adapter }) as any;
 
 // Definición de roles
 const roles = [
@@ -300,6 +301,54 @@ async function main() {
   } else {
     console.log('   ✓ ADMIN role already assigned');
   }
+
+  // 6. Tipos de documento
+  console.log('\n📄 Creating document types...');
+  const documentTypes = [
+    { code: 'DNI', name: 'DNI', length: 8 },
+    { code: 'CE', name: 'Carné de Extranjería', length: 12 },
+    { code: 'RUC', name: 'RUC', length: 11 },
+    { code: 'PASAPORTE', name: 'Pasaporte', length: null },
+  ];
+  for (const dt of documentTypes) {
+    await prisma.documentType.upsert({
+      where: { code: dt.code },
+      create: dt,
+      update: {},
+    });
+  }
+  console.log('   ✅ Document types created');
+
+  // 7. Ubigeo - Departamento Lima y distritos principales
+  console.log('\n🗺️ Creating ubigeo (Lima)...');
+  await prisma.department.upsert({
+    where: { id: '15' },
+    create: { id: '15', name: 'Lima' },
+    update: {},
+  });
+  await prisma.province.upsert({
+    where: { id: '1501' },
+    create: { id: '1501', departmentId: '15', name: 'Lima' },
+    update: {},
+  });
+  const limaDistricts = [
+    { id: '150101', provinceId: '1501', name: 'Lima' },
+    { id: '150132', provinceId: '1501', name: 'Miraflores' },
+    { id: '150122', provinceId: '1501', name: 'San Isidro' },
+    { id: '150131', provinceId: '1501', name: 'Santiago de Surco' },
+    { id: '150114', provinceId: '1501', name: 'Jesús María' },
+    { id: '150133', provinceId: '1501', name: 'Pueblo Libre' },
+    { id: '150128', provinceId: '1501', name: 'San Miguel' },
+    { id: '150136', provinceId: '1501', name: 'Magdalena del Mar' },
+  ];
+  for (const d of limaDistricts) {
+    await prisma.district.upsert({
+      where: { id: d.id },
+      create: d,
+      update: {},
+    });
+  }
+  console.log('   ✅ Ubigeo Lima created');
 
   console.log('\n✨ Seed completed successfully!\n');
 }

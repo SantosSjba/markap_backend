@@ -5,11 +5,13 @@ import { RolePrismaRepository } from './prisma/repositories/role-prisma.reposito
 import { ApplicationPrismaRepository } from './prisma/repositories/application-prisma.repository';
 import { PasswordResetCodePrismaRepository } from './prisma/repositories/password-reset-code-prisma.repository';
 import { MenuPrismaRepository } from './prisma/repositories/menu-prisma.repository';
+import { ClientPrismaRepository } from './prisma/repositories/client-prisma.repository';
 import { UserRepository } from '../../application/repositories/user.repository';
 import { ROLE_REPOSITORY } from '../../application/repositories/role.repository';
 import { APPLICATION_REPOSITORY } from '../../application/repositories/application.repository';
 import { PasswordResetCodeRepository } from '../../application/repositories/password-reset-code.repository';
 import { MenuRepository } from '../../application/repositories/menu.repository';
+import { ClientRepository, CLIENT_REPOSITORY } from '../../application/repositories/client.repository';
 
 @Module({
   providers: [
@@ -34,6 +36,10 @@ import { MenuRepository } from '../../application/repositories/menu.repository';
       provide: MenuRepository,
       useClass: MenuPrismaRepository,
     },
+    {
+      provide: CLIENT_REPOSITORY,
+      useClass: ClientPrismaRepository,
+    },
   ],
   exports: [
     PrismaService,
@@ -42,6 +48,7 @@ import { MenuRepository } from '../../application/repositories/menu.repository';
     APPLICATION_REPOSITORY,
     PasswordResetCodeRepository,
     MenuRepository,
+    CLIENT_REPOSITORY,
   ],
 })
 export class DatabaseModule {}

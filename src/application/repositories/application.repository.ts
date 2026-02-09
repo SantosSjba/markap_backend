@@ -1,5 +1,21 @@
 import { Application } from '../entities';
 
+export type CreateApplicationData = Pick<
+  Application,
+  | 'name'
+  | 'slug'
+  | 'description'
+  | 'icon'
+  | 'color'
+  | 'url'
+  | 'activeCount'
+  | 'pendingCount'
+  | 'isActive'
+  | 'order'
+> & {
+  deletedAt?: Date | null;
+};
+
 /**
  * Application Repository Interface
  * Defines the contract for application data access
@@ -33,7 +49,7 @@ export interface ApplicationRepository {
   /**
    * Create a new application
    */
-  create(application: Omit<Application, 'id' | 'createdAt' | 'updatedAt'>): Promise<Application>;
+  create(application: CreateApplicationData): Promise<Application>;
 
   /**
    * Update an existing application

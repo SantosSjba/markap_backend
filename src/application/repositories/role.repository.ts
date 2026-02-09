@@ -1,5 +1,9 @@
 import { Role } from '../entities';
 
+export type CreateRoleData = Pick<Role, 'name' | 'code' | 'description' | 'isActive'> & {
+  deletedAt?: Date | null;
+};
+
 /**
  * Role Repository Interface
  * Defines the contract for role data access
@@ -28,7 +32,7 @@ export interface RoleRepository {
   /**
    * Create a new role
    */
-  create(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<Role>;
+  create(role: CreateRoleData): Promise<Role>;
 
   /**
    * Update an existing role

@@ -19,13 +19,35 @@ import {
 } from '../../application/use-cases/auth';
 
 // Use Cases - Applications
-import { GetUserApplicationsUseCase } from '../../application/use-cases/applications';
+import {
+  GetUserApplicationsUseCase,
+  GetAllApplicationsUseCase,
+  GetApplicationByIdUseCase,
+  CreateApplicationUseCase,
+  UpdateApplicationUseCase,
+  DeleteApplicationUseCase,
+} from '../../application/use-cases/applications';
 
 // Use Cases - Menus
-import { GetMenusByApplicationUseCase } from '../../application/use-cases/menus';
+import {
+  GetMenusByApplicationUseCase,
+  GetMenusFlatUseCase,
+  CreateMenuUseCase,
+  UpdateMenuUseCase,
+  DeleteMenuUseCase,
+} from '../../application/use-cases/menus';
 
 // Use Cases - Roles
-import { GetUserRolesUseCase, GetAllRolesUseCase } from '../../application/use-cases/roles';
+import {
+  GetUserRolesUseCase,
+  GetAllRolesUseCase,
+  GetRoleByIdUseCase,
+  CreateRoleUseCase,
+  UpdateRoleUseCase,
+  DeleteRoleUseCase,
+  AssignApplicationToRoleUseCase,
+  RevokeApplicationFromRoleUseCase,
+} from '../../application/use-cases/roles';
 
 // Use Cases - Users
 import {
@@ -36,6 +58,9 @@ import {
   RevokeUserRoleUseCase,
 } from '../../application/use-cases/users';
 
+// Use Cases - Clients
+import { CreateClientUseCase } from '../../application/use-cases/clients';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -44,6 +69,8 @@ import { AuthController } from './controllers/auth.controller';
 import { ApplicationsController } from './controllers/applications.controller';
 import { UsersController } from './controllers/users.controller';
 import { RolesController } from './controllers/roles.controller';
+import { MenusController } from './controllers/menus.controller';
+import { ClientsController } from './controllers/clients.controller';
 
 @Module({
   imports: [DatabaseModule],
@@ -52,6 +79,8 @@ import { RolesController } from './controllers/roles.controller';
     ApplicationsController,
     UsersController,
     RolesController,
+    MenusController,
+    ClientsController,
   ],
   providers: [
     // Services
@@ -80,13 +109,28 @@ import { RolesController } from './controllers/roles.controller';
 
     // Use Cases - Applications
     GetUserApplicationsUseCase,
+    GetAllApplicationsUseCase,
+    GetApplicationByIdUseCase,
+    CreateApplicationUseCase,
+    UpdateApplicationUseCase,
+    DeleteApplicationUseCase,
 
     // Use Cases - Menus
     GetMenusByApplicationUseCase,
+    GetMenusFlatUseCase,
+    CreateMenuUseCase,
+    UpdateMenuUseCase,
+    DeleteMenuUseCase,
 
     // Use Cases - Roles
     GetUserRolesUseCase,
     GetAllRolesUseCase,
+    GetRoleByIdUseCase,
+    CreateRoleUseCase,
+    UpdateRoleUseCase,
+    DeleteRoleUseCase,
+    AssignApplicationToRoleUseCase,
+    RevokeApplicationFromRoleUseCase,
 
     // Use Cases - Users
     GetAllUsersUseCase,
@@ -94,6 +138,9 @@ import { RolesController } from './controllers/roles.controller';
     ToggleUserActiveUseCase,
     AssignUserRoleUseCase,
     RevokeUserRoleUseCase,
+
+    // Use Cases - Clients
+    CreateClientUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

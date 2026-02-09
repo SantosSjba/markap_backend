@@ -9,6 +9,7 @@ import { Response } from 'express';
 import {
   DomainException,
   EntityNotFoundException,
+  DuplicateEntityException,
   ValidationException,
   InvalidCredentialsException,
   UserInactiveException,
@@ -57,7 +58,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else if (exception instanceof InvalidPasswordResetCodeException) {
       status = HttpStatus.BAD_REQUEST;
       message = exception.message;
-    } else if (exception instanceof EmailAlreadyExistsException) {
+    } else if (
+      exception instanceof EmailAlreadyExistsException ||
+      exception instanceof DuplicateEntityException
+    ) {
       status = HttpStatus.CONFLICT;
       message = exception.message;
     } else if (exception instanceof DomainException) {

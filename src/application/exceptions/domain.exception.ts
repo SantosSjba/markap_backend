@@ -22,6 +22,15 @@ export class EntityNotFoundException extends DomainException {
 }
 
 /**
+ * Exception thrown when attempting to create a duplicate entity
+ */
+export class DuplicateEntityException extends DomainException {
+  constructor(entity: string, field: string, value: string | number) {
+    super(`${entity} with ${field} "${value}" already exists`);
+  }
+}
+
+/**
  * Exception thrown when a business rule is violated
  */
 export class BusinessRuleException extends DomainException {
