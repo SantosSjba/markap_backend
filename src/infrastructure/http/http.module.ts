@@ -68,7 +68,11 @@ import {
 } from '../../application/use-cases/clients';
 
 // Use Cases - Properties
-import { CreatePropertyUseCase } from '../../application/use-cases/properties';
+import {
+  CreatePropertyUseCase,
+  ListPropertiesUseCase,
+  GetPropertyStatsUseCase,
+} from '../../application/use-cases/properties';
 
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -159,6 +163,8 @@ import { PropertiesController } from './controllers/properties.controller';
 
     // Use Cases - Properties
     CreatePropertyUseCase,
+    ListPropertiesUseCase,
+    GetPropertyStatsUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

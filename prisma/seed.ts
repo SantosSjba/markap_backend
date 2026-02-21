@@ -293,7 +293,6 @@ async function main() {
       // Propiedades
       { label: 'Listado de Propiedades', path: '/alquileres/propiedades', order: 0, parentLabel: 'Propiedades' },
       { label: 'Nueva Propiedad', path: '/alquileres/propiedades/nueva', order: 1, parentLabel: 'Propiedades' },
-      { label: 'Disponibles', path: '/alquileres/propiedades/disponibles', order: 2, parentLabel: 'Propiedades' },
     ];
 
     for (const m of childMenus) {

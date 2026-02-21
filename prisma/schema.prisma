@@ -387,6 +387,9 @@ model Property {
   maintenanceAmount Float? @map("maintenance_amount")
   depositMonths     Int?   @map("deposit_months")
 
+  // Estado para listado: AVAILABLE, RENTED, EXPIRING, MAINTENANCE
+  listingStatus String?  @map("listing_status")
+
   isActive Boolean @default(true) @map("is_active")
 
   createdAt DateTime  @default(now()) @map("created_at")

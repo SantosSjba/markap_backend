@@ -8,7 +8,11 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { Prisma } from '@prisma/client';
-import { CreatePropertyUseCase } from '../../../application/use-cases/properties';
+import {
+  CreatePropertyUseCase,
+  ListPropertiesUseCase,
+  GetPropertyStatsUseCase,
+} from '../../../application/use-cases/properties';
 import { CreatePropertyDto } from '../dtos/properties';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
@@ -19,8 +23,45 @@ import { PrismaService } from '../../database/prisma/prisma.service';
 export class PropertiesController {
   constructor(
     private readonly createPropertyUseCase: CreatePropertyUseCase,
+    private readonly listPropertiesUseCase: ListPropertiesUseCase,
+    private readonly getPropertyStatsUseCase: GetPropertyStatsUseCase,
     private readonly prisma: PrismaService,
   ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar propiedades (paginado)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'propertyTypeId', required: false })
+  @ApiQuery({ name: 'listingStatus', required: false })
+  @ApiResponse({ status: 200 })
+  async list(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('propertyTypeId') propertyTypeId?: string,
+    @Query('listingStatus') listingStatus?: string,
+  ) {
+    return this.listPropertiesUseCase.execute({
+      applicationSlug: applicationSlug ?? 'alquileres',
+      page: Math.max(1, parseInt(page ?? '1', 10)),
+      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      search: search?.trim() || undefined,
+      propertyTypeId: propertyTypeId || undefined,
+      listingStatus: listingStatus === '' ? undefined : listingStatus ?? undefined,
+    });
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Estadísticas de propiedades' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 200 })
+  async stats(@Query('applicationSlug') applicationSlug?: string) {
+    return this.getPropertyStatsUseCase.execute(applicationSlug ?? 'alquileres');
+  }
 
   @Get('property-types')
   @ApiOperation({ summary: 'Listar tipos de propiedad' })
