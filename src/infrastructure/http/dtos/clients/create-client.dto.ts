@@ -35,11 +35,11 @@ export class CreateClientDto {
   applicationSlug?: string;
 
   @ApiProperty({
-    description: 'Tipo de cliente',
-    enum: ['OWNER', 'TENANT', 'BOTH'],
+    description: 'Tipo de cliente: Propietario (OWNER) o Inquilino (TENANT)',
+    enum: ['OWNER', 'TENANT'],
   })
-  @IsEnum(['OWNER', 'TENANT', 'BOTH'])
-  clientType: 'OWNER' | 'TENANT' | 'BOTH';
+  @IsEnum(['OWNER', 'TENANT'])
+  clientType: 'OWNER' | 'TENANT';
 
   @ApiProperty({ description: 'ID del tipo de documento' })
   @IsString()

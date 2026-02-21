@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma.service';
 import type {
   ClientRepository,
   ClientData,
+  ClientType,
   CreateClientData,
 } from '../../../../application/repositories/client.repository';
 
@@ -63,7 +64,7 @@ export class ClientPrismaRepository implements ClientRepository {
     return {
       id: client.id,
       applicationId: client.applicationId,
-      clientType: client.clientType as 'OWNER' | 'TENANT' | 'BOTH',
+      clientType: client.clientType as ClientType,
       documentTypeId: client.documentTypeId,
       documentNumber: client.documentNumber,
       fullName: client.fullName,

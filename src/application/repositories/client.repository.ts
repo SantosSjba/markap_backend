@@ -1,4 +1,4 @@
-export type ClientType = 'OWNER' | 'TENANT' | 'BOTH';
+export type ClientType = 'OWNER' | 'TENANT';
 
 export interface ClientData {
   id: string;

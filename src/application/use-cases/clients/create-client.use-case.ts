@@ -8,7 +8,7 @@ import { EntityNotFoundException } from '../../exceptions';
 export interface CreateClientInput {
   applicationId?: string;
   applicationSlug?: string;
-  clientType: 'OWNER' | 'TENANT' | 'BOTH';
+  clientType: 'OWNER' | 'TENANT';
   documentTypeId: string;
   documentNumber: string;
   fullName: string;

@@ -268,7 +268,7 @@ model District {
 model Client {
   id            String   @id @default(uuid())
   applicationId String   @map("application_id")
-  clientType    String   @map("client_type") // OWNER, TENANT, BOTH
+  clientType    String   @map("client_type") // OWNER, TENANT
 
   // Documento
   documentTypeId String  @map("document_type_id")
