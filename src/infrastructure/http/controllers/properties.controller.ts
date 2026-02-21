@@ -1,19 +1,22 @@
-import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Query, Param, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
   ApiQuery,
+  ApiParam,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { Prisma } from '@prisma/client';
 import {
   CreatePropertyUseCase,
+  GetPropertyByIdUseCase,
   ListPropertiesUseCase,
   GetPropertyStatsUseCase,
+  UpdatePropertyUseCase,
 } from '../../../application/use-cases/properties';
-import { CreatePropertyDto } from '../dtos/properties';
+import { CreatePropertyDto, UpdatePropertyDto } from '../dtos/properties';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
 @ApiTags('Properties')
@@ -23,8 +26,10 @@ import { PrismaService } from '../../database/prisma/prisma.service';
 export class PropertiesController {
   constructor(
     private readonly createPropertyUseCase: CreatePropertyUseCase,
+    private readonly getPropertyByIdUseCase: GetPropertyByIdUseCase,
     private readonly listPropertiesUseCase: ListPropertiesUseCase,
     private readonly getPropertyStatsUseCase: GetPropertyStatsUseCase,
+    private readonly updatePropertyUseCase: UpdatePropertyUseCase,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -129,6 +134,44 @@ export class PropertiesController {
       },
       orderBy: { fullName: 'asc' },
       take: 100,
+    });
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener propiedad por ID' })
+  @ApiParam({ name: 'id', description: 'UUID de la propiedad' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404 })
+  async getById(@Param('id') id: string) {
+    return this.getPropertyByIdUseCase.execute(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar propiedad' })
+  @ApiParam({ name: 'id', description: 'UUID de la propiedad' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404 })
+  async update(@Param('id') id: string, @Body() dto: UpdatePropertyDto) {
+    return this.updatePropertyUseCase.execute({
+      id,
+      code: dto.code,
+      propertyTypeId: dto.propertyTypeId,
+      addressLine: dto.addressLine,
+      districtId: dto.districtId,
+      description: dto.description,
+      area: dto.area,
+      bedrooms: dto.bedrooms,
+      bathrooms: dto.bathrooms,
+      ageYears: dto.ageYears,
+      floorLevel: dto.floorLevel,
+      parkingSpaces: dto.parkingSpaces,
+      partida1: dto.partida1,
+      partida2: dto.partida2,
+      partida3: dto.partida3,
+      ownerId: dto.ownerId,
+      monthlyRent: dto.monthlyRent,
+      maintenanceAmount: dto.maintenanceAmount,
+      depositMonths: dto.depositMonths,
     });
   }
 

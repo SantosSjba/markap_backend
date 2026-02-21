@@ -70,8 +70,10 @@ import {
 // Use Cases - Properties
 import {
   CreatePropertyUseCase,
+  GetPropertyByIdUseCase,
   ListPropertiesUseCase,
   GetPropertyStatsUseCase,
+  UpdatePropertyUseCase,
 } from '../../application/use-cases/properties';
 
 // Guards
@@ -163,8 +165,10 @@ import { PropertiesController } from './controllers/properties.controller';
 
     // Use Cases - Properties
     CreatePropertyUseCase,
+    GetPropertyByIdUseCase,
     ListPropertiesUseCase,
     GetPropertyStatsUseCase,
+    UpdatePropertyUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

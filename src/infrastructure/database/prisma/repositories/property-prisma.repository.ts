@@ -4,18 +4,19 @@ import type {
   PropertyRepository,
   PropertyData,
   CreatePropertyData,
+  UpdatePropertyData,
   ListPropertiesFilters,
   ListPropertiesResult,
   PropertyListItem,
   PropertyStats,
-} from '../../../../application/repositories/property.repository';
+} from '@application/repositories/property.repository';
 
 @Injectable()
 export class PropertyPrismaRepository implements PropertyRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreatePropertyData): Promise<PropertyData> {
-    const property = await this.prisma.property.create({
+    const property = await (this.prisma as any).property.create({
       data: {
         applicationId: data.applicationId,
         code: data.code.trim(),
@@ -40,6 +41,13 @@ export class PropertyPrismaRepository implements PropertyRepository {
       },
     });
     return this.toPropertyData(property);
+  }
+
+  async findById(id: string): Promise<PropertyData | null> {
+    const property = await (this.prisma as any).property.findFirst({
+      where: { id, deletedAt: null },
+    });
+    return property ? this.toPropertyData(property) : null;
   }
 
   async findMany(filters: ListPropertiesFilters): Promise<ListPropertiesResult> {
@@ -123,6 +131,43 @@ export class PropertyPrismaRepository implements PropertyRepository {
       }),
     ]);
     return { total, rented, available, expiring, maintenance };
+  }
+
+  async update(data: UpdatePropertyData): Promise<PropertyData> {
+    const existing = await (this.prisma as any).property.findFirst({
+      where: { id: data.id, deletedAt: null },
+    });
+    if (!existing) {
+      const err = new Error('Property not found');
+      (err as any).code = 'NOT_FOUND';
+      throw err;
+    }
+    const updatePayload: Record<string, unknown> = {};
+    if (data.code !== undefined) updatePayload.code = data.code.trim();
+    if (data.propertyTypeId !== undefined) updatePayload.propertyTypeId = data.propertyTypeId;
+    if (data.addressLine !== undefined) updatePayload.addressLine = data.addressLine.trim();
+    if (data.districtId !== undefined) updatePayload.districtId = data.districtId;
+    if (data.description !== undefined) updatePayload.description = data.description?.trim() || null;
+    if (data.area !== undefined) updatePayload.area = data.area;
+    if (data.bedrooms !== undefined) updatePayload.bedrooms = data.bedrooms;
+    if (data.bathrooms !== undefined) updatePayload.bathrooms = data.bathrooms;
+    if (data.ageYears !== undefined) updatePayload.ageYears = data.ageYears;
+    if (data.floorLevel !== undefined) updatePayload.floorLevel = data.floorLevel?.trim() || null;
+    if (data.parkingSpaces !== undefined) updatePayload.parkingSpaces = data.parkingSpaces;
+    if (data.partida1 !== undefined) updatePayload.partida1 = data.partida1?.trim() || null;
+    if (data.partida2 !== undefined) updatePayload.partida2 = data.partida2?.trim() || null;
+    if (data.partida3 !== undefined) updatePayload.partida3 = data.partida3?.trim() || null;
+    if (data.ownerId !== undefined) updatePayload.ownerId = data.ownerId;
+    if (data.monthlyRent !== undefined) updatePayload.monthlyRent = data.monthlyRent;
+    if (data.maintenanceAmount !== undefined) updatePayload.maintenanceAmount = data.maintenanceAmount;
+    if (data.depositMonths !== undefined) updatePayload.depositMonths = data.depositMonths;
+    if (data.listingStatus !== undefined) updatePayload.listingStatus = data.listingStatus;
+
+    const property = await (this.prisma as any).property.update({
+      where: { id: data.id },
+      data: updatePayload,
+    });
+    return this.toPropertyData(property);
   }
 
   private toPropertyData(property: {
