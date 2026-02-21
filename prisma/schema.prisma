@@ -146,6 +146,7 @@ model Application {
   roleApplications RoleApplication[]
   menus           Menu[]
   clients         Client[]
+  properties      Property[]
 
   @@index([slug])
   @@index([isActive])
@@ -255,8 +256,9 @@ model District {
   provinceId String @map("province_id")
   name       String
 
-  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-  addresses Address[]
+  province   Province   @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  addresses  Address[]
+  properties Property[]
 
   @@index([provinceId])
   @@map("districts")
@@ -300,6 +302,7 @@ model Client {
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   documentType DocumentType @relation(fields: [documentTypeId], references: [id], onDelete: Restrict)
   addresses   Address[]
+  propertiesAsOwner Property[]
 
   @@index([applicationId])
   @@index([documentTypeId])
@@ -330,4 +333,78 @@ model Address {
   @@index([clientId])
   @@index([districtId])
   @@map("addresses")
+}
+
+// ============================================
+// PROPERTY_TYPE - Tipos de propiedad (Departamento, Casa, etc.)
+// ============================================
+model PropertyType {
+  id       String  @id @default(uuid())
+  name     String
+  code     String  @unique
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  properties Property[]
+
+  @@map("property_types")
+}
+
+// ============================================
+// PROPERTY - Propiedades (inmuebles en alquiler)
+// ============================================
+model Property {
+  id             String   @id @default(uuid())
+  applicationId  String   @map("application_id")
+  code           String   // Código interno (ej: PROP-001)
+  propertyTypeId String   @map("property_type_id")
+
+  // Ubicación
+  addressLine String  @map("address_line")
+  districtId  String  @map("district_id")
+  description String? @db.Text
+
+  // Características
+  area            Float?   @map("area") // m²
+  bedrooms        Int?     @map("bedrooms")
+  bathrooms       Int?     @map("bathrooms")
+  ageYears        Int?     @map("age_years")
+  floorLevel      String?  @map("floor_level")
+  parkingSpaces   Int?     @map("parking_spaces")
+
+  // Números de partida (máximo 3)
+  partida1 String? @map("partida_1")
+  partida2 String? @map("partida_2")
+  partida3 String? @map("partida_3")
+
+  // Propietario
+  ownerId String @map("owner_id")
+
+  // Información de alquiler
+  monthlyRent       Float? @map("monthly_rent")
+  maintenanceAmount Float? @map("maintenance_amount")
+  depositMonths     Int?   @map("deposit_months")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  application  Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  propertyType PropertyType @relation(fields: [propertyTypeId], references: [id], onDelete: Restrict)
+  district     District     @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  owner        Client       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+
+  @@index([applicationId])
+  @@index([propertyTypeId])
+  @@index([districtId])
+  @@index([ownerId])
+  @@index([deletedAt])
+  @@map("properties")
 }

@@ -67,6 +67,9 @@ import {
   UpdateClientUseCase,
 } from '../../application/use-cases/clients';
 
+// Use Cases - Properties
+import { CreatePropertyUseCase } from '../../application/use-cases/properties';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -77,6 +80,7 @@ import { UsersController } from './controllers/users.controller';
 import { RolesController } from './controllers/roles.controller';
 import { MenusController } from './controllers/menus.controller';
 import { ClientsController } from './controllers/clients.controller';
+import { PropertiesController } from './controllers/properties.controller';
 
 @Module({
   imports: [DatabaseModule],
@@ -87,6 +91,7 @@ import { ClientsController } from './controllers/clients.controller';
     RolesController,
     MenusController,
     ClientsController,
+    PropertiesController,
   ],
   providers: [
     // Services
@@ -151,6 +156,9 @@ import { ClientsController } from './controllers/clients.controller';
     GetClientStatsUseCase,
     GetClientByIdUseCase,
     UpdateClientUseCase,
+
+    // Use Cases - Properties
+    CreatePropertyUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

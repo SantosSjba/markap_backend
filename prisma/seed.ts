@@ -425,6 +425,25 @@ async function main() {
   }
   console.log('   ✅ Ubigeo Lima created');
 
+  // 8. Tipos de propiedad
+  console.log('\n🏠 Creating property types...');
+  const propertyTypes = [
+    { code: 'DEP', name: 'Departamento' },
+    { code: 'CASA', name: 'Casa' },
+    { code: 'OFICINA', name: 'Oficina' },
+    { code: 'LOCAL', name: 'Local comercial' },
+    { code: 'BODEGA', name: 'Bodega' },
+    { code: 'ESTACIONAMIENTO', name: 'Estacionamiento' },
+  ];
+  for (const pt of propertyTypes) {
+    await prisma.propertyType.upsert({
+      where: { code: pt.code },
+      create: pt,
+      update: {},
+    });
+  }
+  console.log('   ✅ Property types created');
+
   console.log('\n✨ Seed completed successfully!\n');
 }
 
