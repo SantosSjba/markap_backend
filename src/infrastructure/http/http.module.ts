@@ -63,6 +63,8 @@ import {
   CreateClientUseCase,
   ListClientsUseCase,
   GetClientStatsUseCase,
+  GetClientByIdUseCase,
+  UpdateClientUseCase,
 } from '../../application/use-cases/clients';
 
 // Guards
@@ -147,6 +149,8 @@ import { ClientsController } from './controllers/clients.controller';
     CreateClientUseCase,
     ListClientsUseCase,
     GetClientStatsUseCase,
+    GetClientByIdUseCase,
+    UpdateClientUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

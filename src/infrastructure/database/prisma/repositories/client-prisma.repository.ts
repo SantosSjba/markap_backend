@@ -5,6 +5,8 @@ import type {
   ClientData,
   ClientType,
   CreateClientData,
+  UpdateClientData,
+  ClientDetailData,
   ListClientsFilters,
   ListClientsResult,
   ClientListItem,
@@ -47,6 +49,94 @@ export class ClientPrismaRepository implements ClientRepository {
       },
     });
     return this.toClientData(client);
+  }
+
+  async findById(id: string): Promise<ClientDetailData | null> {
+    const client = await this.prisma.client.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        documentType: true,
+        addresses: {
+          where: { isPrimary: true },
+          take: 1,
+          include: {
+            district: {
+              include: {
+                province: { include: { department: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!client) return null;
+    const primaryAddress = client.addresses[0] ?? null;
+    return {
+      ...this.toClientData(client),
+      documentType: client.documentType,
+      primaryAddress: primaryAddress
+        ? {
+            id: primaryAddress.id,
+            addressLine: primaryAddress.addressLine,
+            districtId: primaryAddress.districtId,
+            reference: primaryAddress.reference,
+            district: {
+              id: primaryAddress.district.id,
+              name: primaryAddress.district.name,
+              province: {
+                id: primaryAddress.district.province.id,
+                name: primaryAddress.district.province.name,
+                department: {
+                  id: primaryAddress.district.province.department.id,
+                  name: primaryAddress.district.province.department.name,
+                },
+              },
+            },
+          }
+        : null,
+    };
+  }
+
+  async update(id: string, data: UpdateClientData): Promise<ClientData> {
+    await this.prisma.client.update({
+      where: { id },
+      data: {
+        ...(data.clientType !== undefined && { clientType: data.clientType }),
+        ...(data.documentTypeId !== undefined && { documentTypeId: data.documentTypeId }),
+        ...(data.documentNumber !== undefined && { documentNumber: data.documentNumber.trim() }),
+        ...(data.fullName !== undefined && { fullName: data.fullName.trim() }),
+        ...(data.legalRepresentativeName !== undefined && {
+          legalRepresentativeName: data.legalRepresentativeName?.trim() || null,
+        }),
+        ...(data.legalRepresentativePosition !== undefined && {
+          legalRepresentativePosition: data.legalRepresentativePosition?.trim() || null,
+        }),
+        ...(data.primaryPhone !== undefined && { primaryPhone: data.primaryPhone.trim() }),
+        ...(data.secondaryPhone !== undefined && { secondaryPhone: data.secondaryPhone?.trim() || null }),
+        ...(data.primaryEmail !== undefined && { primaryEmail: data.primaryEmail.trim() }),
+        ...(data.secondaryEmail !== undefined && { secondaryEmail: data.secondaryEmail?.trim() || null }),
+        ...(data.notes !== undefined && { notes: data.notes?.trim() || null }),
+      },
+    });
+    if (data.address) {
+      const primary = await this.prisma.address.findFirst({
+        where: { clientId: id, isPrimary: true },
+      });
+      if (primary) {
+        await this.prisma.address.update({
+          where: { id: primary.id },
+          data: {
+            ...(data.address.addressLine !== undefined && { addressLine: data.address.addressLine.trim() }),
+            ...(data.address.districtId !== undefined && { districtId: data.address.districtId }),
+            ...(data.address.reference !== undefined && { reference: data.address.reference?.trim() || null }),
+          },
+        });
+      }
+    }
+    const updated = await this.prisma.client.findUniqueOrThrow({
+      where: { id },
+    });
+    return this.toClientData(updated);
   }
 
   async findMany(filters: ListClientsFilters): Promise<ListClientsResult> {

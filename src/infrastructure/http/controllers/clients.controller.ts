@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -11,8 +11,10 @@ import {
   CreateClientUseCase,
   ListClientsUseCase,
   GetClientStatsUseCase,
+  GetClientByIdUseCase,
+  UpdateClientUseCase,
 } from '../../../application/use-cases/clients';
-import { CreateClientDto } from '../dtos/clients';
+import { CreateClientDto, UpdateClientDto } from '../dtos/clients';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
 @ApiTags('Clients')
@@ -24,6 +26,8 @@ export class ClientsController {
     private readonly createClientUseCase: CreateClientUseCase,
     private readonly listClientsUseCase: ListClientsUseCase,
     private readonly getClientStatsUseCase: GetClientStatsUseCase,
+    private readonly getClientByIdUseCase: GetClientByIdUseCase,
+    private readonly updateClientUseCase: UpdateClientUseCase,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -108,6 +112,33 @@ export class ClientsController {
         },
       },
       orderBy: { name: 'asc' },
+    });
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener cliente por ID' })
+  @ApiResponse({ status: 200 })
+  async getById(@Param('id') id: string) {
+    return this.getClientByIdUseCase.execute(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar cliente' })
+  @ApiResponse({ status: 200 })
+  async update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
+    return this.updateClientUseCase.execute(id, {
+      clientType: dto.clientType,
+      documentTypeId: dto.documentTypeId,
+      documentNumber: dto.documentNumber,
+      fullName: dto.fullName,
+      legalRepresentativeName: dto.legalRepresentativeName,
+      legalRepresentativePosition: dto.legalRepresentativePosition,
+      primaryPhone: dto.primaryPhone,
+      secondaryPhone: dto.secondaryPhone,
+      primaryEmail: dto.primaryEmail,
+      secondaryEmail: dto.secondaryEmail,
+      notes: dto.notes,
+      address: dto.address,
     });
   }
 }
