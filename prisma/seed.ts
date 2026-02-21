@@ -250,7 +250,7 @@ async function main() {
       { label: 'Dashboard', icon: 'layout-dashboard', path: '/alquileres', order: 0 },
       { label: 'Clientes', icon: 'users', path: '/alquileres/clientes', order: 1 },
       { label: 'Propiedades', icon: 'building', path: null, order: 2 },
-      { label: 'Contratos', icon: 'file-text', path: '/alquileres/contratos', order: 3 },
+      { label: 'Alquileres', icon: 'file-text', path: '/alquileres/contratos', order: 3 },
       { label: 'Inquilinos', icon: 'users', path: '/alquileres/inquilinos', order: 4 },
       { label: 'Cobranzas', icon: 'dollar-sign', path: '/alquileres/cobranzas', order: 5 },
       { label: 'Reportes', icon: 'bar-chart', path: '/alquileres/reportes', order: 6 },
@@ -260,14 +260,14 @@ async function main() {
     const createdMenuIds: { [key: string]: string } = {};
 
     for (const m of parentMenus) {
-      const existing = await prisma.menu.findFirst({
+      const existingMenu = await prisma.menu.findFirst({
         where: {
           applicationId: alquileresApp.id,
-          label: m.label,
           parentId: null,
+          ...(m.path ? { path: m.path } : { label: m.label }),
         },
       });
-      if (!existing) {
+      if (!existingMenu) {
         const menu = await prisma.menu.create({
           data: {
             applicationId: alquileresApp.id,
@@ -282,7 +282,12 @@ async function main() {
         createdMenuIds[m.label] = menu.id;
         console.log(`   ✅ Menu "${m.label}" created`);
       } else {
-        createdMenuIds[m.label] = existing.id;
+        await prisma.menu.update({
+          where: { id: existingMenu.id },
+          data: { label: m.label, icon: m.icon, path: m.path, order: m.order },
+        });
+        createdMenuIds[m.label] = existingMenu.id;
+        console.log(`   ✅ Menu "${m.label}" updated`);
       }
     }
 
@@ -293,6 +298,9 @@ async function main() {
       // Propiedades
       { label: 'Listado de Propiedades', path: '/alquileres/propiedades', order: 0, parentLabel: 'Propiedades' },
       { label: 'Nueva Propiedad', path: '/alquileres/propiedades/nueva', order: 1, parentLabel: 'Propiedades' },
+      // Alquileres (ex Contratos)
+      { label: 'Listado de Alquileres', path: '/alquileres/contratos', order: 0, parentLabel: 'Alquileres' },
+      { label: 'Nuevo Alquiler', path: '/alquileres/contratos/nuevo', order: 1, parentLabel: 'Alquileres' },
     ];
 
     for (const m of childMenus) {

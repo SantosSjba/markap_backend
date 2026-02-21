@@ -147,6 +147,7 @@ model Application {
   menus           Menu[]
   clients         Client[]
   properties      Property[]
+  rentals         Rental[]
 
   @@index([slug])
   @@index([isActive])
@@ -303,6 +304,7 @@ model Client {
   documentType DocumentType @relation(fields: [documentTypeId], references: [id], onDelete: Restrict)
   addresses   Address[]
   propertiesAsOwner Property[]
+  rentalsAsTenant   Rental[]
 
   @@index([applicationId])
   @@index([documentTypeId])
@@ -403,6 +405,7 @@ model Property {
   propertyType PropertyType @relation(fields: [propertyTypeId], references: [id], onDelete: Restrict)
   district     District     @relation(fields: [districtId], references: [id], onDelete: Restrict)
   owner        Client       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  rentals      Rental[]
 
   @@index([applicationId])
   @@index([propertyTypeId])
@@ -410,4 +413,61 @@ model Property {
   @@index([ownerId])
   @@index([deletedAt])
   @@map("properties")
+}
+
+// ============================================
+// RENTAL - Alquileres (contratos de alquiler)
+// ============================================
+model Rental {
+  id             String    @id @default(uuid())
+  applicationId  String    @map("application_id")
+  propertyId     String    @map("property_id")
+  tenantId       String    @map("tenant_id") // Client con clientType TENANT
+
+  startDate       DateTime  @map("start_date")
+  endDate         DateTime  @map("end_date")
+  currency        String    @default("PEN") @map("currency") // PEN, USD
+  monthlyAmount   Float     @map("monthly_amount")
+  securityDeposit Float?    @map("security_deposit")
+  paymentDueDay   Int       @default(5) @map("payment_due_day") // 1-28
+  notes           String?   @db.Text
+
+  status String @default("ACTIVE") @map("status") // ACTIVE, EXPIRED, CANCELLED
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  property    Property     @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  tenant      Client       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  attachments RentalAttachment[]
+
+  @@index([applicationId])
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("rentals")
+}
+
+// Adjuntos de alquiler: contrato firmado, acta de entrega
+model RentalAttachment {
+  id             String   @id @default(uuid())
+  rentalId       String   @map("rental_id")
+  type           String   @map("type") // CONTRACT, DELIVERY_ACT
+  filePath       String   @map("file_path") // ruta relativa en servidor
+  originalFileName String @map("original_file_name")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@index([rentalId])
+  @@index([type])
+  @@map("rental_attachments")
 }

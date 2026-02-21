@@ -76,6 +76,9 @@ import {
   UpdatePropertyUseCase,
 } from '../../application/use-cases/properties';
 
+// Use Cases - Rentals
+import { CreateRentalUseCase } from '../../application/use-cases/rentals';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -87,6 +90,7 @@ import { RolesController } from './controllers/roles.controller';
 import { MenusController } from './controllers/menus.controller';
 import { ClientsController } from './controllers/clients.controller';
 import { PropertiesController } from './controllers/properties.controller';
+import { RentalsController } from './controllers/rentals.controller';
 
 @Module({
   imports: [DatabaseModule],
@@ -98,6 +102,7 @@ import { PropertiesController } from './controllers/properties.controller';
     MenusController,
     ClientsController,
     PropertiesController,
+    RentalsController,
   ],
   providers: [
     // Services
@@ -169,6 +174,7 @@ import { PropertiesController } from './controllers/properties.controller';
     ListPropertiesUseCase,
     GetPropertyStatsUseCase,
     UpdatePropertyUseCase,
+    CreateRentalUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

@@ -7,6 +7,7 @@ import { PasswordResetCodePrismaRepository } from './prisma/repositories/passwor
 import { MenuPrismaRepository } from './prisma/repositories/menu-prisma.repository';
 import { ClientPrismaRepository } from './prisma/repositories/client-prisma.repository';
 import { PropertyPrismaRepository } from './prisma/repositories/property-prisma.repository';
+import { RentalPrismaRepository } from './prisma/repositories/rental-prisma.repository';
 import { UserRepository } from '../../application/repositories/user.repository';
 import { ROLE_REPOSITORY } from '../../application/repositories/role.repository';
 import { APPLICATION_REPOSITORY } from '../../application/repositories/application.repository';
@@ -14,6 +15,7 @@ import { PasswordResetCodeRepository } from '../../application/repositories/pass
 import { MenuRepository } from '../../application/repositories/menu.repository';
 import { ClientRepository, CLIENT_REPOSITORY } from '../../application/repositories/client.repository';
 import { PropertyRepository, PROPERTY_REPOSITORY } from '../../application/repositories/property.repository';
+import { RENTAL_REPOSITORY } from '../../application/repositories/rental.repository';
 
 @Module({
   providers: [
@@ -46,6 +48,10 @@ import { PropertyRepository, PROPERTY_REPOSITORY } from '../../application/repos
       provide: PROPERTY_REPOSITORY,
       useClass: PropertyPrismaRepository,
     },
+    {
+      provide: RENTAL_REPOSITORY,
+      useClass: RentalPrismaRepository,
+    },
   ],
   exports: [
     PrismaService,
@@ -56,6 +62,7 @@ import { PropertyRepository, PROPERTY_REPOSITORY } from '../../application/repos
     MenuRepository,
     CLIENT_REPOSITORY,
     PROPERTY_REPOSITORY,
+    RENTAL_REPOSITORY,
   ],
 })
 export class DatabaseModule {}
