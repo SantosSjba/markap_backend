@@ -10,7 +10,7 @@ const adapter = new PrismaPg({
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const prisma = new PrismaClient({ adapter }) as any;
 
-// Definición de roles
+// Definición de roles (Admin + roles por área)
 const roles = [
   {
     name: 'Administrador',
@@ -18,14 +18,24 @@ const roles = [
     description: 'Acceso total al sistema',
   },
   {
+    name: 'Administración y contabilidad',
+    code: 'ADMIN_CONTAB',
+    description: 'Gestión administrativa y contable',
+  },
+  {
+    name: 'Asistente de arquitectura',
+    code: 'ASIST_ARQUITECTURA',
+    description: 'Acceso a aplicación de arquitectura',
+  },
+  {
+    name: 'Asistente Administrativo',
+    code: 'ASIST_ADMIN',
+    description: 'Tareas administrativas y soporte',
+  },
+  {
     name: 'Gerente',
     code: 'MANAGER',
     description: 'Acceso a gestión y reportes',
-  },
-  {
-    name: 'Usuario',
-    code: 'USER',
-    description: 'Acceso básico al sistema',
   },
 ];
 
@@ -169,7 +179,67 @@ async function main() {
   }
   console.log('   ✅ All applications assigned to ADMIN role');
 
-  // 3.1 Crear menús para Alquileres
+  // 3.2 Mapa slug -> applicationId para asignar por rol
+  const appIdBySlug: { [slug: string]: string } = {};
+  for (let i = 0; i < applications.length; i++) {
+    appIdBySlug[applications[i].slug] = createdApps[i];
+  }
+
+  const assignAppsToRole = async (
+    roleCode: string,
+    slugs: string[],
+    roleLabel: string,
+  ) => {
+    const roleId = createdRoles[roleCode];
+    if (!roleId) return;
+    for (const slug of slugs) {
+      const appId = appIdBySlug[slug];
+      if (!appId) continue;
+      const existing = await prisma.roleApplication.findUnique({
+        where: {
+          roleId_applicationId: { roleId, applicationId: appId },
+        },
+      });
+      if (!existing) {
+        await prisma.roleApplication.create({
+          data: {
+            roleId,
+            applicationId: appId,
+            canRead: true,
+            canWrite: true,
+            canDelete: false,
+            canAdmin: false,
+          },
+        });
+      }
+    }
+    console.log(`   ✅ ${roleLabel}: ${slugs.join(', ')}`);
+  };
+
+  // Asignar aplicaciones a cada rol (según acceso por área)
+  console.log('\n🔗 Assigning applications to other roles...');
+  await assignAppsToRole(
+    'MANAGER',
+    ['alquileres', 'ventas', 'interiorismo', 'arquitectura', 'produccion', 'contabilidad'],
+    'Gerente',
+  );
+  await assignAppsToRole(
+    'ADMIN_CONTAB',
+    ['alquileres', 'contabilidad'],
+    'Administración y contabilidad',
+  );
+  await assignAppsToRole(
+    'ASIST_ARQUITECTURA',
+    ['arquitectura'],
+    'Asistente de arquitectura',
+  );
+  await assignAppsToRole(
+    'ASIST_ADMIN',
+    ['alquileres', 'ventas', 'contabilidad'],
+    'Asistente Administrativo',
+  );
+
+  // 3.3 Crear menús para Alquileres
   console.log('\n📂 Creating menus for Alquileres...');
   const alquileresApp = await prisma.application.findUnique({
     where: { slug: 'alquileres' },
