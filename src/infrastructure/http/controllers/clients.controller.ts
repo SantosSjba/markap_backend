@@ -7,7 +7,11 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { CreateClientUseCase } from '../../../application/use-cases/clients';
+import {
+  CreateClientUseCase,
+  ListClientsUseCase,
+  GetClientStatsUseCase,
+} from '../../../application/use-cases/clients';
 import { CreateClientDto } from '../dtos/clients';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
@@ -18,8 +22,45 @@ import { PrismaService } from '../../database/prisma/prisma.service';
 export class ClientsController {
   constructor(
     private readonly createClientUseCase: CreateClientUseCase,
+    private readonly listClientsUseCase: ListClientsUseCase,
+    private readonly getClientStatsUseCase: GetClientStatsUseCase,
     private readonly prisma: PrismaService,
   ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar clientes (paginado)' })
+  @ApiQuery({ name: 'applicationSlug', required: false, description: 'Slug de la aplicación (default: alquileres)' })
+  @ApiQuery({ name: 'page', required: false, description: 'Página (1-based)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items por página' })
+  @ApiQuery({ name: 'search', required: false, description: 'Buscar por nombre, documento o email' })
+  @ApiQuery({ name: 'clientType', required: false, enum: ['OWNER', 'TENANT'] })
+  @ApiQuery({ name: 'isActive', required: false, description: 'Filtrar por estado activo (true/false)' })
+  @ApiResponse({ status: 200 })
+  async list(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('clientType') clientType?: 'OWNER' | 'TENANT',
+    @Query('isActive') isActive?: string,
+  ) {
+    return this.listClientsUseCase.execute({
+      applicationSlug: applicationSlug ?? 'alquileres',
+      page: Math.max(1, parseInt(page ?? '1', 10)),
+      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      search: search?.trim() || undefined,
+      clientType,
+      isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+    });
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Estadísticas de clientes' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 200 })
+  async stats(@Query('applicationSlug') applicationSlug?: string) {
+    return this.getClientStatsUseCase.execute(applicationSlug ?? 'alquileres');
+  }
 
   @Post()
   @ApiOperation({ summary: 'Crear cliente' })

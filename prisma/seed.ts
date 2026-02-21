@@ -178,12 +178,13 @@ async function main() {
   if (alquileresApp) {
     const parentMenus = [
       { label: 'Dashboard', icon: 'layout-dashboard', path: '/alquileres', order: 0 },
-      { label: 'Propiedades', icon: 'building', path: null, order: 1 },
-      { label: 'Contratos', icon: 'file-text', path: '/alquileres/contratos', order: 2 },
-      { label: 'Inquilinos', icon: 'users', path: '/alquileres/inquilinos', order: 3 },
-      { label: 'Cobranzas', icon: 'dollar-sign', path: '/alquileres/cobranzas', order: 4 },
-      { label: 'Reportes', icon: 'bar-chart', path: '/alquileres/reportes', order: 5 },
-      { label: 'Configuración', icon: 'settings', path: '/alquileres/configuracion', order: 6 },
+      { label: 'Clientes', icon: 'users', path: '/alquileres/clientes', order: 1 },
+      { label: 'Propiedades', icon: 'building', path: null, order: 2 },
+      { label: 'Contratos', icon: 'file-text', path: '/alquileres/contratos', order: 3 },
+      { label: 'Inquilinos', icon: 'users', path: '/alquileres/inquilinos', order: 4 },
+      { label: 'Cobranzas', icon: 'dollar-sign', path: '/alquileres/cobranzas', order: 5 },
+      { label: 'Reportes', icon: 'bar-chart', path: '/alquileres/reportes', order: 6 },
+      { label: 'Configuración', icon: 'settings', path: '/alquileres/configuracion', order: 7 },
     ];
 
     const createdMenuIds: { [key: string]: string } = {};
@@ -216,6 +217,10 @@ async function main() {
     }
 
     const childMenus = [
+      // Clientes (al mismo nivel: listado y nuevo)
+      { label: 'Listado de Clientes', path: '/alquileres/clientes', order: 0, parentLabel: 'Clientes' },
+      { label: 'Nuevo Cliente', path: '/alquileres/clientes/nuevo', order: 1, parentLabel: 'Clientes' },
+      // Propiedades
       { label: 'Listado de Propiedades', path: '/alquileres/propiedades', order: 0, parentLabel: 'Propiedades' },
       { label: 'Nueva Propiedad', path: '/alquileres/propiedades/nueva', order: 1, parentLabel: 'Propiedades' },
       { label: 'Disponibles', path: '/alquileres/propiedades/disponibles', order: 2, parentLabel: 'Propiedades' },

@@ -5,6 +5,10 @@ import type {
   ClientData,
   ClientType,
   CreateClientData,
+  ListClientsFilters,
+  ListClientsResult,
+  ClientListItem,
+  ClientStats,
 } from '../../../../application/repositories/client.repository';
 
 @Injectable()
@@ -43,6 +47,81 @@ export class ClientPrismaRepository implements ClientRepository {
       },
     });
     return this.toClientData(client);
+  }
+
+  async findMany(filters: ListClientsFilters): Promise<ListClientsResult> {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: filters.applicationSlug },
+    });
+    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+
+    const where: Record<string, unknown> = {
+      applicationId: app.id,
+      deletedAt: null,
+    };
+    if (filters.clientType) where.clientType = filters.clientType;
+    if (filters.isActive !== undefined) where.isActive = filters.isActive;
+    if (filters.search?.trim()) {
+      const q = filters.search.trim();
+      where.OR = [
+        { fullName: { contains: q, mode: 'insensitive' } },
+        { documentNumber: { contains: q, mode: 'insensitive' } },
+        { primaryEmail: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.client.findMany({
+        where,
+        include: { documentType: true },
+        orderBy: { fullName: 'asc' },
+        skip: (filters.page - 1) * filters.limit,
+        take: filters.limit,
+      }),
+      this.prisma.client.count({ where }),
+    ]);
+
+    return {
+      data: data.map((c) => ({
+        id: c.id,
+        fullName: c.fullName,
+        documentTypeCode: c.documentType.code,
+        documentNumber: c.documentNumber,
+        primaryPhone: c.primaryPhone,
+        primaryEmail: c.primaryEmail,
+        clientType: c.clientType as ClientType,
+        isActive: c.isActive,
+        propertiesCount: 0,
+        contractsCount: 0,
+      })),
+      total,
+      page: filters.page,
+      limit: filters.limit,
+    };
+  }
+
+  async getStats(applicationSlug: string): Promise<ClientStats> {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: applicationSlug },
+    });
+    if (!app)
+      return { total: 0, owners: 0, tenants: 0, active: 0 };
+
+    const [total, owners, tenants, active] = await Promise.all([
+      this.prisma.client.count({
+        where: { applicationId: app.id, deletedAt: null },
+      }),
+      this.prisma.client.count({
+        where: { applicationId: app.id, clientType: 'OWNER', deletedAt: null },
+      }),
+      this.prisma.client.count({
+        where: { applicationId: app.id, clientType: 'TENANT', deletedAt: null },
+      }),
+      this.prisma.client.count({
+        where: { applicationId: app.id, isActive: true, deletedAt: null },
+      }),
+    ]);
+    return { total, owners, tenants, active };
   }
 
   private toClientData(client: {

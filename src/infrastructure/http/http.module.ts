@@ -59,7 +59,11 @@ import {
 } from '../../application/use-cases/users';
 
 // Use Cases - Clients
-import { CreateClientUseCase } from '../../application/use-cases/clients';
+import {
+  CreateClientUseCase,
+  ListClientsUseCase,
+  GetClientStatsUseCase,
+} from '../../application/use-cases/clients';
 
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -141,6 +145,8 @@ import { ClientsController } from './controllers/clients.controller';
 
     // Use Cases - Clients
     CreateClientUseCase,
+    ListClientsUseCase,
+    GetClientStatsUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })
