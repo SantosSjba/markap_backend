@@ -74,6 +74,10 @@ export class RequestPasswordResetUseCase {
       this.configService.get<string>('frontend.url') || 'http://localhost:5173';
     const resetUrl = `${frontendUrl}/auth/reset-password?email=${encodeURIComponent(user.email)}`;
 
+    const gerenciaEmail =
+      this.configService.get<string>('passwordReset.gerenciaEmail') ||
+      'gerencia.markap@gmail.com';
+
     const html = `
 <!DOCTYPE html>
 <html>
@@ -104,27 +108,31 @@ export class RequestPasswordResetUseCase {
       margin-top: 16px;
     }
     .footer { color: #6B7280; font-size: 12px; margin-top: 32px; }
+    .solicitante { background: #F3F4F6; padding: 12px; border-radius: 8px; margin: 16px 0; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Recuperación de contraseña - MARKAP</h2>
-    <p>Hola ${user.firstName},</p>
-    <p>Has solicitado restablecer tu contraseña. Utiliza el siguiente código:</p>
+    <h2>Recuperación de contraseña - MARKAP (Gerencia)</h2>
+    <p>Solicitud de recuperación de contraseña. El código debe usarse para el siguiente usuario:</p>
+    <div class="solicitante">
+      <strong>Usuario:</strong> ${user.email}<br>
+      <strong>Nombre:</strong> ${user.firstName} ${user.lastName}
+    </div>
+    <p>Código de recuperación:</p>
     <div class="code-box">${code}</div>
     <p>Este código expira en ${expiresInMinutes} minutos.</p>
     <p>
       <a href="${resetUrl}" class="btn">Restablecer contraseña</a>
     </p>
-    <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
     <p class="footer">MARKAP S.A.C. - Todos los derechos reservados</p>
   </div>
 </body>
 </html>`;
 
     await this.mailService.sendMail({
-      to: user.email,
-      subject: 'Código de recuperación de contraseña - MARKAP',
+      to: gerenciaEmail,
+      subject: 'Recuperación de contraseña - MARKAP (solicitado por ' + user.email + ')',
       html,
     });
   }

@@ -28,6 +28,9 @@ export const envConfig = () => ({
       10
     ),
     codeLength: 6,
+    /** Correo de gerencia: todos los códigos de recuperación se envían aquí */
+    gerenciaEmail:
+      process.env.PASSWORD_RESET_GERENCIA_EMAIL || 'gerencia.markap@gmail.com',
   },
 });
 
