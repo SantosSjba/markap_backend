@@ -171,6 +171,46 @@ export class ClientPrismaRepository implements ClientRepository {
       this.prisma.client.count({ where }),
     ]);
 
+    const ownerIds = data.filter((c) => c.clientType === 'OWNER').map((c) => c.id);
+    const tenantIds = data.filter((c) => c.clientType === 'TENANT').map((c) => c.id);
+
+    const [propertiesCountByOwner, rentalsCountByTenant, rentalsForOwners] = await Promise.all([
+      ownerIds.length > 0
+        ? this.prisma.property.groupBy({
+            by: ['ownerId'],
+            where: { ownerId: { in: ownerIds }, deletedAt: null },
+            _count: { id: true },
+          })
+        : [],
+      tenantIds.length > 0
+        ? this.prisma.rental.groupBy({
+            by: ['tenantId'],
+            where: { tenantId: { in: tenantIds }, deletedAt: null },
+            _count: { id: true },
+          })
+        : [],
+      ownerIds.length > 0
+        ? this.prisma.rental.findMany({
+            where: { deletedAt: null, property: { ownerId: { in: ownerIds } } },
+            select: { property: { select: { ownerId: true } } },
+          })
+        : [],
+    ]);
+
+    const propertiesCountMap = new Map<string, number>();
+    for (const row of propertiesCountByOwner as { ownerId: string; _count: { id: number } }[]) {
+      propertiesCountMap.set(row.ownerId, row._count.id);
+    }
+    const rentalsByTenantMap = new Map<string, number>();
+    for (const row of rentalsCountByTenant as { tenantId: string; _count: { id: number } }[]) {
+      rentalsByTenantMap.set(row.tenantId, row._count.id);
+    }
+    const rentalsByOwnerMap = new Map<string, number>();
+    for (const r of rentalsForOwners as { property: { ownerId: string } }[]) {
+      const ownerId = r.property?.ownerId;
+      if (ownerId) rentalsByOwnerMap.set(ownerId, (rentalsByOwnerMap.get(ownerId) ?? 0) + 1);
+    }
+
     return {
       data: data.map((c) => ({
         id: c.id,
@@ -181,8 +221,11 @@ export class ClientPrismaRepository implements ClientRepository {
         primaryEmail: c.primaryEmail,
         clientType: c.clientType as ClientType,
         isActive: c.isActive,
-        propertiesCount: 0,
-        contractsCount: 0,
+        propertiesCount: c.clientType === 'OWNER' ? propertiesCountMap.get(c.id) ?? 0 : 0,
+        contractsCount:
+          c.clientType === 'TENANT'
+            ? rentalsByTenantMap.get(c.id) ?? 0
+            : rentalsByOwnerMap.get(c.id) ?? 0,
       })),
       total,
       page: filters.page,
