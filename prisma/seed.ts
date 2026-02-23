@@ -251,7 +251,6 @@ async function main() {
       { label: 'Clientes', icon: 'users', path: '/alquileres/clientes', order: 1 },
       { label: 'Propiedades', icon: 'building', path: null, order: 2 },
       { label: 'Alquileres', icon: 'file-text', path: '/alquileres/contratos', order: 3 },
-      { label: 'Cobranzas', icon: 'dollar-sign', path: '/alquileres/cobranzas', order: 5 },
       { label: 'Reportes', icon: 'bar-chart', path: '/alquileres/reportes', order: 6 },
       { label: 'Configuración', icon: 'settings', path: '/alquileres/configuracion', order: 7 },
     ];
