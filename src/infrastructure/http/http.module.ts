@@ -87,6 +87,16 @@ import {
   UpdateRentalUseCase,
 } from '../../application/use-cases/rentals';
 
+// Use Cases - Reports
+import {
+  GetReportsSummaryUseCase,
+  GetContractsExpiringUseCase,
+  GetPropertiesWithoutContractUseCase,
+  GetActiveClientsReportUseCase,
+  GetContractStatusSummaryUseCase,
+  GetMonthlyMetricsUseCase,
+} from '../../application/use-cases/reports';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -99,6 +109,7 @@ import { MenusController } from './controllers/menus.controller';
 import { ClientsController } from './controllers/clients.controller';
 import { PropertiesController } from './controllers/properties.controller';
 import { RentalsController } from './controllers/rentals.controller';
+import { ReportsController } from './controllers/reports.controller';
 
 @Module({
   imports: [DatabaseModule],
@@ -111,6 +122,7 @@ import { RentalsController } from './controllers/rentals.controller';
     ClientsController,
     PropertiesController,
     RentalsController,
+    ReportsController,
   ],
   providers: [
     // Services
@@ -189,6 +201,12 @@ import { RentalsController } from './controllers/rentals.controller';
     GetRentalStatsUseCase,
     GetRentalByIdUseCase,
     UpdateRentalUseCase,
+    GetReportsSummaryUseCase,
+    GetContractsExpiringUseCase,
+    GetPropertiesWithoutContractUseCase,
+    GetActiveClientsReportUseCase,
+    GetContractStatusSummaryUseCase,
+    GetMonthlyMetricsUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

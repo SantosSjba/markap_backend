@@ -17,6 +17,9 @@ import { ClientRepository, CLIENT_REPOSITORY } from '../../application/repositor
 import { PropertyRepository, PROPERTY_REPOSITORY } from '../../application/repositories/property.repository';
 import { RENTAL_REPOSITORY } from '../../application/repositories/rental.repository';
 
+import { REPORT_REPOSITORY } from '../../application/repositories/report.repository';
+import { ReportPrismaRepository } from './prisma/repositories/report-prisma.repository';
+
 @Module({
   providers: [
     PrismaService,
@@ -52,6 +55,10 @@ import { RENTAL_REPOSITORY } from '../../application/repositories/rental.reposit
       provide: RENTAL_REPOSITORY,
       useClass: RentalPrismaRepository,
     },
+    {
+      provide: REPORT_REPOSITORY,
+      useClass: ReportPrismaRepository,
+    },
   ],
   exports: [
     PrismaService,
@@ -63,6 +70,7 @@ import { RENTAL_REPOSITORY } from '../../application/repositories/rental.reposit
     CLIENT_REPOSITORY,
     PROPERTY_REPOSITORY,
     RENTAL_REPOSITORY,
+    REPORT_REPOSITORY,
   ],
 })
 export class DatabaseModule {}
