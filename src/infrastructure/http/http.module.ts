@@ -41,12 +41,13 @@ import {
 import {
   GetUserRolesUseCase,
   GetAllRolesUseCase,
-  GetRoleByIdUseCase,
-  CreateRoleUseCase,
-  UpdateRoleUseCase,
-  DeleteRoleUseCase,
-  AssignApplicationToRoleUseCase,
-  RevokeApplicationFromRoleUseCase,
+    GetRoleByIdUseCase,
+    CreateRoleUseCase,
+    UpdateRoleUseCase,
+    DeleteRoleUseCase,
+    AssignApplicationToRoleUseCase,
+    RevokeApplicationFromRoleUseCase,
+    GetApplicationsByRoleUseCase,
 } from '../../application/use-cases/roles';
 
 // Use Cases - Users
@@ -160,6 +161,7 @@ import { RentalsController } from './controllers/rentals.controller';
     DeleteRoleUseCase,
     AssignApplicationToRoleUseCase,
     RevokeApplicationFromRoleUseCase,
+    GetApplicationsByRoleUseCase,
 
     // Use Cases - Users
     GetAllUsersUseCase,

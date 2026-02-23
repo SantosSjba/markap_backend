@@ -14,6 +14,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ApplicationHttpMapper } from '../mappers/application-http.mapper';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
   GetAllRolesUseCase,
@@ -23,8 +24,10 @@ import {
   DeleteRoleUseCase,
   AssignApplicationToRoleUseCase,
   RevokeApplicationFromRoleUseCase,
+  GetApplicationsByRoleUseCase,
 } from '../../../application/use-cases/roles';
 import { CreateRoleDto, UpdateRoleDto } from '../dtos/roles';
+import { ApplicationResponseDto } from '../dtos/applications';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -39,6 +42,7 @@ export class RolesController {
     private readonly deleteRoleUseCase: DeleteRoleUseCase,
     private readonly assignApplicationToRoleUseCase: AssignApplicationToRoleUseCase,
     private readonly revokeApplicationFromRoleUseCase: RevokeApplicationFromRoleUseCase,
+    private readonly getApplicationsByRoleUseCase: GetApplicationsByRoleUseCase,
   ) {}
 
   @Get()
@@ -53,6 +57,15 @@ export class RolesController {
       description: role.description,
       isActive: role.isActive,
     }));
+  }
+
+  @Get(':id/applications')
+  @ApiOperation({ summary: 'Obtener aplicaciones asignadas a un rol' })
+  @ApiResponse({ status: 200, description: 'Lista de aplicaciones del rol', type: [ApplicationResponseDto] })
+  @ApiResponse({ status: 404, description: 'Rol no encontrado' })
+  async getRoleApplications(@Param('id') id: string) {
+    const applications = await this.getApplicationsByRoleUseCase.execute(id);
+    return ApplicationHttpMapper.toResponseList(applications);
   }
 
   @Get(':id')
