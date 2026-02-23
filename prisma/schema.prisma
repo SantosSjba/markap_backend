@@ -35,6 +35,7 @@ model User {
   // Relaciones
   userRoles          UserRole[]
   passwordResetCodes PasswordResetCode[]
+  notifications      Notification[]
 
   // Índices para optimización
   @@index([email])
@@ -470,4 +471,26 @@ model RentalAttachment {
   @@index([rentalId])
   @@index([type])
   @@map("rental_attachments")
+}
+
+// ============================================
+// NOTIFICATION - Notificaciones por usuario (in-app + persistencia)
+// ============================================
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String   @map("type")   // RENTAL_CREATED, etc.
+  title     String   @map("title")
+  body      String?  @db.Text
+  data      Json?    @map("data")   // { rentalId, applicationSlug, ... }
+  readAt    DateTime? @map("read_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([readAt])
+  @@index([createdAt])
+  @@map("notifications")
 }

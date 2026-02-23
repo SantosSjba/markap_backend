@@ -3,11 +3,14 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   // Global prefix for all routes (optional)
   app.setGlobalPrefix('api');

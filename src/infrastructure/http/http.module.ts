@@ -100,6 +100,7 @@ import {
 
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
 
 // Controllers
 import { AuthController } from './controllers/auth.controller';
@@ -111,6 +112,13 @@ import { ClientsController } from './controllers/clients.controller';
 import { PropertiesController } from './controllers/properties.controller';
 import { RentalsController } from './controllers/rentals.controller';
 import { ReportsController } from './controllers/reports.controller';
+import { NotificationsController } from './controllers/notifications.controller';
+
+// Gateways
+import { NotificationsGateway } from './gateways/notifications.gateway';
+
+// Services - Notifications
+import { NotificationsService } from './services/notifications.service';
 
 @Module({
   imports: [DatabaseModule],
@@ -124,6 +132,7 @@ import { ReportsController } from './controllers/reports.controller';
     PropertiesController,
     RentalsController,
     ReportsController,
+    NotificationsController,
   ],
   providers: [
     // Services
@@ -142,8 +151,11 @@ import { ReportsController } from './controllers/reports.controller';
 
     // Guards
     JwtAuthGuard,
+    WsJwtGuard,
 
-    // Use Cases - Auth
+    // Notifications (WebSocket + REST)
+    NotificationsGateway,
+    NotificationsService,
     RegisterUserUseCase,
     LoginUserUseCase,
     GetUserProfileUseCase,

@@ -32,6 +32,7 @@ import {
 import { CreateRentalDto } from '../dtos/rentals/create-rental.dto';
 import { UpdateRentalDto } from '../dtos/rentals/update-rental.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
+import { NotificationsService } from '../services/notifications.service';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
 
@@ -50,6 +51,7 @@ export class RentalsController {
     private readonly getRentalByIdUseCase: GetRentalByIdUseCase,
     private readonly updateRentalUseCase: UpdateRentalUseCase,
     private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   @Get()
@@ -194,6 +196,20 @@ export class RentalsController {
           originalFileName: f.originalname || 'delivery_act',
         },
       });
+    }
+
+    try {
+      const detail = await this.getRentalByIdUseCase.execute(rental.id);
+      if (detail) {
+        await this.notificationsService.notifyRentalCreated(
+          rental.id,
+          dto.applicationSlug ?? 'alquileres',
+          detail.tenant.fullName,
+          detail.property.addressLine,
+        );
+      }
+    } catch {
+      // No fallar el create si falla la notificación
     }
 
     return rental;
