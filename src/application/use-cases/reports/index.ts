@@ -4,3 +4,4 @@ export { GetPropertiesWithoutContractUseCase } from './get-properties-without-co
 export { GetActiveClientsReportUseCase } from './get-active-clients-report.use-case';
 export { GetContractStatusSummaryUseCase } from './get-contract-status-summary.use-case';
 export { GetMonthlyMetricsUseCase } from './get-monthly-metrics.use-case';
+export { GetRentalsByMonthUseCase } from './get-rentals-by-month.use-case';

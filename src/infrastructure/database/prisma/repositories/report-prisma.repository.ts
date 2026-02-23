@@ -8,6 +8,7 @@ import type {
   ActiveClientReportItem,
   ContractStatusSummary,
   MonthlyMetrics,
+  RentalsByMonthItem,
 } from '@application/repositories/report.repository';
 
 @Injectable()
@@ -276,6 +277,89 @@ export class ReportPrismaRepository implements ReportRepository {
       contratosRenovados: 0,
       clientesNuevos: newClientsThisMonth,
     };
+  }
+
+  async getRentalsByMonth(
+    applicationSlug: string,
+    year: number,
+  ): Promise<RentalsByMonthItem[]> {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: applicationSlug },
+    });
+    if (!app) return [];
+
+    const monthNames = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    ];
+
+    const result: RentalsByMonthItem[] = [];
+
+    for (let month = 1; month <= 12; month++) {
+      const firstDay = new Date(year, month - 1, 1);
+      firstDay.setHours(0, 0, 0, 0);
+      const lastDay = new Date(year, month, 0);
+      lastDay.setHours(23, 59, 59, 999);
+
+      const baseWhere = {
+        applicationId: app.id,
+        deletedAt: null,
+      };
+
+      const [newContracts, expiredContracts, activeAtEnd, revenueRentals] =
+        await Promise.all([
+          (this.prisma as any).rental.count({
+            where: {
+              ...baseWhere,
+              startDate: { gte: firstDay, lte: lastDay },
+            },
+          }),
+          (this.prisma as any).rental.count({
+            where: {
+              ...baseWhere,
+              endDate: { gte: firstDay, lte: lastDay },
+            },
+          }),
+          (this.prisma as any).rental.count({
+            where: {
+              ...baseWhere,
+              status: 'ACTIVE',
+              startDate: { lte: lastDay },
+              endDate: { gte: lastDay },
+            },
+          }),
+          (this.prisma as any).rental.findMany({
+            where: {
+              ...baseWhere,
+              startDate: { lte: lastDay },
+              endDate: { gte: firstDay },
+            },
+            select: { monthlyAmount: true, currency: true },
+          }),
+        ]);
+
+      const totalRevenue = revenueRentals.reduce(
+        (sum: number, r: any) => sum + Number(r.monthlyAmount || 0),
+        0,
+      );
+      const currency =
+        revenueRentals.length > 0
+          ? (revenueRentals[0] as any).currency || 'PEN'
+          : 'PEN';
+
+      result.push({
+        month,
+        year,
+        monthName: monthNames[month - 1],
+        newContracts,
+        expiredContracts,
+        activeAtEndOfMonth: activeAtEnd,
+        totalRevenue: Math.round(totalRevenue * 100) / 100,
+        currency,
+      });
+    }
+
+    return result;
   }
 
   private async countPropertiesWithoutContract(applicationId: string): Promise<number> {

@@ -8,6 +8,7 @@ import {
   GetActiveClientsReportUseCase,
   GetContractStatusSummaryUseCase,
   GetMonthlyMetricsUseCase,
+  GetRentalsByMonthUseCase,
 } from '../../../application/use-cases/reports';
 
 @ApiTags('Reports')
@@ -22,6 +23,7 @@ export class ReportsController {
     private readonly getActiveClientsReportUseCase: GetActiveClientsReportUseCase,
     private readonly getContractStatusSummaryUseCase: GetContractStatusSummaryUseCase,
     private readonly getMonthlyMetricsUseCase: GetMonthlyMetricsUseCase,
+    private readonly getRentalsByMonthUseCase: GetRentalsByMonthUseCase,
   ) {}
 
   @Get('summary')
@@ -99,6 +101,22 @@ export class ReportsController {
   ) {
     return this.getMonthlyMetricsUseCase.execute(
       applicationSlug ?? 'alquileres',
+    );
+  }
+
+  @Get('rentals-by-month')
+  @ApiOperation({ summary: 'Reporte de alquiler por mes del año' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'year', required: true, description: 'Año (ej: 2025)' })
+  @ApiResponse({ status: 200 })
+  async getRentalsByMonth(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('year') year?: string,
+  ) {
+    const y = parseInt(year ?? String(new Date().getFullYear()), 10) || new Date().getFullYear();
+    return this.getRentalsByMonthUseCase.execute(
+      applicationSlug ?? 'alquileres',
+      y,
     );
   }
 }

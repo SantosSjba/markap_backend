@@ -42,6 +42,17 @@ export interface MonthlyMetrics {
   clientesNuevos: number;
 }
 
+export interface RentalsByMonthItem {
+  month: number;
+  year: number;
+  monthName: string;
+  newContracts: number;
+  expiredContracts: number;
+  activeAtEndOfMonth: number;
+  totalRevenue: number;
+  currency: string;
+}
+
 export interface ReportRepository {
   getSummary(applicationSlug: string, days: number): Promise<ReportsSummary>;
   getContractsExpiring(applicationSlug: string, days: number): Promise<ContractExpiringItem[]>;
@@ -49,6 +60,7 @@ export interface ReportRepository {
   getActiveClients(applicationSlug: string): Promise<ActiveClientReportItem[]>;
   getContractStatusSummary(applicationSlug: string): Promise<ContractStatusSummary>;
   getMonthlyMetrics(applicationSlug: string): Promise<MonthlyMetrics>;
+  getRentalsByMonth(applicationSlug: string, year: number): Promise<RentalsByMonthItem[]>;
 }
 
 export const REPORT_REPOSITORY = Symbol('ReportRepository');

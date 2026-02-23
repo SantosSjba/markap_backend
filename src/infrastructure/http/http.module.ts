@@ -95,6 +95,7 @@ import {
   GetActiveClientsReportUseCase,
   GetContractStatusSummaryUseCase,
   GetMonthlyMetricsUseCase,
+  GetRentalsByMonthUseCase,
 } from '../../application/use-cases/reports';
 
 // Guards
@@ -207,6 +208,7 @@ import { ReportsController } from './controllers/reports.controller';
     GetActiveClientsReportUseCase,
     GetContractStatusSummaryUseCase,
     GetMonthlyMetricsUseCase,
+    GetRentalsByMonthUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })
