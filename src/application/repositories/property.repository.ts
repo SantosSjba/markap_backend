@@ -34,6 +34,8 @@ export interface PropertyListItem {
   ownerFullName: string;
   monthlyRent: number | null;
   listingStatus: string | null;
+  /** true si tiene al menos un alquiler ACTIVE con endDate >= hoy (permite "Cambiar estado") */
+  hasActiveRental: boolean;
 }
 
 export interface ListPropertiesFilters {

@@ -2,7 +2,9 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
+  Param,
   Query,
   UseGuards,
   UseInterceptors,
@@ -24,8 +26,11 @@ import {
   CreateRentalUseCase,
   ListRentalsUseCase,
   GetRentalStatsUseCase,
+  GetRentalByIdUseCase,
+  UpdateRentalUseCase,
 } from '../../../application/use-cases/rentals';
 import { CreateRentalDto } from '../dtos/rentals/create-rental.dto';
+import { UpdateRentalDto } from '../dtos/rentals/update-rental.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
@@ -42,6 +47,8 @@ export class RentalsController {
     private readonly createRentalUseCase: CreateRentalUseCase,
     private readonly listRentalsUseCase: ListRentalsUseCase,
     private readonly getRentalStatsUseCase: GetRentalStatsUseCase,
+    private readonly getRentalByIdUseCase: GetRentalByIdUseCase,
+    private readonly updateRentalUseCase: UpdateRentalUseCase,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -75,6 +82,32 @@ export class RentalsController {
   @ApiResponse({ status: 200 })
   async stats(@Query('applicationSlug') applicationSlug?: string) {
     return this.getRentalStatsUseCase.execute(applicationSlug ?? 'alquileres');
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener alquiler por ID' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404 })
+  async getById(@Param('id') id: string) {
+    return this.getRentalByIdUseCase.execute(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar alquiler' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404 })
+  async update(@Param('id') id: string, @Body() dto: UpdateRentalDto) {
+    return this.updateRentalUseCase.execute({
+      id,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
+      currency: dto.currency,
+      monthlyAmount: dto.monthlyAmount,
+      securityDeposit: dto.securityDeposit,
+      paymentDueDay: dto.paymentDueDay,
+      notes: dto.notes,
+      status: dto.status,
+    });
   }
 
   @Post()

@@ -15,8 +15,10 @@ import {
   ListPropertiesUseCase,
   GetPropertyStatsUseCase,
   UpdatePropertyUseCase,
+  UpdatePropertyListingStatusUseCase,
 } from '../../../application/use-cases/properties';
 import { CreatePropertyDto, UpdatePropertyDto } from '../dtos/properties';
+import { UpdateListingStatusDto } from '../dtos/properties/update-listing-status.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
 @ApiTags('Properties')
@@ -30,6 +32,7 @@ export class PropertiesController {
     private readonly listPropertiesUseCase: ListPropertiesUseCase,
     private readonly getPropertyStatsUseCase: GetPropertyStatsUseCase,
     private readonly updatePropertyUseCase: UpdatePropertyUseCase,
+    private readonly updatePropertyListingStatusUseCase: UpdatePropertyListingStatusUseCase,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -144,6 +147,22 @@ export class PropertiesController {
   @ApiResponse({ status: 404 })
   async getById(@Param('id') id: string) {
     return this.getPropertyByIdUseCase.execute(id);
+  }
+
+  @Patch(':id/listing-status')
+  @ApiOperation({ summary: 'Cambiar estado de listado (solo si tiene alquiler en vigencia)' })
+  @ApiParam({ name: 'id', description: 'UUID de la propiedad' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400, description: 'La propiedad no tiene alquiler en vigencia' })
+  @ApiResponse({ status: 404 })
+  async updateListingStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateListingStatusDto,
+  ) {
+    return this.updatePropertyListingStatusUseCase.execute(
+      id,
+      dto.listingStatus,
+    );
   }
 
   @Patch(':id')

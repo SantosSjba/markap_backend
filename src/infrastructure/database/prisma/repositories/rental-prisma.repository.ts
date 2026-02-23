@@ -8,6 +8,8 @@ import type {
   ListRentalsResult,
   RentalListItem,
   RentalStats,
+  RentalDetailData,
+  UpdateRentalData,
 } from '@application/repositories/rental.repository';
 
 @Injectable()
@@ -120,6 +122,66 @@ export class RentalPrismaRepository implements RentalRepository {
     ]);
 
     return { total, vigentes, porVencer, vencidos };
+  }
+
+  async findById(id: string): Promise<RentalDetailData | null> {
+    const r = await (this.prisma as any).rental.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        property: { select: { id: true, code: true, addressLine: true, ownerId: true, owner: { select: { id: true, fullName: true } } } },
+        tenant: { select: { id: true, fullName: true } },
+        attachments: { select: { type: true } },
+      },
+    });
+    if (!r) return null;
+    const year = r.startDate instanceof Date ? r.startDate.getFullYear() : new Date(r.startDate).getFullYear();
+    const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
+    const contractCount = (r.attachments || []).filter((a: any) => a.type === 'CONTRACT').length;
+    const deliveryCount = (r.attachments || []).filter((a: any) => a.type === 'DELIVERY_ACT').length;
+    return {
+      ...this.toRentalData(r),
+      code: `ALQ-${year}-${shortId}`,
+      property: {
+        id: r.property.id,
+        code: r.property.code,
+        addressLine: r.property.addressLine,
+        ownerId: r.property.ownerId,
+        owner: { id: r.property.owner.id, fullName: r.property.owner.fullName },
+      },
+      tenant: { id: r.tenant.id, fullName: r.tenant.fullName },
+      hasContract: contractCount > 0,
+      hasDeliveryAct: deliveryCount > 0,
+    };
+  }
+
+  async countActiveByPropertyId(propertyId: string): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return (this.prisma as any).rental.count({
+      where: {
+        propertyId,
+        status: 'ACTIVE',
+        endDate: { gte: today },
+        deletedAt: null,
+      },
+    });
+  }
+
+  async update(id: string, data: UpdateRentalData): Promise<RentalData> {
+    const r = await (this.prisma as any).rental.update({
+      where: { id },
+      data: {
+        ...(data.startDate != null && { startDate: data.startDate }),
+        ...(data.endDate != null && { endDate: data.endDate }),
+        ...(data.currency != null && { currency: data.currency }),
+        ...(data.monthlyAmount != null && { monthlyAmount: data.monthlyAmount }),
+        ...(data.securityDeposit !== undefined && { securityDeposit: data.securityDeposit }),
+        ...(data.paymentDueDay != null && { paymentDueDay: data.paymentDueDay }),
+        ...(data.notes !== undefined && { notes: data.notes?.trim() || null }),
+        ...(data.status != null && { status: data.status }),
+      },
+    });
+    return this.toRentalData(r);
   }
 
   private toListItem(r: any): RentalListItem {

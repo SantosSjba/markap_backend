@@ -74,6 +74,7 @@ import {
   ListPropertiesUseCase,
   GetPropertyStatsUseCase,
   UpdatePropertyUseCase,
+  UpdatePropertyListingStatusUseCase,
 } from '../../application/use-cases/properties';
 
 // Use Cases - Rentals
@@ -81,6 +82,8 @@ import {
   CreateRentalUseCase,
   ListRentalsUseCase,
   GetRentalStatsUseCase,
+  GetRentalByIdUseCase,
+  UpdateRentalUseCase,
 } from '../../application/use-cases/rentals';
 
 // Guards
@@ -178,9 +181,12 @@ import { RentalsController } from './controllers/rentals.controller';
     ListPropertiesUseCase,
     GetPropertyStatsUseCase,
     UpdatePropertyUseCase,
+    UpdatePropertyListingStatusUseCase,
     CreateRentalUseCase,
     ListRentalsUseCase,
     GetRentalStatsUseCase,
+    GetRentalByIdUseCase,
+    UpdateRentalUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

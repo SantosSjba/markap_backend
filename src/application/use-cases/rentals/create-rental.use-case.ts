@@ -3,6 +3,8 @@ import type { RentalRepository } from '../../repositories/rental.repository';
 import { RENTAL_REPOSITORY } from '../../repositories/rental.repository';
 import type { ApplicationRepository } from '../../repositories/application.repository';
 import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
+import type { PropertyRepository } from '../../repositories/property.repository';
+import { PROPERTY_REPOSITORY } from '../../repositories/property.repository';
 import { EntityNotFoundException } from '../../exceptions';
 
 export interface CreateRentalInput {
@@ -26,6 +28,8 @@ export class CreateRentalUseCase {
     private readonly rentalRepository: RentalRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
+    @Inject(PROPERTY_REPOSITORY)
+    private readonly propertyRepository: PropertyRepository,
   ) {}
 
   async execute(input: CreateRentalInput) {
@@ -45,7 +49,7 @@ export class CreateRentalUseCase {
     if (!applicationId) {
       throw new Error('applicationId or applicationSlug is required');
     }
-    return this.rentalRepository.create({
+    const rental = await this.rentalRepository.create({
       applicationId,
       propertyId: input.propertyId,
       tenantId: input.tenantId,
@@ -60,5 +64,10 @@ export class CreateRentalUseCase {
       paymentDueDay: Number(input.paymentDueDay),
       notes: input.notes?.trim() || null,
     });
+    await this.propertyRepository.update({
+      id: input.propertyId,
+      listingStatus: 'RENTED',
+    });
+    return rental;
   }
 }

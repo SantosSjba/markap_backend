@@ -88,6 +88,25 @@ export class PropertyPrismaRepository implements PropertyRepository {
       (this.prisma as any).property.count({ where }),
     ]);
 
+    const propertyIds = data.map((p: { id: string }) => p.id);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const activeRentalPropertyIds = new Set<string>();
+    if (propertyIds.length > 0) {
+      const rentals = await (this.prisma as any).rental.findMany({
+        where: {
+          propertyId: { in: propertyIds },
+          status: 'ACTIVE',
+          endDate: { gte: today },
+          deletedAt: null,
+        },
+        select: { propertyId: true },
+      });
+      for (const r of rentals as { propertyId: string }[]) {
+        activeRentalPropertyIds.add(r.propertyId);
+      }
+    }
+
     return {
       data: data.map((p: { id: string; code: string; addressLine: string; district: { name: string }; propertyType: { name: string }; area: number | null; owner: { id: string; fullName: string }; monthlyRent: number | null; listingStatus: string | null }) => ({
         id: p.id,
@@ -100,6 +119,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
         ownerFullName: p.owner?.fullName ?? '',
         monthlyRent: p.monthlyRent,
         listingStatus: p.listingStatus,
+        hasActiveRental: activeRentalPropertyIds.has(p.id),
       })) as PropertyListItem[],
       total,
       page: filters.page,
