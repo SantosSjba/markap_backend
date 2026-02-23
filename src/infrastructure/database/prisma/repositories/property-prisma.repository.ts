@@ -92,6 +92,8 @@ export class PropertyPrismaRepository implements PropertyRepository {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const activeRentalPropertyIds = new Set<string>();
+    const activeRentalEndByPropertyId = new Map<string, Date>();
+    const activeRentalTenantByPropertyId = new Map<string, string | null>();
     if (propertyIds.length > 0) {
       const rentals = await (this.prisma as any).rental.findMany({
         where: {
@@ -100,10 +102,15 @@ export class PropertyPrismaRepository implements PropertyRepository {
           endDate: { gte: today },
           deletedAt: null,
         },
-        select: { propertyId: true },
+        select: { propertyId: true, endDate: true, tenant: { select: { fullName: true } } },
       });
-      for (const r of rentals as { propertyId: string }[]) {
+      for (const r of rentals as { propertyId: string; endDate: Date; tenant: { fullName: string } }[]) {
         activeRentalPropertyIds.add(r.propertyId);
+        const currentEnd = activeRentalEndByPropertyId.get(r.propertyId);
+        if (!currentEnd || r.endDate > currentEnd) {
+          activeRentalEndByPropertyId.set(r.propertyId, r.endDate);
+          activeRentalTenantByPropertyId.set(r.propertyId, r.tenant?.fullName ?? null);
+        }
       }
     }
 
@@ -120,6 +127,8 @@ export class PropertyPrismaRepository implements PropertyRepository {
         monthlyRent: p.monthlyRent,
         listingStatus: p.listingStatus,
         hasActiveRental: activeRentalPropertyIds.has(p.id),
+        activeRentalEndDate: activeRentalEndByPropertyId.get(p.id) ?? null,
+        activeRentalTenantName: activeRentalTenantByPropertyId.get(p.id) ?? null,
       })) as PropertyListItem[],
       total,
       page: filters.page,

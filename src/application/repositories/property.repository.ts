@@ -36,6 +36,10 @@ export interface PropertyListItem {
   listingStatus: string | null;
   /** true si tiene al menos un alquiler ACTIVE con endDate >= hoy (permite "Cambiar estado") */
   hasActiveRental: boolean;
+  /** Fecha de vencimiento del alquiler vigente (si tiene) */
+  activeRentalEndDate: Date | null;
+  /** Nombre del inquilino del alquiler vigente (si tiene) */
+  activeRentalTenantName: string | null;
 }
 
 export interface ListPropertiesFilters {
