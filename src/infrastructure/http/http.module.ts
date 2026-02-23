@@ -77,7 +77,11 @@ import {
 } from '../../application/use-cases/properties';
 
 // Use Cases - Rentals
-import { CreateRentalUseCase } from '../../application/use-cases/rentals';
+import {
+  CreateRentalUseCase,
+  ListRentalsUseCase,
+  GetRentalStatsUseCase,
+} from '../../application/use-cases/rentals';
 
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -175,6 +179,8 @@ import { RentalsController } from './controllers/rentals.controller';
     GetPropertyStatsUseCase,
     UpdatePropertyUseCase,
     CreateRentalUseCase,
+    ListRentalsUseCase,
+    GetRentalStatsUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

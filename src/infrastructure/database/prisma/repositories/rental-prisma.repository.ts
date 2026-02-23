@@ -4,6 +4,10 @@ import type {
   RentalRepository,
   RentalData,
   CreateRentalData,
+  ListRentalsFilters,
+  ListRentalsResult,
+  RentalListItem,
+  RentalStats,
 } from '@application/repositories/rental.repository';
 
 @Injectable()
@@ -26,6 +30,119 @@ export class RentalPrismaRepository implements RentalRepository {
       },
     });
     return this.toRentalData(rental);
+  }
+
+  async findMany(filters: ListRentalsFilters): Promise<ListRentalsResult> {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: filters.applicationSlug },
+    });
+    if (!app) {
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    }
+
+    const where: any = {
+      applicationId: app.id,
+      deletedAt: null,
+    };
+    if (filters.status) {
+      where.status = filters.status;
+    }
+    if (filters.search?.trim()) {
+      where.OR = [
+        { property: { code: { contains: filters.search.trim(), mode: 'insensitive' } } },
+        { property: { addressLine: { contains: filters.search.trim(), mode: 'insensitive' } } },
+        { tenant: { fullName: { contains: filters.search.trim(), mode: 'insensitive' } } },
+        { property: { owner: { fullName: { contains: filters.search.trim(), mode: 'insensitive' } } } },
+      ];
+    }
+
+    const [data, total] = await Promise.all([
+      (this.prisma as any).rental.findMany({
+        where,
+        include: {
+          property: { select: { id: true, code: true, addressLine: true, ownerId: true, owner: { select: { id: true, fullName: true } } } },
+          tenant: { select: { id: true, fullName: true } },
+          attachments: { where: { type: 'CONTRACT' }, select: { id: true } },
+        },
+        orderBy: [{ startDate: 'desc' }, { createdAt: 'desc' }],
+        skip: (filters.page - 1) * filters.limit,
+        take: filters.limit,
+      }),
+      (this.prisma as any).rental.count({ where }),
+    ]);
+
+    return {
+      data: data.map((r: any) => this.toListItem(r)),
+      total,
+      page: filters.page,
+      limit: filters.limit,
+    };
+  }
+
+  async getStats(applicationSlug: string): Promise<RentalStats> {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: applicationSlug },
+    });
+    if (!app) {
+      return { total: 0, vigentes: 0, porVencer: 0, vencidos: 0 };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const in30Days = new Date(today);
+    in30Days.setDate(in30Days.getDate() + 30);
+
+    const baseWhere = { applicationId: app.id, deletedAt: null };
+
+    const [total, vigentes, porVencer, vencidos] = await Promise.all([
+      (this.prisma as any).rental.count({ where: baseWhere }),
+      (this.prisma as any).rental.count({
+        where: {
+          ...baseWhere,
+          status: 'ACTIVE',
+          startDate: { lte: today },
+          endDate: { gte: today },
+        },
+      }),
+      (this.prisma as any).rental.count({
+        where: {
+          ...baseWhere,
+          status: 'ACTIVE',
+          endDate: { gte: today, lte: in30Days },
+        },
+      }),
+      (this.prisma as any).rental.count({
+        where: {
+          ...baseWhere,
+          OR: [{ endDate: { lt: today } }, { status: 'EXPIRED' }],
+        },
+      }),
+    ]);
+
+    return { total, vigentes, porVencer, vencidos };
+  }
+
+  private toListItem(r: any): RentalListItem {
+    const year = r.startDate instanceof Date ? r.startDate.getFullYear() : new Date(r.startDate).getFullYear();
+    const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
+    return {
+      id: r.id,
+      code: `ALQ-${year}-${shortId}`,
+      propertyId: r.property.id,
+      propertyAddress: r.property.addressLine,
+      propertyCode: r.property.code,
+      tenantId: r.tenant.id,
+      tenantName: r.tenant.fullName,
+      ownerId: r.property.owner.id,
+      ownerName: r.property.owner.fullName,
+      startDate: r.startDate,
+      endDate: r.endDate,
+      currency: r.currency,
+      monthlyAmount: r.monthlyAmount,
+      securityDeposit: r.securityDeposit,
+      status: r.status,
+      hasContract: Array.isArray(r.attachments) && r.attachments.length > 0,
+    };
   }
 
   private toRentalData(r: {

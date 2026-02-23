@@ -1,7 +1,9 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
+  Query,
   UseGuards,
   UseInterceptors,
   UploadedFiles,
@@ -14,10 +16,15 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { getFirstFile, type UploadedFilesMap } from '../../../common/types';
-import { CreateRentalUseCase } from '../../../application/use-cases/rentals';
+import {
+  CreateRentalUseCase,
+  ListRentalsUseCase,
+  GetRentalStatsUseCase,
+} from '../../../application/use-cases/rentals';
 import { CreateRentalDto } from '../dtos/rentals/create-rental.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { mkdir, writeFile } from 'fs/promises';
@@ -33,8 +40,42 @@ type RentalFileField = (typeof RENTAL_FILE_FIELDS)[number];
 export class RentalsController {
   constructor(
     private readonly createRentalUseCase: CreateRentalUseCase,
+    private readonly listRentalsUseCase: ListRentalsUseCase,
+    private readonly getRentalStatsUseCase: GetRentalStatsUseCase,
     private readonly prisma: PrismaService,
   ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar alquileres (paginado)' })
+  @ApiQuery({ name: 'applicationSlug', required: false, description: 'Slug de la aplicación (default: alquileres)' })
+  @ApiQuery({ name: 'page', required: false, description: 'Página (1-based)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items por página' })
+  @ApiQuery({ name: 'search', required: false, description: 'Buscar por código, propiedad, inquilino o propietario' })
+  @ApiQuery({ name: 'status', required: false, enum: ['ACTIVE', 'EXPIRED', 'CANCELLED'] })
+  @ApiResponse({ status: 200 })
+  async list(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: 'ACTIVE' | 'EXPIRED' | 'CANCELLED',
+  ) {
+    return this.listRentalsUseCase.execute({
+      applicationSlug: applicationSlug ?? 'alquileres',
+      page: Math.max(1, parseInt(page ?? '1', 10)),
+      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      search: search?.trim() || undefined,
+      status,
+    });
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Estadísticas de alquileres' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 200 })
+  async stats(@Query('applicationSlug') applicationSlug?: string) {
+    return this.getRentalStatsUseCase.execute(applicationSlug ?? 'alquileres');
+  }
 
   @Post()
   @UseInterceptors(
