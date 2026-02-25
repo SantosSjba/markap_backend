@@ -85,7 +85,18 @@ import {
   GetRentalStatsUseCase,
   GetRentalByIdUseCase,
   UpdateRentalUseCase,
+  GetRentalFinancialConfigUseCase,
+  UpsertRentalFinancialConfigUseCase,
+  GetRentalFinancialBreakdownUseCase,
 } from '../../application/use-cases/rentals';
+
+// Use Cases - Agents
+import {
+  CreateAgentUseCase,
+  ListAgentsUseCase,
+  GetAgentByIdUseCase,
+  UpdateAgentUseCase,
+} from '../../application/use-cases/agents';
 
 // Use Cases - Reports
 import {
@@ -111,6 +122,7 @@ import { MenusController } from './controllers/menus.controller';
 import { ClientsController } from './controllers/clients.controller';
 import { PropertiesController } from './controllers/properties.controller';
 import { RentalsController } from './controllers/rentals.controller';
+import { AgentsController } from './controllers/agents.controller';
 import { ReportsController } from './controllers/reports.controller';
 import { NotificationsController } from './controllers/notifications.controller';
 
@@ -131,6 +143,7 @@ import { NotificationsService } from './services/notifications.service';
     ClientsController,
     PropertiesController,
     RentalsController,
+    AgentsController,
     ReportsController,
     NotificationsController,
   ],
@@ -214,6 +227,13 @@ import { NotificationsService } from './services/notifications.service';
     GetRentalStatsUseCase,
     GetRentalByIdUseCase,
     UpdateRentalUseCase,
+    GetRentalFinancialConfigUseCase,
+    UpsertRentalFinancialConfigUseCase,
+    GetRentalFinancialBreakdownUseCase,
+    CreateAgentUseCase,
+    ListAgentsUseCase,
+    GetAgentByIdUseCase,
+    UpdateAgentUseCase,
     GetReportsSummaryUseCase,
     GetContractsExpiringUseCase,
     GetPropertiesWithoutContractUseCase,

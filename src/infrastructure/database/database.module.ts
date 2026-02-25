@@ -16,6 +16,10 @@ import { MenuRepository } from '../../application/repositories/menu.repository';
 import { ClientRepository, CLIENT_REPOSITORY } from '../../application/repositories/client.repository';
 import { PropertyRepository, PROPERTY_REPOSITORY } from '../../application/repositories/property.repository';
 import { RENTAL_REPOSITORY } from '../../application/repositories/rental.repository';
+import { RENTAL_FINANCIAL_CONFIG_REPOSITORY } from '../../application/repositories/rental-financial-config.repository';
+import { RentalFinancialConfigPrismaRepository } from './prisma/repositories/rental-financial-config-prisma.repository';
+import { AGENT_REPOSITORY } from '../../application/repositories/agent.repository';
+import { AgentPrismaRepository } from './prisma/repositories/agent-prisma.repository';
 
 import { REPORT_REPOSITORY } from '../../application/repositories/report.repository';
 import { ReportPrismaRepository } from './prisma/repositories/report-prisma.repository';
@@ -58,6 +62,14 @@ import { NotificationPrismaRepository } from './prisma/repositories/notification
       useClass: RentalPrismaRepository,
     },
     {
+      provide: RENTAL_FINANCIAL_CONFIG_REPOSITORY,
+      useClass: RentalFinancialConfigPrismaRepository,
+    },
+    {
+      provide: AGENT_REPOSITORY,
+      useClass: AgentPrismaRepository,
+    },
+    {
       provide: REPORT_REPOSITORY,
       useClass: ReportPrismaRepository,
     },
@@ -76,6 +88,8 @@ import { NotificationPrismaRepository } from './prisma/repositories/notification
     CLIENT_REPOSITORY,
     PROPERTY_REPOSITORY,
     RENTAL_REPOSITORY,
+    RENTAL_FINANCIAL_CONFIG_REPOSITORY,
+    AGENT_REPOSITORY,
     REPORT_REPOSITORY,
     NOTIFICATION_REPOSITORY,
   ],

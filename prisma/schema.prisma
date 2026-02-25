@@ -36,6 +36,8 @@ model User {
   userRoles          UserRole[]
   passwordResetCodes PasswordResetCode[]
   notifications      Notification[]
+  agentsAsInternal   Agent[]
+  rentalFinancialConfigsAsAgent RentalFinancialConfig[]
 
   // Índices para optimización
   @@index([email])
@@ -149,6 +151,7 @@ model Application {
   clients         Client[]
   properties      Property[]
   rentals         Rental[]
+  agents          Agent[]
 
   @@index([slug])
   @@index([isActive])
@@ -225,6 +228,7 @@ model DocumentType {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   clients Client[]
+  agents  Agent[]
 
   @@map("document_types")
 }
@@ -447,6 +451,7 @@ model Rental {
   tenant      Client       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   attachments RentalAttachment[]
+  financialConfig RentalFinancialConfig?
 
   @@index([applicationId])
   @@index([propertyId])
@@ -454,6 +459,84 @@ model Rental {
   @@index([status])
   @@index([deletedAt])
   @@map("rentals")
+}
+
+// ============================================
+// AGENT - Agentes (interno = usuario del sistema, externo = terceros)
+// ============================================
+model Agent {
+  id             String   @id @default(uuid())
+  applicationId  String   @map("application_id")
+  type           String   @map("type") // INTERNAL | EXTERNAL
+
+  // INTERNAL: vincula a un usuario del sistema
+  userId         String?  @map("user_id")
+
+  // EXTERNAL: datos del agente externo (nombre, contacto)
+  fullName       String   @map("full_name")
+  email          String?  @map("email")
+  phone          String?  @map("phone")
+  documentTypeId String?  @map("document_type_id")
+  documentNumber String?  @map("document_number")
+
+  isActive       Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  documentType DocumentType? @relation(fields: [documentTypeId], references: [id], onDelete: SetNull)
+
+  rentalFinancialConfigsExternal RentalFinancialConfig[] @relation("ExternalAgent")
+
+  @@index([applicationId])
+  @@index([type])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("agents")
+}
+
+// ============================================
+// RENTAL_FINANCIAL_CONFIG - Distribución financiera por alquiler
+// Utilidades, gastos, impuestos, agente externo, agente interno
+// ============================================
+model RentalFinancialConfig {
+  id        String   @id @default(uuid())
+  rentalId  String   @unique @map("rental_id")
+  currency  String   @default("PEN") @map("currency")
+
+  // Gastos: tipo PERCENT (%) o FIXED (monto fijo), valor según tipo
+  expenseType   String  @default("FIXED") @map("expense_type")   // PERCENT | FIXED
+  expenseValue  Float   @default(0) @map("expense_value")
+
+  // Impuestos (ej. retención)
+  taxType   String  @default("FIXED") @map("tax_type")
+  taxValue  Float   @default(0) @map("tax_value")
+
+  // Agente externo: referencia a Agent (type EXTERNAL) o legacy nombre libre
+  externalAgentId   String? @map("external_agent_id")
+  externalAgentType   String  @default("FIXED") @map("external_agent_type")
+  externalAgentValue  Float   @default(0) @map("external_agent_value")
+  externalAgentName   String? @map("external_agent_name") // legacy, se usa si externalAgentId es null
+
+  // Agente interno: usuario del sistema + comisión (se puede migrar a Agent después)
+  internalAgentId    String? @map("internal_agent_id")
+  internalAgentType  String  @default("FIXED") @map("internal_agent_type")
+  internalAgentValue Float   @default(0) @map("internal_agent_value")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rental        Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  externalAgent Agent? @relation("ExternalAgent", fields: [externalAgentId], references: [id], onDelete: SetNull)
+  internalAgentUser User? @relation(fields: [internalAgentId], references: [id], onDelete: SetNull)
+
+  @@index([rentalId])
+  @@index([internalAgentId])
+  @@index([externalAgentId])
+  @@map("rental_financial_configs")
 }
 
 // Adjuntos de alquiler: contrato firmado, acta de entrega

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Patch,
   Body,
   Param,
@@ -28,9 +29,13 @@ import {
   GetRentalStatsUseCase,
   GetRentalByIdUseCase,
   UpdateRentalUseCase,
+  GetRentalFinancialConfigUseCase,
+  UpsertRentalFinancialConfigUseCase,
+  GetRentalFinancialBreakdownUseCase,
 } from '../../../application/use-cases/rentals';
 import { CreateRentalDto } from '../dtos/rentals/create-rental.dto';
 import { UpdateRentalDto } from '../dtos/rentals/update-rental.dto';
+import { UpsertRentalFinancialConfigDto } from '../dtos/rentals/upsert-rental-financial-config.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { NotificationsService } from '../services/notifications.service';
 import { mkdir, writeFile } from 'fs/promises';
@@ -50,6 +55,9 @@ export class RentalsController {
     private readonly getRentalStatsUseCase: GetRentalStatsUseCase,
     private readonly getRentalByIdUseCase: GetRentalByIdUseCase,
     private readonly updateRentalUseCase: UpdateRentalUseCase,
+    private readonly getRentalFinancialConfigUseCase: GetRentalFinancialConfigUseCase,
+    private readonly upsertRentalFinancialConfigUseCase: UpsertRentalFinancialConfigUseCase,
+    private readonly getRentalFinancialBreakdownUseCase: GetRentalFinancialBreakdownUseCase,
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
   ) {}
@@ -86,12 +94,55 @@ export class RentalsController {
     return this.getRentalStatsUseCase.execute(applicationSlug ?? 'alquileres');
   }
 
+  @Get(':id/financial-config')
+  @ApiOperation({ summary: 'Obtener configuración financiera del alquiler' })
+  @ApiResponse({ status: 200 })
+  async getFinancialConfig(@Param('id') id: string) {
+    return this.getRentalFinancialConfigUseCase.execute(id);
+  }
+
+  @Get(':id/financial-breakdown')
+  @ApiOperation({ summary: 'Desglose financiero (utilidad, gastos, impuestos, agentes)' })
+  @ApiResponse({ status: 200 })
+  async getFinancialBreakdown(@Param('id') id: string) {
+    const rental = await this.getRentalByIdUseCase.execute(id);
+    if (!rental) return null;
+    return this.getRentalFinancialBreakdownUseCase.execute(
+      id,
+      rental.monthlyAmount,
+      rental.currency,
+    );
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener alquiler por ID' })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 404 })
   async getById(@Param('id') id: string) {
     return this.getRentalByIdUseCase.execute(id);
+  }
+
+  @Put(':id/financial-config')
+  @ApiOperation({ summary: 'Crear o actualizar configuración financiera del alquiler' })
+  @ApiResponse({ status: 200 })
+  async upsertFinancialConfig(
+    @Param('id') id: string,
+    @Body() dto: UpsertRentalFinancialConfigDto,
+  ) {
+    return this.upsertRentalFinancialConfigUseCase.execute(id, {
+      currency: dto.currency,
+      expenseType: dto.expenseType,
+      expenseValue: dto.expenseValue,
+      taxType: dto.taxType,
+      taxValue: dto.taxValue,
+      externalAgentId: dto.externalAgentId,
+      externalAgentType: dto.externalAgentType,
+      externalAgentValue: dto.externalAgentValue,
+      externalAgentName: dto.externalAgentName,
+      internalAgentId: dto.internalAgentId,
+      internalAgentType: dto.internalAgentType,
+      internalAgentValue: dto.internalAgentValue,
+    });
   }
 
   @Patch(':id')

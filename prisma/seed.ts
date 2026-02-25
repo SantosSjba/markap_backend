@@ -251,6 +251,7 @@ async function main() {
       { label: 'Clientes', icon: 'users', path: '/alquileres/clientes', order: 1 },
       { label: 'Propiedades', icon: 'building', path: null, order: 2 },
       { label: 'Alquileres', icon: 'file-text', path: '/alquileres/contratos', order: 3 },
+      { label: 'Agentes', icon: 'user-check', path: '/alquileres/agentes', order: 4 },
       { label: 'Reportes', icon: 'bar-chart', path: '/alquileres/reportes', order: 6 },
       { label: 'Configuración', icon: 'settings', path: '/alquileres/configuracion', order: 7 },
     ];
@@ -299,6 +300,9 @@ async function main() {
       // Alquileres (ex Contratos)
       { label: 'Listado de Alquileres', path: '/alquileres/contratos', order: 0, parentLabel: 'Alquileres' },
       { label: 'Nuevo Alquiler', path: '/alquileres/contratos/nuevo', order: 1, parentLabel: 'Alquileres' },
+      // Agentes
+      { label: 'Listado de Agentes', path: '/alquileres/agentes', order: 0, parentLabel: 'Agentes' },
+      { label: 'Nuevo Agente', path: '/alquileres/agentes/nuevo', order: 1, parentLabel: 'Agentes' },
     ];
 
     for (const m of childMenus) {
