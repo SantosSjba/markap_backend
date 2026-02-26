@@ -76,7 +76,7 @@ export class RequestPasswordResetUseCase {
 
     const gerenciaEmail =
       this.configService.get<string>('passwordReset.gerenciaEmail') ||
-      'gerencia.markap@gmail.com';
+      'sistemas@markaphomes.com';
 
     const html = `
 <!DOCTYPE html>

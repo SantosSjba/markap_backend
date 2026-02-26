@@ -333,10 +333,10 @@ async function main() {
 
   // 4. Crear usuario Admin
   console.log('\n👤 Creating admin user...');
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@markap.com';
+  const adminEmail = process.env.ADMIN_EMAIL || 'sistemas@markaphomes.com';
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123';
-  const adminFirstName = process.env.ADMIN_FIRST_NAME || 'Admin';
-  const adminLastName = process.env.ADMIN_LAST_NAME || 'Sistema';
+  const adminFirstName = process.env.ADMIN_FIRST_NAME || 'Sistemas';
+  const adminLastName = process.env.ADMIN_LAST_NAME || 'Markap Homes';
 
   let adminUser = await prisma.user.findUnique({
     where: { email: adminEmail },
