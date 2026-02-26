@@ -121,8 +121,8 @@ export class PropertiesController {
     if (search?.trim()) {
       const q = search.trim();
       where.OR = [
-        { fullName: { contains: q, mode: 'insensitive' } },
-        { documentNumber: { contains: q, mode: 'insensitive' } },
+        { fullName: { contains: q } },
+        { documentNumber: { contains: q } },
       ];
     }
 

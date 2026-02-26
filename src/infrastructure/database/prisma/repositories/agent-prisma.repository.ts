@@ -125,10 +125,10 @@ export class AgentPrismaRepository implements AgentRepository {
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       where.OR = [
-        { fullName: { contains: q, mode: 'insensitive' } },
-        { email: { contains: q, mode: 'insensitive' } },
-        { phone: { contains: q, mode: 'insensitive' } },
-        { documentNumber: { contains: q, mode: 'insensitive' } },
+        { fullName: { contains: q } },
+        { email: { contains: q } },
+        { phone: { contains: q } },
+        { documentNumber: { contains: q } },
       ];
     }
 

@@ -154,9 +154,9 @@ export class ClientPrismaRepository implements ClientRepository {
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       where.OR = [
-        { fullName: { contains: q, mode: 'insensitive' } },
-        { documentNumber: { contains: q, mode: 'insensitive' } },
-        { primaryEmail: { contains: q, mode: 'insensitive' } },
+        { fullName: { contains: q } },
+        { documentNumber: { contains: q } },
+        { primaryEmail: { contains: q } },
       ];
     }
 

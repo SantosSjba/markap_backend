@@ -51,10 +51,10 @@ export class RentalPrismaRepository implements RentalRepository {
     }
     if (filters.search?.trim()) {
       where.OR = [
-        { property: { code: { contains: filters.search.trim(), mode: 'insensitive' } } },
-        { property: { addressLine: { contains: filters.search.trim(), mode: 'insensitive' } } },
-        { tenant: { fullName: { contains: filters.search.trim(), mode: 'insensitive' } } },
-        { property: { owner: { fullName: { contains: filters.search.trim(), mode: 'insensitive' } } } },
+        { property: { code: { contains: filters.search.trim() } } },
+        { property: { addressLine: { contains: filters.search.trim() } } },
+        { tenant: { fullName: { contains: filters.search.trim() } } },
+        { property: { owner: { fullName: { contains: filters.search.trim() } } } },
       ];
     }
 

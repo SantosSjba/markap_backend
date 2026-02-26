@@ -67,9 +67,9 @@ export class PropertyPrismaRepository implements PropertyRepository {
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       where.OR = [
-        { code: { contains: q, mode: 'insensitive' } },
-        { addressLine: { contains: q, mode: 'insensitive' } },
-        { owner: { fullName: { contains: q, mode: 'insensitive' } } },
+        { code: { contains: q } },
+        { addressLine: { contains: q } },
+        { owner: { fullName: { contains: q } } },
       ];
     }
 
