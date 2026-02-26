@@ -451,6 +451,257 @@ async function main() {
   }
   console.log('   ✅ Property types created');
 
+  // 9. Clientes (1 propietario, 1 inquilino) - aplicación Alquileres
+  console.log('\n👥 Creating sample clients...');
+  const alquileresAppId = createdApps[0]; // alquileres es la primera
+  const dniType = await prisma.documentType.findUnique({ where: { code: 'DNI' } });
+  if (!dniType) throw new Error('DocumentType DNI not found');
+
+  let ownerClient = await prisma.client.findFirst({
+    where: { applicationId: alquileresAppId, clientType: 'OWNER' },
+  });
+  if (!ownerClient) {
+    ownerClient = await prisma.client.create({
+      data: {
+        applicationId: alquileresAppId,
+        clientType: 'OWNER',
+        documentTypeId: dniType.id,
+        documentNumber: '12345678',
+        fullName: 'Juan Pérez García',
+        primaryPhone: '999888777',
+        primaryEmail: 'juan.perez@ejemplo.com',
+        createdBy: adminUser.id,
+      },
+    });
+    console.log('   ✅ Owner client "Juan Pérez García" created');
+  } else {
+    console.log('   ✓ Owner client already exists');
+  }
+
+  let tenantClient = await prisma.client.findFirst({
+    where: { applicationId: alquileresAppId, clientType: 'TENANT' },
+  });
+  if (!tenantClient) {
+    tenantClient = await prisma.client.create({
+      data: {
+        applicationId: alquileresAppId,
+        clientType: 'TENANT',
+        documentTypeId: dniType.id,
+        documentNumber: '87654321',
+        fullName: 'María López Sánchez',
+        primaryPhone: '988777666',
+        primaryEmail: 'maria.lopez@ejemplo.com',
+        createdBy: adminUser.id,
+      },
+    });
+    console.log('   ✅ Tenant client "María López Sánchez" created');
+  } else {
+    console.log('   ✓ Tenant client already exists');
+  }
+
+  // 10. Dirección del propietario
+  console.log('\n📍 Creating sample address...');
+  const districtLima = await prisma.district.findUnique({ where: { id: '150101' } });
+  if (districtLima) {
+    const existingAddress = await prisma.address.findFirst({
+      where: { clientId: ownerClient.id },
+    });
+    if (!existingAddress) {
+      await prisma.address.create({
+        data: {
+          clientId: ownerClient.id,
+          addressType: 'FISCAL',
+          addressLine: 'Av. Principal 123, Lima',
+          districtId: districtLima.id,
+          isPrimary: true,
+        },
+      });
+      console.log('   ✅ Address for owner created');
+    } else {
+      console.log('   ✓ Address for owner already exists');
+    }
+  }
+
+  // 11. Propiedad (inmueble en alquiler)
+  console.log('\n🏡 Creating sample property...');
+  const depType = await prisma.propertyType.findUnique({ where: { code: 'DEP' } });
+  if (!depType) throw new Error('PropertyType DEP not found');
+
+  let sampleProperty = await prisma.property.findFirst({
+    where: { applicationId: alquileresAppId, code: 'PROP-SEED-001' },
+  });
+  if (!sampleProperty && districtLima) {
+    sampleProperty = await prisma.property.create({
+      data: {
+        applicationId: alquileresAppId,
+        code: 'PROP-SEED-001',
+        propertyTypeId: depType.id,
+        addressLine: 'Calle Las Flores 456, Miraflores',
+        districtId: districtLima.id,
+        description: 'Departamento amplio, buena iluminación.',
+        area: 85.5,
+        bedrooms: 2,
+        bathrooms: 2,
+        monthlyRent: 1500,
+        depositMonths: 2,
+        listingStatus: 'AVAILABLE',
+        ownerId: ownerClient.id,
+        createdBy: adminUser.id,
+      },
+    });
+    console.log('   ✅ Property "PROP-SEED-001" created');
+  } else {
+    console.log('   ✓ Sample property already exists');
+  }
+
+  // 12. Alquiler (contrato)
+  console.log('\n📋 Creating sample rental...');
+  let sampleRental: { id: string } | null = null;
+  if (sampleProperty) {
+    sampleRental = await prisma.rental.findFirst({
+      where: { propertyId: sampleProperty.id },
+      select: { id: true },
+    });
+    if (!sampleRental) {
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setFullYear(endDate.getFullYear() + 1);
+      sampleRental = await prisma.rental.create({
+        data: {
+          applicationId: alquileresAppId,
+          propertyId: sampleProperty.id,
+          tenantId: tenantClient.id,
+          startDate,
+          endDate,
+          currency: 'PEN',
+          monthlyAmount: 1500,
+          securityDeposit: 3000,
+          paymentDueDay: 5,
+          status: 'ACTIVE',
+          notes: 'Contrato seed - datos de prueba.',
+          createdBy: adminUser.id,
+        },
+        select: { id: true },
+      });
+      console.log('   ✅ Sample rental (contract) created');
+    } else {
+      console.log('   ✓ Sample rental already exists');
+    }
+  }
+
+  // 13. Agentes (1 interno = admin, 1 externo)
+  console.log('\n🤝 Creating sample agents...');
+  let internalAgent = await prisma.agent.findFirst({
+    where: { applicationId: alquileresAppId, type: 'INTERNAL' },
+  });
+  if (!internalAgent) {
+    internalAgent = await prisma.agent.create({
+      data: {
+        applicationId: alquileresAppId,
+        type: 'INTERNAL',
+        userId: adminUser.id,
+        fullName: `${adminUser.firstName} ${adminUser.lastName}`,
+        email: adminUser.email,
+        isActive: true,
+      },
+    });
+    console.log('   ✅ Internal agent (admin user) created');
+  } else {
+    console.log('   ✓ Internal agent already exists');
+  }
+
+  const rucType = await prisma.documentType.findUnique({ where: { code: 'RUC' } });
+  let externalAgent = await prisma.agent.findFirst({
+    where: { applicationId: alquileresAppId, type: 'EXTERNAL' },
+  });
+  if (!externalAgent) {
+    externalAgent = await prisma.agent.create({
+      data: {
+        applicationId: alquileresAppId,
+        type: 'EXTERNAL',
+        fullName: 'Carlos Inmobiliaria SAC',
+        email: 'contacto@carlosinmobiliaria.com',
+        phone: '955444333',
+        ...(rucType && {
+          documentTypeId: rucType.id,
+          documentNumber: '20123456789',
+        }),
+        isActive: true,
+      },
+    });
+    console.log('   ✅ External agent "Carlos Inmobiliaria SAC" created');
+  } else {
+    console.log('   ✓ External agent already exists');
+  }
+
+  // 14. Configuración financiera del alquiler
+  if (sampleRental) {
+    console.log('\n💰 Creating rental financial config...');
+    const existingConfig = await prisma.rentalFinancialConfig.findUnique({
+      where: { rentalId: sampleRental.id },
+    });
+    if (!existingConfig) {
+      await prisma.rentalFinancialConfig.create({
+        data: {
+          rentalId: sampleRental.id,
+          currency: 'PEN',
+          expenseType: 'FIXED',
+          expenseValue: 0,
+          taxType: 'FIXED',
+          taxValue: 0,
+          externalAgentId: externalAgent.id,
+          externalAgentType: 'FIXED',
+          externalAgentValue: 200,
+          internalAgentId: adminUser.id,
+          internalAgentType: 'FIXED',
+          internalAgentValue: 150,
+        },
+      });
+      console.log('   ✅ Rental financial config created');
+    } else {
+      console.log('   ✓ Rental financial config already exists');
+    }
+
+    // 15. Adjunto de alquiler (placeholder)
+    console.log('\n📎 Creating sample rental attachment...');
+    const existingAttachment = await prisma.rentalAttachment.findFirst({
+      where: { rentalId: sampleRental.id },
+    });
+    if (!existingAttachment) {
+      await prisma.rentalAttachment.create({
+        data: {
+          rentalId: sampleRental.id,
+          type: 'CONTRACT',
+          filePath: 'uploads/rentals/seed-contrato-placeholder.pdf',
+          originalFileName: 'contrato-ejemplo.pdf',
+        },
+      });
+      console.log('   ✅ Sample rental attachment (placeholder) created');
+    } else {
+      console.log('   ✓ Sample rental attachment already exists');
+    }
+  }
+
+  // 16. Notificación de ejemplo para el admin
+  console.log('\n🔔 Creating sample notification...');
+  const existingNotification = await prisma.notification.findFirst({
+    where: { userId: adminUser.id },
+  });
+  if (!existingNotification) {
+    await prisma.notification.create({
+      data: {
+        userId: adminUser.id,
+        type: 'RENTAL_CREATED',
+        title: 'Bienvenido al sistema',
+        body: 'Este es un mensaje de ejemplo. El seed ha creado datos básicos en todas las tablas.',
+        data: { source: 'seed' },
+      },
+    });
+    console.log('   ✅ Sample notification created');
+  } else {
+    console.log('   ✓ Sample notification already exists');
+  }
+
   console.log('\n✨ Seed completed successfully!\n');
 }
 
