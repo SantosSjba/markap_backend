@@ -1,35 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { ROLE_REPOSITORY } from '../../repositories/role.repository';
+import type { RoleRepository } from '../../repositories/role.repository';
 
 /**
  * Revoke Role from User Use Case
+ * Clean Architecture: depends only on application port (RoleRepository).
+ * The repository implementation throws if the user-role assignment does not exist.
  */
 @Injectable()
 export class RevokeUserRoleUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(ROLE_REPOSITORY)
+    private readonly roleRepository: RoleRepository,
+  ) {}
 
   async execute(userId: string, roleId: string, revokedBy?: string) {
-    const userRole = await this.prisma.userRole.findUnique({
-      where: {
-        userId_roleId: { userId, roleId },
-      },
-    });
-
-    if (!userRole) {
+    const roles = await this.roleRepository.findByUserId(userId);
+    const hasRole = roles.some((r) => r.id === roleId);
+    if (!hasRole) {
       throw new NotFoundException('El usuario no tiene este rol asignado');
     }
-
-    await this.prisma.userRole.update({
-      where: {
-        userId_roleId: { userId, roleId },
-      },
-      data: {
-        isActive: false,
-        revokedAt: new Date(),
-        revokedBy,
-      },
-    });
-
+    await this.roleRepository.revokeFromUser(userId, roleId, revokedBy);
     return { message: 'Rol revocado exitosamente' };
   }
 }

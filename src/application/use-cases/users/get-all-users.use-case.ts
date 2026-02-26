@@ -1,23 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { UserRepository } from '../../repositories/user.repository';
 
 /**
  * Get All Users Use Case
+ * Clean Architecture: depends only on application port (UserRepository).
  */
 @Injectable()
 export class GetAllUsersUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
   async execute() {
-    return this.prisma.user.findMany({
-      where: { deletedAt: null },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        userRoles: {
-          where: { isActive: true, revokedAt: null },
-          include: { role: true },
-        },
-      },
-    });
+    return this.userRepository.findAllWithRoles();
   }
 }

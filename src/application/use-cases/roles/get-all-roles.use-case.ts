@@ -1,17 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { Injectable, Inject } from '@nestjs/common';
+import { ROLE_REPOSITORY } from '../../repositories/role.repository';
+import type { RoleRepository } from '../../repositories/role.repository';
 
 /**
  * Get All Roles Use Case
+ * Clean Architecture: depends only on application port (RoleRepository).
  */
 @Injectable()
 export class GetAllRolesUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(ROLE_REPOSITORY)
+    private readonly roleRepository: RoleRepository,
+  ) {}
 
   async execute() {
-    return this.prisma.role.findMany({
-      where: { isActive: true, deletedAt: null },
-      orderBy: { name: 'asc' },
-    });
+    return this.roleRepository.findAll();
   }
 }

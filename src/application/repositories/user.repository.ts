@@ -1,6 +1,29 @@
 import { User } from '../entities/user.entity';
 
 /**
+ * Rol resumido para listados (capa aplicación)
+ */
+export interface UserRoleItem {
+  id: string;
+  name: string;
+  code: string;
+}
+
+/**
+ * Usuario con roles para listados y respuestas API (capa aplicación)
+ */
+export interface UserWithRolesListItem {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  isActive: boolean;
+  createdAt: Date;
+  userRoles: Array<{ role: UserRoleItem }>;
+}
+
+/**
  * Datos requeridos para crear un usuario
  */
 export interface CreateUserData {
@@ -41,6 +64,16 @@ export abstract class UserRepository {
    * Busca todos los usuarios activos (no eliminados)
    */
   abstract findAll(): Promise<User[]>;
+
+  /**
+   * Busca todos los usuarios con sus roles activos (para listados API)
+   */
+  abstract findAllWithRoles(): Promise<UserWithRolesListItem[]>;
+
+  /**
+   * Busca un usuario por ID con sus roles activos
+   */
+  abstract findByIdWithRoles(id: string): Promise<UserWithRolesListItem | null>;
 
   /**
    * Busca un usuario por su ID

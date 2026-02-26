@@ -4,6 +4,7 @@ import {
   CreateUserData,
   UpdateUserData,
   SoftDeleteUserData,
+  type UserWithRolesListItem,
 } from '../../../../application/repositories/user.repository';
 import { User } from '../../../../application/entities/user.entity';
 import { PrismaService } from '../prisma.service';
@@ -29,6 +30,64 @@ export class UserPrismaRepository implements UserRepository {
     });
 
     return UserPrismaMapper.toDomainList(users);
+  }
+
+  async findAllWithRoles(): Promise<UserWithRolesListItem[]> {
+    const users = await this.prisma.user.findMany({
+      where: { deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        userRoles: {
+          where: { isActive: true, revokedAt: null },
+          include: { role: true },
+        },
+      },
+    });
+    return users.map((u) => ({
+      id: u.id,
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      fullName: `${u.firstName} ${u.lastName}`,
+      isActive: u.isActive,
+      createdAt: u.createdAt,
+      userRoles: u.userRoles.map((ur) => ({
+        role: {
+          id: ur.role.id,
+          name: ur.role.name,
+          code: ur.role.code,
+        },
+      })),
+    }));
+  }
+
+  async findByIdWithRoles(id: string): Promise<UserWithRolesListItem | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        userRoles: {
+          where: { isActive: true, revokedAt: null },
+          include: { role: true },
+        },
+      },
+    });
+    if (!user) return null;
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      fullName: `${user.firstName} ${user.lastName}`,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      userRoles: user.userRoles.map((ur) => ({
+        role: {
+          id: ur.role.id,
+          name: ur.role.name,
+          code: ur.role.code,
+        },
+      })),
+    };
   }
 
   async findById(id: string): Promise<User | null> {

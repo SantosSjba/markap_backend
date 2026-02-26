@@ -1,5 +1,10 @@
 # Markap Backend
 
+El proyecto sigue **Clean Architecture** con NestJS y Prisma.
+
+- **[Arquitectura](docs/ARCHITECTURE.md)** — Capas (domain, application, infrastructure), puertos y adaptadores.
+- **[Cómo agregar funcionalidades](docs/ADDING_FEATURES.md)** — Pasos para nuevos recursos, use cases y servicios.
+
 ## Pasos de ejecución
 
 ```bash
