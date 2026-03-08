@@ -160,6 +160,7 @@ export class RentalsController {
       paymentDueDay: dto.paymentDueDay,
       notes: dto.notes,
       status: dto.status,
+      enableAlerts: dto.enableAlerts,
     });
   }
 
@@ -212,6 +213,7 @@ export class RentalsController {
         dto.securityDeposit != null ? Number(dto.securityDeposit) : null,
       paymentDueDay: Number(dto.paymentDueDay) || 5,
       notes: dto.notes,
+      enableAlerts: dto.enableAlerts ?? true,
     });
 
     const uploadDir = join(process.cwd(), 'uploads', 'rentals', rental.id);

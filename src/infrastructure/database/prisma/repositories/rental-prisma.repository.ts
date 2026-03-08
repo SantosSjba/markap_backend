@@ -29,6 +29,7 @@ export class RentalPrismaRepository implements RentalRepository {
         securityDeposit: data.securityDeposit ?? null,
         paymentDueDay: data.paymentDueDay,
         notes: data.notes?.trim() || null,
+        enableAlerts: data.enableAlerts ?? true,
       },
     });
     return this.toRentalData(rental);
@@ -179,6 +180,7 @@ export class RentalPrismaRepository implements RentalRepository {
         ...(data.paymentDueDay != null && { paymentDueDay: data.paymentDueDay }),
         ...(data.notes !== undefined && { notes: data.notes?.trim() || null }),
         ...(data.status != null && { status: data.status }),
+        ...(data.enableAlerts !== undefined && { enableAlerts: data.enableAlerts }),
       },
     });
     return this.toRentalData(r);
@@ -220,6 +222,7 @@ export class RentalPrismaRepository implements RentalRepository {
     paymentDueDay: number;
     notes: string | null;
     status: string;
+    enableAlerts: boolean;
   }): RentalData {
     return {
       id: r.id,
@@ -234,6 +237,7 @@ export class RentalPrismaRepository implements RentalRepository {
       paymentDueDay: r.paymentDueDay,
       notes: r.notes,
       status: r.status,
+      enableAlerts: r.enableAlerts,
     };
   }
 }

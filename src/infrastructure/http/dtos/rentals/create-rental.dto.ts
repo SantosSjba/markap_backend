@@ -7,6 +7,7 @@ import {
   Min,
   Max,
   IsDateString,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -62,4 +63,12 @@ export class CreateRentalDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({
+    description: 'Recibir alertas y notificaciones para este contrato',
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  enableAlerts?: boolean;
 }

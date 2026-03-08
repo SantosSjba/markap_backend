@@ -27,6 +27,8 @@ import { NOTIFICATION_REPOSITORY } from '../../application/repositories/notifica
 import { NotificationPrismaRepository } from './prisma/repositories/notification-prisma.repository';
 import { PAYMENT_REPOSITORY } from '../../application/repositories/payment.repository';
 import { PaymentPrismaRepository } from './prisma/repositories/payment-prisma.repository';
+import { ALERT_CONFIG_REPOSITORY } from '../../application/repositories/alert-config.repository';
+import { AlertConfigPrismaRepository } from './prisma/repositories/alert-config-prisma.repository';
 
 @Module({
   providers: [
@@ -83,6 +85,10 @@ import { PaymentPrismaRepository } from './prisma/repositories/payment-prisma.re
       provide: PAYMENT_REPOSITORY,
       useClass: PaymentPrismaRepository,
     },
+    {
+      provide: ALERT_CONFIG_REPOSITORY,
+      useClass: AlertConfigPrismaRepository,
+    },
   ],
   exports: [
     PrismaService,
@@ -99,6 +105,7 @@ import { PaymentPrismaRepository } from './prisma/repositories/payment-prisma.re
     REPORT_REPOSITORY,
     NOTIFICATION_REPOSITORY,
     PAYMENT_REPOSITORY,
+    ALERT_CONFIG_REPOSITORY,
   ],
 })
 export class DatabaseModule {}

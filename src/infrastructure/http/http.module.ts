@@ -118,6 +118,10 @@ import {
   ListOverduePaymentsUseCase,
 } from '../../application/use-cases/payments';
 
+// Use Cases - Alert Config
+import { GetAlertConfigUseCase } from '../../application/use-cases/alert-config/get-alert-config.use-case';
+import { UpsertAlertConfigUseCase } from '../../application/use-cases/alert-config/upsert-alert-config.use-case';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
@@ -135,6 +139,7 @@ import { AgentsController } from './controllers/agents.controller';
 import { ReportsController } from './controllers/reports.controller';
 import { NotificationsController } from './controllers/notifications.controller';
 import { PaymentsController } from './controllers/payments.controller';
+import { AlertConfigController } from './controllers/alert-config.controller';
 
 // Gateways
 import { NotificationsGateway } from './gateways/notifications.gateway';
@@ -157,6 +162,7 @@ import { NotificationsService } from './services/notifications.service';
     ReportsController,
     NotificationsController,
     PaymentsController,
+    AlertConfigController,
   ],
   providers: [
     // Services
@@ -258,6 +264,9 @@ import { NotificationsService } from './services/notifications.service';
     RegisterPaymentUseCase,
     ListPaymentHistoryUseCase,
     ListOverduePaymentsUseCase,
+    // Alert Config
+    GetAlertConfigUseCase,
+    UpsertAlertConfigUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

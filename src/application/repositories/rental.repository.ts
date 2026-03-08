@@ -9,6 +9,7 @@ export interface CreateRentalData {
   securityDeposit?: number | null;
   paymentDueDay: number;
   notes?: string | null;
+  enableAlerts?: boolean;
 }
 
 export interface RentalData {
@@ -24,6 +25,7 @@ export interface RentalData {
   paymentDueDay: number;
   notes: string | null;
   status: string;
+  enableAlerts: boolean;
 }
 
 export interface RentalListItem {
@@ -73,6 +75,7 @@ export interface RentalDetailData extends RentalData {
   tenant: { id: string; fullName: string };
   hasContract: boolean;
   hasDeliveryAct: boolean;
+  enableAlerts: boolean;
 }
 
 export interface UpdateRentalData {
@@ -84,6 +87,7 @@ export interface UpdateRentalData {
   paymentDueDay?: number;
   notes?: string | null;
   status?: string;
+  enableAlerts?: boolean;
 }
 
 export interface RentalRepository {

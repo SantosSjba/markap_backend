@@ -14,6 +14,7 @@ export interface UpdateRentalInput {
   paymentDueDay?: number;
   notes?: string | null;
   status?: string;
+  enableAlerts?: boolean;
 }
 
 @Injectable()
@@ -37,6 +38,7 @@ export class UpdateRentalUseCase {
     if (input.paymentDueDay != null) data.paymentDueDay = input.paymentDueDay;
     if (input.notes !== undefined) data.notes = input.notes;
     if (input.status != null) data.status = input.status;
+    if (input.enableAlerts !== undefined) data.enableAlerts = input.enableAlerts;
     return this.rentalRepository.update(input.id, data);
   }
 }

@@ -38,6 +38,7 @@ model User {
   notifications      Notification[]
   agentsAsInternal   Agent[]
   rentalFinancialConfigsAsAgent RentalFinancialConfig[]
+  alertConfigs       AlertConfig[]
 
   // Índices para optimización
   @@index([email])
@@ -152,6 +153,7 @@ model Application {
   properties      Property[]
   rentals         Rental[]
   agents          Agent[]
+  alertConfigs    AlertConfig[]
 
   @@index([slug])
   @@index([isActive])
@@ -437,7 +439,8 @@ model Rental {
   paymentDueDay   Int       @default(5) @map("payment_due_day") // 1-28
   notes           String?   @db.Text
 
-  status String @default("ACTIVE") @map("status") // ACTIVE, EXPIRED, CANCELLED
+  status       String  @default("ACTIVE") @map("status") // ACTIVE, EXPIRED, CANCELLED
+  enableAlerts Boolean @default(true) @map("enable_alerts") // Si el usuario quiere recibir alertas de este contrato
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -613,4 +616,38 @@ model Notification {
   @@index([readAt])
   @@index([createdAt])
   @@map("notifications")
+}
+
+// ============================================
+// ALERT_CONFIG - Configuración de alertas por aplicación/usuario
+// ============================================
+model AlertConfig {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  userId        String  @map("user_id")
+
+  // Alertas de vencimiento de contrato
+  alert30Days Boolean @default(true) @map("alert_30_days")
+  alert60Days Boolean @default(true) @map("alert_60_days")
+  alert90Days Boolean @default(false) @map("alert_90_days")
+
+  // Alertas de cobranza
+  alertPendingPayment Boolean @default(true) @map("alert_pending_payment")
+  alertOverduePayment Boolean @default(true) @map("alert_overdue_payment")
+
+  // Canal de notificación (solo in-app por ahora)
+  channelInApp    Boolean @default(true) @map("channel_in_app")
+  channelEmail    Boolean @default(false) @map("channel_email")
+  channelWhatsapp Boolean @default(false) @map("channel_whatsapp")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, userId])
+  @@index([applicationId])
+  @@index([userId])
+  @@map("alert_configs")
 }

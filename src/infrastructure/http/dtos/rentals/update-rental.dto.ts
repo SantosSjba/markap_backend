@@ -7,6 +7,7 @@ import {
   Max,
   IsDateString,
   IsIn,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -59,4 +60,9 @@ export class UpdateRentalDto {
   @IsString()
   @IsIn(['ACTIVE', 'EXPIRED', 'CANCELLED'])
   status?: string;
+
+  @ApiPropertyOptional({ description: 'Recibir alertas y notificaciones para este contrato' })
+  @IsOptional()
+  @IsBoolean()
+  enableAlerts?: boolean;
 }

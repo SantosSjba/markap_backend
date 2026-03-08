@@ -19,6 +19,7 @@ export interface CreateRentalInput {
   securityDeposit?: number | null;
   paymentDueDay: number;
   notes?: string | null;
+  enableAlerts?: boolean;
 }
 
 @Injectable()
@@ -63,6 +64,7 @@ export class CreateRentalUseCase {
           : null,
       paymentDueDay: Number(input.paymentDueDay),
       notes: input.notes?.trim() || null,
+      enableAlerts: input.enableAlerts ?? true,
     });
     await this.propertyRepository.update({
       id: input.propertyId,
