@@ -109,6 +109,15 @@ import {
   GetRentalsByMonthUseCase,
 } from '../../application/use-cases/reports';
 
+// Use Cases - Payments
+import {
+  GetPaymentStatsUseCase,
+  ListPendingPaymentsUseCase,
+  RegisterPaymentUseCase,
+  ListPaymentHistoryUseCase,
+  ListOverduePaymentsUseCase,
+} from '../../application/use-cases/payments';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
@@ -125,6 +134,7 @@ import { RentalsController } from './controllers/rentals.controller';
 import { AgentsController } from './controllers/agents.controller';
 import { ReportsController } from './controllers/reports.controller';
 import { NotificationsController } from './controllers/notifications.controller';
+import { PaymentsController } from './controllers/payments.controller';
 
 // Gateways
 import { NotificationsGateway } from './gateways/notifications.gateway';
@@ -146,6 +156,7 @@ import { NotificationsService } from './services/notifications.service';
     AgentsController,
     ReportsController,
     NotificationsController,
+    PaymentsController,
   ],
   providers: [
     // Services
@@ -241,6 +252,12 @@ import { NotificationsService } from './services/notifications.service';
     GetContractStatusSummaryUseCase,
     GetMonthlyMetricsUseCase,
     GetRentalsByMonthUseCase,
+    // Payments
+    GetPaymentStatsUseCase,
+    ListPendingPaymentsUseCase,
+    RegisterPaymentUseCase,
+    ListPaymentHistoryUseCase,
+    ListOverduePaymentsUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

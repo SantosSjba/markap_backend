@@ -250,6 +250,7 @@ async function main() {
       { label: 'Propiedades', icon: 'building', path: null, order: 2 },
       { label: 'Alquileres', icon: 'file-text', path: '/alquileres/contratos', order: 3 },
       { label: 'Agentes', icon: 'user-check', path: '/alquileres/agentes', order: 4 },
+      { label: 'Cobranzas', icon: 'credit-card', path: '/alquileres/cobranzas', order: 5 },
       { label: 'Reportes', icon: 'bar-chart', path: '/alquileres/reportes', order: 6 },
       { label: 'Configuración', icon: 'settings', path: '/alquileres/configuracion', order: 7 },
     ];
@@ -301,6 +302,10 @@ async function main() {
       // Agentes
       { label: 'Listado de Agentes', path: '/alquileres/agentes', order: 0, parentLabel: 'Agentes' },
       { label: 'Nuevo Agente', path: '/alquileres/agentes/nuevo', order: 1, parentLabel: 'Agentes' },
+      // Cobranzas
+      { label: 'Pagos Pendientes', path: '/alquileres/cobranzas', order: 0, parentLabel: 'Cobranzas' },
+      { label: 'Historial de Pagos', path: '/alquileres/cobranzas/historial', order: 1, parentLabel: 'Cobranzas' },
+      { label: 'Con Atraso', path: '/alquileres/cobranzas/atrasos', order: 2, parentLabel: 'Cobranzas' },
     ];
 
     for (const m of childMenus) {

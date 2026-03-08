@@ -452,6 +452,7 @@ model Rental {
 
   attachments RentalAttachment[]
   financialConfig RentalFinancialConfig?
+  payments Payment[]
 
   @@index([applicationId])
   @@index([propertyId])
@@ -537,6 +538,42 @@ model RentalFinancialConfig {
   @@index([internalAgentId])
   @@index([externalAgentId])
   @@map("rental_financial_configs")
+}
+
+// ============================================
+// PAYMENT - Pagos de alquiler (cuotas mensuales)
+// ============================================
+model Payment {
+  id            String   @id @default(uuid())
+  rentalId      String   @map("rental_id")
+
+  periodYear    Int      @map("period_year")   // ej: 2026
+  periodMonth   Int      @map("period_month")  // 1-12
+  dueDate       DateTime @map("due_date")       // fecha límite de pago
+  amount        Float    @map("amount")         // monto esperado (monthlyAmount del Rental)
+  currency      String   @default("PEN") @map("currency")
+
+  // Estado: PENDING, PAID, OVERDUE, PARTIAL
+  status        String   @default("PENDING") @map("status")
+
+  // Datos del pago efectivo (solo cuando status = PAID | PARTIAL)
+  paidDate      DateTime? @map("paid_date")
+  paidAmount    Float?    @map("paid_amount")
+  paymentMethod String?   @map("payment_method") // CASH, TRANSFER, DEPOSIT, YAPE, PLIN, CHECK, OTHER
+  referenceNumber String? @map("reference_number")
+  notes         String?   @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdBy String?   @map("created_by")
+
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@unique([rentalId, periodYear, periodMonth])
+  @@index([rentalId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("payments")
 }
 
 // Adjuntos de alquiler: contrato firmado, acta de entrega
