@@ -73,7 +73,50 @@ export class ApplicationPrismaRepository implements ApplicationRepository {
       orderBy: { order: 'asc' },
     });
 
-    return applications.map(ApplicationPrismaMapper.toDomain);
+    // Calculate dynamic counts for each application
+    const appsWithCounts = await Promise.all(
+      applications.map(async (app) => {
+        const counts = await this.getDynamicCounts(app.id, app.slug);
+        return { ...app, ...counts };
+      }),
+    );
+
+    return appsWithCounts.map(ApplicationPrismaMapper.toDomain);
+  }
+
+  /**
+   * Calculates activeCount and pendingCount dynamically based on real data.
+   * - activeCount: active rentals/contracts for this application
+   * - pendingCount: pending payments across those rentals
+   */
+  private async getDynamicCounts(
+    applicationId: string,
+    slug: string,
+  ): Promise<{ activeCount: number; pendingCount: number }> {
+    // Only calculate for applications that have rentals (e.g. alquileres)
+    // For others, fall back to stored values
+    const RENTAL_SLUGS = ['alquileres'];
+
+    if (!RENTAL_SLUGS.includes(slug)) {
+      return { activeCount: 0, pendingCount: 0 };
+    }
+
+    const [activeCount, pendingCount] = await Promise.all([
+      this.prisma.rental.count({
+        where: {
+          applicationId,
+          status: 'ACTIVE',
+        },
+      }),
+      this.prisma.payment.count({
+        where: {
+          rental: { applicationId },
+          status: 'PENDING',
+        },
+      }),
+    ]);
+
+    return { activeCount, pendingCount };
   }
 
   async findByRoleId(roleId: string): Promise<Application[]> {
