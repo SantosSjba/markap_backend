@@ -107,6 +107,7 @@ import {
   GetContractStatusSummaryUseCase,
   GetMonthlyMetricsUseCase,
   GetRentalsByMonthUseCase,
+  GetFinancialDistributionReportUseCase,
 } from '../../application/use-cases/reports';
 
 // Use Cases - Payments
@@ -258,6 +259,7 @@ import { NotificationsService } from './services/notifications.service';
     GetContractStatusSummaryUseCase,
     GetMonthlyMetricsUseCase,
     GetRentalsByMonthUseCase,
+    GetFinancialDistributionReportUseCase,
     // Payments
     GetPaymentStatsUseCase,
     ListPendingPaymentsUseCase,

@@ -511,6 +511,10 @@ model RentalFinancialConfig {
   rentalId  String   @unique @map("rental_id")
   currency  String   @default("PEN") @map("currency")
 
+  // Monto ingresado por la empresa al concretar el alquiler (base para los descuentos).
+  // Si es null, se usa el monthlyAmount del contrato como base.
+  baseAmount Float?  @map("base_amount")
+
   // Gastos: tipo PERCENT (%) o FIXED (monto fijo), valor según tipo
   expenseType   String  @default("FIXED") @map("expense_type")   // PERCENT | FIXED
   expenseValue  Float   @default(0) @map("expense_value")

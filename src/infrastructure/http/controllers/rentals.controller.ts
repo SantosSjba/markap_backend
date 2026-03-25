@@ -131,6 +131,7 @@ export class RentalsController {
   ) {
     return this.upsertRentalFinancialConfigUseCase.execute(id, {
       currency: dto.currency,
+      baseAmount: dto.baseAmount,
       expenseType: dto.expenseType,
       expenseValue: dto.expenseValue,
       taxType: dto.taxType,

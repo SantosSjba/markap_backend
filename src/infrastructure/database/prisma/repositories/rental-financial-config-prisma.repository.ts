@@ -31,6 +31,7 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
       create: {
         rentalId: data.rentalId,
         currency: data.currency ?? 'PEN',
+        baseAmount: data.baseAmount ?? null,
         expenseType: data.expenseType ?? 'FIXED',
         expenseValue: data.expenseValue ?? 0,
         taxType: data.taxType ?? 'FIXED',
@@ -45,6 +46,7 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
       },
       update: {
         ...(data.currency != null && { currency: data.currency }),
+        ...(data.baseAmount !== undefined && { baseAmount: data.baseAmount }),
         ...(data.expenseType != null && { expenseType: data.expenseType }),
         ...(data.expenseValue != null && { expenseValue: data.expenseValue }),
         ...(data.taxType != null && { taxType: data.taxType }),
@@ -68,7 +70,10 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
     currency: string,
   ): Promise<RentalFinancialBreakdown> {
     const config = await this.findByRentalId(rentalId);
-    const base = monthlyAmount;
+    // Si hay un monto ingresado configurado, se usa como base; de lo contrario el monthlyAmount del contrato
+    const base = (config?.baseAmount != null && config.baseAmount > 0)
+      ? config.baseAmount
+      : monthlyAmount;
 
     const expense = config
       ? computeAmount(config.expenseType, config.expenseValue, base)
@@ -85,7 +90,8 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
     const utility = Math.round((base - totalDeductions) * 100) / 100;
 
     return {
-      monthlyAmount: base,
+      monthlyAmount,
+      baseAmount: base,
       currency,
       expense,
       tax,
@@ -100,6 +106,7 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
     id: string;
     rentalId: string;
     currency: string;
+    baseAmount?: number | null;
     expenseType: string;
     expenseValue: number;
     taxType: string;
@@ -119,6 +126,7 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
       id: row.id,
       rentalId: row.rentalId,
       currency: row.currency,
+      baseAmount: row.baseAmount != null ? Number(row.baseAmount) : null,
       expenseType: row.expenseType as FinancialValueType,
       expenseValue: Number(row.expenseValue),
       taxType: row.taxType as FinancialValueType,

@@ -1,12 +1,12 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type {
   ReportRepository,
-  RentalsByMonthItem,
+  FinancialDistributionReportItem,
 } from '../../repositories/report.repository';
 import { REPORT_REPOSITORY } from '../../repositories/report.repository';
 
 @Injectable()
-export class GetRentalsByMonthUseCase {
+export class GetFinancialDistributionReportUseCase {
   constructor(
     @Inject(REPORT_REPOSITORY)
     private readonly reportRepository: ReportRepository,
@@ -14,11 +14,10 @@ export class GetRentalsByMonthUseCase {
 
   async execute(
     applicationSlug: string,
-    year: number,
-    month?: number,
+    status?: string,
     startDate?: string,
     endDate?: string,
-  ): Promise<RentalsByMonthItem[]> {
-    return this.reportRepository.getRentalsByMonth(applicationSlug, year, month, startDate, endDate);
+  ): Promise<FinancialDistributionReportItem[]> {
+    return this.reportRepository.getFinancialDistributionReport(applicationSlug, status, startDate, endDate);
   }
 }

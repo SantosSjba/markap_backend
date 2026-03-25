@@ -9,6 +9,7 @@ import {
   GetContractStatusSummaryUseCase,
   GetMonthlyMetricsUseCase,
   GetRentalsByMonthUseCase,
+  GetFinancialDistributionReportUseCase,
 } from '../../../application/use-cases/reports';
 
 @ApiTags('Reports')
@@ -24,6 +25,7 @@ export class ReportsController {
     private readonly getContractStatusSummaryUseCase: GetContractStatusSummaryUseCase,
     private readonly getMonthlyMetricsUseCase: GetMonthlyMetricsUseCase,
     private readonly getRentalsByMonthUseCase: GetRentalsByMonthUseCase,
+    private readonly getFinancialDistributionReportUseCase: GetFinancialDistributionReportUseCase,
   ) {}
 
   @Get('summary')
@@ -105,18 +107,49 @@ export class ReportsController {
   }
 
   @Get('rentals-by-month')
-  @ApiOperation({ summary: 'Reporte de alquiler por mes del año' })
+  @ApiOperation({ summary: 'Reporte de alquiler por mes. Soporta filtro por año, mes específico o rango de fechas.' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  @ApiQuery({ name: 'year', required: true, description: 'Año (ej: 2025)' })
+  @ApiQuery({ name: 'year', required: false, description: 'Año (ej: 2026). Requerido salvo que se use startDate/endDate.' })
+  @ApiQuery({ name: 'month', required: false, description: 'Mes específico 1-12 (usar junto con year)' })
+  @ApiQuery({ name: 'startDate', required: false, description: 'Inicio del rango (YYYY-MM-DD). Reemplaza year/month.' })
+  @ApiQuery({ name: 'endDate', required: false, description: 'Fin del rango (YYYY-MM-DD). Reemplaza year/month.' })
   @ApiResponse({ status: 200 })
   async getRentalsByMonth(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('year') year?: string,
+    @Query('month') month?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
     const y = parseInt(year ?? String(new Date().getFullYear()), 10) || new Date().getFullYear();
+    const m = month ? (parseInt(month, 10) || undefined) : undefined;
     return this.getRentalsByMonthUseCase.execute(
       applicationSlug ?? 'alquileres',
       y,
+      m,
+      startDate,
+      endDate,
+    );
+  }
+
+  @Get('financial-distribution')
+  @ApiOperation({ summary: 'Reporte de distribución financiera por alquiler (ingresos, gastos, impuestos, comisiones y utilidad)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'status', required: false, enum: ['ACTIVE', 'EXPIRED', 'CANCELLED'], description: 'Filtrar por estado del contrato' })
+  @ApiQuery({ name: 'startDate', required: false, description: 'Fecha inicio del contrato YYYY-MM-DD (cuándo se concretó)' })
+  @ApiQuery({ name: 'endDate', required: false, description: 'Fecha fin del contrato YYYY-MM-DD' })
+  @ApiResponse({ status: 200 })
+  async getFinancialDistribution(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.getFinancialDistributionReportUseCase.execute(
+      applicationSlug ?? 'alquileres',
+      status,
+      startDate,
+      endDate,
     );
   }
 }

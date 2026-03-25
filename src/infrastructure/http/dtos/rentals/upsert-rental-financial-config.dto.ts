@@ -11,6 +11,13 @@ export class UpsertRentalFinancialConfigDto {
   @IsIn(['PEN', 'USD'])
   currency?: string;
 
+  @ApiPropertyOptional({ description: 'Monto ingresado al concretar el alquiler (base para descuentos). Si no se indica, se usa el monto mensual del contrato.' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  baseAmount?: number | null;
+
   @ApiPropertyOptional({ description: 'Tipo de gasto', enum: ['PERCENT', 'FIXED'] })
   @IsOptional()
   @IsString()
