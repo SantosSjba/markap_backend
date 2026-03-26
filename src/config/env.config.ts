@@ -19,8 +19,9 @@ export const envValidationSchema = Joi.object({
   JWT_SECRET: Joi.string().min(16).required(),
   JWT_EXPIRES_IN: Joi.number().integer().positive().default(3600),
 
-  // Frontend – required for CORS (must be a valid URL)
-  FRONTEND_URL: Joi.string().uri().required(),
+  // Frontend – required for CORS; supports comma-separated origins
+  // e.g. "http://localhost:5173,https://admin.markaphomes.com"
+  FRONTEND_URL: Joi.string().required(),
 
   // Mail – optional; if omitted, emails print to console in dev
   MAIL_HOST: Joi.string().default('smtp.gmail.com'),
