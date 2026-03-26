@@ -5,6 +5,18 @@ export interface PropertyData {
   propertyTypeId: string;
   addressLine: string;
   districtId: string;
+  district?: {
+    id: string;
+    name: string;
+    province: {
+      id: string;
+      name: string;
+      department: {
+        id: string;
+        name: string;
+      };
+    };
+  } | null;
   description: string | null;
   area: number | null;
   bedrooms: number | null;

@@ -46,6 +46,15 @@ export class PropertyPrismaRepository implements PropertyRepository {
   async findById(id: string): Promise<PropertyData | null> {
     const property = await (this.prisma as any).property.findFirst({
       where: { id, deletedAt: null },
+      include: {
+        district: {
+          include: {
+            province: {
+              include: { department: true },
+            },
+          },
+        },
+      },
     });
     return property ? this.toPropertyData(property) : null;
   }
@@ -206,6 +215,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
     propertyTypeId: string;
     addressLine: string;
     districtId: string;
+    district?: { id: string; name: string; province: { id: string; name: string; department: { id: string; name: string } } } | null;
     description: string | null;
     area: number | null;
     bedrooms: number | null;
@@ -230,6 +240,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
       propertyTypeId: property.propertyTypeId,
       addressLine: property.addressLine,
       districtId: property.districtId,
+      district: property.district ?? null,
       description: property.description,
       area: property.area,
       bedrooms: property.bedrooms,

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import * as bcrypt from 'bcrypt';
+import { DEPARTMENTS, PROVINCES, DISTRICTS } from './ubigeo-data';
 
 const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);
 
@@ -406,36 +407,44 @@ async function main() {
   }
   console.log('   ✅ Document types created');
 
-  // 7. Ubigeo - Departamento Lima y distritos principales
-  console.log('\n🗺️ Creating ubigeo (Lima)...');
-  await prisma.department.upsert({
-    where: { id: '15' },
-    create: { id: '15', name: 'Lima' },
-    update: {},
-  });
-  await prisma.province.upsert({
-    where: { id: '1501' },
-    create: { id: '1501', departmentId: '15', name: 'Lima' },
-    update: {},
-  });
-  const limaDistricts = [
-    { id: '150101', provinceId: '1501', name: 'Lima' },
-    { id: '150132', provinceId: '1501', name: 'Miraflores' },
-    { id: '150122', provinceId: '1501', name: 'San Isidro' },
-    { id: '150131', provinceId: '1501', name: 'Santiago de Surco' },
-    { id: '150114', provinceId: '1501', name: 'Jesús María' },
-    { id: '150133', provinceId: '1501', name: 'Pueblo Libre' },
-    { id: '150128', provinceId: '1501', name: 'San Miguel' },
-    { id: '150136', provinceId: '1501', name: 'Magdalena del Mar' },
-  ];
-  for (const d of limaDistricts) {
-    await prisma.district.upsert({
-      where: { id: d.id },
-      create: d,
-      update: {},
-    });
+  // 7. Ubigeo - Todos los departamentos, provincias y distritos del Perú
+  console.log('\n🗺️ Creating ubigeo (all Peru)...');
+
+  // Helper: bulk upsert via raw SQL (INSERT ... ON DUPLICATE KEY UPDATE)
+  async function bulkUpsertDepartments(rows: readonly { id: string; name: string }[]) {
+    const values = rows.map(r => `('${r.id}', '${r.name.replace(/'/g, "''")}')`).join(',');
+    await (prisma as any).$executeRawUnsafe(
+      `INSERT INTO departments (id, name) VALUES ${values} ON DUPLICATE KEY UPDATE name = VALUES(name)`
+    );
   }
-  console.log('   ✅ Ubigeo Lima created');
+
+  async function bulkUpsertProvinces(rows: readonly { id: string; departmentId: string; name: string }[]) {
+    const values = rows.map(r => `('${r.id}', '${r.departmentId}', '${r.name.replace(/'/g, "''")}')`).join(',');
+    await (prisma as any).$executeRawUnsafe(
+      `INSERT INTO provinces (id, department_id, name) VALUES ${values} ON DUPLICATE KEY UPDATE name = VALUES(name)`
+    );
+  }
+
+  async function bulkUpsertDistricts(rows: readonly { id: string; provinceId: string; name: string }[]) {
+    const values = rows.map(r => `('${r.id}', '${r.provinceId}', '${r.name.replace(/'/g, "''")}')`).join(',');
+    await (prisma as any).$executeRawUnsafe(
+      `INSERT INTO districts (id, province_id, name) VALUES ${values} ON DUPLICATE KEY UPDATE name = VALUES(name)`
+    );
+  }
+
+  await bulkUpsertDepartments(DEPARTMENTS);
+  console.log(`   ✅ ${DEPARTMENTS.length} departments`);
+
+  await bulkUpsertProvinces(PROVINCES);
+  console.log(`   ✅ ${PROVINCES.length} provinces`);
+
+  // Districts in chunks of 500 to stay within MariaDB packet limits
+  const CHUNK = 500;
+  for (let i = 0; i < DISTRICTS.length; i += CHUNK) {
+    await bulkUpsertDistricts(DISTRICTS.slice(i, i + CHUNK));
+    console.log(`   ... districts ${i + 1}–${Math.min(i + CHUNK, DISTRICTS.length)} done`);
+  }
+  console.log(`   ✅ ${DISTRICTS.length} districts`);
 
   // 8. Tipos de propiedad
   console.log('\n🏠 Creating property types...');

@@ -83,8 +83,24 @@ export class PropertiesController {
     });
   }
 
+  @Get('departments')
+  @ApiOperation({ summary: 'Listar departamentos del Perú' })
+  @ApiResponse({ status: 200 })
+  async getDepartments() {
+    return this.prisma.department.findMany({ orderBy: { name: 'asc' } });
+  }
+
+  @Get('provinces')
+  @ApiOperation({ summary: 'Listar provincias por departamento' })
+  @ApiQuery({ name: 'departmentId', required: false })
+  @ApiResponse({ status: 200 })
+  async getProvinces(@Query('departmentId') departmentId?: string) {
+    const where = departmentId ? { departmentId } : {};
+    return this.prisma.province.findMany({ where, orderBy: { name: 'asc' } });
+  }
+
   @Get('districts')
-  @ApiOperation({ summary: 'Listar distritos (con provincia y departamento)' })
+  @ApiOperation({ summary: 'Listar distritos por provincia' })
   @ApiQuery({ name: 'provinceId', required: false })
   @ApiResponse({ status: 200 })
   async getDistricts(@Query('provinceId') provinceId?: string) {
