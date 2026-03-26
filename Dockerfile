@@ -1,11 +1,10 @@
-FROM node:22-alpine
+FROM node:20-alpine
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
 # Copiar archivos de dependencias
 COPY package*.json ./
 COPY prisma ./prisma/
-COPY prisma.config.ts ./
 
 # Instalar todas las dependencias (incluyendo dev)
 RUN npm install
@@ -16,12 +15,7 @@ RUN npx prisma generate
 # Copiar código fuente
 COPY . .
 
-# Compilar TypeScript → dist/
-RUN npm run build
+EXPOSE 4001
 
-RUN mkdir -p uploads
-
-EXPOSE 3000
-
-# Ejecutar migraciones y arrancar en producción
-CMD ["sh", "-c", "node_modules/.bin/prisma db push --accept-data-loss && node -r tsconfig-paths/register dist/main"]
+# Modo desarrollo con hot-reload
+CMD ["npm", "run", "start:dev"]
