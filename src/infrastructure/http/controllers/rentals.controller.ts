@@ -147,22 +147,76 @@ export class RentalsController {
   }
 
   @Patch(':id')
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'contractFile', maxCount: 1 },
+        { name: 'deliveryActFile', maxCount: 1 },
+      ],
+      { limits: { fileSize: 10 * 1024 * 1024 } },
+    ),
+  )
   @ApiOperation({ summary: 'Actualizar alquiler' })
+  @ApiConsumes('multipart/form-data', 'application/json')
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 404 })
-  async update(@Param('id') id: string, @Body() dto: UpdateRentalDto) {
-    return this.updateRentalUseCase.execute({
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateRentalDto,
+    @UploadedFiles() files?: UploadedFilesMap<RentalFileField>,
+  ) {
+    const rental = await this.updateRentalUseCase.execute({
       id,
       startDate: dto.startDate,
       endDate: dto.endDate,
       currency: dto.currency,
-      monthlyAmount: dto.monthlyAmount,
-      securityDeposit: dto.securityDeposit,
-      paymentDueDay: dto.paymentDueDay,
+      monthlyAmount: dto.monthlyAmount != null ? Number(dto.monthlyAmount) : undefined,
+      securityDeposit: dto.securityDeposit != null ? Number(dto.securityDeposit) : dto.securityDeposit,
+      paymentDueDay: dto.paymentDueDay != null ? Number(dto.paymentDueDay) : undefined,
       notes: dto.notes,
       status: dto.status,
-      enableAlerts: dto.enableAlerts,
+      enableAlerts: dto.enableAlerts != null ? Boolean(dto.enableAlerts) : undefined,
     });
+
+    const contractFile = getFirstFile(files?.contractFile);
+    const deliveryActFile = getFirstFile(files?.deliveryActFile);
+
+    if (contractFile || deliveryActFile) {
+      const uploadDir = join(process.cwd(), 'uploads', 'rentals', id);
+      await mkdir(uploadDir, { recursive: true });
+
+      if (contractFile) {
+        const f = contractFile;
+        const safeName = `${Date.now()}_${(f.originalname || 'contract').replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        await writeFile(join(uploadDir, safeName), f.buffer);
+        await (this.prisma as any).rentalAttachment.deleteMany({ where: { rentalId: id, type: 'CONTRACT' } });
+        await (this.prisma as any).rentalAttachment.create({
+          data: {
+            rentalId: id,
+            type: 'CONTRACT',
+            filePath: `rentals/${id}/${safeName}`,
+            originalFileName: f.originalname || 'contract',
+          },
+        });
+      }
+
+      if (deliveryActFile) {
+        const f = deliveryActFile;
+        const safeName = `${Date.now()}_${(f.originalname || 'delivery_act').replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        await writeFile(join(uploadDir, safeName), f.buffer);
+        await (this.prisma as any).rentalAttachment.deleteMany({ where: { rentalId: id, type: 'DELIVERY_ACT' } });
+        await (this.prisma as any).rentalAttachment.create({
+          data: {
+            rentalId: id,
+            type: 'DELIVERY_ACT',
+            filePath: `rentals/${id}/${safeName}`,
+            originalFileName: f.originalname || 'delivery_act',
+          },
+        });
+      }
+    }
+
+    return rental;
   }
 
   @Post()
