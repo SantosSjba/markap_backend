@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -13,6 +13,7 @@ import {
   GetClientStatsUseCase,
   GetClientByIdUseCase,
   UpdateClientUseCase,
+  DeleteClientUseCase,
 } from '../../../application/use-cases/clients';
 import { CreateClientDto, UpdateClientDto } from '../dtos/clients';
 import { PrismaService } from '../../database/prisma/prisma.service';
@@ -28,6 +29,7 @@ export class ClientsController {
     private readonly getClientStatsUseCase: GetClientStatsUseCase,
     private readonly getClientByIdUseCase: GetClientByIdUseCase,
     private readonly updateClientUseCase: UpdateClientUseCase,
+    private readonly deleteClientUseCase: DeleteClientUseCase,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -140,5 +142,14 @@ export class ClientsController {
       notes: dto.notes,
       address: dto.address,
     });
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Eliminar cliente (soft delete)' })
+  @ApiResponse({ status: 200, description: 'Cliente eliminado correctamente' })
+  @ApiResponse({ status: 404 })
+  async remove(@Param('id') id: string) {
+    return this.deleteClientUseCase.execute(id);
   }
 }

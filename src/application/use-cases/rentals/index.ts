@@ -6,3 +6,4 @@ export * from './update-rental.use-case';
 export * from './get-rental-financial-config.use-case';
 export * from './upsert-rental-financial-config.use-case';
 export * from './get-rental-financial-breakdown.use-case';
+export * from './cancel-rental.use-case';

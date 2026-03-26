@@ -69,6 +69,13 @@ export interface RentalStats {
   vencidos: number;
 }
 
+export interface RentalAttachmentData {
+  id: string;
+  type: string;
+  filePath: string;
+  originalFileName: string;
+}
+
 export interface RentalDetailData extends RentalData {
   code: string;
   property: { id: string; code: string; addressLine: string; ownerId: string; owner: { id: string; fullName: string } };
@@ -76,6 +83,7 @@ export interface RentalDetailData extends RentalData {
   hasContract: boolean;
   hasDeliveryAct: boolean;
   enableAlerts: boolean;
+  attachments: RentalAttachmentData[];
 }
 
 export interface UpdateRentalData {
@@ -98,6 +106,8 @@ export interface RentalRepository {
   update(id: string, data: UpdateRentalData): Promise<RentalData>;
   /** Cuenta alquileres vigentes (ACTIVE, endDate >= hoy, no eliminados) para una propiedad */
   countActiveByPropertyId(propertyId: string): Promise<number>;
+  /** Soft delete: marca como CANCELLED y registra deletedAt */
+  cancel(id: string): Promise<void>;
 }
 
 export const RENTAL_REPOSITORY = Symbol('RentalRepository');

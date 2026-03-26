@@ -290,4 +290,11 @@ export class ClientPrismaRepository implements ClientRepository {
       isActive: client.isActive,
     };
   }
+
+  async softDelete(id: string): Promise<void> {
+    await this.prisma.client.update({
+      where: { id },
+      data: { deletedAt: new Date(), isActive: false },
+    });
+  }
 }

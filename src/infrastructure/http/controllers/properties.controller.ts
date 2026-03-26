@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -16,6 +16,7 @@ import {
   GetPropertyStatsUseCase,
   UpdatePropertyUseCase,
   UpdatePropertyListingStatusUseCase,
+  DeletePropertyUseCase,
 } from '../../../application/use-cases/properties';
 import { CreatePropertyDto, UpdatePropertyDto } from '../dtos/properties';
 import { UpdateListingStatusDto } from '../dtos/properties/update-listing-status.dto';
@@ -33,6 +34,7 @@ export class PropertiesController {
     private readonly getPropertyStatsUseCase: GetPropertyStatsUseCase,
     private readonly updatePropertyUseCase: UpdatePropertyUseCase,
     private readonly updatePropertyListingStatusUseCase: UpdatePropertyListingStatusUseCase,
+    private readonly deletePropertyUseCase: DeletePropertyUseCase,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -220,5 +222,14 @@ export class PropertiesController {
       maintenanceAmount: dto.maintenanceAmount,
       depositMonths: dto.depositMonths,
     });
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Eliminar propiedad (soft delete)' })
+  @ApiResponse({ status: 200, description: 'Propiedad eliminada correctamente' })
+  @ApiResponse({ status: 404 })
+  async remove(@Param('id') id: string) {
+    return this.deletePropertyUseCase.execute(id);
   }
 }

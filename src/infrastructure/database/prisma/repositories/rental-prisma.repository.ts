@@ -131,14 +131,15 @@ export class RentalPrismaRepository implements RentalRepository {
       include: {
         property: { select: { id: true, code: true, addressLine: true, ownerId: true, owner: { select: { id: true, fullName: true } } } },
         tenant: { select: { id: true, fullName: true } },
-        attachments: { select: { type: true } },
+        attachments: { select: { id: true, type: true, filePath: true, originalFileName: true }, orderBy: { id: 'asc' } },
       },
     });
     if (!r) return null;
     const year = r.startDate instanceof Date ? r.startDate.getFullYear() : new Date(r.startDate).getFullYear();
     const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
-    const contractCount = (r.attachments || []).filter((a: any) => a.type === 'CONTRACT').length;
-    const deliveryCount = (r.attachments || []).filter((a: any) => a.type === 'DELIVERY_ACT').length;
+    const attachments: Array<{ id: string; type: string; filePath: string; originalFileName: string }> = r.attachments || [];
+    const contractCount = attachments.filter((a) => a.type === 'CONTRACT').length;
+    const deliveryCount = attachments.filter((a) => a.type === 'DELIVERY_ACT').length;
     return {
       ...this.toRentalData(r),
       code: `ALQ-${year}-${shortId}`,
@@ -152,6 +153,12 @@ export class RentalPrismaRepository implements RentalRepository {
       tenant: { id: r.tenant.id, fullName: r.tenant.fullName },
       hasContract: contractCount > 0,
       hasDeliveryAct: deliveryCount > 0,
+      attachments: attachments.map((a) => ({
+        id: a.id,
+        type: a.type,
+        filePath: a.filePath,
+        originalFileName: a.originalFileName,
+      })),
     };
   }
 
@@ -239,5 +246,12 @@ export class RentalPrismaRepository implements RentalRepository {
       status: r.status,
       enableAlerts: r.enableAlerts,
     };
+  }
+
+  async cancel(id: string): Promise<void> {
+    await this.prisma.rental.update({
+      where: { id },
+      data: { status: 'CANCELLED', deletedAt: new Date() },
+    });
   }
 }

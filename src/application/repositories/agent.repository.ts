@@ -63,6 +63,7 @@ export interface AgentRepository {
   findById(id: string): Promise<AgentListItem | null>;
   findMany(filters: ListAgentsFilters): Promise<ListAgentsResult>;
   update(id: string, data: UpdateAgentData): Promise<AgentData>;
+  softDelete(id: string): Promise<void>;
 }
 
 export const AGENT_REPOSITORY = Symbol('AgentRepository');

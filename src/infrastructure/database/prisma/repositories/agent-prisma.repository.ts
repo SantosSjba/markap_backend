@@ -154,6 +154,13 @@ export class AgentPrismaRepository implements AgentRepository {
     };
   }
 
+  async softDelete(id: string): Promise<void> {
+    await this.prisma.agent.update({
+      where: { id },
+      data: { deletedAt: new Date(), isActive: false },
+    });
+  }
+
   async update(id: string, data: UpdateAgentData): Promise<AgentData> {
     await this.prisma.agent.update({
       where: { id },

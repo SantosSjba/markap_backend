@@ -66,6 +66,7 @@ import {
   GetClientStatsUseCase,
   GetClientByIdUseCase,
   UpdateClientUseCase,
+  DeleteClientUseCase,
 } from '../../application/use-cases/clients';
 
 // Use Cases - Properties
@@ -76,6 +77,7 @@ import {
   GetPropertyStatsUseCase,
   UpdatePropertyUseCase,
   UpdatePropertyListingStatusUseCase,
+  DeletePropertyUseCase,
 } from '../../application/use-cases/properties';
 
 // Use Cases - Rentals
@@ -88,6 +90,7 @@ import {
   GetRentalFinancialConfigUseCase,
   UpsertRentalFinancialConfigUseCase,
   GetRentalFinancialBreakdownUseCase,
+  CancelRentalUseCase,
 } from '../../application/use-cases/rentals';
 
 // Use Cases - Agents
@@ -96,6 +99,7 @@ import {
   ListAgentsUseCase,
   GetAgentByIdUseCase,
   UpdateAgentUseCase,
+  DeleteAgentUseCase,
 } from '../../application/use-cases/agents';
 
 // Use Cases - Reports
@@ -232,6 +236,7 @@ import { NotificationsService } from './services/notifications.service';
     GetClientStatsUseCase,
     GetClientByIdUseCase,
     UpdateClientUseCase,
+    DeleteClientUseCase,
 
     // Use Cases - Properties
     CreatePropertyUseCase,
@@ -240,6 +245,9 @@ import { NotificationsService } from './services/notifications.service';
     GetPropertyStatsUseCase,
     UpdatePropertyUseCase,
     UpdatePropertyListingStatusUseCase,
+    DeletePropertyUseCase,
+
+    // Use Cases - Rentals
     CreateRentalUseCase,
     ListRentalsUseCase,
     GetRentalStatsUseCase,
@@ -248,10 +256,12 @@ import { NotificationsService } from './services/notifications.service';
     GetRentalFinancialConfigUseCase,
     UpsertRentalFinancialConfigUseCase,
     GetRentalFinancialBreakdownUseCase,
+    CancelRentalUseCase,
     CreateAgentUseCase,
     ListAgentsUseCase,
     GetAgentByIdUseCase,
     UpdateAgentUseCase,
+    DeleteAgentUseCase,
     GetReportsSummaryUseCase,
     GetContractsExpiringUseCase,
     GetPropertiesWithoutContractUseCase,

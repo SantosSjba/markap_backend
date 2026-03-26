@@ -4,12 +4,15 @@ import {
   Post,
   Put,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
@@ -32,6 +35,7 @@ import {
   GetRentalFinancialConfigUseCase,
   UpsertRentalFinancialConfigUseCase,
   GetRentalFinancialBreakdownUseCase,
+  CancelRentalUseCase,
 } from '../../../application/use-cases/rentals';
 import { CreateRentalDto } from '../dtos/rentals/create-rental.dto';
 import { UpdateRentalDto } from '../dtos/rentals/update-rental.dto';
@@ -60,6 +64,7 @@ export class RentalsController {
     private readonly getRentalFinancialBreakdownUseCase: GetRentalFinancialBreakdownUseCase,
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly cancelRentalUseCase: CancelRentalUseCase,
   ) {}
 
   @Get()
@@ -321,5 +326,14 @@ export class RentalsController {
     }
 
     return rental;
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cancelar contrato (soft delete)' })
+  @ApiResponse({ status: 200, description: 'Contrato cancelado correctamente' })
+  @ApiResponse({ status: 404 })
+  async cancel(@Param('id') id: string) {
+    return this.cancelRentalUseCase.execute(id);
   }
 }

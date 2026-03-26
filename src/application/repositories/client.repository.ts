@@ -123,6 +123,7 @@ export interface ClientRepository {
   findMany(filters: ListClientsFilters): Promise<ListClientsResult>;
   getStats(applicationSlug: string): Promise<ClientStats>;
   update(id: string, data: UpdateClientData): Promise<ClientData>;
+  softDelete(id: string): Promise<void>;
 }
 
 export const CLIENT_REPOSITORY = Symbol('ClientRepository');

@@ -3,10 +3,13 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +24,7 @@ import {
   ListAgentsUseCase,
   GetAgentByIdUseCase,
   UpdateAgentUseCase,
+  DeleteAgentUseCase,
 } from '../../../application/use-cases/agents';
 import { CreateAgentDto, UpdateAgentDto } from '../dtos/agents';
 
@@ -34,6 +38,7 @@ export class AgentsController {
     private readonly listAgentsUseCase: ListAgentsUseCase,
     private readonly getAgentByIdUseCase: GetAgentByIdUseCase,
     private readonly updateAgentUseCase: UpdateAgentUseCase,
+    private readonly deleteAgentUseCase: DeleteAgentUseCase,
   ) {}
 
   @Get()
@@ -106,5 +111,14 @@ export class AgentsController {
       documentNumber: dto.documentNumber,
       isActive: dto.isActive,
     });
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Eliminar agente (soft delete)' })
+  @ApiResponse({ status: 200, description: 'Agente eliminado correctamente' })
+  @ApiResponse({ status: 404 })
+  async remove(@Param('id') id: string) {
+    return this.deleteAgentUseCase.execute(id);
   }
 }

@@ -118,6 +118,7 @@ export interface PropertyRepository {
   findMany(filters: ListPropertiesFilters): Promise<ListPropertiesResult>;
   getStats(applicationSlug: string): Promise<PropertyStats>;
   update(data: UpdatePropertyData): Promise<PropertyData>;
+  softDelete(id: string): Promise<void>;
 }
 
 export const PROPERTY_REPOSITORY = Symbol('PropertyRepository');

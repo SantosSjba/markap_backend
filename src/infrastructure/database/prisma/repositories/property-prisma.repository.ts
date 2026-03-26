@@ -248,4 +248,11 @@ export class PropertyPrismaRepository implements PropertyRepository {
       isActive: property.isActive,
     };
   }
+
+  async softDelete(id: string): Promise<void> {
+    await this.prisma.property.update({
+      where: { id },
+      data: { deletedAt: new Date(), isActive: false },
+    });
+  }
 }
