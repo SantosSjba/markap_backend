@@ -24,4 +24,4 @@ RUN mkdir -p uploads
 EXPOSE 3000
 
 # Ejecutar migraciones y arrancar en producción
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node -r tsconfig-paths/register dist/main"]
+CMD ["sh", "-c", "node_modules/.bin/prisma db push --accept-data-loss && node -r tsconfig-paths/register dist/main"]
