@@ -2,26 +2,26 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# dumb-init: proper PID 1 for signal forwarding (SIGTERM, etc.)
-RUN apk add --no-cache dumb-init
-
-# Install dependencies
+# Copiar archivos de dependencias
 COPY package*.json ./
-RUN npm ci
+COPY prisma ./prisma/
+COPY prisma.config.ts ./
 
-# Copy everything (includes prisma.config.ts, tsconfig.json, src/, prisma/, etc.)
-COPY . .
+# Instalar todas las dependencias (incluyendo dev)
+RUN npm install
 
-# Generate Prisma client for linux/alpine
+# Generar Prisma Client
 RUN npx prisma generate
 
-# Compile TypeScript → dist/
+# Copiar código fuente
+COPY . .
+
+# Compilar TypeScript → dist/
 RUN npm run build
 
-# Pre-create uploads directory
 RUN mkdir -p uploads
 
 EXPOSE 3000
 
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["./docker-entrypoint.sh"]
+# Ejecutar migraciones y arrancar en producción
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node -r tsconfig-paths/register dist/main"]
