@@ -40,6 +40,7 @@ import {
 import { CreateRentalDto } from '../dtos/rentals/create-rental.dto';
 import { UpdateRentalDto } from '../dtos/rentals/update-rental.dto';
 import { UpsertRentalFinancialConfigDto } from '../dtos/rentals/upsert-rental-financial-config.dto';
+import { SaveCommunicationNoteDto } from '../dtos/rentals/save-communication-note.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { NotificationsService } from '../services/notifications.service';
 import { mkdir, writeFile } from 'fs/promises';
@@ -326,6 +327,24 @@ export class RentalsController {
     }
 
     return rental;
+  }
+
+  @Patch(':id/communication-note')
+  @ApiOperation({ summary: 'Guardar nota de comunicación con el inquilino' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404 })
+  async saveCommunicationNote(
+    @Param('id') id: string,
+    @Body() dto: SaveCommunicationNoteDto,
+  ) {
+    await this.prisma.rental.update({
+      where: { id },
+      data: {
+        lastCommunicationNote: dto.note.trim(),
+        lastCommunicationDate: new Date(),
+      },
+    });
+    return { message: 'Nota guardada correctamente' };
   }
 
   @Delete(':id')

@@ -73,6 +73,8 @@ export interface OverduePaymentItem {
   tenantId: string;
   tenantName: string;
   tenantDocument: string | null;
+  tenantPhone: string | null;
+  tenantEmail: string | null;
   overdueLevel: 'critical' | 'high' | 'moderate'; // critical >30d, high 15-30d, moderate <15d
   totalOwed: number;
   currency: string;
@@ -80,6 +82,7 @@ export interface OverduePaymentItem {
   maxDaysOverdue: number; // días del pago más atrasado
   lastPaymentDate: Date | null;
   lastCommunicationDate: Date | null;
+  lastCommunicationNote: string | null;
   // Detalles de la propiedad (primera propiedad si tiene varias)
   propertyAddress: string;
   ownerName: string;

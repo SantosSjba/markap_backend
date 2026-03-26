@@ -307,6 +307,8 @@ export class PaymentPrismaRepository implements PaymentRepository {
                 id: true,
                 fullName: true,
                 documentNumber: true,
+                primaryPhone: true,
+                primaryEmail: true,
                 notes: true,
               },
             },
@@ -322,11 +324,21 @@ export class PaymentPrismaRepository implements PaymentRepository {
       orderBy: { dueDate: 'asc' },
     });
 
+    // Pre-fetch lastCommunicationNote/Date for rentals in the result set
+    const rentalIds = [...new Set(overduePayments.map((p) => p.rental.id))];
+    const rentalNotes = await this.prisma.rental.findMany({
+      where: { id: { in: rentalIds } },
+      select: { id: true, lastCommunicationNote: true, lastCommunicationDate: true },
+    });
+    const rentalNoteMap = new Map(
+      rentalNotes.map((r) => [r.id, { note: r.lastCommunicationNote, date: r.lastCommunicationDate }]),
+    );
+
     // Agrupa por tenantId
     const grouped = new Map<
       string,
       {
-        tenant: { id: string; fullName: string; documentNumber: string | null; notes: string | null };
+        tenant: { id: string; fullName: string; documentNumber: string | null; primaryPhone: string | null; primaryEmail: string | null; notes: string | null };
         payments: typeof overduePayments;
         rental: (typeof overduePayments)[0]['rental'];
       }
@@ -365,17 +377,21 @@ export class PaymentPrismaRepository implements PaymentRepository {
         select: { paidDate: true },
       });
 
+      const commNote = rentalNoteMap.get(rental.id);
       result.push({
         tenantId: tenant.id,
         tenantName: tenant.fullName,
         tenantDocument: tenant.documentNumber ?? null,
+        tenantPhone: tenant.primaryPhone ?? null,
+        tenantEmail: tenant.primaryEmail ?? null,
         overdueLevel,
         totalOwed,
         currency: rental.currency,
         monthsOverdue,
         maxDaysOverdue: maxDays,
         lastPaymentDate: lastPaidPayment?.paidDate ?? null,
-        lastCommunicationDate: null, // campo futuro
+        lastCommunicationDate: commNote?.date ?? null,
+        lastCommunicationNote: commNote?.note ?? null,
         propertyAddress: `${rental.property.addressLine}, ${rental.property.district?.name ?? ''}`.trim().replace(/,$/, ''),
         ownerName: rental.property.owner?.fullName ?? '—',
         rentalId: rental.id,

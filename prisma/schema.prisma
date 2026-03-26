@@ -442,6 +442,10 @@ model Rental {
   status       String  @default("ACTIVE") @map("status") // ACTIVE, EXPIRED, CANCELLED
   enableAlerts Boolean @default(true) @map("enable_alerts") // Si el usuario quiere recibir alertas de este contrato
 
+  // Seguimiento de comunicación con el inquilino
+  lastCommunicationNote String?   @db.Text @map("last_communication_note")
+  lastCommunicationDate DateTime? @map("last_communication_date")
+
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   createdBy String?   @map("created_by")
