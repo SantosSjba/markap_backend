@@ -28,8 +28,13 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // Enable CORS for frontend communication
+  // FRONTEND_URL supports multiple origins separated by commas:
+  // e.g. "http://localhost:5173,https://admin.markaphomes.com"
+  const rawOrigins = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const allowedOrigins = rawOrigins.split(',').map((o) => o.trim());
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins,
     credentials: true,
   });
 
