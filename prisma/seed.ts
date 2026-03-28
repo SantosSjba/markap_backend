@@ -336,6 +336,92 @@ async function main() {
     }
   }
 
+  // 3.4 Crear menús para Ventas Inmobiliarias
+  console.log('\n📂 Creating menus for Ventas...');
+  const ventasApp = await prisma.application.findUnique({
+    where: { slug: 'ventas' },
+  });
+
+  if (ventasApp) {
+    const ventasParentMenus = [
+      { label: 'Dashboard', icon: 'layout-dashboard', path: '/ventas', order: 0 },
+      { label: 'Clientes', icon: 'users', path: null, order: 1 },
+      { label: 'Propiedades', icon: 'building', path: null, order: 2 },
+      { label: 'Negociaciones', icon: 'file-text', path: '/ventas/negociaciones', order: 3 },
+      { label: 'Comisiones', icon: 'dollar-sign', path: '/ventas/comisiones', order: 4 },
+      { label: 'Reportes', icon: 'bar-chart', path: '/ventas/reportes', order: 5 },
+      { label: 'Configuración', icon: 'settings', path: '/ventas/configuracion', order: 6 },
+    ];
+
+    const ventasMenuIds: { [key: string]: string } = {};
+
+    for (const m of ventasParentMenus) {
+      const existingMenu = await prisma.menu.findFirst({
+        where: {
+          applicationId: ventasApp.id,
+          parentId: null,
+          ...(m.path ? { path: m.path } : { label: m.label }),
+        },
+      });
+      if (!existingMenu) {
+        const menu = await prisma.menu.create({
+          data: {
+            applicationId: ventasApp.id,
+            parentId: null,
+            label: m.label,
+            icon: m.icon,
+            path: m.path,
+            order: m.order,
+            isActive: true,
+          },
+        });
+        ventasMenuIds[m.label] = menu.id;
+        console.log(`   ✅ Ventas menu "${m.label}" created`);
+      } else {
+        await prisma.menu.update({
+          where: { id: existingMenu.id },
+          data: { label: m.label, icon: m.icon, path: m.path, order: m.order },
+        });
+        ventasMenuIds[m.label] = existingMenu.id;
+        console.log(`   ✅ Ventas menu "${m.label}" updated`);
+      }
+    }
+
+    const ventasChildMenus = [
+      { label: 'Listado de Clientes', path: '/ventas/clientes', order: 0, parentLabel: 'Clientes' },
+      { label: 'Nuevo Cliente', path: '/ventas/clientes/nuevo', order: 1, parentLabel: 'Clientes' },
+      { label: 'Listado de Propiedades', path: '/ventas/propiedades', order: 0, parentLabel: 'Propiedades' },
+      { label: 'Nueva Propiedad', path: '/ventas/propiedades/nueva', order: 1, parentLabel: 'Propiedades' },
+    ];
+
+    for (const m of ventasChildMenus) {
+      const parentId = ventasMenuIds[m.parentLabel];
+      if (!parentId) continue;
+
+      const existing = await prisma.menu.findFirst({
+        where: {
+          applicationId: ventasApp.id,
+          label: m.label,
+          parentId,
+        },
+      });
+      if (!existing) {
+        await prisma.menu.create({
+          data: {
+            applicationId: ventasApp.id,
+            parentId,
+            label: m.label,
+            icon: null,
+            path: m.path,
+            order: m.order,
+            isActive: true,
+          },
+        });
+        console.log(`   ✅ Ventas submenu "${m.label}" created`);
+      }
+    }
+  }
+
   // 4. Crear usuario Admin
   console.log('\n👤 Creating admin user...');
   const adminEmail = process.env.ADMIN_EMAIL || 'sistemas@markaphomes.com';
