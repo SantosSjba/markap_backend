@@ -1,0 +1,79 @@
+// Aplicaciones del sistema, menús dinámicos, permisos rol ↔ app
+
+model Application {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  description String?
+  icon        String?
+  color       String?
+  url         String?
+
+  activeCount  Int @default(0) @map("active_count")
+  pendingCount Int @default(0) @map("pending_count")
+
+  isActive Boolean @default(true) @map("is_active")
+  order    Int     @default(0)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  roleApplications RoleApplication[]
+  menus            Menu[]
+  clients          Client[]
+  properties       Property[]
+  rentals          Rental[]
+  agents           Agent[]
+  alertConfigs     AlertConfig[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([order])
+  @@map("applications")
+}
+
+model Menu {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  parentId      String? @map("parent_id")
+  label         String
+  icon          String?
+  path          String?
+  order         Int     @default(0) @map("order")
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  parent      Menu?       @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Menu[]      @relation("MenuHierarchy")
+
+  @@index([applicationId])
+  @@index([parentId])
+  @@index([order])
+  @@map("menus")
+}
+
+model RoleApplication {
+  id            String @id @default(uuid())
+  roleId        String @map("role_id")
+  applicationId String @map("application_id")
+
+  canRead   Boolean @default(true) @map("can_read")
+  canWrite  Boolean @default(false) @map("can_write")
+  canDelete Boolean @default(false) @map("can_delete")
+  canAdmin  Boolean @default(false) @map("can_admin")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  role        Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, applicationId])
+  @@index([roleId])
+  @@index([applicationId])
+  @@map("role_applications")
+}

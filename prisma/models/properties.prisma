@@ -1,0 +1,53 @@
+// Inmuebles
+
+model Property {
+  id             String @id @default(uuid())
+  applicationId  String @map("application_id")
+  code           String
+  propertyTypeId String @map("property_type_id")
+
+  addressLine String  @map("address_line")
+  districtId  String  @map("district_id")
+  description String? @db.Text
+
+  area          Float?  @map("area")
+  bedrooms      Int?    @map("bedrooms")
+  bathrooms     Int?    @map("bathrooms")
+  ageYears      Int?    @map("age_years")
+  floorLevel    String? @map("floor_level")
+  parkingSpaces Int?    @map("parking_spaces")
+
+  partida1 String? @map("partida_1")
+  partida2 String? @map("partida_2")
+  partida3 String? @map("partida_3")
+
+  ownerId String @map("owner_id")
+
+  monthlyRent       Float? @map("monthly_rent")
+  maintenanceAmount Float? @map("maintenance_amount")
+  depositMonths     Int?   @map("deposit_months")
+
+  listingStatus String? @map("listing_status")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  application  Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  propertyType PropertyType @relation(fields: [propertyTypeId], references: [id], onDelete: Restrict)
+  district     District     @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  owner        Client       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  rentals      Rental[]
+
+  @@index([applicationId])
+  @@index([propertyTypeId])
+  @@index([districtId])
+  @@index([ownerId])
+  @@index([deletedAt])
+  @@map("properties")
+}

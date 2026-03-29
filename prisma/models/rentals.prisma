@@ -1,0 +1,126 @@
+// Contratos de alquiler, pagos, adjuntos, distribución financiera
+
+model Rental {
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
+  propertyId    String @map("property_id")
+  tenantId      String @map("tenant_id")
+
+  startDate       DateTime @map("start_date")
+  endDate         DateTime @map("end_date")
+  currency        String   @default("PEN") @map("currency")
+  monthlyAmount   Float    @map("monthly_amount")
+  securityDeposit Float?   @map("security_deposit")
+  paymentDueDay   Int      @default(5) @map("payment_due_day")
+  notes           String?  @db.Text
+
+  status       String  @default("ACTIVE") @map("status")
+  enableAlerts Boolean @default(true) @map("enable_alerts")
+
+  lastCommunicationNote String?   @db.Text @map("last_communication_note")
+  lastCommunicationDate DateTime? @map("last_communication_date")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  property    Property    @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  tenant      Client      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  attachments     RentalAttachment[]
+  financialConfig RentalFinancialConfig?
+  payments        Payment[]
+
+  @@index([applicationId])
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("rentals")
+}
+
+model RentalFinancialConfig {
+  id       String @id @default(uuid())
+  rentalId String @unique @map("rental_id")
+  currency String @default("PEN") @map("currency")
+
+  baseAmount Float? @map("base_amount")
+
+  expenseType  String @default("FIXED") @map("expense_type")
+  expenseValue Float  @default(0) @map("expense_value")
+
+  taxType  String @default("FIXED") @map("tax_type")
+  taxValue Float  @default(0) @map("tax_value")
+
+  externalAgentId     String? @map("external_agent_id")
+  externalAgentType   String  @default("FIXED") @map("external_agent_type")
+  externalAgentValue  Float   @default(0) @map("external_agent_value")
+  externalAgentName   String? @map("external_agent_name")
+
+  internalAgentId    String? @map("internal_agent_id")
+  internalAgentType  String  @default("FIXED") @map("internal_agent_type")
+  internalAgentValue Float   @default(0) @map("internal_agent_value")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rental          Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  externalAgent   Agent? @relation("ExternalAgent", fields: [externalAgentId], references: [id], onDelete: SetNull)
+  internalAgentUser User?  @relation(fields: [internalAgentId], references: [id], onDelete: SetNull)
+
+  @@index([rentalId])
+  @@index([internalAgentId])
+  @@index([externalAgentId])
+  @@map("rental_financial_configs")
+}
+
+model Payment {
+  id       String @id @default(uuid())
+  rentalId String @map("rental_id")
+
+  periodYear  Int      @map("period_year")
+  periodMonth Int      @map("period_month")
+  dueDate     DateTime @map("due_date")
+  amount      Float    @map("amount")
+  currency    String   @default("PEN") @map("currency")
+
+  status String @default("PENDING") @map("status")
+
+  paidDate        DateTime? @map("paid_date")
+  paidAmount      Float?    @map("paid_amount")
+  paymentMethod   String?   @map("payment_method")
+  referenceNumber String?   @map("reference_number")
+  notes           String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@unique([rentalId, periodYear, periodMonth])
+  @@index([rentalId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("payments")
+}
+
+model RentalAttachment {
+  id               String @id @default(uuid())
+  rentalId         String @map("rental_id")
+  type             String @map("type")
+  filePath         String @map("file_path")
+  originalFileName String @map("original_file_name")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@index([rentalId])
+  @@index([type])
+  @@map("rental_attachments")
+}

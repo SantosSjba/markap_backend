@@ -1,0 +1,108 @@
+// Usuarios, roles, recuperación de contraseña, notificaciones in-app
+
+model User {
+  id        String  @id @default(uuid())
+  email     String  @unique
+  password  String
+  firstName String  @map("first_name")
+  lastName  String  @map("last_name")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  userRoles                     UserRole[]
+  passwordResetCodes            PasswordResetCode[]
+  notifications                 Notification[]
+  agentsAsInternal              Agent[]
+  rentalFinancialConfigsAsAgent RentalFinancialConfig[]
+  alertConfigs                  AlertConfig[]
+
+  @@index([email])
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model PasswordResetCode {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  code      String
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([code])
+  @@index([expiresAt])
+  @@map("password_reset_codes")
+}
+
+model Role {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  code        String  @unique
+  description String?
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  userRoles        UserRole[]
+  roleApplications RoleApplication[]
+
+  @@index([code])
+  @@index([isActive])
+  @@map("roles")
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  roleId String @map("role_id")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  assignedAt DateTime  @default(now()) @map("assigned_at")
+  assignedBy String?   @map("assigned_by")
+  revokedAt  DateTime? @map("revoked_at")
+  revokedBy  String?   @map("revoked_by")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model Notification {
+  id     String    @id @default(uuid())
+  userId String    @map("user_id")
+  type   String    @map("type")
+  title  String    @map("title")
+  body   String?   @db.Text
+  data   Json?     @map("data")
+  readAt DateTime? @map("read_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([readAt])
+  @@index([createdAt])
+  @@map("notifications")
+}

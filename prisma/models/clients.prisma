@@ -1,0 +1,63 @@
+// Clientes (propietarios / inquilinos) y direcciones
+
+model Client {
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
+  clientType    String @map("client_type")
+
+  documentTypeId String @map("document_type_id")
+  documentNumber String @map("document_number")
+
+  fullName                    String  @map("full_name")
+  legalRepresentativeName     String? @map("legal_representative_name")
+  legalRepresentativePosition String? @map("legal_representative_position")
+
+  primaryPhone   String  @map("primary_phone")
+  secondaryPhone String? @map("secondary_phone")
+  primaryEmail   String  @map("primary_email")
+  secondaryEmail String? @map("secondary_email")
+
+  notes String? @db.Text
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  application       Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  documentType      DocumentType @relation(fields: [documentTypeId], references: [id], onDelete: Restrict)
+  addresses         Address[]
+  propertiesAsOwner Property[]
+  rentalsAsTenant   Rental[]
+
+  @@index([applicationId])
+  @@index([documentTypeId])
+  @@index([clientType])
+  @@index([documentNumber])
+  @@index([deletedAt])
+  @@map("clients")
+}
+
+model Address {
+  id          String  @id @default(uuid())
+  clientId    String  @map("client_id")
+  addressType String  @map("address_type")
+  addressLine String  @map("address_line")
+  districtId  String  @map("district_id")
+  reference   String? @db.Text
+  isPrimary   Boolean @default(true) @map("is_primary")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  district District @relation(fields: [districtId], references: [id], onDelete: Restrict)
+
+  @@index([clientId])
+  @@index([districtId])
+  @@map("addresses")
+}

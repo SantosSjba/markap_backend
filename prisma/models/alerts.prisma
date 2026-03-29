@@ -1,0 +1,29 @@
+// Preferencias de alertas por usuario y aplicación
+
+model AlertConfig {
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
+  userId        String @map("user_id")
+
+  alert30Days Boolean @default(true) @map("alert_30_days")
+  alert60Days Boolean @default(true) @map("alert_60_days")
+  alert90Days Boolean @default(false) @map("alert_90_days")
+
+  alertPendingPayment Boolean @default(true) @map("alert_pending_payment")
+  alertOverduePayment Boolean @default(true) @map("alert_overdue_payment")
+
+  channelInApp    Boolean @default(true) @map("channel_in_app")
+  channelEmail    Boolean @default(false) @map("channel_email")
+  channelWhatsapp Boolean @default(false) @map("channel_whatsapp")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, userId])
+  @@index([applicationId])
+  @@index([userId])
+  @@map("alert_configs")
+}
