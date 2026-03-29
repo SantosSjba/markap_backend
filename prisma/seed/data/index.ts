@@ -1,6 +1,11 @@
 export { APPLICATIONS } from './applications';
 export { DOCUMENT_TYPES } from './document-types';
 export { ALQUILERES_CHILD_MENUS, ALQUILERES_PARENT_MENUS } from './menus-alquileres';
+export {
+  VENTAS_APPLICATION_SLUG,
+  VENTAS_CHILD_MENUS,
+  VENTAS_PARENT_MENUS,
+} from './menus-ventas';
 export { PROPERTY_TYPES } from './property-types';
 export { ROLE_APPLICATION_ASSIGNMENTS } from './role-application-assignments';
 export { ROLES } from './roles';

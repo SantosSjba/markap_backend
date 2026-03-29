@@ -9,6 +9,7 @@ import {
   seedPropertyTypes,
   seedRolesAndApplications,
   seedUbigeo,
+  seedVentasMenus,
 } from './seed/steps';
 
 const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);
@@ -21,6 +22,7 @@ async function main() {
 
   const { adminRoleId, appIdBySlug } = await seedRolesAndApplications(prisma);
   await seedAlquileresMenus(prisma);
+  await seedVentasMenus(prisma);
   const { adminUser } = await seedAdminUser(prisma, adminRoleId);
   await seedDocumentTypes(prisma);
   await seedUbigeo(prisma);
