@@ -7,7 +7,7 @@ export class CreateAgentDto {
   @IsString()
   applicationId?: string;
 
-  @ApiPropertyOptional({ description: 'Slug de la aplicación (ej: alquileres)' })
+  @ApiPropertyOptional({ description: 'Slug de la aplicación (ej. alquileres, ventas)' })
   @IsOptional()
   @IsString()
   applicationSlug?: string;

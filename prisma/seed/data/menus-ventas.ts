@@ -7,13 +7,15 @@ export const VENTAS_PARENT_MENUS = [
 
   { label: 'Propiedades', icon: 'building', path: null, order: 2 },
 
-  { label: 'Ventas', icon: 'file-text', path: null, order: 3 },
+  { label: 'Agentes', icon: 'user-check', path: null, order: 3 },
 
-  { label: 'Finanzas', icon: 'dollar-sign', path: null, order: 4 },
+  { label: 'Ventas', icon: 'file-text', path: null, order: 4 },
 
-  { label: 'Reportes', icon: 'bar-chart', path: '/ventas/reportes', order: 5 },
+  { label: 'Finanzas', icon: 'dollar-sign', path: null, order: 5 },
 
-  { label: 'Configuración', icon: 'settings', path: '/ventas/configuracion', order: 6 },
+  { label: 'Reportes', icon: 'bar-chart', path: '/ventas/reportes', order: 6 },
+
+  { label: 'Configuración', icon: 'settings', path: '/ventas/configuracion', order: 7 },
 ];
 
 export const VENTAS_CHILD_MENUS = [
@@ -24,6 +26,10 @@ export const VENTAS_CHILD_MENUS = [
   // Propiedades
   { label: 'Listado de Propiedades', path: '/ventas/propiedades', order: 0, parentLabel: 'Propiedades' },
   { label: 'Nueva Propiedad', path: '/ventas/propiedades/nueva', order: 1, parentLabel: 'Propiedades' },
+
+  // Agentes
+  { label: 'Listado de Agentes', path: '/ventas/agentes', order: 0, parentLabel: 'Agentes' },
+  { label: 'Nuevo Agente', path: '/ventas/agentes/nuevo', order: 1, parentLabel: 'Agentes' },
 
   // Ventas (antes Negociaciones)
   { label: 'Procesos de Venta', path: '/ventas/procesos', order: 0, parentLabel: 'Ventas' },

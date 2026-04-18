@@ -46,7 +46,7 @@ export class AgentsController {
   @ApiQuery({
     name: 'applicationSlug',
     required: false,
-    description: 'Slug de la aplicación (default: alquileres)',
+    description: 'Slug de la aplicación (ej. alquileres, ventas). Por defecto: alquileres',
   })
   @ApiQuery({ name: 'page', required: false, description: 'Página (1-based)' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items por página' })
@@ -92,9 +92,20 @@ export class AgentsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener agente por ID' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description:
+      'Si se envía, valida que el agente pertenezca a esa aplicación (ej. ventas)',
+  })
   @ApiResponse({ status: 200 })
-  async getById(@Param('id') id: string) {
-    return this.getAgentByIdUseCase.execute(id);
+  async getById(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.getAgentByIdUseCase.execute(id, {
+      applicationSlug: applicationSlug?.trim() || undefined,
+    });
   }
 
   @Patch(':id')
