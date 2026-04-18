@@ -152,6 +152,8 @@ export interface PropertyRepository {
   getStats(applicationSlug: string): Promise<PropertyStats>;
   update(data: UpdatePropertyData): Promise<PropertyData>;
   softDelete(id: string): Promise<void>;
+  /** Propiedades no eliminadas donde el cliente es titular (cualquier aplicación). */
+  countActiveByOwnerId(ownerId: string): Promise<number>;
 }
 
 export const PROPERTY_REPOSITORY = Symbol('PropertyRepository');

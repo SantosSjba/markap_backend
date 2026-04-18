@@ -5,6 +5,8 @@ import type { RentalRepository } from '../../repositories/rental.repository';
 import { RENTAL_REPOSITORY } from '../../repositories/rental.repository';
 import type { ApplicationRepository } from '../../repositories/application.repository';
 import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
+import type { PropertyRepository } from '../../repositories/property.repository';
+import { PROPERTY_REPOSITORY } from '../../repositories/property.repository';
 import { EntityNotFoundException } from '../../exceptions';
 
 @Injectable()
@@ -16,6 +18,8 @@ export class DeleteClientUseCase {
     private readonly rentalRepository: RentalRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
+    @Inject(PROPERTY_REPOSITORY)
+    private readonly propertyRepository: PropertyRepository,
   ) {}
 
   /**
@@ -36,6 +40,14 @@ export class DeleteClientUseCase {
     }
 
     const isVentasApp = app?.slug === 'ventas';
+    if (isVentasApp && client.clientType === 'OWNER') {
+      const props = await this.propertyRepository.countActiveByOwnerId(id);
+      if (props > 0) {
+        throw new BadRequestException(
+          'No se puede eliminar el propietario mientras tenga propiedades en inventario.',
+        );
+      }
+    }
     if (!isVentasApp) {
       const activeRentals = await this.rentalRepository.countActiveInvolvingClient(
         id,

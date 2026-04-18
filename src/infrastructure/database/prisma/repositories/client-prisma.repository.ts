@@ -160,27 +160,55 @@ export class ClientPrismaRepository implements ClientRepository {
     });
     if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
-    const where: Record<string, unknown> = {
-      applicationId: app.id,
-      deletedAt: null,
-    };
+    const andParts: Record<string, unknown>[] = [
+      { applicationId: app.id, deletedAt: null },
+    ];
 
     if (app.slug === 'ventas') {
-      where.clientType = 'BUYER';
-      if (filters.salesStatus) where.salesStatus = filters.salesStatus;
+      const ct =
+        filters.clientType === 'TENANT'
+          ? undefined
+          : filters.clientType === 'OWNER' || filters.clientType === 'BUYER'
+            ? filters.clientType
+            : undefined;
+      const st = filters.salesStatus;
+
+      if (ct === 'OWNER') {
+        andParts.push({ clientType: 'OWNER' });
+      } else if (ct === 'BUYER') {
+        andParts.push({ clientType: 'BUYER' });
+        if (st) {
+          andParts.push({ salesStatus: st });
+        }
+      } else if (st) {
+        andParts.push({ clientType: { in: ['BUYER', 'OWNER'] } });
+        andParts.push({
+          OR: [{ clientType: 'OWNER' }, { clientType: 'BUYER', salesStatus: st }],
+        });
+      } else {
+        andParts.push({ clientType: { in: ['BUYER', 'OWNER'] } });
+      }
     } else {
-      where.clientType = filters.clientType ?? { in: ['OWNER', 'TENANT'] };
+      andParts.push({
+        clientType: filters.clientType ?? { in: ['OWNER', 'TENANT'] },
+      });
     }
 
-    if (filters.isActive !== undefined) where.isActive = filters.isActive;
+    if (filters.isActive !== undefined) {
+      andParts.push({ isActive: filters.isActive });
+    }
     if (filters.search?.trim()) {
       const q = filters.search.trim();
-      where.OR = [
-        { fullName: { contains: q } },
-        { documentNumber: { contains: q } },
-        { primaryEmail: { contains: q } },
-      ];
+      andParts.push({
+        OR: [
+          { fullName: { contains: q } },
+          { documentNumber: { contains: q } },
+          { primaryEmail: { contains: q } },
+        ],
+      });
     }
+
+    const where = { AND: andParts };
 
     const [data, total] = await Promise.all([
       this.prisma.client.findMany({
@@ -203,7 +231,11 @@ export class ClientPrismaRepository implements ClientRepository {
       ownerIds.length > 0
         ? this.prisma.property.groupBy({
             by: ['ownerId'],
-            where: { ownerId: { in: ownerIds }, deletedAt: null },
+            where: {
+              ownerId: { in: ownerIds },
+              deletedAt: null,
+              applicationId: app.id,
+            },
             _count: { id: true },
           })
         : [],
@@ -270,17 +302,38 @@ export class ClientPrismaRepository implements ClientRepository {
     if (!app) return { total: 0, owners: 0, tenants: 0, active: 0 };
 
     if (app.slug === 'ventas') {
-      const base = { applicationId: app.id, deletedAt: null, clientType: 'BUYER' as const };
-      const [total, active, prospects, interested, salesClients] = await Promise.all([
-        this.prisma.client.count({ where: base }),
-        this.prisma.client.count({ where: { ...base, isActive: true } }),
-        this.prisma.client.count({ where: { ...base, salesStatus: 'PROSPECT' } }),
-        this.prisma.client.count({ where: { ...base, salesStatus: 'INTERESTED' } }),
-        this.prisma.client.count({ where: { ...base, salesStatus: 'CLIENT' } }),
-      ]);
+      const allVentas = {
+        applicationId: app.id,
+        deletedAt: null,
+        clientType: { in: ['BUYER', 'OWNER'] },
+      };
+      const buyerBase = {
+        applicationId: app.id,
+        deletedAt: null,
+        clientType: 'BUYER' as const,
+      };
+      const [total, owners, active, prospects, interested, salesClients] =
+        await Promise.all([
+          this.prisma.client.count({ where: allVentas }),
+          this.prisma.client.count({
+            where: { applicationId: app.id, deletedAt: null, clientType: 'OWNER' },
+          }),
+          this.prisma.client.count({
+            where: { ...buyerBase, isActive: true },
+          }),
+          this.prisma.client.count({
+            where: { ...buyerBase, salesStatus: 'PROSPECT' },
+          }),
+          this.prisma.client.count({
+            where: { ...buyerBase, salesStatus: 'INTERESTED' },
+          }),
+          this.prisma.client.count({
+            where: { ...buyerBase, salesStatus: 'CLIENT' },
+          }),
+        ]);
       return {
         total,
-        owners: 0,
+        owners,
         tenants: 0,
         active,
         prospects,

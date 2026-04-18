@@ -168,7 +168,7 @@ export class PropertiesController {
         primaryEmail: true,
       },
       orderBy: { fullName: 'asc' },
-      take: 100,
+      take: 500,
     });
   }
 

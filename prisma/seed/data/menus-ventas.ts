@@ -21,7 +21,8 @@ export const VENTAS_PARENT_MENUS = [
 export const VENTAS_CHILD_MENUS = [
   // Clientes
   { label: 'Listado de Clientes', path: '/ventas/clientes', order: 0, parentLabel: 'Clientes' },
-  { label: 'Nuevo Cliente', path: '/ventas/clientes/nuevo', order: 1, parentLabel: 'Clientes' },
+  { label: 'Propietarios', path: '/ventas/clientes/propietarios', order: 1, parentLabel: 'Clientes' },
+  { label: 'Nuevo Cliente', path: '/ventas/clientes/nuevo', order: 2, parentLabel: 'Clientes' },
 
   // Propiedades
   { label: 'Listado de Propiedades', path: '/ventas/propiedades', order: 0, parentLabel: 'Propiedades' },

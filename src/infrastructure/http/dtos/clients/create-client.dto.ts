@@ -107,7 +107,10 @@ export class CreateClientDto {
   @IsString()
   assignedAgentId?: string | null;
 
-  @ApiPropertyOptional({ description: 'Dirección (obligatoria para OWNER/TENANT)' })
+  @ApiPropertyOptional({
+    description:
+      'Dirección obligatoria para propietario (ventas o alquileres) e inquilino (alquileres)',
+  })
   @ValidateIf((o) => o.clientType === 'OWNER' || o.clientType === 'TENANT')
   @IsObject()
   @ValidateNested()

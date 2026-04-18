@@ -84,10 +84,19 @@ export class CreateClientUseCase {
           applicationId,
         );
       }
+    } else if (input.clientType === 'OWNER') {
+      if (slug !== 'ventas' && slug !== 'alquileres') {
+        throw new BadRequestException(
+          'Los propietarios se crean con applicationSlug ventas o alquileres',
+        );
+      }
+      if (!input.address) {
+        throw new BadRequestException('La dirección es obligatoria');
+      }
     } else {
       if (slug !== 'alquileres') {
         throw new BadRequestException(
-          'Los propietarios e inquilinos deben crearse con applicationSlug alquileres',
+          'Los inquilinos deben crearse con applicationSlug alquileres',
         );
       }
       if (!input.address) {
