@@ -146,16 +146,35 @@ export class ClientsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener cliente por ID' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Si se indica (ej. ventas), solo se devuelve si el cliente pertenece a esa aplicación',
+  })
   @ApiResponse({ status: 200 })
-  async getById(@Param('id') id: string) {
-    return this.getClientByIdUseCase.execute(id);
+  async getById(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.getClientByIdUseCase.execute(id, applicationSlug);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar cliente' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Si se indica, el cliente debe pertenecer a esa aplicación',
+  })
   @ApiResponse({ status: 200 })
-  async update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
-    return this.updateClientUseCase.execute(id, {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateClientDto,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.updateClientUseCase.execute(
+      id,
+      {
       clientType: dto.clientType,
       documentTypeId: dto.documentTypeId,
       documentNumber: dto.documentNumber,
@@ -171,15 +190,25 @@ export class ClientsController {
       leadOrigin: dto.leadOrigin,
       assignedAgentId: dto.assignedAgentId,
       address: dto.address,
-    });
+    },
+      applicationSlug,
+    );
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Eliminar cliente (soft delete)' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Si se indica, el cliente debe pertenecer a esa aplicación',
+  })
   @ApiResponse({ status: 200, description: 'Cliente eliminado correctamente' })
   @ApiResponse({ status: 404 })
-  async remove(@Param('id') id: string) {
-    return this.deleteClientUseCase.execute(id);
+  async remove(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.deleteClientUseCase.execute(id, applicationSlug);
   }
 }

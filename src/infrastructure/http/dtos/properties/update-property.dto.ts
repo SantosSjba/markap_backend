@@ -6,8 +6,12 @@ import {
   IsUUID,
   Min,
   MaxLength,
+  IsArray,
+  ValidateNested,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PropertyMediaItemDto } from './property-media-item.dto';
 
 export class UpdatePropertyDto {
   @ApiProperty({ description: 'Código de la propiedad (ej: PROP-001)' })
@@ -115,4 +119,30 @@ export class UpdatePropertyDto {
   @IsNumber()
   @Min(0)
   depositMonths?: number | null;
+
+  @ApiPropertyOptional({ description: 'Precio de venta (S/)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  salePrice?: number | null;
+
+  @ApiPropertyOptional({ description: 'Proyecto / urbanización' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  projectName?: string | null;
+
+  @ApiPropertyOptional({ type: [PropertyMediaItemDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PropertyMediaItemDto)
+  mediaItems?: PropertyMediaItemDto[] | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @IsIn(['AVAILABLE', 'RESERVED', 'SOLD', 'RENTED', 'EXPIRING', 'MAINTENANCE'])
+  listingStatus?: string | null;
 }

@@ -27,6 +27,13 @@ model Property {
   maintenanceAmount Float? @map("maintenance_amount")
   depositMonths     Int?   @map("deposit_months")
 
+  /// Precio de venta (S/) — inventario Ventas
+  salePrice   Float?  @map("sale_price")
+  /// Nombre del proyecto / urbanización (Ventas)
+  projectName String? @map("project_name")
+  /// Multimedia: [{ "url": string, "kind": "photo" | "plan" }]
+  mediaItems  Json?   @map("media_items")
+
   listingStatus String? @map("listing_status")
 
   isActive Boolean @default(true) @map("is_active")

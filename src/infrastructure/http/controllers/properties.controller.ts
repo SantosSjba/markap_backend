@@ -45,7 +45,10 @@ export class PropertiesController {
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'propertyTypeId', required: false })
+  @ApiQuery({ name: 'districtId', required: false })
   @ApiQuery({ name: 'listingStatus', required: false })
+  @ApiQuery({ name: 'minSalePrice', required: false })
+  @ApiQuery({ name: 'maxSalePrice', required: false })
   @ApiResponse({ status: 200 })
   async list(
     @Query('applicationSlug') applicationSlug?: string,
@@ -53,15 +56,26 @@ export class PropertiesController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('propertyTypeId') propertyTypeId?: string,
+    @Query('districtId') districtId?: string,
     @Query('listingStatus') listingStatus?: string,
+    @Query('minSalePrice') minSalePrice?: string,
+    @Query('maxSalePrice') maxSalePrice?: string,
   ) {
+    const parseOptPrice = (v?: string) => {
+      if (v === undefined || v === '') return undefined;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    };
     return this.listPropertiesUseCase.execute({
       applicationSlug: applicationSlug ?? 'alquileres',
       page: Math.max(1, parseInt(page ?? '1', 10)),
       limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
       search: search?.trim() || undefined,
       propertyTypeId: propertyTypeId || undefined,
+      districtId: districtId || undefined,
       listingStatus: listingStatus === '' ? undefined : listingStatus ?? undefined,
+      minSalePrice: parseOptPrice(minSalePrice),
+      maxSalePrice: parseOptPrice(maxSalePrice),
     });
   }
 
@@ -161,55 +175,89 @@ export class PropertiesController {
   @Get(':id')
   @ApiOperation({ summary: 'Obtener propiedad por ID' })
   @ApiParam({ name: 'id', description: 'UUID de la propiedad' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Si se indica (ej. ventas), solo se devuelve si la propiedad pertenece a esa aplicación',
+  })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 404 })
-  async getById(@Param('id') id: string) {
-    return this.getPropertyByIdUseCase.execute(id);
+  async getById(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.getPropertyByIdUseCase.execute(id, applicationSlug);
   }
 
   @Patch(':id/listing-status')
-  @ApiOperation({ summary: 'Cambiar estado de listado (solo si tiene alquiler en vigencia)' })
+  @ApiOperation({
+    summary:
+      'Cambiar estado de listado (Ventas: sin restricción; Alquileres: requiere alquiler activo para RENTED/EXPIRING/MAINTENANCE)',
+  })
   @ApiParam({ name: 'id', description: 'UUID de la propiedad' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Si se indica, la propiedad debe pertenecer a esa aplicación',
+  })
   @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400, description: 'La propiedad no tiene alquiler en vigencia' })
+  @ApiResponse({ status: 400, description: 'Validación de aplicación o alquiler' })
   @ApiResponse({ status: 404 })
   async updateListingStatus(
     @Param('id') id: string,
     @Body() dto: UpdateListingStatusDto,
+    @Query('applicationSlug') applicationSlug?: string,
   ) {
     return this.updatePropertyListingStatusUseCase.execute(
       id,
       dto.listingStatus,
+      applicationSlug,
     );
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar propiedad' })
   @ApiParam({ name: 'id', description: 'UUID de la propiedad' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Si se indica, la propiedad debe pertenecer a esa aplicación',
+  })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 404 })
-  async update(@Param('id') id: string, @Body() dto: UpdatePropertyDto) {
-    return this.updatePropertyUseCase.execute({
-      id,
-      code: dto.code,
-      propertyTypeId: dto.propertyTypeId,
-      addressLine: dto.addressLine,
-      districtId: dto.districtId,
-      description: dto.description,
-      area: dto.area,
-      bedrooms: dto.bedrooms,
-      bathrooms: dto.bathrooms,
-      ageYears: dto.ageYears,
-      floorLevel: dto.floorLevel,
-      parkingSpaces: dto.parkingSpaces,
-      partida1: dto.partida1,
-      partida2: dto.partida2,
-      partida3: dto.partida3,
-      ownerId: dto.ownerId,
-      monthlyRent: dto.monthlyRent,
-      maintenanceAmount: dto.maintenanceAmount,
-      depositMonths: dto.depositMonths,
-    });
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePropertyDto,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.updatePropertyUseCase.execute(
+      {
+        id,
+        code: dto.code,
+        propertyTypeId: dto.propertyTypeId,
+        addressLine: dto.addressLine,
+        districtId: dto.districtId,
+        description: dto.description,
+        area: dto.area,
+        bedrooms: dto.bedrooms,
+        bathrooms: dto.bathrooms,
+        ageYears: dto.ageYears,
+        floorLevel: dto.floorLevel,
+        parkingSpaces: dto.parkingSpaces,
+        partida1: dto.partida1,
+        partida2: dto.partida2,
+        partida3: dto.partida3,
+        ownerId: dto.ownerId,
+        monthlyRent: dto.monthlyRent,
+        maintenanceAmount: dto.maintenanceAmount,
+        depositMonths: dto.depositMonths,
+        salePrice: dto.salePrice,
+        projectName: dto.projectName,
+        mediaItems: dto.mediaItems,
+        listingStatus: dto.listingStatus,
+      },
+      applicationSlug,
+    );
   }
 
   @Post()
@@ -237,15 +285,27 @@ export class PropertiesController {
       monthlyRent: dto.monthlyRent,
       maintenanceAmount: dto.maintenanceAmount,
       depositMonths: dto.depositMonths,
+      salePrice: dto.salePrice,
+      projectName: dto.projectName,
+      mediaItems: dto.mediaItems,
+      listingStatus: dto.listingStatus,
     });
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Eliminar propiedad (soft delete)' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Si se indica, la propiedad debe pertenecer a esa aplicación',
+  })
   @ApiResponse({ status: 200, description: 'Propiedad eliminada correctamente' })
   @ApiResponse({ status: 404 })
-  async remove(@Param('id') id: string) {
-    return this.deletePropertyUseCase.execute(id);
+  async remove(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.deletePropertyUseCase.execute(id, applicationSlug);
   }
 }

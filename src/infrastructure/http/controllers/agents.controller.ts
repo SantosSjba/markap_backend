@@ -110,26 +110,47 @@ export class AgentsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar agente' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Si se indica, el agente debe pertenecer a esa aplicación',
+  })
   @ApiResponse({ status: 200 })
-  async update(@Param('id') id: string, @Body() dto: UpdateAgentDto) {
-    return this.updateAgentUseCase.execute(id, {
-      type: dto.type,
-      userId: dto.userId,
-      fullName: dto.fullName,
-      email: dto.email,
-      phone: dto.phone,
-      documentTypeId: dto.documentTypeId,
-      documentNumber: dto.documentNumber,
-      isActive: dto.isActive,
-    });
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateAgentDto,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.updateAgentUseCase.execute(
+      id,
+      {
+        type: dto.type,
+        userId: dto.userId,
+        fullName: dto.fullName,
+        email: dto.email,
+        phone: dto.phone,
+        documentTypeId: dto.documentTypeId,
+        documentNumber: dto.documentNumber,
+        isActive: dto.isActive,
+      },
+      applicationSlug,
+    );
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Eliminar agente (soft delete)' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Si se indica, el agente debe pertenecer a esa aplicación',
+  })
   @ApiResponse({ status: 200, description: 'Agente eliminado correctamente' })
   @ApiResponse({ status: 404 })
-  async remove(@Param('id') id: string) {
-    return this.deleteAgentUseCase.execute(id);
+  async remove(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.deleteAgentUseCase.execute(id, applicationSlug);
   }
 }

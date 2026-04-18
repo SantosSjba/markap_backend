@@ -1,9 +1,17 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import type { PropertyRepository } from '../../repositories/property.repository';
 import { PROPERTY_REPOSITORY } from '../../repositories/property.repository';
 import type { ApplicationRepository } from '../../repositories/application.repository';
 import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
 import { EntityNotFoundException } from '../../exceptions';
+
+const VENTAS_LISTING = new Set(['AVAILABLE', 'RESERVED', 'SOLD']);
+const ALQUILERES_LISTING = new Set([
+  'AVAILABLE',
+  'RENTED',
+  'EXPIRING',
+  'MAINTENANCE',
+]);
 
 export interface CreatePropertyInput {
   applicationId?: string;
@@ -26,6 +34,10 @@ export interface CreatePropertyInput {
   monthlyRent?: number | null;
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
+  salePrice?: number | null;
+  projectName?: string | null;
+  mediaItems?: { url: string; kind: 'photo' | 'plan' }[] | null;
+  listingStatus?: string | null;
 }
 
 @Injectable()
@@ -51,6 +63,24 @@ export class CreatePropertyUseCase {
     if (!applicationId) {
       throw new Error('applicationId or applicationSlug is required');
     }
+    const app = await this.applicationRepository.findById(applicationId);
+    if (!app) {
+      throw new EntityNotFoundException('Application', applicationId);
+    }
+
+    const listingStatus = input.listingStatus?.trim() || 'AVAILABLE';
+    if (app.slug === 'ventas') {
+      if (!VENTAS_LISTING.has(listingStatus)) {
+        throw new BadRequestException(
+          'En Ventas el estado comercial debe ser AVAILABLE, RESERVED o SOLD.',
+        );
+      }
+    } else if (!ALQUILERES_LISTING.has(listingStatus)) {
+      throw new BadRequestException(
+        'Estado de listado no válido para esta aplicación.',
+      );
+    }
+
     return this.propertyRepository.create({
       applicationId,
       code: input.code,
@@ -71,6 +101,10 @@ export class CreatePropertyUseCase {
       monthlyRent: input.monthlyRent,
       maintenanceAmount: input.maintenanceAmount,
       depositMonths: input.depositMonths,
+      salePrice: input.salePrice,
+      projectName: input.projectName,
+      mediaItems: input.mediaItems ?? undefined,
+      listingStatus,
     });
   }
 }

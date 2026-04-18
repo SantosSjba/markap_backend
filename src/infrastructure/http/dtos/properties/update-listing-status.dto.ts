@@ -1,12 +1,34 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsIn } from 'class-validator';
 
+/** Alquileres: RENTED | EXPIRING | MAINTENANCE (requiere alquiler activo). Ventas: AVAILABLE | RESERVED | SOLD. */
 export class UpdateListingStatusDto {
   @ApiProperty({
-    description: 'Estado de listado de la propiedad (solo si tiene alquiler en vigencia)',
-    enum: ['RENTED', 'EXPIRING', 'MAINTENANCE'],
+    description:
+      'Alquileres: RENTED, EXPIRING, MAINTENANCE (requiere alquiler en vigencia). Ventas: AVAILABLE, RESERVED, SOLD.',
+    enum: [
+      'RENTED',
+      'EXPIRING',
+      'MAINTENANCE',
+      'AVAILABLE',
+      'RESERVED',
+      'SOLD',
+    ],
   })
   @IsString()
-  @IsIn(['RENTED', 'EXPIRING', 'MAINTENANCE'])
-  listingStatus: 'RENTED' | 'EXPIRING' | 'MAINTENANCE';
+  @IsIn([
+    'RENTED',
+    'EXPIRING',
+    'MAINTENANCE',
+    'AVAILABLE',
+    'RESERVED',
+    'SOLD',
+  ])
+  listingStatus:
+    | 'RENTED'
+    | 'EXPIRING'
+    | 'MAINTENANCE'
+    | 'AVAILABLE'
+    | 'RESERVED'
+    | 'SOLD';
 }

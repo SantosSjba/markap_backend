@@ -1,3 +1,6 @@
+/** Elemento de multimedia almacenado en `Property.mediaItems` (JSON). */
+export type PropertyMediaItem = { url: string; kind: 'photo' | 'plan' };
+
 export interface PropertyData {
   id: string;
   applicationId: string;
@@ -31,6 +34,9 @@ export interface PropertyData {
   monthlyRent: number | null;
   maintenanceAmount: number | null;
   depositMonths: number | null;
+  salePrice: number | null;
+  projectName: string | null;
+  mediaItems: PropertyMediaItem[] | null;
   listingStatus: string | null;
   isActive: boolean;
 }
@@ -45,6 +51,8 @@ export interface PropertyListItem {
   ownerId: string;
   ownerFullName: string;
   monthlyRent: number | null;
+  salePrice: number | null;
+  projectName: string | null;
   listingStatus: string | null;
   /** true si tiene al menos un alquiler ACTIVE con endDate >= hoy (permite "Cambiar estado") */
   hasActiveRental: boolean;
@@ -60,7 +68,10 @@ export interface ListPropertiesFilters {
   limit: number;
   search?: string;
   propertyTypeId?: string;
+  districtId?: string;
   listingStatus?: string | null;
+  minSalePrice?: number;
+  maxSalePrice?: number;
 }
 
 export interface ListPropertiesResult {
@@ -76,6 +87,10 @@ export interface PropertyStats {
   available: number;
   expiring: number;
   maintenance: number;
+  /** Inventario ventas (Separada) */
+  reserved: number;
+  /** Inventario ventas (Vendida) */
+  sold: number;
 }
 
 export interface CreatePropertyData {
@@ -98,6 +113,9 @@ export interface CreatePropertyData {
   monthlyRent?: number | null;
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
+  salePrice?: number | null;
+  projectName?: string | null;
+  mediaItems?: PropertyMediaItem[] | null;
   listingStatus?: string | null;
 }
 
@@ -121,6 +139,9 @@ export interface UpdatePropertyData {
   monthlyRent?: number | null;
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
+  salePrice?: number | null;
+  projectName?: string | null;
+  mediaItems?: PropertyMediaItem[] | null;
   listingStatus?: string | null;
 }
 
