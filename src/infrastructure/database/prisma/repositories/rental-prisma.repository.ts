@@ -175,13 +175,14 @@ export class RentalPrismaRepository implements RentalRepository {
     });
   }
 
-  async countActiveInvolvingClient(clientId: string): Promise<number> {
+  async countActiveInvolvingClient(clientId: string, applicationId: string): Promise<number> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const activeRental = {
       status: 'ACTIVE',
       endDate: { gte: today },
       deletedAt: null,
+      applicationId,
     };
     return (this.prisma as any).rental.count({
       where: {
@@ -192,6 +193,7 @@ export class RentalPrismaRepository implements RentalRepository {
             property: {
               ownerId: clientId,
               deletedAt: null,
+              applicationId,
             },
           },
         ],

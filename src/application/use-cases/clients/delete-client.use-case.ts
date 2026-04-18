@@ -41,7 +41,7 @@ export class DeleteClientUseCase {
 
     const isVentasApp = app?.slug === 'ventas';
     if (isVentasApp && client.clientType === 'OWNER') {
-      const props = await this.propertyRepository.countActiveByOwnerId(id);
+      const props = await this.propertyRepository.countActiveByOwnerId(id, client.applicationId);
       if (props > 0) {
         throw new BadRequestException(
           'No se puede eliminar el propietario mientras tenga propiedades en inventario.',
@@ -51,6 +51,7 @@ export class DeleteClientUseCase {
     if (!isVentasApp) {
       const activeRentals = await this.rentalRepository.countActiveInvolvingClient(
         id,
+        client.applicationId,
       );
       if (activeRentals > 0) {
         throw new BadRequestException(

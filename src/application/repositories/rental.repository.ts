@@ -107,9 +107,10 @@ export interface RentalRepository {
   /** Cuenta alquileres vigentes (ACTIVE, endDate >= hoy, no eliminados) para una propiedad */
   countActiveByPropertyId(propertyId: string): Promise<number>;
   /**
-   * Cuenta alquileres vigentes donde el cliente participa como inquilino o como propietario del inmueble.
+   * Cuenta alquileres vigentes donde el cliente participa como inquilino o como propietario del inmueble,
+   * solo dentro de la aplicación indicada (ej. alquileres).
    */
-  countActiveInvolvingClient(clientId: string): Promise<number>;
+  countActiveInvolvingClient(clientId: string, applicationId: string): Promise<number>;
   /** Soft delete: marca como CANCELLED y registra deletedAt */
   cancel(id: string): Promise<void>;
 }

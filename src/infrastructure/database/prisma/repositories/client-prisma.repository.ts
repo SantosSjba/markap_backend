@@ -141,11 +141,30 @@ export class ClientPrismaRepository implements ClientRepository {
         await this.prisma.address.update({
           where: { id: primary.id },
           data: {
-            ...(data.address.addressLine !== undefined && { addressLine: data.address.addressLine.trim() }),
+            ...(data.address.addressLine !== undefined && {
+              addressLine: data.address.addressLine.trim(),
+            }),
             ...(data.address.districtId !== undefined && { districtId: data.address.districtId }),
-            ...(data.address.reference !== undefined && { reference: data.address.reference?.trim() || null }),
+            ...(data.address.reference !== undefined && {
+              reference: data.address.reference?.trim() || null,
+            }),
           },
         });
+      } else {
+        const line = data.address.addressLine?.trim();
+        const districtId = data.address.districtId;
+        if (line && districtId) {
+          await this.prisma.address.create({
+            data: {
+              clientId: id,
+              addressType: 'FISCAL',
+              addressLine: line,
+              districtId,
+              reference: data.address.reference?.trim() || null,
+              isPrimary: true,
+            },
+          });
+        }
       }
     }
     const updated = await this.prisma.client.findUniqueOrThrow({
@@ -242,13 +261,25 @@ export class ClientPrismaRepository implements ClientRepository {
       tenantIds.length > 0
         ? this.prisma.rental.groupBy({
             by: ['tenantId'],
-            where: { tenantId: { in: tenantIds }, deletedAt: null },
+            where: {
+              tenantId: { in: tenantIds },
+              deletedAt: null,
+              applicationId: app.id,
+            },
             _count: { id: true },
           })
         : [],
       ownerIds.length > 0
         ? this.prisma.rental.findMany({
-            where: { deletedAt: null, property: { ownerId: { in: ownerIds } } },
+            where: {
+              deletedAt: null,
+              applicationId: app.id,
+              property: {
+                ownerId: { in: ownerIds },
+                deletedAt: null,
+                applicationId: app.id,
+              },
+            },
             select: { property: { select: { ownerId: true } } },
           })
         : [],

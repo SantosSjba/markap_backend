@@ -343,9 +343,9 @@ export class PropertyPrismaRepository implements PropertyRepository {
     });
   }
 
-  async countActiveByOwnerId(ownerId: string): Promise<number> {
+  async countActiveByOwnerId(ownerId: string, applicationId: string): Promise<number> {
     return this.prisma.property.count({
-      where: { ownerId, deletedAt: null },
+      where: { ownerId, applicationId, deletedAt: null },
     });
   }
 }

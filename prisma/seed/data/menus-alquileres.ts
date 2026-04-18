@@ -11,7 +11,8 @@ export const ALQUILERES_PARENT_MENUS = [
 
 export const ALQUILERES_CHILD_MENUS = [
   { label: 'Listado de Clientes', path: '/alquileres/clientes', order: 0, parentLabel: 'Clientes' },
-  { label: 'Nuevo Cliente', path: '/alquileres/clientes/nuevo', order: 1, parentLabel: 'Clientes' },
+  { label: 'Propietarios', path: '/alquileres/clientes/propietarios', order: 1, parentLabel: 'Clientes' },
+  { label: 'Nuevo Cliente', path: '/alquileres/clientes/nuevo', order: 2, parentLabel: 'Clientes' },
   { label: 'Listado de Propiedades', path: '/alquileres/propiedades', order: 0, parentLabel: 'Propiedades' },
   { label: 'Nueva Propiedad', path: '/alquileres/propiedades/nueva', order: 1, parentLabel: 'Propiedades' },
   { label: 'Listado de Alquileres', path: '/alquileres/contratos', order: 0, parentLabel: 'Alquileres' },

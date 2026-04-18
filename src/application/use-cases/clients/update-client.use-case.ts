@@ -6,6 +6,8 @@ import type { AgentRepository } from '../../repositories/agent.repository';
 import { AGENT_REPOSITORY } from '../../repositories/agent.repository';
 import type { ApplicationRepository } from '../../repositories/application.repository';
 import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
+import type { PropertyRepository } from '../../repositories/property.repository';
+import { PROPERTY_REPOSITORY } from '../../repositories/property.repository';
 import { EntityNotFoundException } from '../../exceptions';
 
 @Injectable()
@@ -17,6 +19,8 @@ export class UpdateClientUseCase {
     private readonly agentRepository: AgentRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
+    @Inject(PROPERTY_REPOSITORY)
+    private readonly propertyRepository: PropertyRepository,
   ) {}
 
   async execute(
@@ -42,6 +46,24 @@ export class UpdateClientUseCase {
       if (!agent || agent.applicationId !== existing.applicationId) {
         throw new BadRequestException(
           'El asesor no existe o no pertenece a esta aplicación',
+        );
+      }
+    }
+
+    const app = await this.applicationRepository.findById(existing.applicationId);
+    const isVentas = app?.slug === 'ventas';
+    if (
+      isVentas &&
+      data.clientType === 'BUYER' &&
+      existing.clientType === 'OWNER'
+    ) {
+      const props = await this.propertyRepository.countActiveByOwnerId(
+        id,
+        existing.applicationId,
+      );
+      if (props > 0) {
+        throw new BadRequestException(
+          'No se puede cambiar a comprador / lead mientras el cliente siga como titular de propiedades en inventario.',
         );
       }
     }
