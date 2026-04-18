@@ -39,7 +39,13 @@ export class ClientsController {
   @ApiQuery({ name: 'page', required: false, description: 'Página (1-based)' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items por página' })
   @ApiQuery({ name: 'search', required: false, description: 'Buscar por nombre, documento o email' })
-  @ApiQuery({ name: 'clientType', required: false, enum: ['OWNER', 'TENANT'] })
+  @ApiQuery({ name: 'clientType', required: false, enum: ['OWNER', 'TENANT', 'BUYER'] })
+  @ApiQuery({
+    name: 'salesStatus',
+    required: false,
+    enum: ['PROSPECT', 'INTERESTED', 'CLIENT'],
+    description: 'Filtrar embudo ventas (applicationSlug ventas)',
+  })
   @ApiQuery({ name: 'isActive', required: false, description: 'Filtrar por estado activo (true/false)' })
   @ApiResponse({ status: 200 })
   async list(
@@ -47,7 +53,8 @@ export class ClientsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
-    @Query('clientType') clientType?: 'OWNER' | 'TENANT',
+    @Query('clientType') clientType?: 'OWNER' | 'TENANT' | 'BUYER',
+    @Query('salesStatus') salesStatus?: 'PROSPECT' | 'INTERESTED' | 'CLIENT',
     @Query('isActive') isActive?: string,
   ) {
     return this.listClientsUseCase.execute({
@@ -56,6 +63,7 @@ export class ClientsController {
       limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
       search: search?.trim() || undefined,
       clientType,
+      salesStatus,
       isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
     });
   }
@@ -86,6 +94,9 @@ export class ClientsController {
       primaryEmail: dto.primaryEmail,
       secondaryEmail: dto.secondaryEmail,
       notes: dto.notes,
+      salesStatus: dto.salesStatus,
+      leadOrigin: dto.leadOrigin,
+      assignedAgentId: dto.assignedAgentId,
       address: dto.address,
     });
   }
@@ -156,6 +167,9 @@ export class ClientsController {
       primaryEmail: dto.primaryEmail,
       secondaryEmail: dto.secondaryEmail,
       notes: dto.notes,
+      salesStatus: dto.salesStatus,
+      leadOrigin: dto.leadOrigin,
+      assignedAgentId: dto.assignedAgentId,
       address: dto.address,
     });
   }

@@ -23,6 +23,7 @@ model Agent {
   user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   documentType  DocumentType?  @relation(fields: [documentTypeId], references: [id], onDelete: SetNull)
   rentalFinancialConfigsExternal RentalFinancialConfig[] @relation("ExternalAgent")
+  assignedSalesClients           Client[]                 @relation("ClientAssignedAgent")
 
   @@index([applicationId])
   @@index([type])

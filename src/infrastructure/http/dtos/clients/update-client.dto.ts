@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsObject,
   ValidateNested,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -28,11 +29,11 @@ class UpdateClientAddressDto {
 export class UpdateClientDto {
   @ApiPropertyOptional({
     description: 'Tipo de cliente',
-    enum: ['OWNER', 'TENANT'],
+    enum: ['OWNER', 'TENANT', 'BUYER'],
   })
   @IsOptional()
-  @IsEnum(['OWNER', 'TENANT'])
-  clientType?: 'OWNER' | 'TENANT';
+  @IsEnum(['OWNER', 'TENANT', 'BUYER'])
+  clientType?: 'OWNER' | 'TENANT' | 'BUYER';
 
   @ApiPropertyOptional({ description: 'ID del tipo de documento' })
   @IsOptional()
@@ -83,6 +84,25 @@ export class UpdateClientDto {
   @IsOptional()
   @IsString()
   notes?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Embudo ventas',
+    enum: ['PROSPECT', 'INTERESTED', 'CLIENT'],
+  })
+  @IsOptional()
+  @IsEnum(['PROSPECT', 'INTERESTED', 'CLIENT'])
+  salesStatus?: 'PROSPECT' | 'INTERESTED' | 'CLIENT' | null;
+
+  @ApiPropertyOptional({ description: 'Origen del lead' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  leadOrigin?: string | null;
+
+  @ApiPropertyOptional({ description: 'Asesor asignado (id agente)' })
+  @IsOptional()
+  @IsString()
+  assignedAgentId?: string | null;
 
   @ApiPropertyOptional({ description: 'Dirección' })
   @IsOptional()

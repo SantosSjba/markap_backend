@@ -5,6 +5,8 @@ import {
   IsEnum,
   IsObject,
   ValidateNested,
+  ValidateIf,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -29,17 +31,17 @@ export class CreateClientDto {
   @IsString()
   applicationId?: string;
 
-  @ApiPropertyOptional({ description: 'Slug de la aplicación (ej: alquileres)' })
+  @ApiPropertyOptional({ description: 'Slug de la aplicación (ej: alquileres, ventas)' })
   @IsOptional()
   @IsString()
   applicationSlug?: string;
 
   @ApiProperty({
-    description: 'Tipo de cliente: Propietario (OWNER) o Inquilino (TENANT)',
-    enum: ['OWNER', 'TENANT'],
+    description: 'Propietario, inquilino o comprador/leads (ventas)',
+    enum: ['OWNER', 'TENANT', 'BUYER'],
   })
-  @IsEnum(['OWNER', 'TENANT'])
-  clientType: 'OWNER' | 'TENANT';
+  @IsEnum(['OWNER', 'TENANT', 'BUYER'])
+  clientType: 'OWNER' | 'TENANT' | 'BUYER';
 
   @ApiProperty({ description: 'ID del tipo de documento' })
   @IsString()
@@ -86,9 +88,29 @@ export class CreateClientDto {
   @IsString()
   notes?: string | null;
 
-  @ApiProperty({ description: 'Dirección' })
+  @ApiPropertyOptional({
+    description: 'Embudo ventas (solo BUYER)',
+    enum: ['PROSPECT', 'INTERESTED', 'CLIENT'],
+  })
+  @IsOptional()
+  @IsEnum(['PROSPECT', 'INTERESTED', 'CLIENT'])
+  salesStatus?: 'PROSPECT' | 'INTERESTED' | 'CLIENT';
+
+  @ApiPropertyOptional({ description: 'Origen del lead (Facebook, web, etc.)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  leadOrigin?: string | null;
+
+  @ApiPropertyOptional({ description: 'ID del asesor (agente) asignado' })
+  @IsOptional()
+  @IsString()
+  assignedAgentId?: string | null;
+
+  @ApiPropertyOptional({ description: 'Dirección (obligatoria para OWNER/TENANT)' })
+  @ValidateIf((o) => o.clientType === 'OWNER' || o.clientType === 'TENANT')
   @IsObject()
   @ValidateNested()
   @Type(() => CreateClientAddressDto)
-  address: CreateClientAddressDto;
+  address?: CreateClientAddressDto;
 }

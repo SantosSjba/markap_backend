@@ -5,8 +5,14 @@ export async function seedAdminUser(
   prisma: SeedDb,
   adminRoleId: string,
 ): Promise<{ adminUser: { id: string; email: string; firstName: string; lastName: string } }> {
+  if (!adminRoleId) {
+    throw new Error(
+      'seedAdminUser: adminRoleId vacío. Debe ejecutarse seedRolesAndApplications antes.',
+    );
+  }
+
   console.log('\n👤 Creating admin user...');
-  const adminEmail = process.env.ADMIN_EMAIL || 'sistemas@markaphomes.com';
+  const adminEmail = (process.env.ADMIN_EMAIL || 'sistemas@markaphomes.com').toLowerCase().trim();
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123';
   const adminFirstName = process.env.ADMIN_FIRST_NAME || 'Sistemas';
   const adminLastName = process.env.ADMIN_LAST_NAME || 'Markap Homes';
@@ -34,27 +40,27 @@ export async function seedAdminUser(
   }
 
   console.log('\n🔐 Assigning ADMIN role to admin user...');
-  const existingUserRole = await prisma.userRole.findUnique({
+  await prisma.userRole.upsert({
     where: {
       userId_roleId: {
         userId: adminUser.id,
         roleId: adminRoleId,
       },
     },
+    create: {
+      userId: adminUser.id,
+      roleId: adminRoleId,
+      assignedBy: 'system',
+      isActive: true,
+    },
+    update: {
+      isActive: true,
+      revokedAt: null,
+      revokedBy: null,
+      assignedBy: 'system',
+    },
   });
-
-  if (!existingUserRole) {
-    await prisma.userRole.create({
-      data: {
-        userId: adminUser.id,
-        roleId: adminRoleId,
-        assignedBy: 'system',
-      },
-    });
-    console.log('   ✅ ADMIN role assigned to admin user');
-  } else {
-    console.log('   ✓ ADMIN role already assigned');
-  }
+  console.log('   ✅ ADMIN role asegurado para el usuario admin (activo, no revocado)');
 
   return { adminUser };
 }

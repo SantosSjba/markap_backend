@@ -22,4 +22,8 @@ export {
   SAMPLE_TENANT_CLIENT,
   SEED_PRIMARY_APPLICATION_SLUG,
 } from './sample-demo';
+export {
+  VENTAS_SAMPLE_BUYER_CLIENTS,
+  VENTAS_SAMPLE_EXTERNAL_AGENT,
+} from './sample-ventas';
 export { DEPARTMENTS, DISTRICTS, PROVINCES } from './ubigeo';

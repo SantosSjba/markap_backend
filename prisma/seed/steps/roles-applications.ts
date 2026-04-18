@@ -51,6 +51,11 @@ export async function seedRolesAndApplications(prisma: SeedDb): Promise<RolesApp
 
   console.log('\n🔗 Assigning applications to ADMIN role...');
   const adminRoleId = createdRoles['ADMIN'];
+  if (!adminRoleId) {
+    throw new Error(
+      'Rol ADMIN no encontrado en createdRoles; revisa prisma/seed/data/roles.ts (code: ADMIN).',
+    );
+  }
 
   for (const appId of createdApps) {
     const existing = await prisma.roleApplication.findUnique({

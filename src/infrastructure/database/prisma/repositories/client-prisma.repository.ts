@@ -11,6 +11,7 @@ import type {
   ListClientsResult,
   ClientListItem,
   ClientStats,
+  SalesPipelineStatus,
 } from '../../../../application/repositories/client.repository';
 
 @Injectable()
@@ -33,15 +34,22 @@ export class ClientPrismaRepository implements ClientRepository {
         primaryEmail: data.primaryEmail.trim(),
         secondaryEmail: data.secondaryEmail?.trim() || null,
         notes: data.notes?.trim() || null,
-        addresses: {
-          create: {
-            addressType: 'FISCAL',
-            addressLine: data.address.addressLine.trim(),
-            districtId: data.address.districtId,
-            reference: data.address.reference?.trim() || null,
-            isPrimary: true,
-          },
-        },
+        salesStatus: data.salesStatus ?? null,
+        leadOrigin: data.leadOrigin?.trim() || null,
+        assignedAgentId: data.assignedAgentId ?? null,
+        ...(data.address
+          ? {
+              addresses: {
+                create: {
+                  addressType: 'FISCAL',
+                  addressLine: data.address.addressLine.trim(),
+                  districtId: data.address.districtId,
+                  reference: data.address.reference?.trim() || null,
+                  isPrimary: true,
+                },
+              },
+            }
+          : {}),
       },
       include: {
         documentType: true,
@@ -55,7 +63,9 @@ export class ClientPrismaRepository implements ClientRepository {
     const client = await this.prisma.client.findFirst({
       where: { id, deletedAt: null },
       include: {
+        application: { select: { slug: true } },
         documentType: true,
+        assignedAgent: { select: { id: true, fullName: true } },
         addresses: {
           where: { isPrimary: true },
           take: 1,
@@ -73,6 +83,7 @@ export class ClientPrismaRepository implements ClientRepository {
     const primaryAddress = client.addresses[0] ?? null;
     return {
       ...this.toClientData(client),
+      applicationSlug: client.application.slug,
       documentType: client.documentType,
       primaryAddress: primaryAddress
         ? {
@@ -94,6 +105,7 @@ export class ClientPrismaRepository implements ClientRepository {
             },
           }
         : null,
+      assignedAgent: client.assignedAgent,
     };
   }
 
@@ -116,6 +128,9 @@ export class ClientPrismaRepository implements ClientRepository {
         ...(data.primaryEmail !== undefined && { primaryEmail: data.primaryEmail.trim() }),
         ...(data.secondaryEmail !== undefined && { secondaryEmail: data.secondaryEmail?.trim() || null }),
         ...(data.notes !== undefined && { notes: data.notes?.trim() || null }),
+        ...(data.salesStatus !== undefined && { salesStatus: data.salesStatus }),
+        ...(data.leadOrigin !== undefined && { leadOrigin: data.leadOrigin?.trim() || null }),
+        ...(data.assignedAgentId !== undefined && { assignedAgentId: data.assignedAgentId }),
       },
     });
     if (data.address) {
@@ -149,7 +164,14 @@ export class ClientPrismaRepository implements ClientRepository {
       applicationId: app.id,
       deletedAt: null,
     };
-    if (filters.clientType) where.clientType = filters.clientType;
+
+    if (app.slug === 'ventas') {
+      where.clientType = 'BUYER';
+      if (filters.salesStatus) where.salesStatus = filters.salesStatus;
+    } else {
+      where.clientType = filters.clientType ?? { in: ['OWNER', 'TENANT'] };
+    }
+
     if (filters.isActive !== undefined) where.isActive = filters.isActive;
     if (filters.search?.trim()) {
       const q = filters.search.trim();
@@ -163,7 +185,10 @@ export class ClientPrismaRepository implements ClientRepository {
     const [data, total] = await Promise.all([
       this.prisma.client.findMany({
         where,
-        include: { documentType: true },
+        include: {
+          documentType: true,
+          assignedAgent: { select: { id: true, fullName: true } },
+        },
         orderBy: { fullName: 'asc' },
         skip: (filters.page - 1) * filters.limit,
         take: filters.limit,
@@ -212,21 +237,26 @@ export class ClientPrismaRepository implements ClientRepository {
     }
 
     return {
-      data: data.map((c) => ({
-        id: c.id,
-        fullName: c.fullName,
-        documentTypeCode: c.documentType.code,
-        documentNumber: c.documentNumber,
-        primaryPhone: c.primaryPhone,
-        primaryEmail: c.primaryEmail,
-        clientType: c.clientType as ClientType,
-        isActive: c.isActive,
-        propertiesCount: c.clientType === 'OWNER' ? propertiesCountMap.get(c.id) ?? 0 : 0,
-        contractsCount:
-          c.clientType === 'TENANT'
-            ? rentalsByTenantMap.get(c.id) ?? 0
-            : rentalsByOwnerMap.get(c.id) ?? 0,
-      })),
+      data: data.map(
+        (c): ClientListItem => ({
+          id: c.id,
+          fullName: c.fullName,
+          documentTypeCode: c.documentType.code,
+          documentNumber: c.documentNumber,
+          primaryPhone: c.primaryPhone,
+          primaryEmail: c.primaryEmail,
+          clientType: c.clientType as ClientType,
+          isActive: c.isActive,
+          propertiesCount: c.clientType === 'OWNER' ? propertiesCountMap.get(c.id) ?? 0 : 0,
+          contractsCount:
+            c.clientType === 'TENANT'
+              ? rentalsByTenantMap.get(c.id) ?? 0
+              : rentalsByOwnerMap.get(c.id) ?? 0,
+          salesStatus: (c.salesStatus as SalesPipelineStatus | null) ?? null,
+          leadOrigin: c.leadOrigin,
+          assignedAgentName: c.assignedAgent?.fullName ?? null,
+        }),
+      ),
       total,
       page: filters.page,
       limit: filters.limit,
@@ -237,8 +267,27 @@ export class ClientPrismaRepository implements ClientRepository {
     const app = await this.prisma.application.findUnique({
       where: { slug: applicationSlug },
     });
-    if (!app)
-      return { total: 0, owners: 0, tenants: 0, active: 0 };
+    if (!app) return { total: 0, owners: 0, tenants: 0, active: 0 };
+
+    if (app.slug === 'ventas') {
+      const base = { applicationId: app.id, deletedAt: null, clientType: 'BUYER' as const };
+      const [total, active, prospects, interested, salesClients] = await Promise.all([
+        this.prisma.client.count({ where: base }),
+        this.prisma.client.count({ where: { ...base, isActive: true } }),
+        this.prisma.client.count({ where: { ...base, salesStatus: 'PROSPECT' } }),
+        this.prisma.client.count({ where: { ...base, salesStatus: 'INTERESTED' } }),
+        this.prisma.client.count({ where: { ...base, salesStatus: 'CLIENT' } }),
+      ]);
+      return {
+        total,
+        owners: 0,
+        tenants: 0,
+        active,
+        prospects,
+        interested,
+        salesClients,
+      };
+    }
 
     const [total, owners, tenants, active] = await Promise.all([
       this.prisma.client.count({
@@ -271,6 +320,9 @@ export class ClientPrismaRepository implements ClientRepository {
     primaryEmail: string;
     secondaryEmail: string | null;
     notes: string | null;
+    salesStatus: string | null;
+    leadOrigin: string | null;
+    assignedAgentId: string | null;
     isActive: boolean;
   }): ClientData {
     return {
@@ -287,6 +339,9 @@ export class ClientPrismaRepository implements ClientRepository {
       primaryEmail: client.primaryEmail,
       secondaryEmail: client.secondaryEmail,
       notes: client.notes,
+      salesStatus: (client.salesStatus as SalesPipelineStatus | null) ?? null,
+      leadOrigin: client.leadOrigin,
+      assignedAgentId: client.assignedAgentId,
       isActive: client.isActive,
     };
   }

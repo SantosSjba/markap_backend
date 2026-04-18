@@ -5,6 +5,7 @@ import {
   seedAdminUser,
   seedAlquileresMenus,
   seedDemoAlquileres,
+  seedDemoVentas,
   seedDocumentTypes,
   seedPropertyTypes,
   seedRolesAndApplications,
@@ -28,6 +29,7 @@ async function main() {
   await seedUbigeo(prisma);
   await seedPropertyTypes(prisma);
   await seedDemoAlquileres(prisma, appIdBySlug, adminUser);
+  await seedDemoVentas(prisma, appIdBySlug, adminUser);
 
   console.log('\n✨ Seed completed successfully!\n');
 }

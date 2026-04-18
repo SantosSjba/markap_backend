@@ -1,4 +1,6 @@
-export type ClientType = 'OWNER' | 'TENANT';
+export type ClientType = 'OWNER' | 'TENANT' | 'BUYER';
+
+export type SalesPipelineStatus = 'PROSPECT' | 'INTERESTED' | 'CLIENT';
 
 export interface ClientData {
   id: string;
@@ -14,6 +16,9 @@ export interface ClientData {
   primaryEmail: string;
   secondaryEmail: string | null;
   notes: string | null;
+  salesStatus: SalesPipelineStatus | null;
+  leadOrigin: string | null;
+  assignedAgentId: string | null;
   isActive: boolean;
 }
 
@@ -40,7 +45,10 @@ export interface CreateClientData {
   primaryEmail: string;
   secondaryEmail?: string | null;
   notes?: string | null;
-  address: {
+  salesStatus?: SalesPipelineStatus | null;
+  leadOrigin?: string | null;
+  assignedAgentId?: string | null;
+  address?: {
     addressLine: string;
     districtId: string;
     reference?: string | null;
@@ -59,6 +67,9 @@ export interface UpdateClientData {
   primaryEmail?: string;
   secondaryEmail?: string | null;
   notes?: string | null;
+  salesStatus?: SalesPipelineStatus | null;
+  leadOrigin?: string | null;
+  assignedAgentId?: string | null;
   address?: {
     addressLine?: string;
     districtId?: string;
@@ -67,6 +78,7 @@ export interface UpdateClientData {
 }
 
 export interface ClientDetailData extends ClientData {
+  applicationSlug: string;
   documentType: { id: string; code: string; name: string };
   primaryAddress: {
     id: string;
@@ -79,6 +91,7 @@ export interface ClientDetailData extends ClientData {
       province: { id: string; name: string; department: { id: string; name: string } };
     };
   } | null;
+  assignedAgent: { id: string; fullName: string } | null;
 }
 
 export interface ClientListItem {
@@ -92,6 +105,9 @@ export interface ClientListItem {
   isActive: boolean;
   propertiesCount: number;
   contractsCount: number;
+  salesStatus: SalesPipelineStatus | null;
+  leadOrigin: string | null;
+  assignedAgentName: string | null;
 }
 
 export interface ListClientsFilters {
@@ -100,6 +116,7 @@ export interface ListClientsFilters {
   limit: number;
   search?: string;
   clientType?: ClientType;
+  salesStatus?: SalesPipelineStatus;
   isActive?: boolean;
 }
 
@@ -115,6 +132,10 @@ export interface ClientStats {
   owners: number;
   tenants: number;
   active: number;
+  /** Embudo ventas (clientType BUYER) */
+  prospects?: number;
+  interested?: number;
+  salesClients?: number;
 }
 
 export interface ClientRepository {
