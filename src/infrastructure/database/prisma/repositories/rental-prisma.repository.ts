@@ -175,6 +175,30 @@ export class RentalPrismaRepository implements RentalRepository {
     });
   }
 
+  async countActiveInvolvingClient(clientId: string): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const activeRental = {
+      status: 'ACTIVE',
+      endDate: { gte: today },
+      deletedAt: null,
+    };
+    return (this.prisma as any).rental.count({
+      where: {
+        ...activeRental,
+        OR: [
+          { tenantId: clientId },
+          {
+            property: {
+              ownerId: clientId,
+              deletedAt: null,
+            },
+          },
+        ],
+      },
+    });
+  }
+
   async update(id: string, data: UpdateRentalData): Promise<RentalData> {
     const r = await (this.prisma as any).rental.update({
       where: { id },
