@@ -147,8 +147,10 @@ import { PaymentsController } from './controllers/payments.controller';
 import { AlertConfigController } from './controllers/alert-config.controller';
 import { VentasSalesController } from './controllers/ventas-sales.controller';
 import { VentasFinanzasController } from './controllers/ventas-finanzas.controller';
+import { VentasReportsController } from './controllers/ventas-reports.controller';
 import { VentasSalesOperationsService } from '../../application/use-cases/ventas-sales';
 import { VentasFinanzasOperationsService } from '../../application/use-cases/ventas-finanzas';
+import { VentasReportsOperationsService } from '../../application/use-cases/ventas-reports';
 
 // Gateways
 import { NotificationsGateway } from './gateways/notifications.gateway';
@@ -174,6 +176,7 @@ import { NotificationsService } from './services/notifications.service';
     AlertConfigController,
     VentasSalesController,
     VentasFinanzasController,
+    VentasReportsController,
   ],
   providers: [
     // Services
@@ -287,6 +290,7 @@ import { NotificationsService } from './services/notifications.service';
     UpsertAlertConfigUseCase,
     VentasSalesOperationsService,
     VentasFinanzasOperationsService,
+    VentasReportsOperationsService,
   ],
   exports: [HashService, TokenService, MailService],
 })
