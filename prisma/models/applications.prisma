@@ -32,6 +32,8 @@ model Application {
   saleCommissions  SaleCommission[]
   saleDocumentationCosts       SaleDocumentationCost[]
   ventasAgentCommissionProfiles VentasAgentCommissionProfile[]
+  ventasPipelineStageConfigs    VentasPipelineStageConfig[]
+  ventasNumberingSeries         VentasNumberingSeries[]
 
   @@index([slug])
   @@index([isActive])

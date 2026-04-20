@@ -13,6 +13,7 @@ import {
   seedVentasMenus,
   seedVentasSales,
   seedVentasFinanzas,
+  seedVentasConfig,
 } from './seed/steps';
 
 const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);
@@ -34,6 +35,7 @@ async function main() {
   await seedDemoVentas(prisma, appIdBySlug, adminUser);
   await seedVentasSales(prisma, appIdBySlug);
   await seedVentasFinanzas(prisma, appIdBySlug);
+  await seedVentasConfig(prisma, appIdBySlug);
 
   console.log('\n✨ Seed completed successfully!\n');
 }

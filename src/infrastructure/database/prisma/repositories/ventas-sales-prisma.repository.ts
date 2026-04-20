@@ -16,8 +16,29 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async nextProcessCode(applicationId: string): Promise<string> {
-    const n = await this.prisma.saleProcess.count({ where: { applicationId } });
-    return `VNT-PRC-${String(n + 1).padStart(4, '0')}`;
+    return this.prisma.$transaction(async (tx) => {
+      let row = await tx.ventasNumberingSeries.findUnique({
+        where: {
+          applicationId_seriesKey: { applicationId, seriesKey: 'SALE_PROCESS' },
+        },
+      });
+      if (!row) {
+        const processCount = await tx.saleProcess.count({ where: { applicationId } });
+        row = await tx.ventasNumberingSeries.create({
+          data: {
+            applicationId,
+            seriesKey: 'SALE_PROCESS',
+            prefix: 'VNT-PRC',
+            lastNumber: processCount,
+          },
+        });
+      }
+      const updated = await tx.ventasNumberingSeries.update({
+        where: { id: row.id },
+        data: { lastNumber: { increment: 1 } },
+      });
+      return `${updated.prefix}-${String(updated.lastNumber).padStart(4, '0')}`;
+    });
   }
 
   async createSaleProcess(data: {

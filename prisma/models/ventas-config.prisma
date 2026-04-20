@@ -1,0 +1,38 @@
+// Parametrización específica de la aplicación Ventas (pipeline, numeración)
+
+model VentasPipelineStageConfig {
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
+  /// Código fijo alineado con backend (PROSPECT, VISIT, …)
+  code          String
+  label         String
+  sortOrder     Int    @map("sort_order")
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@map("ventas_pipeline_stage_configs")
+}
+
+model VentasNumberingSeries {
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
+  /// SALE_PROCESS — extensible a otros documentos
+  seriesKey     String @map("series_key")
+  prefix        String
+  lastNumber    Int    @default(0) @map("last_number")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, seriesKey])
+  @@index([applicationId])
+  @@map("ventas_numbering_series")
+}
