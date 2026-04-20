@@ -30,6 +30,8 @@ model Application {
   saleSeparations  SaleSeparation[]
   saleClosings     SaleClosing[]
   saleCommissions  SaleCommission[]
+  saleDocumentationCosts       SaleDocumentationCost[]
+  ventasAgentCommissionProfiles VentasAgentCommissionProfile[]
 
   @@index([slug])
   @@index([isActive])

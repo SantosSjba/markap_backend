@@ -147,6 +147,8 @@ model SaleClosing {
   buyer       Client       @relation("SaleClosingBuyer", fields: [buyerClientId], references: [id], onDelete: Restrict)
   agent       Agent?       @relation(fields: [agentId], references: [id], onDelete: SetNull)
   commission  SaleCommission?
+  buyerPayments       SaleBuyerPayment[]
+  documentationCosts  SaleDocumentationCost[]
 
   @@index([applicationId])
   @@index([propertyId])
@@ -176,4 +178,69 @@ model SaleCommission {
   @@index([agentId])
   @@index([status])
   @@map("sale_commissions")
+}
+
+/// Pago del comprador vinculado al cierre (inicial o cuota). OVERDUE se deriva en API si PENDING y vencido.
+model SaleBuyerPayment {
+  id            String   @id @default(uuid())
+  saleClosingId String   @map("sale_closing_id")
+  /// DOWN_PAYMENT | INSTALLMENT
+  kind          String
+  amount        Float
+  currency      String   @default("PEN")
+  dueDate       DateTime @map("due_date")
+  paidAt        DateTime? @map("paid_at")
+  /// PENDING | PAID
+  status        String   @default("PENDING")
+  notes         String?  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  closing SaleClosing @relation(fields: [saleClosingId], references: [id], onDelete: Cascade)
+
+  @@index([saleClosingId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("sale_buyer_payments")
+}
+
+/// Gastos de documentación asociados a un cierre (impacto en rentabilidad).
+model SaleDocumentationCost {
+  id            String   @id @default(uuid())
+  applicationId String   @map("application_id")
+  saleClosingId String   @map("sale_closing_id")
+  /// NOTARY | REGISTRY | OTHER
+  costType      String   @map("cost_type")
+  description   String?  @db.Text
+  amount        Float
+  currency      String   @default("PEN")
+  expenseDate   DateTime @default(now()) @map("expense_date")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  closing     SaleClosing @relation(fields: [saleClosingId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([saleClosingId])
+  @@map("sale_documentation_costs")
+}
+
+/// Porcentaje de comisión por defecto del asesor en la app Ventas (para cálculo automático).
+model VentasAgentCommissionProfile {
+  id                String @id @default(uuid())
+  applicationId     String @map("application_id")
+  agentId           String @map("agent_id")
+  commissionPercent Float  @map("commission_percent")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  agent       Agent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, agentId])
+  @@index([applicationId])
+  @@index([agentId])
+  @@map("ventas_agent_commission_profiles")
 }

@@ -19,6 +19,10 @@ import {
   type VentasPaymentType,
   type VentasSeparationStatus,
 } from '../../repositories/ventas-sales.repository';
+import {
+  VENTAS_FINANZAS_REPOSITORY,
+  type VentasFinanzasRepository,
+} from '../../repositories/ventas-finanzas.repository';
 import { EntityNotFoundException } from '../../exceptions';
 
 const VENTAS_SLUG = 'ventas';
@@ -44,6 +48,8 @@ export class VentasSalesOperationsService {
   constructor(
     @Inject(VENTAS_SALES_REPOSITORY)
     private readonly ventasSales: VentasSalesRepository,
+    @Inject(VENTAS_FINANZAS_REPOSITORY)
+    private readonly ventasFinanzas: VentasFinanzasRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
     @Inject(PROPERTY_REPOSITORY)
@@ -372,8 +378,11 @@ export class VentasSalesOperationsService {
       paymentType: string;
       notes?: string | null;
       commissionAgentId?: string | null;
-      commissionAmount: number;
+      /** Obligatorio salvo que commissionAutoFromProfile sea true */
+      commissionAmount?: number;
       commissionPercent?: number | null;
+      /** Si true, toma el % de Finanzas → Comisiones y calcula el monto */
+      commissionAutoFromProfile?: boolean;
     },
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
@@ -444,6 +453,27 @@ export class VentasSalesOperationsService {
       );
     }
 
+    let commissionAmount = body.commissionAmount;
+    let commissionPercent = body.commissionPercent ?? null;
+
+    if (body.commissionAutoFromProfile) {
+      const pct = await this.ventasFinanzas.getAgentCommissionPercent(
+        applicationId,
+        commissionAgentId,
+      );
+      if (pct == null) {
+        throw new BadRequestException(
+          'No hay porcentaje configurado para este asesor. Configúrelo en Finanzas → Comisiones.',
+        );
+      }
+      commissionPercent = pct;
+      commissionAmount = Math.round(body.finalPrice * (pct / 100) * 100) / 100;
+    } else if (commissionAmount == null || commissionAmount < 0) {
+      throw new BadRequestException(
+        'Indique commissionAmount o active commissionAutoFromProfile con perfil de % del asesor.',
+      );
+    }
+
     const ag = await this.agentRepository.findById(commissionAgentId);
     if (!ag || ag.applicationId !== applicationId) {
       throw new BadRequestException('El agente de comisión no existe o no pertenece a Ventas.');
@@ -468,8 +498,8 @@ export class VentasSalesOperationsService {
       contractFilePath: null,
       notes: body.notes ?? null,
       commissionAgentId,
-      commissionAmount: body.commissionAmount,
-      commissionPercent: body.commissionPercent ?? null,
+      commissionAmount: commissionAmount!,
+      commissionPercent,
     });
   }
 

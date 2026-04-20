@@ -270,8 +270,9 @@ export class VentasSalesController {
       paymentType: string;
       notes?: string | null;
       commissionAgentId?: string | null;
-      commissionAmount: number;
+      commissionAmount?: number;
       commissionPercent?: number | null;
+      commissionAutoFromProfile?: boolean;
     },
   ) {
     return this.ventasSales.createClosing(applicationSlug, body);

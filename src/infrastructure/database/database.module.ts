@@ -31,6 +31,8 @@ import { ALERT_CONFIG_REPOSITORY } from '../../application/repositories/alert-co
 import { AlertConfigPrismaRepository } from './prisma/repositories/alert-config-prisma.repository';
 import { VENTAS_SALES_REPOSITORY } from '../../application/repositories/ventas-sales.repository';
 import { VentasSalesPrismaRepository } from './prisma/repositories/ventas-sales-prisma.repository';
+import { VENTAS_FINANZAS_REPOSITORY } from '../../application/repositories/ventas-finanzas.repository';
+import { VentasFinanzasPrismaRepository } from './prisma/repositories/ventas-finanzas-prisma.repository';
 
 @Module({
   providers: [
@@ -95,6 +97,10 @@ import { VentasSalesPrismaRepository } from './prisma/repositories/ventas-sales-
       provide: VENTAS_SALES_REPOSITORY,
       useClass: VentasSalesPrismaRepository,
     },
+    {
+      provide: VENTAS_FINANZAS_REPOSITORY,
+      useClass: VentasFinanzasPrismaRepository,
+    },
   ],
   exports: [
     PrismaService,
@@ -113,6 +119,7 @@ import { VentasSalesPrismaRepository } from './prisma/repositories/ventas-sales-
     PAYMENT_REPOSITORY,
     ALERT_CONFIG_REPOSITORY,
     VENTAS_SALES_REPOSITORY,
+    VENTAS_FINANZAS_REPOSITORY,
   ],
 })
 export class DatabaseModule {}

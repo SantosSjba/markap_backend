@@ -27,6 +27,7 @@ model Agent {
   saleProcesses                  SaleProcess[]
   saleClosings                   SaleClosing[]
   saleCommissions                SaleCommission[]
+  ventasCommissionProfiles       VentasAgentCommissionProfile[]
 
   @@index([applicationId])
   @@index([type])
