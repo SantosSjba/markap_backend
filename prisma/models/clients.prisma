@@ -40,6 +40,9 @@ model Client {
   addresses         Address[]
   propertiesAsOwner Property[]
   rentalsAsTenant   Rental[]
+  saleProcessesAsBuyer SaleProcess[] @relation("SaleProcessBuyer")
+  saleSeparationsAsBuyer SaleSeparation[] @relation("SaleSeparationBuyer")
+  saleClosingsAsBuyer    SaleClosing[] @relation("SaleClosingBuyer")
 
   @@index([applicationId])
   @@index([documentTypeId])

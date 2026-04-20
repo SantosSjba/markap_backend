@@ -50,6 +50,9 @@ model Property {
   district     District     @relation(fields: [districtId], references: [id], onDelete: Restrict)
   owner        Client       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   rentals      Rental[]
+  saleProcesses SaleProcess[]
+  saleSeparations SaleSeparation[]
+  saleClosings    SaleClosing[]
 
   @@index([applicationId])
   @@index([propertyTypeId])

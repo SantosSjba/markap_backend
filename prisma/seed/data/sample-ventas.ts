@@ -138,4 +138,24 @@ export const VENTAS_SAMPLE_PROPERTIES: {
     ownerDocumentNumber: '41777888',
     mediaItems: [],
   },
+  /** Inmueble solo para proceso CRM ACTIVE en pipeline (no se cierra en el seed largo). */
+  {
+    code: 'VNT-SEED-CRM',
+    addressLine: 'Jr. Lima 210, Barranco',
+    description: 'Demo pipeline: oportunidad activa en etapa negociación.',
+    area: 72,
+    bedrooms: 2,
+    bathrooms: 1,
+    projectName: 'Edificio Barranco Centro',
+    salePrice: 265000,
+    listingStatus: 'AVAILABLE',
+    propertyTypeCode: 'DEP',
+    ownerDocumentNumber: '41888999',
+    mediaItems: [
+      {
+        url: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200',
+        kind: 'photo',
+      },
+    ],
+  },
 ]

@@ -26,6 +26,10 @@ model Application {
   rentals          Rental[]
   agents           Agent[]
   alertConfigs     AlertConfig[]
+  saleProcesses    SaleProcess[]
+  saleSeparations  SaleSeparation[]
+  saleClosings     SaleClosing[]
+  saleCommissions  SaleCommission[]
 
   @@index([slug])
   @@index([isActive])

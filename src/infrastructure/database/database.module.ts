@@ -29,6 +29,8 @@ import { PAYMENT_REPOSITORY } from '../../application/repositories/payment.repos
 import { PaymentPrismaRepository } from './prisma/repositories/payment-prisma.repository';
 import { ALERT_CONFIG_REPOSITORY } from '../../application/repositories/alert-config.repository';
 import { AlertConfigPrismaRepository } from './prisma/repositories/alert-config-prisma.repository';
+import { VENTAS_SALES_REPOSITORY } from '../../application/repositories/ventas-sales.repository';
+import { VentasSalesPrismaRepository } from './prisma/repositories/ventas-sales-prisma.repository';
 
 @Module({
   providers: [
@@ -89,6 +91,10 @@ import { AlertConfigPrismaRepository } from './prisma/repositories/alert-config-
       provide: ALERT_CONFIG_REPOSITORY,
       useClass: AlertConfigPrismaRepository,
     },
+    {
+      provide: VENTAS_SALES_REPOSITORY,
+      useClass: VentasSalesPrismaRepository,
+    },
   ],
   exports: [
     PrismaService,
@@ -106,6 +112,7 @@ import { AlertConfigPrismaRepository } from './prisma/repositories/alert-config-
     NOTIFICATION_REPOSITORY,
     PAYMENT_REPOSITORY,
     ALERT_CONFIG_REPOSITORY,
+    VENTAS_SALES_REPOSITORY,
   ],
 })
 export class DatabaseModule {}

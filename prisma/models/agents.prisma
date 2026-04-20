@@ -24,6 +24,9 @@ model Agent {
   documentType  DocumentType?  @relation(fields: [documentTypeId], references: [id], onDelete: SetNull)
   rentalFinancialConfigsExternal RentalFinancialConfig[] @relation("ExternalAgent")
   assignedSalesClients           Client[]                 @relation("ClientAssignedAgent")
+  saleProcesses                  SaleProcess[]
+  saleClosings                   SaleClosing[]
+  saleCommissions                SaleCommission[]
 
   @@index([applicationId])
   @@index([type])
