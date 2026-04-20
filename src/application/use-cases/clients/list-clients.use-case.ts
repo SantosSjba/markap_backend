@@ -1,11 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { ClientRepository } from '../../repositories/client.repository';
-import { CLIENT_REPOSITORY } from '../../repositories/client.repository';
+import type { ClientRepository } from '@domain/repositories/client.repository';
+import { CLIENT_REPOSITORY } from '@domain/repositories/client.repository';
 import type {
   ListClientsResult,
   ListClientsFilters,
   ClientStats,
-} from '../../repositories/client.repository';
+} from '@domain/repositories/client.repository';
 
 @Injectable()
 export class ListClientsUseCase {

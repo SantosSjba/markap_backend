@@ -1,4 +1,4 @@
-import { Application } from '../../../application/entities';
+import { Application } from '@domain/entities';
 import { ApplicationResponseDto } from '../dtos/applications';
 
 /**

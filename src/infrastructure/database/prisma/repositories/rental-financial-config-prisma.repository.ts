@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { RentalFinancialConfigPrismaMapper } from '../mappers/rental-financial-config-prisma.mapper';
 import type {
   RentalFinancialConfigRepository,
-  RentalFinancialConfigData,
   CreateOrUpdateRentalFinancialConfigData,
-  RentalFinancialBreakdown,
-  FinancialValueType,
-} from '../../../../application/repositories/rental-financial-config.repository';
+} from '@domain/repositories/rental-financial-config.repository';
+import { RentalFinancialBreakdown } from '@domain/entities/rental-financial-config.entity';
+import type { RentalFinancialConfig } from '@domain/entities/rental-financial-config.entity';
 
 function computeAmount(type: string, value: number, base: number): number {
   if (type === 'PERCENT') return Math.round((base * value) / 100 * 100) / 100;
@@ -17,15 +17,15 @@ function computeAmount(type: string, value: number, base: number): number {
 export class RentalFinancialConfigPrismaRepository implements RentalFinancialConfigRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByRentalId(rentalId: string): Promise<RentalFinancialConfigData | null> {
+  async findByRentalId(rentalId: string): Promise<RentalFinancialConfig | null> {
     const row = await this.prisma.rentalFinancialConfig.findUnique({
       where: { rentalId },
       include: { externalAgent: { select: { fullName: true } } },
     });
-    return row ? this.toData(row) : null;
+    return row ? RentalFinancialConfigPrismaMapper.toDomain(row) : null;
   }
 
-  async upsert(data: CreateOrUpdateRentalFinancialConfigData): Promise<RentalFinancialConfigData> {
+  async upsert(data: CreateOrUpdateRentalFinancialConfigData): Promise<RentalFinancialConfig> {
     const row = await this.prisma.rentalFinancialConfig.upsert({
       where: { rentalId: data.rentalId },
       create: {
@@ -61,7 +61,7 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
       },
       include: { externalAgent: { select: { fullName: true } } },
     });
-    return this.toData(row);
+    return RentalFinancialConfigPrismaMapper.toDomain(row);
   }
 
   async getBreakdown(
@@ -89,9 +89,9 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
     const totalDeductions = expense + tax + externalAgentCommission + internalAgentCommission;
     const utility = Math.round((base - totalDeductions) * 100) / 100;
 
-    return {
+    return new RentalFinancialBreakdown(
       monthlyAmount,
-      baseAmount: base,
+      base,
       currency,
       expense,
       tax,
@@ -99,47 +99,7 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
       internalAgentCommission,
       utility,
       config,
-    };
+    );
   }
 
-  private toData(row: {
-    id: string;
-    rentalId: string;
-    currency: string;
-    baseAmount?: number | null;
-    expenseType: string;
-    expenseValue: number;
-    taxType: string;
-    taxValue: number;
-    externalAgentId: string | null;
-    externalAgentType: string;
-    externalAgentValue: number;
-    externalAgentName: string | null;
-    internalAgentId: string | null;
-    internalAgentType: string;
-    internalAgentValue: number;
-    createdAt: Date;
-    updatedAt: Date;
-    externalAgent?: { fullName: string } | null;
-  }): RentalFinancialConfigData {
-    return {
-      id: row.id,
-      rentalId: row.rentalId,
-      currency: row.currency,
-      baseAmount: row.baseAmount != null ? Number(row.baseAmount) : null,
-      expenseType: row.expenseType as FinancialValueType,
-      expenseValue: Number(row.expenseValue),
-      taxType: row.taxType as FinancialValueType,
-      taxValue: Number(row.taxValue),
-      externalAgentId: row.externalAgentId ?? null,
-      externalAgentType: row.externalAgentType as FinancialValueType,
-      externalAgentValue: Number(row.externalAgentValue),
-      externalAgentName: row.externalAgent?.fullName ?? row.externalAgentName,
-      internalAgentId: row.internalAgentId,
-      internalAgentType: row.internalAgentType as FinancialValueType,
-      internalAgentValue: Number(row.internalAgentValue),
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    };
-  }
 }

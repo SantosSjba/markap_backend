@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { MenuRepository, MenuData } from '../../repositories/menu.repository';
-import type { ApplicationRepository } from '../../repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
-import { EntityNotFoundException } from '../../exceptions';
+import { MenuRepository, Menu } from '@domain/repositories/menu.repository';
+import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
 
 export interface GetMenusByApplicationInput {
   applicationSlug: string;
@@ -38,7 +38,7 @@ export class GetMenusByApplicationUseCase {
     return this.mapToDto(menus);
   }
 
-  private mapToDto(menus: MenuData[]): MenuItemDto[] {
+  private mapToDto(menus: Menu[]): MenuItemDto[] {
     return menus.map((m) => ({
       id: m.id,
       label: m.label,

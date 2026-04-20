@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { ApplicationRepository } from '../../repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
-import { EntityNotFoundException } from '../../exceptions';
+import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
 
 export interface UpdateApplicationInput {
   id: string;

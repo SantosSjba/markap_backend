@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import {
+  deriveBuyerPaymentDisplayStatus,
+  startOfLocalDay,
+} from '../mappers/ventas-finanzas-prisma.mapper';
 import type {
   VentasFinanzasRepository,
   ListBuyerPaymentsFilters,
@@ -7,26 +11,7 @@ import type {
   ListDocCostsFilters,
   VentasBuyerPaymentKind,
   VentasDocCostType,
-} from '../../../../application/repositories/ventas-finanzas.repository';
-
-function startOfLocalDay(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function deriveBuyerPaymentDisplayStatus(row: {
-  status: string;
-  dueDate: Date;
-  paidAt: Date | null;
-}): 'PENDING' | 'PAID' | 'OVERDUE' {
-  if (row.status === 'PAID' || row.paidAt) return 'PAID';
-  const due = new Date(row.dueDate);
-  due.setHours(0, 0, 0, 0);
-  const today = startOfLocalDay();
-  if (due < today) return 'OVERDUE';
-  return 'PENDING';
-}
+} from '@domain/repositories/ventas-finanzas.repository';
 
 @Injectable()
 export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository {

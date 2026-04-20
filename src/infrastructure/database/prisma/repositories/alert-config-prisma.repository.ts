@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import type {
-  AlertConfigRepository,
-  AlertConfigData,
-  UpsertAlertConfigData,
-} from '../../../../application/repositories/alert-config.repository';
+import { AlertConfigPrismaMapper } from '../mappers/alert-config-prisma.mapper';
+import type { AlertConfigRepository, UpsertAlertConfigData } from '@domain/repositories/alert-config.repository';
+import type { AlertConfig } from '@domain/entities/alert-config.entity';
 
 @Injectable()
 export class AlertConfigPrismaRepository implements AlertConfigRepository {
@@ -13,38 +11,20 @@ export class AlertConfigPrismaRepository implements AlertConfigRepository {
   async findByUserAndApp(
     userId: string,
     applicationId: string,
-  ): Promise<AlertConfigData | null> {
+  ): Promise<AlertConfig | null> {
     const record = await (this.prisma as any).alertConfig.findUnique({
       where: { applicationId_userId: { applicationId, userId } },
     });
-    return record ? this.map(record) : null;
+    return record ? AlertConfigPrismaMapper.toDomain(record) : null;
   }
 
-  async upsert(data: UpsertAlertConfigData): Promise<AlertConfigData> {
+  async upsert(data: UpsertAlertConfigData): Promise<AlertConfig> {
     const { applicationId, userId, ...fields } = data;
     const record = await (this.prisma as any).alertConfig.upsert({
       where: { applicationId_userId: { applicationId, userId } },
       create: { applicationId, userId, ...fields },
       update: { ...fields },
     });
-    return this.map(record);
-  }
-
-  private map(r: any): AlertConfigData {
-    return {
-      id: r.id,
-      applicationId: r.applicationId,
-      userId: r.userId,
-      alert30Days: r.alert30Days,
-      alert60Days: r.alert60Days,
-      alert90Days: r.alert90Days,
-      alertPendingPayment: r.alertPendingPayment,
-      alertOverduePayment: r.alertOverduePayment,
-      channelInApp: r.channelInApp,
-      channelEmail: r.channelEmail,
-      channelWhatsapp: r.channelWhatsapp,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
-    };
+    return AlertConfigPrismaMapper.toDomain(record);
   }
 }

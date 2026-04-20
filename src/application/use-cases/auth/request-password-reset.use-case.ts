@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UserRepository } from '../../repositories/user.repository';
-import { PasswordResetCodeRepository } from '../../repositories/password-reset-code.repository';
-import { MailService } from '../../services/mail.service';
-import { UserNotFoundException } from '../../exceptions';
+import { UserRepository } from '@domain/repositories/user.repository';
+import { PasswordResetCodeRepository } from '@domain/repositories/password-reset-code.repository';
+import { MailService } from '@domain/services/mail.service';
+import { UserNotFoundException } from '@domain/exceptions';
 
 export interface RequestPasswordResetInput {
   email: string;

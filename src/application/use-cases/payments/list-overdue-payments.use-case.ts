@@ -2,8 +2,8 @@ import { Injectable, Inject } from '@nestjs/common';
 import type {
   PaymentRepository,
   OverduePaymentItem,
-} from '../../repositories/payment.repository';
-import { PAYMENT_REPOSITORY } from '../../repositories/payment.repository';
+} from '@domain/repositories/payment.repository';
+import { PAYMENT_REPOSITORY } from '@domain/repositories/payment.repository';
 
 @Injectable()
 export class ListOverduePaymentsUseCase {

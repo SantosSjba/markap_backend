@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { Role } from '../../../../application/entities';
-import { RoleRepository } from '../../../../application/repositories';
+import { Role } from '@domain/entities';
+import { RoleRepository } from '@domain/repositories';
 import { RolePrismaMapper } from '../mappers';
 
 /**

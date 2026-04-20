@@ -107,10 +107,7 @@ export class AuthController {
     const roles = await this.getUserRolesUseCase.execute(result.user.id);
 
     return {
-      user: {
-        ...UserHttpMapper.toResponse(result.user),
-        roles: roles.map((r) => ({ id: r.id, name: r.name, code: r.code })),
-      },
+      user: UserHttpMapper.toResponseWithRoleEntities(result.user, roles),
       accessToken: result.accessToken,
       expiresIn: result.expiresIn,
     };
@@ -135,10 +132,7 @@ export class AuthController {
     const user = await this.getUserProfileUseCase.execute(req.user.sub);
     const roles = await this.getUserRolesUseCase.execute(user.id);
 
-    return {
-      ...UserHttpMapper.toResponse(user),
-      roles: roles.map((r) => ({ id: r.id, name: r.name, code: r.code })),
-    };
+    return UserHttpMapper.toResponseWithRoleEntities(user, roles);
   }
 
   @Post('forgot-password')

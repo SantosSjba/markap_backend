@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Put, Patch, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { VentasConfigOperationsService } from '../../../application/use-cases/ventas-config';
-import type { VentasPipelineStageDTO } from '../../../application/repositories/ventas-config.repository';
+import { VentasConfigOperationsService } from '../../../application/services';
+import type { VentasPipelineStageInput } from '@domain/repositories/ventas-config.repository';
 
 @ApiTags('Ventas — Configuración')
 @Controller('ventas-config')
@@ -25,7 +25,7 @@ export class VentasConfigController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   async replacePipeline(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { stages: VentasPipelineStageDTO[] },
+    @Body() body: { stages: VentasPipelineStageInput[] },
   ) {
     return this.ventasConfig.replacePipelineStages(applicationSlug, body);
   }

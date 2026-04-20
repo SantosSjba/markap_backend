@@ -1,11 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { RentalRepository } from '../../repositories/rental.repository';
-import { RENTAL_REPOSITORY } from '../../repositories/rental.repository';
-import type { ApplicationRepository } from '../../repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
-import type { PropertyRepository } from '../../repositories/property.repository';
-import { PROPERTY_REPOSITORY } from '../../repositories/property.repository';
-import { EntityNotFoundException } from '../../exceptions';
+import type { RentalRepository } from '@domain/repositories/rental.repository';
+import { RENTAL_REPOSITORY } from '@domain/repositories/rental.repository';
+import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import type { PropertyRepository } from '@domain/repositories/property.repository';
+import { PROPERTY_REPOSITORY } from '@domain/repositories/property.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
 
 export interface CreateRentalInput {
   applicationSlug?: string;

@@ -1,24 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { ClientPrismaMapper } from '../mappers/client-prisma.mapper';
 import type {
   ClientRepository,
-  ClientData,
+  Client,
   ClientType,
   CreateClientData,
   UpdateClientData,
-  ClientDetailData,
+  ClientDetail,
   ListClientsFilters,
   ListClientsResult,
-  ClientListItem,
   ClientStats,
   SalesPipelineStatus,
-} from '../../../../application/repositories/client.repository';
+} from '@domain/repositories/client.repository';
 
 @Injectable()
 export class ClientPrismaRepository implements ClientRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateClientData): Promise<ClientData> {
+  async create(data: CreateClientData): Promise<Client> {
     const client = await this.prisma.client.create({
       data: {
         applicationId: data.applicationId,
@@ -56,10 +56,10 @@ export class ClientPrismaRepository implements ClientRepository {
         addresses: { include: { district: { include: { province: true } } } },
       },
     });
-    return this.toClientData(client);
+    return ClientPrismaMapper.toDomain(client);
   }
 
-  async findById(id: string): Promise<ClientDetailData | null> {
+  async findById(id: string): Promise<ClientDetail | null> {
     const client = await this.prisma.client.findFirst({
       where: { id, deletedAt: null },
       include: {
@@ -81,11 +81,11 @@ export class ClientPrismaRepository implements ClientRepository {
     });
     if (!client) return null;
     const primaryAddress = client.addresses[0] ?? null;
-    return {
-      ...this.toClientData(client),
-      applicationSlug: client.application.slug,
-      documentType: client.documentType,
-      primaryAddress: primaryAddress
+    return ClientPrismaMapper.toDetail(
+      client,
+      client.application.slug,
+      client.documentType,
+      primaryAddress
         ? {
             id: primaryAddress.id,
             addressLine: primaryAddress.addressLine,
@@ -105,11 +105,11 @@ export class ClientPrismaRepository implements ClientRepository {
             },
           }
         : null,
-      assignedAgent: client.assignedAgent,
-    };
+      client.assignedAgent,
+    );
   }
 
-  async update(id: string, data: UpdateClientData): Promise<ClientData> {
+  async update(id: string, data: UpdateClientData): Promise<Client> {
     await this.prisma.client.update({
       where: { id },
       data: {
@@ -170,7 +170,7 @@ export class ClientPrismaRepository implements ClientRepository {
     const updated = await this.prisma.client.findUniqueOrThrow({
       where: { id },
     });
-    return this.toClientData(updated);
+    return ClientPrismaMapper.toDomain(updated);
   }
 
   async findMany(filters: ListClientsFilters): Promise<ListClientsResult> {
@@ -300,25 +300,14 @@ export class ClientPrismaRepository implements ClientRepository {
     }
 
     return {
-      data: data.map(
-        (c): ClientListItem => ({
-          id: c.id,
-          fullName: c.fullName,
-          documentTypeCode: c.documentType.code,
-          documentNumber: c.documentNumber,
-          primaryPhone: c.primaryPhone,
-          primaryEmail: c.primaryEmail,
-          clientType: c.clientType as ClientType,
-          isActive: c.isActive,
-          propertiesCount: c.clientType === 'OWNER' ? propertiesCountMap.get(c.id) ?? 0 : 0,
-          contractsCount:
-            c.clientType === 'TENANT'
-              ? rentalsByTenantMap.get(c.id) ?? 0
-              : rentalsByOwnerMap.get(c.id) ?? 0,
-          salesStatus: (c.salesStatus as SalesPipelineStatus | null) ?? null,
-          leadOrigin: c.leadOrigin,
-          assignedAgentName: c.assignedAgent?.fullName ?? null,
-        }),
+      data: data.map((c) =>
+        ClientPrismaMapper.toListItem(
+          c,
+          c.clientType === 'OWNER' ? propertiesCountMap.get(c.id) ?? 0 : 0,
+          c.clientType === 'TENANT'
+            ? rentalsByTenantMap.get(c.id) ?? 0
+            : rentalsByOwnerMap.get(c.id) ?? 0,
+        ),
       ),
       total,
       page: filters.page,
@@ -388,46 +377,6 @@ export class ClientPrismaRepository implements ClientRepository {
       }),
     ]);
     return { total, owners, tenants, active };
-  }
-
-  private toClientData(client: {
-    id: string;
-    applicationId: string;
-    clientType: string;
-    documentTypeId: string;
-    documentNumber: string;
-    fullName: string;
-    legalRepresentativeName: string | null;
-    legalRepresentativePosition: string | null;
-    primaryPhone: string;
-    secondaryPhone: string | null;
-    primaryEmail: string;
-    secondaryEmail: string | null;
-    notes: string | null;
-    salesStatus: string | null;
-    leadOrigin: string | null;
-    assignedAgentId: string | null;
-    isActive: boolean;
-  }): ClientData {
-    return {
-      id: client.id,
-      applicationId: client.applicationId,
-      clientType: client.clientType as ClientType,
-      documentTypeId: client.documentTypeId,
-      documentNumber: client.documentNumber,
-      fullName: client.fullName,
-      legalRepresentativeName: client.legalRepresentativeName,
-      legalRepresentativePosition: client.legalRepresentativePosition,
-      primaryPhone: client.primaryPhone,
-      secondaryPhone: client.secondaryPhone,
-      primaryEmail: client.primaryEmail,
-      secondaryEmail: client.secondaryEmail,
-      notes: client.notes,
-      salesStatus: (client.salesStatus as SalesPipelineStatus | null) ?? null,
-      leadOrigin: client.leadOrigin,
-      assignedAgentId: client.assignedAgentId,
-      isActive: client.isActive,
-    };
   }
 
   async softDelete(id: string): Promise<void> {

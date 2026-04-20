@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '../../repositories/user.repository';
-import { PasswordResetCodeRepository } from '../../repositories/password-reset-code.repository';
-import { HashService } from '../../services/hash.service';
+import { UserRepository } from '@domain/repositories/user.repository';
+import { PasswordResetCodeRepository } from '@domain/repositories/password-reset-code.repository';
+import { HashService } from '@domain/services/hash.service';
 import {
   InvalidPasswordResetCodeException,
   UserNotFoundException,
-} from '../../exceptions';
+} from '@domain/exceptions';
 
 export interface ResetPasswordInput {
   email: string;

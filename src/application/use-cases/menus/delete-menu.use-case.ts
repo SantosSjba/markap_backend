@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { MenuRepository } from '../../repositories/menu.repository';
-import { EntityNotFoundException } from '../../exceptions';
+import { MenuRepository } from '@domain/repositories/menu.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
 
 @Injectable()
 export class DeleteMenuUseCase {

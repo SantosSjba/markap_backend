@@ -1,82 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { AgentPrismaMapper } from '../mappers/agent-prisma.mapper';
+import type { Agent, AgentListItem } from '@domain/entities/agent.entity';
 import type {
   AgentRepository,
-  AgentData,
-  AgentListItem,
   CreateAgentData,
   UpdateAgentData,
   ListAgentsFilters,
   ListAgentsResult,
-} from '../../../../application/repositories/agent.repository';
+} from '@domain/repositories/agent.repository';
 
 @Injectable()
 export class AgentPrismaRepository implements AgentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private toAgentData(row: {
-    id: string;
-    applicationId: string;
-    type: string;
-    userId: string | null;
-    fullName: string;
-    email: string | null;
-    phone: string | null;
-    documentTypeId: string | null;
-    documentNumber: string | null;
-    isActive: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-  }): AgentData {
-    return {
-      id: row.id,
-      applicationId: row.applicationId,
-      type: row.type as 'INTERNAL' | 'EXTERNAL',
-      userId: row.userId,
-      fullName: row.fullName,
-      email: row.email,
-      phone: row.phone,
-      documentTypeId: row.documentTypeId,
-      documentNumber: row.documentNumber,
-      isActive: row.isActive,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    };
-  }
-
-  private toListItem(row: {
-    id: string;
-    applicationId: string;
-    type: string;
-    userId: string | null;
-    fullName: string;
-    email: string | null;
-    phone: string | null;
-    documentTypeId: string | null;
-    documentNumber: string | null;
-    isActive: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-    user?: { id: string; firstName: string; lastName: string } | null;
-    documentType?: { code: string; name: string } | null;
-  }): AgentListItem {
-    const base = this.toAgentData(row);
-    return {
-      ...base,
-      user: row.user
-        ? {
-            id: row.user.id,
-            firstName: row.user.firstName,
-            lastName: row.user.lastName,
-          }
-        : null,
-      documentType: row.documentType
-        ? { code: row.documentType.code, name: row.documentType.name }
-        : null,
-    };
-  }
-
-  async create(data: CreateAgentData): Promise<AgentData> {
+  async create(data: CreateAgentData): Promise<Agent> {
     const agent = await this.prisma.agent.create({
       data: {
         applicationId: data.applicationId,
@@ -89,7 +27,7 @@ export class AgentPrismaRepository implements AgentRepository {
         documentNumber: data.documentNumber?.trim() || null,
       },
     });
-    return this.toAgentData(agent);
+    return AgentPrismaMapper.toDomain(agent);
   }
 
   async findById(id: string): Promise<AgentListItem | null> {
@@ -101,7 +39,7 @@ export class AgentPrismaRepository implements AgentRepository {
       },
     });
     if (!agent) return null;
-    return this.toListItem(agent);
+    return AgentPrismaMapper.toListItem(agent);
   }
 
   async findMany(filters: ListAgentsFilters): Promise<ListAgentsResult> {
@@ -147,7 +85,7 @@ export class AgentPrismaRepository implements AgentRepository {
     ]);
 
     return {
-      data: data.map((row) => this.toListItem(row)),
+      data: data.map((row) => AgentPrismaMapper.toListItem(row)),
       total,
       page: filters.page,
       limit: filters.limit,
@@ -161,7 +99,7 @@ export class AgentPrismaRepository implements AgentRepository {
     });
   }
 
-  async update(id: string, data: UpdateAgentData): Promise<AgentData> {
+  async update(id: string, data: UpdateAgentData): Promise<Agent> {
     await this.prisma.agent.update({
       where: { id },
       data: {
@@ -180,6 +118,6 @@ export class AgentPrismaRepository implements AgentRepository {
       },
     });
     const updated = await this.prisma.agent.findUniqueOrThrow({ where: { id } });
-    return this.toAgentData(updated);
+    return AgentPrismaMapper.toDomain(updated);
   }
 }

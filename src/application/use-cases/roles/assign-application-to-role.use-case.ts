@@ -1,11 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { RoleRepository } from '../../repositories/role.repository';
-import { ROLE_REPOSITORY } from '../../repositories/role.repository';
+import type { RoleRepository } from '@domain/repositories/role.repository';
+import { ROLE_REPOSITORY } from '@domain/repositories/role.repository';
 import type {
   ApplicationRepository,
-} from '../../repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
-import { EntityNotFoundException } from '../../exceptions';
+} from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
 
 export interface AssignApplicationToRoleInput {
   roleId: string;

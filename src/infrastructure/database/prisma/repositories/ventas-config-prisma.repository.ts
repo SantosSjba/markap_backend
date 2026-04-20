@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { VentasConfigPrismaMapper } from '../mappers/ventas-config-prisma.mapper';
 import type {
   VentasConfigRepository,
-  VentasPipelineStageDTO,
-  VentasNumberingSeriesDTO,
-} from '../../../../application/repositories/ventas-config.repository';
+  VentasPipelineStageInput,
+} from '@domain/repositories/ventas-config.repository';
+import { VentasPropertyTypeCatalogItem } from '@domain/entities/ventas-config.entity';
+import type { VentasNumberingSeries, VentasPipelineStage } from '@domain/entities/ventas-config.entity';
 
-const DEFAULT_STAGES: Omit<VentasPipelineStageDTO, never>[] = [
+const DEFAULT_STAGES: VentasPipelineStageInput[] = [
   { code: 'PROSPECT', label: 'Prospecto', sortOrder: 0, isActive: true },
   { code: 'VISIT', label: 'Visita', sortOrder: 1, isActive: true },
   { code: 'NEGOTIATION', label: 'Negociación', sortOrder: 2, isActive: true },
@@ -18,22 +20,17 @@ const DEFAULT_STAGES: Omit<VentasPipelineStageDTO, never>[] = [
 export class VentasConfigPrismaRepository implements VentasConfigRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listPipelineStages(applicationId: string): Promise<VentasPipelineStageDTO[]> {
+  async listPipelineStages(applicationId: string): Promise<VentasPipelineStage[]> {
     const rows = await this.prisma.ventasPipelineStageConfig.findMany({
       where: { applicationId },
       orderBy: { sortOrder: 'asc' },
     });
-    return rows.map((r) => ({
-      code: r.code,
-      label: r.label,
-      sortOrder: r.sortOrder,
-      isActive: r.isActive,
-    }));
+    return rows.map((r) => VentasConfigPrismaMapper.toPipelineStage(r));
   }
 
   async replacePipelineStages(
     applicationId: string,
-    stages: VentasPipelineStageDTO[],
+    stages: VentasPipelineStageInput[],
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       await tx.ventasPipelineStageConfig.deleteMany({ where: { applicationId } });
@@ -52,23 +49,19 @@ export class VentasConfigPrismaRepository implements VentasConfigRepository {
   async getNumberingSeries(
     applicationId: string,
     seriesKey: string,
-  ): Promise<VentasNumberingSeriesDTO | null> {
+  ): Promise<VentasNumberingSeries | null> {
     const row = await this.prisma.ventasNumberingSeries.findUnique({
       where: { applicationId_seriesKey: { applicationId, seriesKey } },
     });
     if (!row) return null;
-    return {
-      seriesKey: row.seriesKey,
-      prefix: row.prefix,
-      lastNumber: row.lastNumber,
-    };
+    return VentasConfigPrismaMapper.toNumberingSeries(row);
   }
 
   async updateNumberingSeries(
     applicationId: string,
     seriesKey: string,
     data: { prefix?: string; lastNumber?: number },
-  ): Promise<VentasNumberingSeriesDTO> {
+  ): Promise<VentasNumberingSeries> {
     const row = await this.prisma.ventasNumberingSeries.update({
       where: { applicationId_seriesKey: { applicationId, seriesKey } },
       data: {
@@ -76,20 +69,16 @@ export class VentasConfigPrismaRepository implements VentasConfigRepository {
         ...(data.lastNumber !== undefined && { lastNumber: data.lastNumber }),
       },
     });
-    return {
-      seriesKey: row.seriesKey,
-      prefix: row.prefix,
-      lastNumber: row.lastNumber,
-    };
+    return VentasConfigPrismaMapper.toNumberingSeries(row);
   }
 
-  async listActivePropertyTypes(): Promise<{ id: string; name: string; code: string }[]> {
+  async listActivePropertyTypes(): Promise<VentasPropertyTypeCatalogItem[]> {
     const rows = await this.prisma.propertyType.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' },
       select: { id: true, name: true, code: true },
     });
-    return rows;
+    return rows.map((r) => new VentasPropertyTypeCatalogItem(r.id, r.name, r.code));
   }
 
   async ensureDefaults(applicationId: string): Promise<void> {

@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { ReportRepository, ReportsSummary } from '../../repositories/report.repository';
-import { REPORT_REPOSITORY } from '../../repositories/report.repository';
+import type { ReportRepository, ReportsSummary } from '@domain/repositories/report.repository';
+import { REPORT_REPOSITORY } from '@domain/repositories/report.repository';
 
 @Injectable()
 export class GetReportsSummaryUseCase {

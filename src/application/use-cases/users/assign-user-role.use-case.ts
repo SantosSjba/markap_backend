@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
-import { UserRepository } from '../../repositories/user.repository';
-import { ROLE_REPOSITORY } from '../../repositories/role.repository';
-import type { RoleRepository } from '../../repositories/role.repository';
+import { UserRepository } from '@domain/repositories/user.repository';
+import { ROLE_REPOSITORY } from '@domain/repositories/role.repository';
+import type { RoleRepository } from '@domain/repositories/role.repository';
 
 /**
  * Assign Role to User Use Case

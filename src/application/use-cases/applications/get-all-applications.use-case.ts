@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Application } from '../../entities';
-import type { ApplicationRepository } from '../../repositories';
-import { APPLICATION_REPOSITORY } from '../../repositories';
+import { Application } from '@domain/entities';
+import type { ApplicationRepository } from '@domain/repositories';
+import { APPLICATION_REPOSITORY } from '@domain/repositories';
 
 /**
  * Get All Applications Use Case

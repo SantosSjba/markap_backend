@@ -2,8 +2,8 @@ import { Injectable, Inject } from '@nestjs/common';
 import type {
   ReportRepository,
   FinancialDistributionReportItem,
-} from '../../repositories/report.repository';
-import { REPORT_REPOSITORY } from '../../repositories/report.repository';
+} from '@domain/repositories/report.repository';
+import { REPORT_REPOSITORY } from '@domain/repositories/report.repository';
 
 @Injectable()
 export class GetFinancialDistributionReportUseCase {

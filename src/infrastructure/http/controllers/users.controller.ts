@@ -23,6 +23,8 @@ import { ToggleUserActiveUseCase } from '../../../application/use-cases/users/to
 import { AssignUserRoleUseCase } from '../../../application/use-cases/users/assign-user-role.use-case';
 import { RevokeUserRoleUseCase } from '../../../application/use-cases/users/revoke-user-role.use-case';
 import { RegisterUserUseCase } from '../../../application/use-cases/auth';
+import { CreateUserDto, UpdateUserDto } from '../dtos/users';
+import { UserHttpMapper } from '../mappers/user-http.mapper';
 
 @ApiTags('Users')
 @Controller('users')
@@ -43,20 +45,7 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Lista de usuarios' })
   async getAll() {
     const users = await this.getAllUsersUseCase.execute();
-    return users.map((user) => ({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: `${user.firstName} ${user.lastName}`,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      roles: user.userRoles.map((ur) => ({
-        id: ur.role.id,
-        name: ur.role.name,
-        code: ur.role.code,
-      })),
-    }));
+    return users.map((user) => UserHttpMapper.toResponseFromListItem(user));
   }
 
   @Post()
@@ -64,26 +53,17 @@ export class UsersController {
   @ApiResponse({ status: 201, description: 'Usuario creado' })
   async create(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { email: string; password: string; firstName: string; lastName: string },
+    @Body() dto: CreateUserDto,
   ) {
     const user = await this.registerUserUseCase.execute({
-      email: body.email,
-      password: body.password,
-      firstName: body.firstName,
-      lastName: body.lastName,
+      email: dto.email,
+      password: dto.password,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
       createdBy: req.user.sub,
     });
 
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: `${user.firstName} ${user.lastName}`,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      roles: [],
-    };
+    return UserHttpMapper.toResponseWithRoleEntities(user, []);
   }
 
   @Patch(':id')
@@ -92,7 +72,7 @@ export class UsersController {
   async update(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
-    @Body() body: { firstName?: string; lastName?: string; email?: string },
+    @Body() body: UpdateUserDto,
   ) {
     const user = await this.updateUserUseCase.execute({
       userId: id,
@@ -102,20 +82,7 @@ export class UsersController {
       updatedBy: req.user.sub,
     });
 
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: `${user.firstName} ${user.lastName}`,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      roles: user.userRoles.map((ur) => ({
-        id: ur.role.id,
-        name: ur.role.name,
-        code: ur.role.code,
-      })),
-    };
+    return UserHttpMapper.toResponseFromListItem(user);
   }
 
   @Patch(':id/toggle-active')
@@ -127,20 +94,7 @@ export class UsersController {
   ) {
     const user = await this.toggleUserActiveUseCase.execute(id, req.user.sub);
 
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: `${user.firstName} ${user.lastName}`,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      roles: user.userRoles.map((ur) => ({
-        id: ur.role.id,
-        name: ur.role.name,
-        code: ur.role.code,
-      })),
-    };
+    return UserHttpMapper.toResponseFromListItem(user);
   }
 
   @Post(':userId/roles/:roleId')

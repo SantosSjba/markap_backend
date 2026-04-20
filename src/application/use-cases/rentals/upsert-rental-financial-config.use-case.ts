@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type {
   RentalFinancialConfigRepository,
-  RentalFinancialConfigData,
+  RentalFinancialConfig,
   CreateOrUpdateRentalFinancialConfigData,
-} from '../../repositories/rental-financial-config.repository';
-import { RENTAL_FINANCIAL_CONFIG_REPOSITORY } from '../../repositories/rental-financial-config.repository';
+} from '@domain/repositories/rental-financial-config.repository';
+import { RENTAL_FINANCIAL_CONFIG_REPOSITORY } from '@domain/repositories/rental-financial-config.repository';
 
 @Injectable()
 export class UpsertRentalFinancialConfigUseCase {
@@ -16,7 +16,7 @@ export class UpsertRentalFinancialConfigUseCase {
   async execute(
     rentalId: string,
     data: Omit<CreateOrUpdateRentalFinancialConfigData, 'rentalId'>,
-  ): Promise<RentalFinancialConfigData> {
+  ): Promise<RentalFinancialConfig> {
     return this.repo.upsert({ rentalId, ...data });
   }
 }

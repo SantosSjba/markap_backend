@@ -17,7 +17,7 @@ import {
   UnauthorizedException,
   InvalidPasswordResetCodeException,
   UserNotFoundException,
-} from '../../application/exceptions';
+} from '@domain/exceptions';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {

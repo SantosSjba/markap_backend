@@ -20,7 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { VentasSalesOperationsService } from '../../../application/use-cases/ventas-sales';
+import { VentasSalesOperationsService } from '../../../application/services';
 import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';

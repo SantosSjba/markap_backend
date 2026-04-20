@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { ClientRepository } from '../../repositories/client.repository';
-import { CLIENT_REPOSITORY } from '../../repositories/client.repository';
-import type { ClientDetailData } from '../../repositories/client.repository';
-import type { ApplicationRepository } from '../../repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
-import { EntityNotFoundException } from '../../exceptions';
+import type { ClientRepository } from '@domain/repositories/client.repository';
+import { CLIENT_REPOSITORY } from '@domain/repositories/client.repository';
+import type { ClientDetail } from '@domain/repositories/client.repository';
+import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
 
 @Injectable()
 export class GetClientByIdUseCase {
@@ -21,7 +21,7 @@ export class GetClientByIdUseCase {
   async execute(
     id: string,
     expectedApplicationSlug?: string,
-  ): Promise<ClientDetailData> {
+  ): Promise<ClientDetail> {
     const client = await this.clientRepository.findById(id);
     if (!client) {
       throw new EntityNotFoundException('Client', id);

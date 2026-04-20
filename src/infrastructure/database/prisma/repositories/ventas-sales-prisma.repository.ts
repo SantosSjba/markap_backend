@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { prismaAmountToNumber } from '../mappers/ventas-sales-prisma.mapper';
 import type {
   VentasSalesRepository,
   ListSaleProcessesFilters,
@@ -9,7 +10,7 @@ import type {
   VentasSaleProcessStatus,
   VentasSeparationStatus,
   VentasPaymentType,
-} from '../../../../application/repositories/ventas-sales.repository';
+} from '@domain/repositories/ventas-sales.repository';
 
 @Injectable()
 export class VentasSalesPrismaRepository implements VentasSalesRepository {
@@ -104,7 +105,18 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       }),
       this.prisma.saleProcess.count({ where }),
     ]);
-    return { data: rows as unknown[], total };
+    return {
+      data: rows.map((row) => ({
+        ...row,
+        property: row.property
+          ? {
+              ...row.property,
+              salePrice: prismaAmountToNumber(row.property.salePrice as unknown),
+            }
+          : row.property,
+      })) as unknown[],
+      total,
+    };
   }
 
   async getSaleProcessById(

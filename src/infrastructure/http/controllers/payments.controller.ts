@@ -9,8 +9,6 @@ import {
   Request,
   HttpCode,
   HttpStatus,
-  ParseIntPipe,
-  Optional,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { GetPaymentStatsUseCase } from '../../../application/use-cases/payments/get-payment-stats.use-case';
@@ -18,7 +16,7 @@ import { ListPendingPaymentsUseCase } from '../../../application/use-cases/payme
 import { RegisterPaymentUseCase } from '../../../application/use-cases/payments/register-payment.use-case';
 import { ListPaymentHistoryUseCase } from '../../../application/use-cases/payments/list-payment-history.use-case';
 import { ListOverduePaymentsUseCase } from '../../../application/use-cases/payments/list-overdue-payments.use-case';
-import { PaymentMethod } from '../../../application/repositories/payment.repository';
+import { RegisterPaymentDto } from '../dtos/payments';
 
 @UseGuards(JwtAuthGuard)
 @Controller('payments')
@@ -56,22 +54,16 @@ export class PaymentsController {
   @HttpCode(HttpStatus.OK)
   async registerPayment(
     @Param('id') id: string,
-    @Body() body: {
-      paidDate: string;
-      paidAmount: number;
-      paymentMethod: PaymentMethod;
-      referenceNumber?: string | null;
-      notes?: string | null;
-    },
+    @Body() dto: RegisterPaymentDto,
     @Request() req: any,
   ) {
     return this.registerPaymentUseCase.execute({
       paymentId: id,
-      paidDate: new Date(body.paidDate),
-      paidAmount: body.paidAmount,
-      paymentMethod: body.paymentMethod,
-      referenceNumber: body.referenceNumber,
-      notes: body.notes,
+      paidDate: new Date(dto.paidDate),
+      paidAmount: dto.paidAmount,
+      paymentMethod: dto.paymentMethod,
+      referenceNumber: dto.referenceNumber,
+      notes: dto.notes,
       registeredBy: req.user?.id ?? null,
     });
   }

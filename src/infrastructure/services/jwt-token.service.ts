@@ -5,7 +5,7 @@ import {
   TokenService,
   TokenPayload,
   TokenResult,
-} from '../../application/services/token.service';
+} from '@domain/services/token.service';
 
 /**
  * JWT Token Service

@@ -1,9 +1,9 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
-import type { PropertyRepository } from '../../repositories/property.repository';
-import { PROPERTY_REPOSITORY } from '../../repositories/property.repository';
-import type { ApplicationRepository } from '../../repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
-import { EntityNotFoundException } from '../../exceptions';
+import type { PropertyRepository } from '@domain/repositories/property.repository';
+import { PROPERTY_REPOSITORY } from '@domain/repositories/property.repository';
+import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
 
 const VENTAS_LISTING = new Set(['AVAILABLE', 'RESERVED', 'SOLD']);
 const ALQUILERES_LISTING = new Set([

@@ -1,9 +1,9 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
-import type { PropertyRepository } from '../../repositories/property.repository';
-import { PROPERTY_REPOSITORY } from '../../repositories/property.repository';
-import type { ApplicationRepository } from '../../repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
-import type { PropertyData, UpdatePropertyData } from '../../repositories/property.repository';
+import type { PropertyRepository } from '@domain/repositories/property.repository';
+import { PROPERTY_REPOSITORY } from '@domain/repositories/property.repository';
+import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import type { Property, UpdatePropertyData } from '@domain/repositories/property.repository';
 
 const VENTAS_LISTING = new Set(['AVAILABLE', 'RESERVED', 'SOLD']);
 const ALQUILERES_LISTING = new Set([
@@ -25,7 +25,7 @@ export class UpdatePropertyUseCase {
   async execute(
     data: UpdatePropertyData,
     expectedApplicationSlug?: string,
-  ): Promise<PropertyData> {
+  ): Promise<Property> {
     const existing = await this.propertyRepository.findById(data.id);
     if (!existing) {
       throw new NotFoundException(`Propiedad con id ${data.id} no encontrada`);

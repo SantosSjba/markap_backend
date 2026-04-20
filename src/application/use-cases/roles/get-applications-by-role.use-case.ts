@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { ApplicationRepository } from '../../repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
-import type { Application } from '../../entities';
+import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import type { Application } from '@domain/entities';
 
 /**
  * Get applications assigned to a role (role-applications access control).

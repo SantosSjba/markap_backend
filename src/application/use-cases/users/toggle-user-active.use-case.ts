@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { UserRepository } from '../../repositories/user.repository';
+import { UserRepository } from '@domain/repositories/user.repository';
 
 /**
  * Toggle User Active Status Use Case

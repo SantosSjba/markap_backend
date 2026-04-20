@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { MailService } from '../../application/services/mail.service';
+import { MailService } from '@domain/services/mail.service';
 
 /**
  * Nodemailer Mail Service

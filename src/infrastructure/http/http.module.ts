@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module';
 
 // Services
-import { HashService } from '../../application/services/hash.service';
-import { TokenService } from '../../application/services/token.service';
-import { MailService } from '../../application/services/mail.service';
+import { HashService } from '@domain/services/hash.service';
+import { TokenService } from '@domain/services/token.service';
+import { MailService } from '@domain/services/mail.service';
 import { BcryptHashService } from '../services/bcrypt-hash.service';
 import { JwtTokenService } from '../services/jwt-token.service';
 import { NodemailerMailService } from '../services/nodemailer-mail.service';
@@ -149,16 +149,18 @@ import { VentasSalesController } from './controllers/ventas-sales.controller';
 import { VentasFinanzasController } from './controllers/ventas-finanzas.controller';
 import { VentasReportsController } from './controllers/ventas-reports.controller';
 import { VentasConfigController } from './controllers/ventas-config.controller';
-import { VentasSalesOperationsService } from '../../application/use-cases/ventas-sales';
-import { VentasFinanzasOperationsService } from '../../application/use-cases/ventas-finanzas';
-import { VentasReportsOperationsService } from '../../application/use-cases/ventas-reports';
-import { VentasConfigOperationsService } from '../../application/use-cases/ventas-config';
+import {
+  VentasSalesOperationsService,
+  VentasFinanzasOperationsService,
+  VentasReportsOperationsService,
+  VentasConfigOperationsService,
+} from '../../application/services';
 
 // Gateways
 import { NotificationsGateway } from './gateways/notifications.gateway';
 
 // Services - Notifications
-import { NotificationsService } from './services/notifications.service';
+import { NotificationsService } from '../../application/services';
 
 @Module({
   imports: [DatabaseModule],

@@ -1,16 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import type {
-  ReportRepository,
-  ReportsSummary,
-  ContractExpiringItem,
-  PropertyWithoutContractItem,
+import { ReportPrismaMapper } from '../mappers/report-prisma.mapper';
+import type { ReportRepository } from '@domain/repositories/report.repository';
+import {
   ActiveClientReportItem,
   ContractStatusSummary,
+  FinancialDistributionReportItem,
   MonthlyMetrics,
   RentalsByMonthItem,
-  FinancialDistributionReportItem,
-} from '@application/repositories/report.repository';
+  ReportsSummary,
+} from '@domain/entities/report.entity';
+import type {
+  ContractExpiringItem,
+  PropertyWithoutContractItem,
+} from '@domain/entities/report.entity';
 
 @Injectable()
 export class ReportPrismaRepository implements ReportRepository {
@@ -21,12 +24,7 @@ export class ReportPrismaRepository implements ReportRepository {
       where: { slug: applicationSlug },
     });
     if (!app) {
-      return {
-        contratosPorVencer: 0,
-        propiedadesSinContrato: 0,
-        clientesActivos: 0,
-        clientesConIncidencias: 0,
-      };
+      return new ReportsSummary(0, 0, 0, 0);
     }
 
     const today = new Date();
@@ -47,12 +45,12 @@ export class ReportPrismaRepository implements ReportRepository {
       this.countActiveTenants(app.id),
     ]);
 
-    return {
+    return new ReportsSummary(
       contratosPorVencer,
       propiedadesSinContrato,
       clientesActivos,
-      clientesConIncidencias: 0,
-    };
+      0,
+    );
   }
 
   async getContractsExpiring(
@@ -88,21 +86,9 @@ export class ReportPrismaRepository implements ReportRepository {
       orderBy: { endDate: 'asc' },
     });
 
-    return rentals.map((r: any) => {
-      const endDate = new Date(r.endDate);
-      const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      const year = endDate.getFullYear();
-      const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
-      return {
-        id: r.id,
-        code: `ALQ-${year}-${shortId}`,
-        tenantName: r.tenant.fullName,
-        propertyAddress: r.property.addressLine,
-        ownerName: r.property.owner.fullName,
-        endDate: r.endDate,
-        daysLeft,
-      };
-    });
+    return rentals.map((r: any) =>
+      ReportPrismaMapper.toContractExpiringItem(r, today),
+    );
   }
 
   async getPropertiesWithoutContract(
@@ -141,12 +127,7 @@ export class ReportPrismaRepository implements ReportRepository {
       orderBy: { code: 'asc' },
     });
 
-    return properties.map((p: any) => ({
-      id: p.id,
-      code: p.code,
-      addressLine: p.addressLine,
-      ownerName: p.owner.fullName,
-    }));
+    return properties.map((p: any) => ReportPrismaMapper.toPropertyWithoutContractItem(p));
   }
 
   async getActiveClients(applicationSlug: string): Promise<ActiveClientReportItem[]> {
@@ -180,11 +161,10 @@ export class ReportPrismaRepository implements ReportRepository {
       tenantsWithActive.map((g: any) => [g.tenantId, g._count.id]),
     );
 
-    return clients.map((c: any) => ({
-      id: c.id,
-      fullName: c.fullName,
-      contractsCount: countByTenant[c.id] ?? 0,
-    }));
+    return clients.map(
+      (c: any) =>
+        new ActiveClientReportItem(c.id, c.fullName, countByTenant[c.id] ?? 0),
+    );
   }
 
   async getContractStatusSummary(
@@ -194,7 +174,7 @@ export class ReportPrismaRepository implements ReportRepository {
       where: { slug: applicationSlug },
     });
     if (!app) {
-      return { vigentes: 0, porVencer: 0, proximos: 0, urgentes: 0 };
+      return new ContractStatusSummary(0, 0, 0, 0);
     }
 
     const today = new Date();
@@ -228,7 +208,7 @@ export class ReportPrismaRepository implements ReportRepository {
       }),
     ]);
 
-    return { vigentes, porVencer, proximos, urgentes };
+    return new ContractStatusSummary(vigentes, porVencer, proximos, urgentes);
   }
 
   async getMonthlyMetrics(applicationSlug: string): Promise<MonthlyMetrics> {
@@ -236,12 +216,7 @@ export class ReportPrismaRepository implements ReportRepository {
       where: { slug: applicationSlug },
     });
     if (!app) {
-      return {
-        tasaOcupacion: 0,
-        tasaCobranza: 0,
-        contratosRenovados: 0,
-        clientesNuevos: 0,
-      };
+      return new MonthlyMetrics(0, 0, 0, 0);
     }
 
     const today = new Date();
@@ -272,12 +247,7 @@ export class ReportPrismaRepository implements ReportRepository {
 
     const tasaOcupacion = totalProps > 0 ? Math.round((rentedCount / totalProps) * 100) : 0;
 
-    return {
-      tasaOcupacion,
-      tasaCobranza: 0,
-      contratosRenovados: 0,
-      clientesNuevos: newClientsThisMonth,
-    };
+    return new MonthlyMetrics(tasaOcupacion, 0, 0, newClientsThisMonth);
   }
 
   async getRentalsByMonth(
@@ -417,22 +387,24 @@ export class ReportPrismaRepository implements ReportRepository {
         ? `${monthNames[m - 1]} ${y}`
         : monthNames[m - 1];
 
-      result.push({
-        month: m,
-        year: y,
-        monthName: monthLabel,
-        newContracts,
-        expiredContracts,
-        activeAtEndOfMonth: activeAtEnd,
-        totalRevenue: Math.round(totalRevenue * 100) / 100,
-        companyRevenue: Math.round(companyRevenue * 100) / 100,
-        totalExpense: Math.round(totalExpense * 100) / 100,
-        totalTax: Math.round(totalTax * 100) / 100,
-        totalExternalCommission: Math.round(totalExternalCommission * 100) / 100,
-        totalInternalCommission: Math.round(totalInternalCommission * 100) / 100,
-        totalUtility: Math.round(totalUtility * 100) / 100,
-        currency,
-      });
+      result.push(
+        new RentalsByMonthItem(
+          m,
+          y,
+          monthLabel,
+          newContracts,
+          expiredContracts,
+          activeAtEnd,
+          Math.round(totalRevenue * 100) / 100,
+          Math.round(companyRevenue * 100) / 100,
+          Math.round(totalExpense * 100) / 100,
+          Math.round(totalTax * 100) / 100,
+          Math.round(totalExternalCommission * 100) / 100,
+          Math.round(totalInternalCommission * 100) / 100,
+          Math.round(totalUtility * 100) / 100,
+          currency,
+        ),
+      );
     }
 
     return result;
@@ -522,14 +494,14 @@ export class ReportPrismaRepository implements ReportRepository {
         ? `${cfg.internalAgentUser.firstName} ${cfg.internalAgentUser.lastName}`.trim()
         : null;
 
-      return {
-        rentalId: r.id,
+      return new FinancialDistributionReportItem(
+        r.id,
         rentalCode,
-        propertyAddress: r.property.addressLine,
-        ownerName: r.property.owner.fullName,
-        tenantName: r.tenant.fullName,
-        currency: r.currency,
-        baseAmount: base,
+        r.property.addressLine,
+        r.property.owner.fullName,
+        r.tenant.fullName,
+        r.currency,
+        base,
         monthlyAmount,
         expense,
         tax,
@@ -538,8 +510,8 @@ export class ReportPrismaRepository implements ReportRepository {
         utility,
         externalAgentName,
         internalAgentName,
-        status: r.status,
-      };
+        r.status,
+      );
     });
   }
 

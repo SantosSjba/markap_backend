@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { PropertyRepository } from '../../repositories/property.repository';
-import { PROPERTY_REPOSITORY } from '../../repositories/property.repository';
+import type { PropertyRepository } from '@domain/repositories/property.repository';
+import { PROPERTY_REPOSITORY } from '@domain/repositories/property.repository';
 import type {
   ListPropertiesFilters,
   ListPropertiesResult,
-} from '../../repositories/property.repository';
+} from '@domain/repositories/property.repository';
 
 @Injectable()
 export class ListPropertiesUseCase {

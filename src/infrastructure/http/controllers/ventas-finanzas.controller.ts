@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { VentasFinanzasOperationsService } from '../../../application/use-cases/ventas-finanzas';
+import { VentasFinanzasOperationsService } from '../../../application/services';
 
 @ApiTags('Ventas — Finanzas')
 @Controller('ventas-finanzas')

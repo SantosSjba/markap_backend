@@ -2,8 +2,8 @@ import { Injectable, Inject } from '@nestjs/common';
 import type {
   PaymentRepository,
   ListPaymentHistoryResult,
-} from '../../repositories/payment.repository';
-import { PAYMENT_REPOSITORY } from '../../repositories/payment.repository';
+} from '@domain/repositories/payment.repository';
+import { PAYMENT_REPOSITORY } from '@domain/repositories/payment.repository';
 
 export interface ListPaymentHistoryInput {
   applicationSlug: string;

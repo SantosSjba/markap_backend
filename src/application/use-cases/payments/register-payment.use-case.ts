@@ -1,10 +1,10 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import type {
   PaymentRepository,
-  PaymentData,
+  Payment,
   PaymentMethod,
-} from '../../repositories/payment.repository';
-import { PAYMENT_REPOSITORY } from '../../repositories/payment.repository';
+} from '@domain/repositories/payment.repository';
+import { PAYMENT_REPOSITORY } from '@domain/repositories/payment.repository';
 
 export interface RegisterPaymentInput {
   paymentId: string;
@@ -23,7 +23,7 @@ export class RegisterPaymentUseCase {
     private readonly paymentRepository: PaymentRepository,
   ) {}
 
-  async execute(input: RegisterPaymentInput): Promise<PaymentData> {
+  async execute(input: RegisterPaymentInput): Promise<Payment> {
     const payment = await this.paymentRepository.findById(input.paymentId);
     if (!payment) {
       throw new NotFoundException(`Pago con id ${input.paymentId} no encontrado`);

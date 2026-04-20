@@ -1,18 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import {
+import { PaymentPrismaMapper } from '../mappers/payment-prisma.mapper';
+import type {
   PaymentRepository,
-  PaymentData,
-  PaymentStatus,
-  PendingPaymentItem,
-  PaymentHistoryItem,
-  OverduePaymentItem,
-  PaymentStats,
   RegisterPaymentData,
   ListPendingPaymentsFilters,
   ListPaymentHistoryFilters,
   ListPaymentHistoryResult,
-} from '../../../../application/repositories/payment.repository';
+} from '@domain/repositories/payment.repository';
+import type { PaymentStatus } from '@domain/entities/payment.entity';
+import {
+  OverduePaymentItem,
+  Payment,
+  PaymentHistoryItem,
+  PaymentStats,
+  PendingPaymentItem,
+} from '@domain/entities/payment.entity';
 
 const MONTH_NAMES_ES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -149,29 +152,29 @@ export class PaymentPrismaRepository implements PaymentRepository {
       const diffMs = today.getTime() - due.getTime();
       const daysOverdue = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      return {
-        paymentId: p.id,
-        rentalId: p.rentalId,
-        rentalCode: `ALQ-${p.rentalId.slice(-6).toUpperCase()}`,
-        tenantId: p.rental.tenant.id,
-        tenantName: p.rental.tenant.fullName,
-        tenantHistoryNote: p.rental.tenant.notes ?? null,
-        propertyAddress: `${p.rental.property.addressLine}, ${p.rental.property.district?.name ?? ''}`.trim().replace(/,$/, ''),
-        ownerName: p.rental.property.owner?.fullName ?? '—',
-        periodYear: p.periodYear,
-        periodMonth: p.periodMonth,
-        periodLabel: `${MONTH_NAMES_ES[p.periodMonth - 1]} ${p.periodYear}`,
-        dueDate: p.dueDate,
+      return new PendingPaymentItem(
+        p.id,
+        p.rentalId,
+        `ALQ-${p.rentalId.slice(-6).toUpperCase()}`,
+        p.rental.tenant.id,
+        p.rental.tenant.fullName,
+        p.rental.tenant.notes ?? null,
+        `${p.rental.property.addressLine}, ${p.rental.property.district?.name ?? ''}`.trim().replace(/,$/, ''),
+        p.rental.property.owner?.fullName ?? '—',
+        p.periodYear,
+        p.periodMonth,
+        `${MONTH_NAMES_ES[p.periodMonth - 1]} ${p.periodYear}`,
+        p.dueDate,
         daysOverdue,
-        amount: p.amount,
-        currency: p.currency,
-        status: p.status as PaymentStatus,
-      };
+        p.amount,
+        p.currency,
+        p.status as PaymentStatus,
+      );
     });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  async registerPayment(paymentId: string, data: RegisterPaymentData): Promise<PaymentData> {
+  async registerPayment(paymentId: string, data: RegisterPaymentData): Promise<Payment> {
     const updated = await this.prisma.payment.update({
       where: { id: paymentId },
       data: {
@@ -184,7 +187,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
         createdBy: data.registeredBy ?? null,
       },
     });
-    return this.mapPayment(updated);
+    return PaymentPrismaMapper.toDomain(updated);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -247,23 +250,26 @@ export class PaymentPrismaRepository implements PaymentRepository {
       _sum: { paidAmount: true },
     });
 
-    const data: PaymentHistoryItem[] = payments.map((p) => ({
-      paymentId: p.id,
-      rentalId: p.rentalId,
-      rentalCode: `ALQ-${p.rentalId.slice(-6).toUpperCase()}`,
-      tenantName: p.rental.tenant.fullName,
-      propertyAddress: `${p.rental.property.addressLine}, ${p.rental.property.district?.name ?? ''}`.trim().replace(/,$/, ''),
-      ownerName: p.rental.property.owner?.fullName ?? '—',
-      periodYear: p.periodYear,
-      periodMonth: p.periodMonth,
-      periodLabel: `${MONTH_NAMES_ES[p.periodMonth - 1]} ${p.periodYear}`,
-      paidDate: p.paidDate!,
-      paidAmount: p.paidAmount!,
-      currency: p.currency,
-      paymentMethod: p.paymentMethod ?? 'OTHER',
-      referenceNumber: p.referenceNumber ?? null,
-      notes: p.notes ?? null,
-    }));
+    const data: PaymentHistoryItem[] = payments.map(
+      (p) =>
+        new PaymentHistoryItem(
+          p.id,
+          p.rentalId,
+          `ALQ-${p.rentalId.slice(-6).toUpperCase()}`,
+          p.rental.tenant.fullName,
+          `${p.rental.property.addressLine}, ${p.rental.property.district?.name ?? ''}`.trim().replace(/,$/, ''),
+          p.rental.property.owner?.fullName ?? '—',
+          p.periodYear,
+          p.periodMonth,
+          `${MONTH_NAMES_ES[p.periodMonth - 1]} ${p.periodYear}`,
+          p.paidDate!,
+          p.paidAmount!,
+          p.currency,
+          p.paymentMethod ?? 'OTHER',
+          p.referenceNumber ?? null,
+          p.notes ?? null,
+        ),
+    );
 
     return {
       data,
@@ -367,7 +373,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
         }),
       );
 
-      const overdueLevel: OverduePaymentItem['overdueLevel'] =
+      const overdueLevel: 'critical' | 'high' | 'moderate' =
         maxDays > 30 ? 'critical' : maxDays > 14 ? 'high' : 'moderate';
 
       // Último pago pagado
@@ -378,24 +384,26 @@ export class PaymentPrismaRepository implements PaymentRepository {
       });
 
       const commNote = rentalNoteMap.get(rental.id);
-      result.push({
-        tenantId: tenant.id,
-        tenantName: tenant.fullName,
-        tenantDocument: tenant.documentNumber ?? null,
-        tenantPhone: tenant.primaryPhone ?? null,
-        tenantEmail: tenant.primaryEmail ?? null,
-        overdueLevel,
-        totalOwed,
-        currency: rental.currency,
-        monthsOverdue,
-        maxDaysOverdue: maxDays,
-        lastPaymentDate: lastPaidPayment?.paidDate ?? null,
-        lastCommunicationDate: commNote?.date ?? null,
-        lastCommunicationNote: commNote?.note ?? null,
-        propertyAddress: `${rental.property.addressLine}, ${rental.property.district?.name ?? ''}`.trim().replace(/,$/, ''),
-        ownerName: rental.property.owner?.fullName ?? '—',
-        rentalId: rental.id,
-      });
+      result.push(
+        new OverduePaymentItem(
+          tenant.id,
+          tenant.fullName,
+          tenant.documentNumber ?? null,
+          tenant.primaryPhone ?? null,
+          tenant.primaryEmail ?? null,
+          overdueLevel,
+          totalOwed,
+          rental.currency,
+          monthsOverdue,
+          maxDays,
+          lastPaidPayment?.paidDate ?? null,
+          commNote?.date ?? null,
+          commNote?.note ?? null,
+          `${rental.property.addressLine}, ${rental.property.district?.name ?? ''}`.trim().replace(/,$/, ''),
+          rental.property.owner?.fullName ?? '—',
+          rental.id,
+        ),
+      );
     }
 
     result.sort((a, b) => b.maxDaysOverdue - a.maxDaysOverdue);
@@ -408,7 +416,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
       where: { slug: applicationSlug, deletedAt: null },
       select: { id: true },
     });
-    if (!app) return { totalPending: 0, totalCollected: 0, pendingCount: 0, overdueCount: 0, currency: 'PEN' };
+    if (!app) return new PaymentStats(0, 0, 0, 0, 'PEN');
 
     const now = new Date();
     const year = now.getFullYear();
@@ -431,40 +439,18 @@ export class PaymentPrismaRepository implements PaymentRepository {
       }),
     ]);
 
-    return {
-      totalPending: pendingAgg._sum.amount ?? 0,
-      totalCollected: collectedAgg._sum.paidAmount ?? 0,
+    return new PaymentStats(
+      pendingAgg._sum.amount ?? 0,
+      collectedAgg._sum.paidAmount ?? 0,
       pendingCount,
       overdueCount,
-      currency: 'PEN',
-    };
+      'PEN',
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  async findById(id: string): Promise<PaymentData | null> {
+  async findById(id: string): Promise<Payment | null> {
     const p = await this.prisma.payment.findUnique({ where: { id } });
-    return p ? this.mapPayment(p) : null;
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  private mapPayment(p: any): PaymentData {
-    return {
-      id: p.id,
-      rentalId: p.rentalId,
-      periodYear: p.periodYear,
-      periodMonth: p.periodMonth,
-      dueDate: p.dueDate,
-      amount: p.amount,
-      currency: p.currency,
-      status: p.status as PaymentStatus,
-      paidDate: p.paidDate ?? null,
-      paidAmount: p.paidAmount ?? null,
-      paymentMethod: p.paymentMethod ?? null,
-      referenceNumber: p.referenceNumber ?? null,
-      notes: p.notes ?? null,
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-      createdBy: p.createdBy ?? null,
-    };
+    return p ? PaymentPrismaMapper.toDomain(p) : null;
   }
 }

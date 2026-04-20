@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Role } from '../../entities';
-import type { RoleRepository } from '../../repositories';
-import { ROLE_REPOSITORY } from '../../repositories';
+import { Role } from '@domain/entities';
+import type { RoleRepository } from '@domain/repositories';
+import { ROLE_REPOSITORY } from '@domain/repositories';
 
 /**
  * Get User Roles Use Case

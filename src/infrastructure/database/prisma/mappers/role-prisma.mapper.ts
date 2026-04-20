@@ -1,5 +1,5 @@
 import { Role as PrismaRole } from '@prisma/client';
-import { Role } from '../../../../application/entities';
+import { Role } from '@domain/entities';
 
 /**
  * Role Prisma Mapper

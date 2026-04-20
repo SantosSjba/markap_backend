@@ -1,31 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import type {
-  VentasReportsRepository,
-  VentasReportsDateRange,
-  VentasReportsGranularity,
-  SalesByPeriodRow,
+import { periodLabel } from '../mappers/ventas-reports-prisma.mapper';
+import type { VentasReportsRepository } from '@domain/repositories/ventas-reports.repository';
+import type { VentasReportsDateRange, VentasReportsGranularity } from '@domain/entities/ventas-reports.entity';
+import {
   AgentPerformanceRow,
   ConversionReport,
   FinancialFlowReport,
-} from '../../../../application/repositories/ventas-reports.repository';
-
-function periodLabel(d: Date, granularity: VentasReportsGranularity): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  if (granularity === 'month') return `${y}-${m}`;
-  if (granularity === 'day') return `${y}-${m}-${day}`;
-  const weekStart = new Date(d);
-  const dow = weekStart.getDay();
-  const diff = dow === 0 ? -6 : 1 - dow;
-  weekStart.setDate(weekStart.getDate() + diff);
-  weekStart.setHours(0, 0, 0, 0);
-  const wy = weekStart.getFullYear();
-  const wm = String(weekStart.getMonth() + 1).padStart(2, '0');
-  const wd = String(weekStart.getDate()).padStart(2, '0');
-  return `${wy}-${wm}-${wd}`;
-}
+  SalesByPeriodRow,
+} from '@domain/entities/ventas-reports.entity';
 
 @Injectable()
 export class VentasReportsPrismaRepository implements VentasReportsRepository {
@@ -55,11 +38,14 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
 
     return [...map.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([period, v]) => ({
-        period,
-        closingsCount: v.closingsCount,
-        totalAmount: Math.round(v.totalAmount * 100) / 100,
-      }));
+      .map(
+        ([period, v]) =>
+          new SalesByPeriodRow(
+            period,
+            v.closingsCount,
+            Math.round(v.totalAmount * 100) / 100,
+          ),
+      );
   }
 
   async getAgentPerformance(range: VentasReportsDateRange): Promise<AgentPerformanceRow[]> {
@@ -99,14 +85,16 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
 
     return grouped
       .filter((g) => g.agentId)
-      .map((g) => ({
-        agentId: g.agentId as string,
-        agentName: nameById.get(g.agentId as string) ?? '—',
-        closingsCount: g._count._all,
-        totalSales: Math.round((g._sum.finalPrice ?? 0) * 100) / 100,
-        totalCommissionAmount:
-          Math.round((commissionSum.get(g.agentId as string) ?? 0) * 100) / 100,
-      }))
+      .map(
+        (g) =>
+          new AgentPerformanceRow(
+            g.agentId as string,
+            nameById.get(g.agentId as string) ?? '—',
+            g._count._all,
+            Math.round((g._sum.finalPrice ?? 0) * 100) / 100,
+            Math.round((commissionSum.get(g.agentId as string) ?? 0) * 100) / 100,
+          ),
+      )
       .sort((a, b) => b.totalSales - a.totalSales);
   }
 
@@ -173,7 +161,7 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
         ? Math.round((opportunitiesWon / opportunitiesCreated) * 10000) / 100
         : 0;
 
-    return {
+    return new ConversionReport(
       opportunitiesCreated,
       opportunitiesWon,
       opportunitiesLost,
@@ -181,7 +169,7 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
       closingsCount,
       conversionRatePercent,
       activePipelineByStage,
-    };
+    );
   }
 
   async getFinancialFlow(range: VentasReportsDateRange): Promise<FinancialFlowReport> {
@@ -242,13 +230,13 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
         (buyerPaymentsCollected - documentationCostsTotal - commissionsPaidAmount) * 100,
       ) / 100;
 
-    return {
-      buyerPaymentsCollected: Math.round(buyerPaymentsCollected * 100) / 100,
-      buyerPaymentsPending: Math.round(buyerPaymentsPending * 100) / 100,
-      documentationCostsTotal: Math.round(documentationCostsTotal * 100) / 100,
+    return new FinancialFlowReport(
+      Math.round(buyerPaymentsCollected * 100) / 100,
+      Math.round(buyerPaymentsPending * 100) / 100,
+      Math.round(documentationCostsTotal * 100) / 100,
       commissionsPaidAmount,
       commissionsPendingAmount,
       estimatedNetAfterCosts,
-    };
+    );
   }
 }

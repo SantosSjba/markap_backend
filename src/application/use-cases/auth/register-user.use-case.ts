@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '../../entities/user.entity';
-import { UserRepository } from '../../repositories/user.repository';
-import { HashService } from '../../services/hash.service';
-import { EmailAlreadyExistsException } from '../../exceptions';
+import { User } from '@domain/entities/user.entity';
+import { UserRepository } from '@domain/repositories/user.repository';
+import { HashService } from '@domain/services/hash.service';
+import { EmailAlreadyExistsException } from '@domain/exceptions';
 
 /**
  * Input para registrar un nuevo usuario

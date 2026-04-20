@@ -4,8 +4,8 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
-import { TokenService, TokenPayload } from '../../application/services/token.service';
-import { UserRepository } from '../../application/repositories/user.repository';
+import { TokenService, TokenPayload } from '@domain/services/token.service';
+import { UserRepository } from '@domain/repositories/user.repository';
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {

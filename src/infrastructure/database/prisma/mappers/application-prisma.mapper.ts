@@ -1,5 +1,5 @@
 import { Application as PrismaApplication } from '@prisma/client';
-import { Application } from '../../../../application/entities';
+import { Application } from '@domain/entities';
 
 /**
  * Application Prisma Mapper

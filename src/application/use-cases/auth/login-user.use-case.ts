@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '../../entities/user.entity';
-import { UserRepository } from '../../repositories/user.repository';
-import { HashService } from '../../services/hash.service';
-import { TokenService, TokenResult } from '../../services/token.service';
+import { User } from '@domain/entities/user.entity';
+import { UserRepository } from '@domain/repositories/user.repository';
+import { HashService } from '@domain/services/hash.service';
+import { TokenService, TokenResult } from '@domain/services/token.service';
 import {
   InvalidCredentialsException,
   UserInactiveException,
-} from '../../exceptions';
+} from '@domain/exceptions';
 
 /**
  * Input para iniciar sesión

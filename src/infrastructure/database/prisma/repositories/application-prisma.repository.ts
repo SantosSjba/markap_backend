@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { Application } from '../../../../application/entities';
-import { ApplicationRepository } from '../../../../application/repositories';
+import { Application } from '@domain/entities';
+import { ApplicationRepository } from '@domain/repositories';
 import { ApplicationPrismaMapper } from '../mappers';
 
 /**

@@ -1,5 +1,5 @@
 import { User as PrismaUser } from '@prisma/client';
-import { User } from '../../../../application/entities/user.entity';
+import { User } from '@domain/entities/user.entity';
 
 /**
  * User Prisma Mapper

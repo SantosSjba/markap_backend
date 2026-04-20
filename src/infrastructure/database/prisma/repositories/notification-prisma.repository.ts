@@ -1,18 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { NotificationPrismaMapper } from '../mappers/notification-prisma.mapper';
 import type {
   NotificationRepository,
-  NotificationData,
   CreateNotificationData,
   ListNotificationsFilters,
   ListNotificationsResult,
-} from '../../../../application/repositories/notification.repository';
+} from '@domain/repositories/notification.repository';
+import type { Notification } from '@domain/entities/notification.entity';
 
 @Injectable()
 export class NotificationPrismaRepository implements NotificationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateNotificationData): Promise<NotificationData> {
+  async create(data: CreateNotificationData): Promise<Notification> {
     const n = await (this.prisma as any).notification.create({
       data: {
         userId: data.userId,
@@ -22,7 +23,7 @@ export class NotificationPrismaRepository implements NotificationRepository {
         data: data.data ?? null,
       },
     });
-    return this.toData(n);
+    return NotificationPrismaMapper.toDomain(n);
   }
 
   async findManyByUserId(
@@ -46,19 +47,19 @@ export class NotificationPrismaRepository implements NotificationRepository {
     ]);
 
     return {
-      data: data.map((n: any) => this.toData(n)),
+      data: data.map((n: any) => NotificationPrismaMapper.toDomain(n)),
       total,
     };
   }
 
-  async findById(id: string): Promise<NotificationData | null> {
+  async findById(id: string): Promise<Notification | null> {
     const n = await (this.prisma as any).notification.findUnique({
       where: { id },
     });
-    return n ? this.toData(n) : null;
+    return n ? NotificationPrismaMapper.toDomain(n) : null;
   }
 
-  async markAsRead(id: string, userId: string): Promise<NotificationData | null> {
+  async markAsRead(id: string, userId: string): Promise<Notification | null> {
     const n = await (this.prisma as any).notification.findFirst({
       where: { id, userId },
     });
@@ -67,25 +68,12 @@ export class NotificationPrismaRepository implements NotificationRepository {
       where: { id },
       data: { readAt: new Date() },
     });
-    return this.toData(updated);
+    return NotificationPrismaMapper.toDomain(updated);
   }
 
   async countUnreadByUserId(userId: string): Promise<number> {
     return (this.prisma as any).notification.count({
       where: { userId, readAt: null },
     });
-  }
-
-  private toData(n: any): NotificationData {
-    return {
-      id: n.id,
-      userId: n.userId,
-      type: n.type,
-      title: n.title,
-      body: n.body,
-      data: n.data as Record<string, unknown> | null,
-      readAt: n.readAt,
-      createdAt: n.createdAt,
-    };
   }
 }

@@ -5,8 +5,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { TokenService, TokenPayload } from '../../application/services/token.service';
-import { UserRepository } from '../../application/repositories/user.repository';
+import { TokenService, TokenPayload } from '@domain/services/token.service';
+import { UserRepository } from '@domain/repositories/user.repository';
 
 /**
  * Request con usuario autenticado

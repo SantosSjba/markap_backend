@@ -1,49 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
+import { PropertyPrismaMapper } from '../mappers/property-prisma.mapper';
 import type {
   PropertyRepository,
-  PropertyData,
   CreatePropertyData,
   UpdatePropertyData,
   ListPropertiesFilters,
   ListPropertiesResult,
-  PropertyListItem,
-  PropertyStats,
-  PropertyMediaItem,
-} from '@application/repositories/property.repository';
+} from '@domain/repositories/property.repository';
+import { PropertyListItem, PropertyStats } from '@domain/entities/property.entity';
+import type { Property } from '@domain/entities/property.entity';
 
 @Injectable()
 export class PropertyPrismaRepository implements PropertyRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private parseMediaItems(raw: Prisma.JsonValue | null | undefined): PropertyMediaItem[] | null {
-    if (raw == null) return null;
-    if (!Array.isArray(raw)) return null;
-    const out: PropertyMediaItem[] = [];
-    for (const item of raw) {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
-      const o = item as Record<string, unknown>;
-      const url = typeof o.url === 'string' ? o.url.trim() : '';
-      const kind = o.kind === 'plan' ? 'plan' : o.kind === 'photo' ? 'photo' : null;
-      if (!url || !kind) continue;
-      out.push({ url, kind });
-    }
-    return out.length ? out : null;
-  }
-
-  private mediaToJson(items: PropertyMediaItem[] | null | undefined): Prisma.InputJsonValue | typeof Prisma.JsonNull {
-    if (items == null) return Prisma.JsonNull;
-    const cleaned = items
-      .map((m) => ({
-        url: typeof m.url === 'string' ? m.url.trim() : '',
-        kind: m.kind === 'plan' ? 'plan' : 'photo',
-      }))
-      .filter((m) => m.url.length > 0);
-    return cleaned.length ? (cleaned as Prisma.InputJsonValue) : Prisma.JsonNull;
-  }
-
-  async create(data: CreatePropertyData): Promise<PropertyData> {
+  async create(data: CreatePropertyData): Promise<Property> {
     const createData: Prisma.PropertyCreateInput = {
       application: { connect: { id: data.applicationId } },
       code: data.code.trim(),
@@ -69,7 +42,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
       listingStatus: data.listingStatus ?? null,
     };
     if (data.mediaItems !== undefined) {
-      createData.mediaItems = this.mediaToJson(data.mediaItems) as Prisma.InputJsonValue;
+      createData.mediaItems = PropertyPrismaMapper.mediaToJson(data.mediaItems) as Prisma.InputJsonValue;
     }
 
     const property = await this.prisma.property.create({
@@ -80,7 +53,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
     return full;
   }
 
-  async findById(id: string): Promise<PropertyData | null> {
+  async findById(id: string): Promise<Property | null> {
     const property = await this.prisma.property.findFirst({
       where: { id, deletedAt: null },
       include: {
@@ -93,7 +66,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
         },
       },
     });
-    return property ? this.mapRowToPropertyData(property) : null;
+    return property ? PropertyPrismaMapper.toDomain(property) : null;
   }
 
   async findMany(filters: ListPropertiesFilters): Promise<ListPropertiesResult> {
@@ -169,23 +142,26 @@ export class PropertyPrismaRepository implements PropertyRepository {
     }
 
     return {
-      data: data.map((p) => ({
-        id: p.id,
-        code: p.code,
-        addressLine: p.addressLine,
-        districtName: p.district?.name ?? '',
-        propertyTypeName: p.propertyType?.name ?? '',
-        area: p.area,
-        ownerId: p.owner?.id ?? '',
-        ownerFullName: p.owner?.fullName ?? '',
-        monthlyRent: p.monthlyRent,
-        salePrice: p.salePrice,
-        projectName: p.projectName,
-        listingStatus: p.listingStatus,
-        hasActiveRental: isVentasList ? false : activeRentalPropertyIds.has(p.id),
-        activeRentalEndDate: isVentasList ? null : activeRentalEndByPropertyId.get(p.id) ?? null,
-        activeRentalTenantName: isVentasList ? null : activeRentalTenantByPropertyId.get(p.id) ?? null,
-      })) as PropertyListItem[],
+      data: data.map(
+        (p) =>
+          new PropertyListItem(
+            p.id,
+            p.code,
+            p.addressLine,
+            p.district?.name ?? '',
+            p.propertyType?.name ?? '',
+            p.area,
+            p.owner?.id ?? '',
+            p.owner?.fullName ?? '',
+            p.monthlyRent,
+            p.salePrice,
+            p.projectName,
+            p.listingStatus,
+            isVentasList ? false : activeRentalPropertyIds.has(p.id),
+            isVentasList ? null : activeRentalEndByPropertyId.get(p.id) ?? null,
+            isVentasList ? null : activeRentalTenantByPropertyId.get(p.id) ?? null,
+          ),
+      ),
       total,
       page: filters.page,
       limit: filters.limit,
@@ -196,15 +172,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
     const app = await this.prisma.application.findUnique({
       where: { slug: applicationSlug },
     });
-    const empty: PropertyStats = {
-      total: 0,
-      rented: 0,
-      available: 0,
-      expiring: 0,
-      maintenance: 0,
-      reserved: 0,
-      sold: 0,
-    };
+    const empty = new PropertyStats(0, 0, 0, 0, 0, 0, 0);
     if (!app) return empty;
 
     const baseWhere = { applicationId: app.id, deletedAt: null };
@@ -222,15 +190,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
           where: { ...baseWhere, listingStatus: 'SOLD' },
         }),
       ]);
-      return {
-        total,
-        rented: 0,
-        available,
-        expiring: 0,
-        maintenance: 0,
-        reserved,
-        sold,
-      };
+      return new PropertyStats(total, 0, available, 0, 0, reserved, sold);
     }
 
     const [total, rented, available, expiring, maintenance] = await Promise.all([
@@ -248,10 +208,10 @@ export class PropertyPrismaRepository implements PropertyRepository {
         where: { ...baseWhere, listingStatus: 'MAINTENANCE' },
       }),
     ]);
-    return { total, rented, available, expiring, maintenance, reserved: 0, sold: 0 };
+    return new PropertyStats(total, rented, available, expiring, maintenance, 0, 0);
   }
 
-  async update(data: UpdatePropertyData): Promise<PropertyData> {
+  async update(data: UpdatePropertyData): Promise<Property> {
     const existing = await this.prisma.property.findFirst({
       where: { id: data.id, deletedAt: null },
     });
@@ -283,7 +243,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
     if (data.salePrice !== undefined) updatePayload.salePrice = data.salePrice;
     if (data.projectName !== undefined) updatePayload.projectName = data.projectName?.trim() || null;
     if (data.mediaItems !== undefined)
-      updatePayload.mediaItems = this.mediaToJson(data.mediaItems) as Prisma.InputJsonValue;
+      updatePayload.mediaItems = PropertyPrismaMapper.mediaToJson(data.mediaItems) as Prisma.InputJsonValue;
     if (data.listingStatus !== undefined) updatePayload.listingStatus = data.listingStatus;
 
     await this.prisma.property.update({
@@ -293,47 +253,6 @@ export class PropertyPrismaRepository implements PropertyRepository {
     const full = await this.findById(data.id);
     if (!full) throw new Error('Property update failed');
     return full;
-  }
-
-  private mapRowToPropertyData(
-    property: Prisma.PropertyGetPayload<{
-      include: {
-        district: {
-          include: {
-            province: { include: { department: true } };
-          };
-        };
-      };
-    }>,
-  ): PropertyData {
-    return {
-      id: property.id,
-      applicationId: property.applicationId,
-      code: property.code,
-      propertyTypeId: property.propertyTypeId,
-      addressLine: property.addressLine,
-      districtId: property.districtId,
-      district: property.district ?? null,
-      description: property.description,
-      area: property.area,
-      bedrooms: property.bedrooms,
-      bathrooms: property.bathrooms,
-      ageYears: property.ageYears,
-      floorLevel: property.floorLevel,
-      parkingSpaces: property.parkingSpaces,
-      partida1: property.partida1,
-      partida2: property.partida2,
-      partida3: property.partida3,
-      ownerId: property.ownerId,
-      monthlyRent: property.monthlyRent,
-      maintenanceAmount: property.maintenanceAmount,
-      depositMonths: property.depositMonths,
-      salePrice: property.salePrice,
-      projectName: property.projectName,
-      mediaItems: this.parseMediaItems(property.mediaItems),
-      listingStatus: property.listingStatus,
-      isActive: property.isActive,
-    };
   }
 
   async softDelete(id: string): Promise<void> {

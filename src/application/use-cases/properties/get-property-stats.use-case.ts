@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { PropertyRepository } from '../../repositories/property.repository';
-import { PROPERTY_REPOSITORY } from '../../repositories/property.repository';
-import type { PropertyStats } from '../../repositories/property.repository';
+import type { PropertyRepository } from '@domain/repositories/property.repository';
+import { PROPERTY_REPOSITORY } from '@domain/repositories/property.repository';
+import type { PropertyStats } from '@domain/repositories/property.repository';
 
 @Injectable()
 export class GetPropertyStatsUseCase {

@@ -15,6 +15,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ApplicationHttpMapper } from '../mappers/application-http.mapper';
+import { RoleHttpMapper } from '../mappers/role-http.mapper';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
   GetAllRolesUseCase,
@@ -50,13 +51,7 @@ export class RolesController {
   @ApiResponse({ status: 200, description: 'Lista de roles' })
   async getAll() {
     const roles = await this.getAllRolesUseCase.execute();
-    return roles.map((role) => ({
-      id: role.id,
-      name: role.name,
-      code: role.code,
-      description: role.description,
-      isActive: role.isActive,
-    }));
+    return roles.map((role) => RoleHttpMapper.toListItem(role));
   }
 
   @Get(':id/applications')
@@ -74,15 +69,7 @@ export class RolesController {
   @ApiResponse({ status: 404, description: 'Rol no encontrado' })
   async getById(@Param('id') id: string) {
     const role = await this.getRoleByIdUseCase.execute(id);
-    return {
-      id: role.id,
-      name: role.name,
-      code: role.code,
-      description: role.description,
-      isActive: role.isActive,
-      createdAt: role.createdAt,
-      updatedAt: role.updatedAt,
-    };
+    return RoleHttpMapper.toDetail(role);
   }
 
   @Post()

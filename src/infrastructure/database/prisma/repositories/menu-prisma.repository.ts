@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import {
   MenuRepository,
-  MenuData,
+  Menu,
   CreateMenuData,
   UpdateMenuData,
-} from '../../../../application/repositories/menu.repository';
+} from '@domain/repositories/menu.repository';
 import { PrismaService } from '../prisma.service';
+import { MenuPrismaMapper } from '../mappers/menu-prisma.mapper';
 
 @Injectable()
 export class MenuPrismaRepository implements MenuRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByApplicationId(applicationId: string): Promise<MenuData[]> {
+  async findByApplicationId(applicationId: string): Promise<Menu[]> {
     const menus = await this.prisma.menu.findMany({
       where: {
         applicationId,
@@ -20,25 +21,25 @@ export class MenuPrismaRepository implements MenuRepository {
       orderBy: { order: 'asc' },
     });
 
-    return this.buildTree(menus.map(this.toData), null);
+    return this.buildTree(menus.map(MenuPrismaMapper.toDomain), null);
   }
 
-  async findAllByApplicationId(applicationId: string): Promise<MenuData[]> {
+  async findAllByApplicationId(applicationId: string): Promise<Menu[]> {
     const menus = await this.prisma.menu.findMany({
       where: { applicationId },
       orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
     });
-    return menus.map(this.toData);
+    return menus.map(MenuPrismaMapper.toDomain);
   }
 
-  async findById(id: string): Promise<MenuData | null> {
+  async findById(id: string): Promise<Menu | null> {
     const menu = await this.prisma.menu.findUnique({
       where: { id },
     });
-    return menu ? this.toData(menu) : null;
+    return menu ? MenuPrismaMapper.toDomain(menu) : null;
   }
 
-  async create(data: CreateMenuData): Promise<MenuData> {
+  async create(data: CreateMenuData): Promise<Menu> {
     const menu = await this.prisma.menu.create({
       data: {
         applicationId: data.applicationId,
@@ -50,10 +51,10 @@ export class MenuPrismaRepository implements MenuRepository {
         isActive: true,
       },
     });
-    return this.toData(menu);
+    return MenuPrismaMapper.toDomain(menu);
   }
 
-  async update(id: string, data: UpdateMenuData): Promise<MenuData> {
+  async update(id: string, data: UpdateMenuData): Promise<Menu> {
     const updateData: Record<string, unknown> = {};
     if (data.parentId !== undefined) updateData.parentId = data.parentId;
     if (data.label !== undefined) updateData.label = data.label;
@@ -66,7 +67,7 @@ export class MenuPrismaRepository implements MenuRepository {
       where: { id },
       data: updateData,
     });
-    return this.toData(menu);
+    return MenuPrismaMapper.toDomain(menu);
   }
 
   async delete(id: string): Promise<void> {
@@ -75,35 +76,13 @@ export class MenuPrismaRepository implements MenuRepository {
     });
   }
 
-  private buildTree(items: MenuData[], parentId: string | null): MenuData[] {
+  private buildTree(items: Menu[], parentId: string | null): Menu[] {
     return items
       .filter((item) => item.parentId === parentId)
-      .map((item) => ({
-        ...item,
-        children: this.buildTree(items, item.id),
-      }))
+      .map((item) => {
+        const children = this.buildTree(items, item.id);
+        return item.withChildren(children);
+      })
       .sort((a, b) => a.order - b.order);
-  }
-
-  private toData(record: {
-    id: string;
-    applicationId: string;
-    parentId: string | null;
-    label: string;
-    icon: string | null;
-    path: string | null;
-    order: number;
-    isActive: boolean;
-  }): MenuData {
-    return {
-      id: record.id,
-      applicationId: record.applicationId,
-      parentId: record.parentId,
-      label: record.label,
-      icon: record.icon,
-      path: record.path,
-      order: record.order,
-      isActive: record.isActive,
-    };
   }
 }

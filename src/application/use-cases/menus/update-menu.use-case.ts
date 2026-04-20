@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { MenuRepository, UpdateMenuData } from '../../repositories/menu.repository';
-import { EntityNotFoundException } from '../../exceptions';
+import { MenuRepository, UpdateMenuData } from '@domain/repositories/menu.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
 
 export interface UpdateMenuInput {
   id: string;

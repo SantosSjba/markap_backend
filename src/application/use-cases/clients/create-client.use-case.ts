@@ -1,12 +1,12 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
-import type { ClientRepository } from '../../repositories/client.repository';
-import { CLIENT_REPOSITORY } from '../../repositories/client.repository';
-import type { ApplicationRepository } from '../../repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
-import type { AgentRepository } from '../../repositories/agent.repository';
-import { AGENT_REPOSITORY } from '../../repositories/agent.repository';
-import { EntityNotFoundException } from '../../exceptions';
-import type { SalesPipelineStatus } from '../../repositories/client.repository';
+import type { ClientRepository } from '@domain/repositories/client.repository';
+import { CLIENT_REPOSITORY } from '@domain/repositories/client.repository';
+import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import type { AgentRepository } from '@domain/repositories/agent.repository';
+import { AGENT_REPOSITORY } from '@domain/repositories/agent.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
+import type { SalesPipelineStatus } from '@domain/repositories/client.repository';
 
 export interface CreateClientInput {
   applicationId?: string;

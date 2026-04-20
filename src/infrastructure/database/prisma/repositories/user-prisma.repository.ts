@@ -5,8 +5,8 @@ import {
   UpdateUserData,
   SoftDeleteUserData,
   type UserWithRolesListItem,
-} from '../../../../application/repositories/user.repository';
-import { User } from '../../../../application/entities/user.entity';
+} from '@domain/repositories/user.repository';
+import { User } from '@domain/entities/user.entity';
 import { PrismaService } from '../prisma.service';
 import { UserPrismaMapper } from '../mappers/user-prisma.mapper';
 

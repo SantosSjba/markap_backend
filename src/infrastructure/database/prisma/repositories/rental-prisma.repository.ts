@@ -1,22 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { RentalPrismaMapper } from '../mappers/rental-prisma.mapper';
 import type {
   RentalRepository,
-  RentalData,
   CreateRentalData,
   ListRentalsFilters,
   ListRentalsResult,
-  RentalListItem,
-  RentalStats,
-  RentalDetailData,
   UpdateRentalData,
-} from '@application/repositories/rental.repository';
+} from '@domain/repositories/rental.repository';
+import { RentalAttachment, RentalDetail, RentalStats } from '@domain/entities/rental.entity';
+import type { Rental } from '@domain/entities/rental.entity';
 
 @Injectable()
 export class RentalPrismaRepository implements RentalRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateRentalData): Promise<RentalData> {
+  async create(data: CreateRentalData): Promise<Rental> {
     const rental = await (this.prisma as any).rental.create({
       data: {
         applicationId: data.applicationId,
@@ -32,7 +31,7 @@ export class RentalPrismaRepository implements RentalRepository {
         enableAlerts: data.enableAlerts ?? true,
       },
     });
-    return this.toRentalData(rental);
+    return RentalPrismaMapper.toDomain(rental);
   }
 
   async findMany(filters: ListRentalsFilters): Promise<ListRentalsResult> {
@@ -75,7 +74,7 @@ export class RentalPrismaRepository implements RentalRepository {
     ]);
 
     return {
-      data: data.map((r: any) => this.toListItem(r)),
+      data: data.map((r: any) => RentalPrismaMapper.toListItem(r)),
       total,
       page: filters.page,
       limit: filters.limit,
@@ -87,7 +86,7 @@ export class RentalPrismaRepository implements RentalRepository {
       where: { slug: applicationSlug },
     });
     if (!app) {
-      return { total: 0, vigentes: 0, porVencer: 0, vencidos: 0 };
+      return new RentalStats(0, 0, 0, 0);
     }
 
     const today = new Date();
@@ -122,10 +121,10 @@ export class RentalPrismaRepository implements RentalRepository {
       }),
     ]);
 
-    return { total, vigentes, porVencer, vencidos };
+    return new RentalStats(total, vigentes, porVencer, vencidos);
   }
 
-  async findById(id: string): Promise<RentalDetailData | null> {
+  async findById(id: string): Promise<RentalDetail | null> {
     const r = await (this.prisma as any).rental.findFirst({
       where: { id, deletedAt: null },
       include: {
@@ -140,26 +139,24 @@ export class RentalPrismaRepository implements RentalRepository {
     const attachments: Array<{ id: string; type: string; filePath: string; originalFileName: string }> = r.attachments || [];
     const contractCount = attachments.filter((a) => a.type === 'CONTRACT').length;
     const deliveryCount = attachments.filter((a) => a.type === 'DELIVERY_ACT').length;
-    return {
-      ...this.toRentalData(r),
-      code: `ALQ-${year}-${shortId}`,
-      property: {
+    const base = RentalPrismaMapper.toDomain(r);
+    return new RentalDetail(
+      base,
+      `ALQ-${year}-${shortId}`,
+      {
         id: r.property.id,
         code: r.property.code,
         addressLine: r.property.addressLine,
         ownerId: r.property.ownerId,
         owner: { id: r.property.owner.id, fullName: r.property.owner.fullName },
       },
-      tenant: { id: r.tenant.id, fullName: r.tenant.fullName },
-      hasContract: contractCount > 0,
-      hasDeliveryAct: deliveryCount > 0,
-      attachments: attachments.map((a) => ({
-        id: a.id,
-        type: a.type,
-        filePath: a.filePath,
-        originalFileName: a.originalFileName,
-      })),
-    };
+      { id: r.tenant.id, fullName: r.tenant.fullName },
+      contractCount > 0,
+      deliveryCount > 0,
+      attachments.map(
+        (a) => new RentalAttachment(a.id, a.type, a.filePath, a.originalFileName),
+      ),
+    );
   }
 
   async countActiveByPropertyId(propertyId: string): Promise<number> {
@@ -201,7 +198,7 @@ export class RentalPrismaRepository implements RentalRepository {
     });
   }
 
-  async update(id: string, data: UpdateRentalData): Promise<RentalData> {
+  async update(id: string, data: UpdateRentalData): Promise<Rental> {
     const r = await (this.prisma as any).rental.update({
       where: { id },
       data: {
@@ -216,62 +213,7 @@ export class RentalPrismaRepository implements RentalRepository {
         ...(data.enableAlerts !== undefined && { enableAlerts: data.enableAlerts }),
       },
     });
-    return this.toRentalData(r);
-  }
-
-  private toListItem(r: any): RentalListItem {
-    const year = r.startDate instanceof Date ? r.startDate.getFullYear() : new Date(r.startDate).getFullYear();
-    const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
-    return {
-      id: r.id,
-      code: `ALQ-${year}-${shortId}`,
-      propertyId: r.property.id,
-      propertyAddress: r.property.addressLine,
-      propertyCode: r.property.code,
-      tenantId: r.tenant.id,
-      tenantName: r.tenant.fullName,
-      ownerId: r.property.owner.id,
-      ownerName: r.property.owner.fullName,
-      startDate: r.startDate,
-      endDate: r.endDate,
-      currency: r.currency,
-      monthlyAmount: r.monthlyAmount,
-      securityDeposit: r.securityDeposit,
-      status: r.status,
-      hasContract: Array.isArray(r.attachments) && r.attachments.length > 0,
-    };
-  }
-
-  private toRentalData(r: {
-    id: string;
-    applicationId: string;
-    propertyId: string;
-    tenantId: string;
-    startDate: Date;
-    endDate: Date;
-    currency: string;
-    monthlyAmount: number;
-    securityDeposit: number | null;
-    paymentDueDay: number;
-    notes: string | null;
-    status: string;
-    enableAlerts: boolean;
-  }): RentalData {
-    return {
-      id: r.id,
-      applicationId: r.applicationId,
-      propertyId: r.propertyId,
-      tenantId: r.tenantId,
-      startDate: r.startDate,
-      endDate: r.endDate,
-      currency: r.currency,
-      monthlyAmount: r.monthlyAmount,
-      securityDeposit: r.securityDeposit,
-      paymentDueDay: r.paymentDueDay,
-      notes: r.notes,
-      status: r.status,
-      enableAlerts: r.enableAlerts,
-    };
+    return RentalPrismaMapper.toDomain(r);
   }
 
   async cancel(id: string): Promise<void> {

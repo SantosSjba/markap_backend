@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { ROLE_REPOSITORY } from '../../repositories/role.repository';
-import type { RoleRepository } from '../../repositories/role.repository';
+import { ROLE_REPOSITORY } from '@domain/repositories/role.repository';
+import type { RoleRepository } from '@domain/repositories/role.repository';
 
 /**
  * Get All Roles Use Case

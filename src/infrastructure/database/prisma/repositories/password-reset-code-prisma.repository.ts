@@ -1,18 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import {
   PasswordResetCodeRepository,
-  PasswordResetCodeData,
   CreatePasswordResetCodeData,
-} from '../../../../application/repositories/password-reset-code.repository';
+} from '@domain/repositories/password-reset-code.repository';
+import { PasswordResetCode } from '@domain/entities/password-reset-code.entity';
 import { PrismaService } from '../prisma.service';
 
 @Injectable()
-export class PasswordResetCodePrismaRepository
-  implements PasswordResetCodeRepository
-{
+export class PasswordResetCodePrismaRepository implements PasswordResetCodeRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreatePasswordResetCodeData): Promise<PasswordResetCodeData> {
+  async create(data: CreatePasswordResetCodeData): Promise<PasswordResetCode> {
     const record = await this.prisma.passwordResetCode.create({
       data: {
         userId: data.userId,
@@ -21,13 +19,13 @@ export class PasswordResetCodePrismaRepository
       },
     });
 
-    return this.toData(record);
+    return this.toDomain(record);
   }
 
   async findValidByCodeAndUserId(
     code: string,
-    userId: string
-  ): Promise<PasswordResetCodeData | null> {
+    userId: string,
+  ): Promise<PasswordResetCode | null> {
     const record = await this.prisma.passwordResetCode.findFirst({
       where: {
         code,
@@ -37,7 +35,7 @@ export class PasswordResetCodePrismaRepository
       },
     });
 
-    return record ? this.toData(record) : null;
+    return record ? this.toDomain(record) : null;
   }
 
   async markAsUsed(id: string): Promise<void> {
@@ -57,21 +55,21 @@ export class PasswordResetCodePrismaRepository
     });
   }
 
-  private toData(record: {
+  private toDomain(record: {
     id: string;
     userId: string;
     code: string;
     expiresAt: Date;
     usedAt: Date | null;
     createdAt: Date;
-  }): PasswordResetCodeData {
-    return {
-      id: record.id,
-      userId: record.userId,
-      code: record.code,
-      expiresAt: record.expiresAt,
-      usedAt: record.usedAt,
-      createdAt: record.createdAt,
-    };
+  }): PasswordResetCode {
+    return new PasswordResetCode(
+      record.id,
+      record.userId,
+      record.code,
+      record.expiresAt,
+      record.usedAt,
+      record.createdAt,
+    );
   }
 }

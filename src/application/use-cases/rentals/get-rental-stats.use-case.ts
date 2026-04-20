@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { RentalRepository } from '../../repositories/rental.repository';
-import { RENTAL_REPOSITORY } from '../../repositories/rental.repository';
-import type { RentalStats } from '../../repositories/rental.repository';
+import type { RentalRepository } from '@domain/repositories/rental.repository';
+import { RENTAL_REPOSITORY } from '@domain/repositories/rental.repository';
+import type { RentalStats } from '@domain/repositories/rental.repository';
 
 @Injectable()
 export class GetRentalStatsUseCase {

@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { MenuRepository } from '../../repositories/menu.repository';
-import type { ApplicationRepository } from '../../repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '../../repositories/application.repository';
-import { EntityNotFoundException } from '../../exceptions';
+import { MenuRepository } from '@domain/repositories/menu.repository';
+import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
 
 export interface GetMenusFlatInput {
   applicationSlug: string;

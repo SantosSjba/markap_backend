@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { AgentRepository } from '../../repositories/agent.repository';
-import { AGENT_REPOSITORY } from '../../repositories/agent.repository';
+import type { AgentRepository } from '@domain/repositories/agent.repository';
+import { AGENT_REPOSITORY } from '@domain/repositories/agent.repository';
 import type {
   ListAgentsResult,
   ListAgentsFilters,
-} from '../../repositories/agent.repository';
+} from '@domain/repositories/agent.repository';
 
 @Injectable()
 export class ListAgentsUseCase {

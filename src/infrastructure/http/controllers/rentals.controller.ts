@@ -42,7 +42,7 @@ import { UpdateRentalDto } from '../dtos/rentals/update-rental.dto';
 import { UpsertRentalFinancialConfigDto } from '../dtos/rentals/upsert-rental-financial-config.dto';
 import { SaveCommunicationNoteDto } from '../dtos/rentals/save-communication-note.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { NotificationsService } from '../services/notifications.service';
+import { NotificationsService } from '../../../application/services';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
 

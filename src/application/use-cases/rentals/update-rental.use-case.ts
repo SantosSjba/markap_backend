@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { RentalRepository } from '../../repositories/rental.repository';
-import { RENTAL_REPOSITORY } from '../../repositories/rental.repository';
-import type { RentalData, UpdateRentalData } from '../../repositories/rental.repository';
-import { EntityNotFoundException } from '../../exceptions';
+import type { RentalRepository } from '@domain/repositories/rental.repository';
+import { RENTAL_REPOSITORY } from '@domain/repositories/rental.repository';
+import type { Rental, UpdateRentalData } from '@domain/repositories/rental.repository';
+import { EntityNotFoundException } from '@domain/exceptions';
 
 export interface UpdateRentalInput {
   id: string;
@@ -24,7 +24,7 @@ export class UpdateRentalUseCase {
     private readonly rentalRepository: RentalRepository,
   ) {}
 
-  async execute(input: UpdateRentalInput): Promise<RentalData> {
+  async execute(input: UpdateRentalInput): Promise<Rental> {
     const existing = await this.rentalRepository.findById(input.id);
     if (!existing) {
       throw new EntityNotFoundException('Rental', input.id);
