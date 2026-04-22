@@ -1,11 +1,10 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { AGENT_REPOSITORY, APPLICATION_REPOSITORY, CLIENT_REPOSITORY } from '@common/constants/injection-tokens';
 import type { ClientRepository } from '@domain/repositories/client.repository';
-import { CLIENT_REPOSITORY } from '@domain/repositories/client.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import type { AgentRepository } from '@domain/repositories/agent.repository';
-import { AGENT_REPOSITORY } from '@domain/repositories/agent.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+import { Email, Phone } from '@domain/value-objects';
 import type { SalesPipelineStatus } from '@domain/repositories/client.repository';
 
 export interface CreateClientInput {
@@ -107,6 +106,10 @@ export class CreateClientUseCase {
     const salesStatus: SalesPipelineStatus | null =
       input.clientType === 'BUYER' ? input.salesStatus ?? 'PROSPECT' : null;
 
+    const primaryPhone = Phone.create(input.primaryPhone).value;
+    const primaryEmail = Email.create(input.primaryEmail).value;
+    const secondary = Phone.optional(input.secondaryPhone);
+
     return this.clientRepository.create({
       applicationId,
       clientType: input.clientType,
@@ -115,10 +118,10 @@ export class CreateClientUseCase {
       fullName: input.fullName,
       legalRepresentativeName: input.legalRepresentativeName,
       legalRepresentativePosition: input.legalRepresentativePosition,
-      primaryPhone: input.primaryPhone,
-      secondaryPhone: input.secondaryPhone,
-      primaryEmail: input.primaryEmail,
-      secondaryEmail: input.secondaryEmail,
+      primaryPhone,
+      secondaryPhone: secondary ? secondary.value : null,
+      primaryEmail,
+      secondaryEmail: Email.optional(input.secondaryEmail),
       notes: input.notes,
       salesStatus,
       leadOrigin:

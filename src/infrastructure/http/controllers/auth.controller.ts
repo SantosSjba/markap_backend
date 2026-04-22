@@ -7,6 +7,7 @@ import {
   HttpStatus,
   UseGuards,
   Request,
+  Inject,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,14 +15,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import {
-  RegisterUserUseCase,
-  LoginUserUseCase,
-  GetUserProfileUseCase,
-  RequestPasswordResetUseCase,
-  ResetPasswordUseCase,
-} from '../../../application/use-cases/auth';
-import { GetUserRolesUseCase } from '../../../application/use-cases/roles';
+import { AUTH_PORT, type AuthPort } from '@application/ports';
 import {
   RegisterDto,
   LoginDto,
@@ -38,14 +32,7 @@ import type { AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly registerUserUseCase: RegisterUserUseCase,
-    private readonly loginUserUseCase: LoginUserUseCase,
-    private readonly getUserProfileUseCase: GetUserProfileUseCase,
-    private readonly getUserRolesUseCase: GetUserRolesUseCase,
-    private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
-    private readonly resetPasswordUseCase: ResetPasswordUseCase,
-  ) {}
+  constructor(@Inject(AUTH_PORT) private readonly auth: AuthPort) {}
 
   @Post('register')
   @UseGuards(JwtAuthGuard)
@@ -72,7 +59,7 @@ export class AuthController {
     @Request() req: AuthenticatedRequest,
     @Body() dto: RegisterDto,
   ): Promise<RegisterResponseDto> {
-    const user = await this.registerUserUseCase.execute({
+    const user = await this.auth.register({
       email: dto.email,
       password: dto.password,
       firstName: dto.firstName,
@@ -99,12 +86,12 @@ export class AuthController {
     description: 'Credenciales inválidas',
   })
   async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
-    const result = await this.loginUserUseCase.execute({
+    const result = await this.auth.login({
       email: dto.email,
       password: dto.password,
     });
 
-    const roles = await this.getUserRolesUseCase.execute(result.user.id);
+    const roles = await this.auth.getRolesForUser(result.user.id);
 
     return {
       user: UserHttpMapper.toResponseWithRoleEntities(result.user, roles),
@@ -129,8 +116,7 @@ export class AuthController {
   async getProfile(
     @Request() req: AuthenticatedRequest,
   ): Promise<UserResponseDto> {
-    const user = await this.getUserProfileUseCase.execute(req.user.sub);
-    const roles = await this.getUserRolesUseCase.execute(user.id);
+    const { user, roles } = await this.auth.getProfileWithRoles(req.user.sub);
 
     return UserHttpMapper.toResponseWithRoleEntities(user, roles);
   }
@@ -144,7 +130,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ message: string }> {
-    await this.requestPasswordResetUseCase.execute({ email: dto.email });
+    await this.auth.requestPasswordReset({ email: dto.email });
     return {
       message:
         'Si el correo está registrado, recibirás un código de recuperación en unos momentos',
@@ -166,7 +152,7 @@ export class AuthController {
   async resetPassword(
     @Body() dto: ResetPasswordDto,
   ): Promise<{ message: string }> {
-    await this.resetPasswordUseCase.execute({
+    await this.auth.resetPassword({
       email: dto.email,
       code: dto.code,
       newPassword: dto.newPassword,

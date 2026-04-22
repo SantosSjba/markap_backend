@@ -1,10 +1,12 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import type { AgentRepository } from '@domain/repositories/agent.repository';
-import { AGENT_REPOSITORY } from '@domain/repositories/agent.repository';
 import {
+  AGENT_REPOSITORY,
+  APPLICATION_REPOSITORY,
   VENTAS_FINANZAS_REPOSITORY,
+} from '@common/constants/injection-tokens';
+import {
   type VentasFinanzasRepository,
   type ListBuyerPaymentsFilters,
   type ListCommissionsFilters,

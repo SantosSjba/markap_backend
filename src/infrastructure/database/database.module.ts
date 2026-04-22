@@ -8,35 +8,40 @@ import { MenuPrismaRepository } from './prisma/repositories/menu-prisma.reposito
 import { ClientPrismaRepository } from './prisma/repositories/client-prisma.repository';
 import { PropertyPrismaRepository } from './prisma/repositories/property-prisma.repository';
 import { RentalPrismaRepository } from './prisma/repositories/rental-prisma.repository';
-import { UserRepository } from '@domain/repositories/user.repository';
-import { ROLE_REPOSITORY } from '@domain/repositories/role.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
-import { PasswordResetCodeRepository } from '@domain/repositories/password-reset-code.repository';
-import { MenuRepository } from '@domain/repositories/menu.repository';
-import { ClientRepository, CLIENT_REPOSITORY } from '@domain/repositories/client.repository';
-import { PropertyRepository, PROPERTY_REPOSITORY } from '@domain/repositories/property.repository';
-import { RENTAL_REPOSITORY } from '@domain/repositories/rental.repository';
-import { RENTAL_FINANCIAL_CONFIG_REPOSITORY } from '@domain/repositories/rental-financial-config.repository';
+import {
+  UserRepository,
+  PasswordResetCodeRepository,
+  MenuRepository,
+} from '@common/constants/injection-tokens';
+import { ClientRepository } from '@domain/repositories/client.repository';
+import { PropertyRepository } from '@domain/repositories/property.repository';
 import { RentalFinancialConfigPrismaRepository } from './prisma/repositories/rental-financial-config-prisma.repository';
-import { AGENT_REPOSITORY } from '@domain/repositories/agent.repository';
 import { AgentPrismaRepository } from './prisma/repositories/agent-prisma.repository';
-
-import { REPORT_REPOSITORY } from '@domain/repositories/report.repository';
 import { ReportPrismaRepository } from './prisma/repositories/report-prisma.repository';
-import { NOTIFICATION_REPOSITORY } from '@domain/repositories/notification.repository';
 import { NotificationPrismaRepository } from './prisma/repositories/notification-prisma.repository';
-import { PAYMENT_REPOSITORY } from '@domain/repositories/payment.repository';
 import { PaymentPrismaRepository } from './prisma/repositories/payment-prisma.repository';
-import { ALERT_CONFIG_REPOSITORY } from '@domain/repositories/alert-config.repository';
 import { AlertConfigPrismaRepository } from './prisma/repositories/alert-config-prisma.repository';
-import { VENTAS_SALES_REPOSITORY } from '@domain/repositories/ventas-sales.repository';
 import { VentasSalesPrismaRepository } from './prisma/repositories/ventas-sales-prisma.repository';
-import { VENTAS_FINANZAS_REPOSITORY } from '@domain/repositories/ventas-finanzas.repository';
 import { VentasFinanzasPrismaRepository } from './prisma/repositories/ventas-finanzas-prisma.repository';
-import { VENTAS_REPORTS_REPOSITORY } from '@domain/repositories/ventas-reports.repository';
 import { VentasReportsPrismaRepository } from './prisma/repositories/ventas-reports-prisma.repository';
-import { VENTAS_CONFIG_REPOSITORY } from '@domain/repositories/ventas-config.repository';
 import { VentasConfigPrismaRepository } from './prisma/repositories/ventas-config-prisma.repository';
+import {
+  ROLE_REPOSITORY,
+  APPLICATION_REPOSITORY,
+  CLIENT_REPOSITORY,
+  PROPERTY_REPOSITORY,
+  RENTAL_REPOSITORY,
+  RENTAL_FINANCIAL_CONFIG_REPOSITORY,
+  AGENT_REPOSITORY,
+  REPORT_REPOSITORY,
+  NOTIFICATION_REPOSITORY,
+  PAYMENT_REPOSITORY,
+  ALERT_CONFIG_REPOSITORY,
+  VENTAS_SALES_REPOSITORY,
+  VENTAS_FINANZAS_REPOSITORY,
+  VENTAS_REPORTS_REPOSITORY,
+  VENTAS_CONFIG_REPOSITORY,
+} from '@common/constants/injection-tokens';
 
 @Module({
   providers: [

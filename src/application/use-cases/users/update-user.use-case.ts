@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { UserRepository } from '@domain/repositories/user.repository';
+import { UserRepository } from '@common/constants/injection-tokens';
+import { Email } from '@domain/value-objects';
 
 interface UpdateUserInput {
   userId: string;
@@ -25,7 +26,10 @@ export class UpdateUserUseCase {
     await this.userRepository.update(input.userId, {
       firstName: input.firstName,
       lastName: input.lastName,
-      email: input.email,
+      email:
+        input.email !== undefined
+          ? Email.create(input.email).value
+          : undefined,
       updatedBy: input.updatedBy,
     });
     const updated = await this.userRepository.findByIdWithRoles(input.userId);

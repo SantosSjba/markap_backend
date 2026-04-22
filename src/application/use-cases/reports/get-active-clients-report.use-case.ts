@@ -1,9 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type {
-  ReportRepository,
-  ActiveClientReportItem,
-} from '@domain/repositories/report.repository';
-import { REPORT_REPOSITORY } from '@domain/repositories/report.repository';
+import { REPORT_REPOSITORY } from '@common/constants/injection-tokens';
+import type { ReportRepository, ActiveClientReportItem } from '@domain/repositories/report.repository';
 
 @Injectable()
 export class GetActiveClientsReportUseCase {

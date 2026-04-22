@@ -1,12 +1,12 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type { NotificationRepository } from '@domain/repositories/notification.repository';
 import type { Notification } from '@domain/entities/notification.entity';
-import { NOTIFICATION_REPOSITORY } from '@domain/repositories/notification.repository';
 import type { AlertConfigRepository } from '@domain/repositories/alert-config.repository';
-import { ALERT_CONFIG_REPOSITORY } from '@domain/repositories/alert-config.repository';
 import type { NotificationPayload } from '@infrastructure/http/gateways/notifications.gateway';
 import { NotificationsGateway } from '@infrastructure/http/gateways/notifications.gateway';
 import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
+
+import { ALERT_CONFIG_REPOSITORY, NOTIFICATION_REPOSITORY } from '@common/constants/injection-tokens';
 
 export const RENTAL_NOTIFICATION_ROLE_CODES = ['ADMIN', 'MANAGER'] as const;
 

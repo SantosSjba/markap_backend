@@ -1,11 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type {
-  PaymentRepository,
-  PendingPaymentItem,
-  ListPendingPaymentsFilters,
-  PaymentStatus,
-} from '@domain/repositories/payment.repository';
-import { PAYMENT_REPOSITORY } from '@domain/repositories/payment.repository';
+import { PAYMENT_REPOSITORY } from '@common/constants/injection-tokens';
+import type { PaymentRepository, PendingPaymentItem, ListPendingPaymentsFilters, PaymentStatus } from '@domain/repositories/payment.repository';
 
 @Injectable()
 export class ListPendingPaymentsUseCase {

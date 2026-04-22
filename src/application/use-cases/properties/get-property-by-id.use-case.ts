@@ -1,9 +1,9 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import type { PropertyRepository } from '@domain/repositories/property.repository';
-import { PROPERTY_REPOSITORY } from '@domain/repositories/property.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import type { Property } from '@domain/repositories/property.repository';
+
+import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
 
 @Injectable()
 export class GetPropertyByIdUseCase {

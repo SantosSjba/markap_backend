@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '@domain/repositories/user.repository';
-import { PasswordResetCodeRepository } from '@domain/repositories/password-reset-code.repository';
-import { HashService } from '@domain/services/hash.service';
+import {
+  UserRepository,
+  PasswordResetCodeRepository,
+  HashService,
+} from '@common/constants/injection-tokens';
 import {
   InvalidPasswordResetCodeException,
   UserNotFoundException,
 } from '@domain/exceptions';
+import { Email } from '@domain/value-objects';
 
 export interface ResetPasswordInput {
   email: string;
@@ -28,7 +31,7 @@ export class ResetPasswordUseCase {
 
   async execute(input: ResetPasswordInput): Promise<void> {
     const user = await this.userRepository.findByEmail(
-      input.email.toLowerCase().trim(),
+      Email.create(input.email).value,
     );
 
     if (!user) {

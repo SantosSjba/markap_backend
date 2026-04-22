@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,13 +20,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import {
-  CreateAgentUseCase,
-  ListAgentsUseCase,
-  GetAgentByIdUseCase,
-  UpdateAgentUseCase,
-  DeleteAgentUseCase,
-} from '../../../application/use-cases/agents';
+import { AGENT_PORT, type AgentPort } from '@application/ports';
 import { CreateAgentDto, UpdateAgentDto } from '../dtos/agents';
 
 @ApiTags('Agents')
@@ -34,11 +29,7 @@ import { CreateAgentDto, UpdateAgentDto } from '../dtos/agents';
 @ApiBearerAuth('JWT-auth')
 export class AgentsController {
   constructor(
-    private readonly createAgentUseCase: CreateAgentUseCase,
-    private readonly listAgentsUseCase: ListAgentsUseCase,
-    private readonly getAgentByIdUseCase: GetAgentByIdUseCase,
-    private readonly updateAgentUseCase: UpdateAgentUseCase,
-    private readonly deleteAgentUseCase: DeleteAgentUseCase,
+    @Inject(AGENT_PORT) private readonly agent: AgentPort,
   ) {}
 
   @Get()
@@ -62,7 +53,7 @@ export class AgentsController {
     @Query('type') type?: 'INTERNAL' | 'EXTERNAL',
     @Query('isActive') isActive?: string,
   ) {
-    return this.listAgentsUseCase.execute({
+    return this.agent.listAgents({
       applicationSlug: applicationSlug ?? 'alquileres',
       page: Math.max(1, parseInt(page ?? '1', 10)),
       limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
@@ -77,7 +68,7 @@ export class AgentsController {
   @ApiOperation({ summary: 'Crear agente' })
   @ApiResponse({ status: 201 })
   async create(@Body() dto: CreateAgentDto) {
-    return this.createAgentUseCase.execute({
+    return this.agent.createAgent({
       applicationId: dto.applicationId,
       applicationSlug: dto.applicationSlug ?? 'alquileres',
       type: dto.type,
@@ -103,7 +94,7 @@ export class AgentsController {
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.getAgentByIdUseCase.execute(id, {
+    return this.agent.getAgentById(id, {
       applicationSlug: applicationSlug?.trim() || undefined,
     });
   }
@@ -121,7 +112,7 @@ export class AgentsController {
     @Body() dto: UpdateAgentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateAgentUseCase.execute(
+    return this.agent.updateAgent(
       id,
       {
         type: dto.type,
@@ -151,6 +142,6 @@ export class AgentsController {
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.deleteAgentUseCase.execute(id, applicationSlug);
+    return this.agent.deleteAgent(id, applicationSlug);
   }
 }

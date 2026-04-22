@@ -1,10 +1,11 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { PAYMENT_REPOSITORY } from '@common/constants/injection-tokens';
 import type {
   PaymentRepository,
   Payment,
   PaymentMethod,
 } from '@domain/repositories/payment.repository';
-import { PAYMENT_REPOSITORY } from '@domain/repositories/payment.repository';
+import { Money } from '@domain/value-objects';
 
 export interface RegisterPaymentInput {
   paymentId: string;
@@ -29,9 +30,10 @@ export class RegisterPaymentUseCase {
       throw new NotFoundException(`Pago con id ${input.paymentId} no encontrado`);
     }
 
+    const paid = Money.create(input.paidAmount, payment.currency);
     return this.paymentRepository.registerPayment(input.paymentId, {
       paidDate: input.paidDate,
-      paidAmount: input.paidAmount,
+      paidAmount: paid.amount,
       paymentMethod: input.paymentMethod,
       referenceNumber: input.referenceNumber,
       notes: input.notes,

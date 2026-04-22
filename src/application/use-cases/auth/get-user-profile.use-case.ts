@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { User } from '@domain/entities/user.entity';
-import { UserRepository } from '@domain/repositories/user.repository';
+import { UserRepository } from '@common/constants/injection-tokens';
 import { EntityNotFoundException } from '@domain/exceptions';
 
 /**

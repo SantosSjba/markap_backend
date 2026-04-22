@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '@domain/repositories/user.repository';
+import { UserRepository } from '@common/constants/injection-tokens';
 
 /**
  * Get All Users Use Case

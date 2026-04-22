@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { User } from '@domain/entities/user.entity';
-import { UserRepository } from '@domain/repositories/user.repository';
-import { HashService } from '@domain/services/hash.service';
-import { TokenService, TokenResult } from '@domain/services/token.service';
+import type { TokenResult } from '@domain/services/token.service';
+import { HashService, TokenService, UserRepository } from '@common/constants/injection-tokens';
 import {
   InvalidCredentialsException,
   UserInactiveException,
 } from '@domain/exceptions';
-
+import { Email } from '@domain/value-objects';
 /**
  * Input para iniciar sesión
  */
@@ -39,8 +38,8 @@ export class LoginUserUseCase {
   ) {}
 
   async execute(input: LoginUserInput): Promise<LoginUserOutput> {
-    // Buscar usuario por email
-    const user = await this.userRepository.findByEmail(input.email);
+    const email = Email.create(input.email);
+    const user = await this.userRepository.findByEmail(email.value);
     if (!user) {
       throw new InvalidCredentialsException();
     }

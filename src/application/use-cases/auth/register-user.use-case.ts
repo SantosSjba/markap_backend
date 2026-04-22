@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { User } from '@domain/entities/user.entity';
-import { UserRepository } from '@domain/repositories/user.repository';
-import { HashService } from '@domain/services/hash.service';
+import { HashService, UserRepository } from '@common/constants/injection-tokens';
 import { EmailAlreadyExistsException } from '@domain/exceptions';
+import { Email } from '@domain/value-objects';
 
 /**
  * Input para registrar un nuevo usuario
@@ -28,10 +28,10 @@ export class RegisterUserUseCase {
   ) {}
 
   async execute(input: RegisterUserInput): Promise<User> {
-    // Verificar si el email ya existe
-    const existingUser = await this.userRepository.existsByEmail(input.email);
+    const email = Email.create(input.email);
+    const existingUser = await this.userRepository.existsByEmail(email.value);
     if (existingUser) {
-      throw new EmailAlreadyExistsException(input.email);
+      throw new EmailAlreadyExistsException(email.value);
     }
 
     // Encriptar la contraseña
@@ -39,7 +39,7 @@ export class RegisterUserUseCase {
 
     // Crear el usuario
     const user = await this.userRepository.create({
-      email: input.email,
+      email: email.value,
       password: hashedPassword,
       firstName: input.firstName,
       lastName: input.lastName,

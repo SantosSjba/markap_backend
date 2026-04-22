@@ -1,10 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type {
-  RentalFinancialConfigRepository,
-  RentalFinancialConfig,
-  CreateOrUpdateRentalFinancialConfigData,
-} from '@domain/repositories/rental-financial-config.repository';
-import { RENTAL_FINANCIAL_CONFIG_REPOSITORY } from '@domain/repositories/rental-financial-config.repository';
+import { RENTAL_FINANCIAL_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
+import type { RentalFinancialConfigRepository, RentalFinancialConfig, CreateOrUpdateRentalFinancialConfigData } from '@domain/repositories/rental-financial-config.repository';
 
 @Injectable()
 export class UpsertRentalFinancialConfigUseCase {

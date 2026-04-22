@@ -1,9 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
+import { AGENT_REPOSITORY, APPLICATION_REPOSITORY } from '@common/constants/injection-tokens';
 import type { AgentRepository } from '@domain/repositories/agent.repository';
-import { AGENT_REPOSITORY } from '@domain/repositories/agent.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+import { Email, Phone } from '@domain/value-objects';
 import type { CreateAgentData } from '@domain/repositories/agent.repository';
 
 export interface CreateAgentInput {
@@ -49,8 +49,8 @@ export class CreateAgentUseCase {
       type: input.type,
       userId: input.userId ?? null,
       fullName: input.fullName.trim(),
-      email: input.email ?? null,
-      phone: input.phone ?? null,
+      email: input.email?.trim() ? Email.create(String(input.email)).value : null,
+      phone: input.phone?.trim() ? Phone.create(String(input.phone)).value : null,
       documentTypeId: input.documentTypeId ?? null,
       documentNumber: input.documentNumber ?? null,
     };

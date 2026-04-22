@@ -1,10 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import type {
-  AlertConfigRepository,
-} from '@domain/repositories/alert-config.repository';
-import { ALERT_CONFIG_REPOSITORY } from '@domain/repositories/alert-config.repository';
+import { ALERT_CONFIG_REPOSITORY, APPLICATION_REPOSITORY } from '@common/constants/injection-tokens';
+import type { AlertConfigRepository } from '@domain/repositories/alert-config.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 
 export interface UpsertAlertConfigInput {
   userId: string;

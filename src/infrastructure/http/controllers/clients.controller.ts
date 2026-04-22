@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, HttpCode, HttpStatus, Inject } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -7,14 +7,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import {
-  CreateClientUseCase,
-  ListClientsUseCase,
-  GetClientStatsUseCase,
-  GetClientByIdUseCase,
-  UpdateClientUseCase,
-  DeleteClientUseCase,
-} from '../../../application/use-cases/clients';
+import { CLIENT_PORT, type ClientPort } from '@application/ports';
 import { CreateClientDto, UpdateClientDto } from '../dtos/clients';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
@@ -24,12 +17,7 @@ import { PrismaService } from '../../database/prisma/prisma.service';
 @ApiBearerAuth('JWT-auth')
 export class ClientsController {
   constructor(
-    private readonly createClientUseCase: CreateClientUseCase,
-    private readonly listClientsUseCase: ListClientsUseCase,
-    private readonly getClientStatsUseCase: GetClientStatsUseCase,
-    private readonly getClientByIdUseCase: GetClientByIdUseCase,
-    private readonly updateClientUseCase: UpdateClientUseCase,
-    private readonly deleteClientUseCase: DeleteClientUseCase,
+    @Inject(CLIENT_PORT) private readonly clients: ClientPort,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -57,7 +45,7 @@ export class ClientsController {
     @Query('salesStatus') salesStatus?: 'PROSPECT' | 'INTERESTED' | 'CLIENT',
     @Query('isActive') isActive?: string,
   ) {
-    return this.listClientsUseCase.execute({
+    return this.clients.listClients({
       applicationSlug: applicationSlug ?? 'alquileres',
       page: Math.max(1, parseInt(page ?? '1', 10)),
       limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
@@ -73,14 +61,14 @@ export class ClientsController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiResponse({ status: 200 })
   async stats(@Query('applicationSlug') applicationSlug?: string) {
-    return this.getClientStatsUseCase.execute(applicationSlug ?? 'alquileres');
+    return this.clients.getClientStats(applicationSlug ?? 'alquileres');
   }
 
   @Post()
   @ApiOperation({ summary: 'Crear cliente' })
   @ApiResponse({ status: 201 })
   async create(@Body() dto: CreateClientDto) {
-    return this.createClientUseCase.execute({
+    return this.clients.createClient({
       applicationId: dto.applicationId,
       applicationSlug: dto.applicationSlug ?? 'alquileres',
       clientType: dto.clientType,
@@ -156,7 +144,7 @@ export class ClientsController {
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.getClientByIdUseCase.execute(id, applicationSlug);
+    return this.clients.getClientById(id, applicationSlug);
   }
 
   @Patch(':id')
@@ -172,7 +160,7 @@ export class ClientsController {
     @Body() dto: UpdateClientDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateClientUseCase.execute(
+    return this.clients.updateClient(
       id,
       {
       clientType: dto.clientType,
@@ -209,6 +197,6 @@ export class ClientsController {
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.deleteClientUseCase.execute(id, applicationSlug);
+    return this.clients.deleteClient(id, applicationSlug);
   }
 }

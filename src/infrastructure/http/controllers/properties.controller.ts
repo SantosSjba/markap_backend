@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards, HttpCode, HttpStatus, Inject } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -9,15 +9,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { Prisma } from '@prisma/client';
-import {
-  CreatePropertyUseCase,
-  GetPropertyByIdUseCase,
-  ListPropertiesUseCase,
-  GetPropertyStatsUseCase,
-  UpdatePropertyUseCase,
-  UpdatePropertyListingStatusUseCase,
-  DeletePropertyUseCase,
-} from '../../../application/use-cases/properties';
+import { PROPERTY_PORT, type PropertyPort } from '@application/ports';
 import { CreatePropertyDto, UpdatePropertyDto } from '../dtos/properties';
 import { UpdateListingStatusDto } from '../dtos/properties/update-listing-status.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
@@ -28,13 +20,7 @@ import { PrismaService } from '../../database/prisma/prisma.service';
 @ApiBearerAuth('JWT-auth')
 export class PropertiesController {
   constructor(
-    private readonly createPropertyUseCase: CreatePropertyUseCase,
-    private readonly getPropertyByIdUseCase: GetPropertyByIdUseCase,
-    private readonly listPropertiesUseCase: ListPropertiesUseCase,
-    private readonly getPropertyStatsUseCase: GetPropertyStatsUseCase,
-    private readonly updatePropertyUseCase: UpdatePropertyUseCase,
-    private readonly updatePropertyListingStatusUseCase: UpdatePropertyListingStatusUseCase,
-    private readonly deletePropertyUseCase: DeletePropertyUseCase,
+    @Inject(PROPERTY_PORT) private readonly properties: PropertyPort,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -66,7 +52,7 @@ export class PropertiesController {
       const n = Number(v);
       return Number.isFinite(n) ? n : undefined;
     };
-    return this.listPropertiesUseCase.execute({
+    return this.properties.listProperties({
       applicationSlug: applicationSlug ?? 'alquileres',
       page: Math.max(1, parseInt(page ?? '1', 10)),
       limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
@@ -84,7 +70,7 @@ export class PropertiesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiResponse({ status: 200 })
   async stats(@Query('applicationSlug') applicationSlug?: string) {
-    return this.getPropertyStatsUseCase.execute(applicationSlug ?? 'alquileres');
+    return this.properties.getPropertyStats(applicationSlug ?? 'alquileres');
   }
 
   @Get('property-types')
@@ -186,7 +172,7 @@ export class PropertiesController {
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.getPropertyByIdUseCase.execute(id, applicationSlug);
+    return this.properties.getPropertyById(id, applicationSlug);
   }
 
   @Patch(':id/listing-status')
@@ -208,7 +194,7 @@ export class PropertiesController {
     @Body() dto: UpdateListingStatusDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updatePropertyListingStatusUseCase.execute(
+    return this.properties.updateListingStatus(
       id,
       dto.listingStatus,
       applicationSlug,
@@ -230,7 +216,7 @@ export class PropertiesController {
     @Body() dto: UpdatePropertyDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updatePropertyUseCase.execute(
+    return this.properties.updateProperty(
       {
         id,
         code: dto.code,
@@ -264,7 +250,7 @@ export class PropertiesController {
   @ApiOperation({ summary: 'Crear propiedad' })
   @ApiResponse({ status: 201 })
   async create(@Body() dto: CreatePropertyDto) {
-    return this.createPropertyUseCase.execute({
+    return this.properties.createProperty({
       applicationId: dto.applicationId,
       applicationSlug: dto.applicationSlug ?? 'alquileres',
       code: dto.code,
@@ -306,6 +292,6 @@ export class PropertiesController {
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.deletePropertyUseCase.execute(id, applicationSlug);
+    return this.properties.deleteProperty(id, applicationSlug);
   }
 }

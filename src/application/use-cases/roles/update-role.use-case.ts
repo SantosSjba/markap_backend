@@ -1,7 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type { RoleRepository } from '@domain/repositories/role.repository';
-import { ROLE_REPOSITORY } from '@domain/repositories/role.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+
+import { ROLE_REPOSITORY } from '@common/constants/injection-tokens';
 
 export interface UpdateRoleInput {
   id: string;

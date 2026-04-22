@@ -162,6 +162,21 @@ import { NotificationsGateway } from './gateways/notifications.gateway';
 // Services - Notifications
 import { NotificationsService } from '../../application/services';
 
+import {
+  AGENT_PORT,
+  AgentPortImpl,
+  AUTH_PORT,
+  AuthPortImpl,
+  CLIENT_PORT,
+  ClientPortImpl,
+  PAYMENT_PORT,
+  PaymentPortImpl,
+  PROPERTY_PORT,
+  PropertyPortImpl,
+  RENTAL_PORT,
+  RentalPortImpl,
+} from '../../application/ports';
+
 @Module({
   imports: [DatabaseModule],
   controllers: [
@@ -184,6 +199,13 @@ import { NotificationsService } from '../../application/services';
     VentasConfigController,
   ],
   providers: [
+    { provide: AGENT_PORT, useClass: AgentPortImpl },
+    { provide: AUTH_PORT, useClass: AuthPortImpl },
+    { provide: CLIENT_PORT, useClass: ClientPortImpl },
+    { provide: PAYMENT_PORT, useClass: PaymentPortImpl },
+    { provide: PROPERTY_PORT, useClass: PropertyPortImpl },
+    { provide: RENTAL_PORT, useClass: RentalPortImpl },
+
     // Services
     {
       provide: HashService,

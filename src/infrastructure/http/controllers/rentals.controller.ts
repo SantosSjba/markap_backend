@@ -13,6 +13,7 @@ import {
   UploadedFiles,
   HttpCode,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
@@ -26,17 +27,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { getFirstFile, type UploadedFilesMap } from '../../../common/types';
-import {
-  CreateRentalUseCase,
-  ListRentalsUseCase,
-  GetRentalStatsUseCase,
-  GetRentalByIdUseCase,
-  UpdateRentalUseCase,
-  GetRentalFinancialConfigUseCase,
-  UpsertRentalFinancialConfigUseCase,
-  GetRentalFinancialBreakdownUseCase,
-  CancelRentalUseCase,
-} from '../../../application/use-cases/rentals';
+import { RENTAL_PORT, type RentalPort } from '@application/ports';
 import { CreateRentalDto } from '../dtos/rentals/create-rental.dto';
 import { UpdateRentalDto } from '../dtos/rentals/update-rental.dto';
 import { UpsertRentalFinancialConfigDto } from '../dtos/rentals/upsert-rental-financial-config.dto';
@@ -55,17 +46,9 @@ type RentalFileField = (typeof RENTAL_FILE_FIELDS)[number];
 @ApiBearerAuth('JWT-auth')
 export class RentalsController {
   constructor(
-    private readonly createRentalUseCase: CreateRentalUseCase,
-    private readonly listRentalsUseCase: ListRentalsUseCase,
-    private readonly getRentalStatsUseCase: GetRentalStatsUseCase,
-    private readonly getRentalByIdUseCase: GetRentalByIdUseCase,
-    private readonly updateRentalUseCase: UpdateRentalUseCase,
-    private readonly getRentalFinancialConfigUseCase: GetRentalFinancialConfigUseCase,
-    private readonly upsertRentalFinancialConfigUseCase: UpsertRentalFinancialConfigUseCase,
-    private readonly getRentalFinancialBreakdownUseCase: GetRentalFinancialBreakdownUseCase,
+    @Inject(RENTAL_PORT) private readonly rental: RentalPort,
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-    private readonly cancelRentalUseCase: CancelRentalUseCase,
   ) {}
 
   @Get()
@@ -83,7 +66,7 @@ export class RentalsController {
     @Query('search') search?: string,
     @Query('status') status?: 'ACTIVE' | 'EXPIRED' | 'CANCELLED',
   ) {
-    return this.listRentalsUseCase.execute({
+    return this.rental.listRentals({
       applicationSlug: applicationSlug ?? 'alquileres',
       page: Math.max(1, parseInt(page ?? '1', 10)),
       limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
@@ -97,23 +80,22 @@ export class RentalsController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiResponse({ status: 200 })
   async stats(@Query('applicationSlug') applicationSlug?: string) {
-    return this.getRentalStatsUseCase.execute(applicationSlug ?? 'alquileres');
+    return this.rental.getRentalStats(applicationSlug ?? 'alquileres');
   }
 
   @Get(':id/financial-config')
   @ApiOperation({ summary: 'Obtener configuración financiera del alquiler' })
   @ApiResponse({ status: 200 })
   async getFinancialConfig(@Param('id') id: string) {
-    return this.getRentalFinancialConfigUseCase.execute(id);
+    return this.rental.getRentalFinancialConfig(id);
   }
 
   @Get(':id/financial-breakdown')
   @ApiOperation({ summary: 'Desglose financiero (utilidad, gastos, impuestos, agentes)' })
   @ApiResponse({ status: 200 })
   async getFinancialBreakdown(@Param('id') id: string) {
-    const rental = await this.getRentalByIdUseCase.execute(id);
-    if (!rental) return null;
-    return this.getRentalFinancialBreakdownUseCase.execute(
+    const rental = await this.rental.getRentalById(id);
+    return this.rental.getRentalFinancialBreakdown(
       id,
       rental.monthlyAmount,
       rental.currency,
@@ -125,7 +107,7 @@ export class RentalsController {
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 404 })
   async getById(@Param('id') id: string) {
-    return this.getRentalByIdUseCase.execute(id);
+    return this.rental.getRentalById(id);
   }
 
   @Put(':id/financial-config')
@@ -135,7 +117,7 @@ export class RentalsController {
     @Param('id') id: string,
     @Body() dto: UpsertRentalFinancialConfigDto,
   ) {
-    return this.upsertRentalFinancialConfigUseCase.execute(id, {
+    return this.rental.upsertRentalFinancialConfig(id, {
       currency: dto.currency,
       baseAmount: dto.baseAmount,
       expenseType: dto.expenseType,
@@ -171,7 +153,7 @@ export class RentalsController {
     @Body() dto: UpdateRentalDto,
     @UploadedFiles() files?: UploadedFilesMap<RentalFileField>,
   ) {
-    const rental = await this.updateRentalUseCase.execute({
+    const rental = await this.rental.updateRental({
       id,
       startDate: dto.startDate,
       endDate: dto.endDate,
@@ -262,7 +244,7 @@ export class RentalsController {
     @UploadedFiles()
     files?: UploadedFilesMap<RentalFileField>,
   ) {
-    const rental = await this.createRentalUseCase.execute({
+    const rental = await this.rental.createRental({
       applicationSlug: dto.applicationSlug ?? 'alquileres',
       propertyId: dto.propertyId,
       tenantId: dto.tenantId,
@@ -313,7 +295,7 @@ export class RentalsController {
     }
 
     try {
-      const detail = await this.getRentalByIdUseCase.execute(rental.id);
+      const detail = await this.rental.getRentalById(rental.id);
       if (detail) {
         await this.notificationsService.notifyRentalCreated(
           rental.id,
@@ -353,6 +335,6 @@ export class RentalsController {
   @ApiResponse({ status: 200, description: 'Contrato cancelado correctamente' })
   @ApiResponse({ status: 404 })
   async cancel(@Param('id') id: string) {
-    return this.cancelRentalUseCase.execute(id);
+    return this.rental.cancelRental(id);
   }
 }

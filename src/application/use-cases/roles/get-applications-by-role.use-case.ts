@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
+import { APPLICATION_REPOSITORY } from '@common/constants/injection-tokens';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import type { Application } from '@domain/entities';
 
 /**

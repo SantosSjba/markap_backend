@@ -1,8 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { MenuRepository, Menu } from '@domain/repositories/menu.repository';
+import type { Menu } from '@domain/repositories/menu.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+
+import { APPLICATION_REPOSITORY, MenuRepository } from '@common/constants/injection-tokens';
 
 export interface GetMenusByApplicationInput {
   applicationSlug: string;

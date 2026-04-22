@@ -1,7 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type { RentalRepository } from '@domain/repositories/rental.repository';
-import { RENTAL_REPOSITORY } from '@domain/repositories/rental.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+
+import { RENTAL_REPOSITORY } from '@common/constants/injection-tokens';
 
 @Injectable()
 export class CancelRentalUseCase {

@@ -9,30 +9,21 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { GetPaymentStatsUseCase } from '../../../application/use-cases/payments/get-payment-stats.use-case';
-import { ListPendingPaymentsUseCase } from '../../../application/use-cases/payments/list-pending-payments.use-case';
-import { RegisterPaymentUseCase } from '../../../application/use-cases/payments/register-payment.use-case';
-import { ListPaymentHistoryUseCase } from '../../../application/use-cases/payments/list-payment-history.use-case';
-import { ListOverduePaymentsUseCase } from '../../../application/use-cases/payments/list-overdue-payments.use-case';
+import { PAYMENT_PORT, type PaymentPort } from '@application/ports';
 import { RegisterPaymentDto } from '../dtos/payments';
 
 @UseGuards(JwtAuthGuard)
 @Controller('payments')
 export class PaymentsController {
-  constructor(
-    private readonly getStatsUseCase: GetPaymentStatsUseCase,
-    private readonly listPendingUseCase: ListPendingPaymentsUseCase,
-    private readonly registerPaymentUseCase: RegisterPaymentUseCase,
-    private readonly listHistoryUseCase: ListPaymentHistoryUseCase,
-    private readonly listOverdueUseCase: ListOverduePaymentsUseCase,
-  ) {}
+  constructor(@Inject(PAYMENT_PORT) private readonly payments: PaymentPort) {}
 
   /** GET /payments/stats?applicationSlug=alquileres */
   @Get('stats')
   async getStats(@Query('applicationSlug') applicationSlug: string) {
-    return this.getStatsUseCase.execute(applicationSlug ?? 'alquileres');
+    return this.payments.getStats(applicationSlug ?? 'alquileres');
   }
 
   /** GET /payments/pending?applicationSlug=alquileres&search=&status= */
@@ -42,7 +33,7 @@ export class PaymentsController {
     @Query('search') search?: string,
     @Query('status') status?: string,
   ) {
-    return this.listPendingUseCase.execute({
+    return this.payments.listPending({
       applicationSlug: applicationSlug ?? 'alquileres',
       search,
       status,
@@ -57,7 +48,7 @@ export class PaymentsController {
     @Body() dto: RegisterPaymentDto,
     @Request() req: any,
   ) {
-    return this.registerPaymentUseCase.execute({
+    return this.payments.registerPayment({
       paymentId: id,
       paidDate: new Date(dto.paidDate),
       paidAmount: dto.paidAmount,
@@ -79,7 +70,7 @@ export class PaymentsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.listHistoryUseCase.execute({
+    return this.payments.listHistory({
       applicationSlug: applicationSlug ?? 'alquileres',
       search,
       periodYear: periodYear ? parseInt(periodYear, 10) : undefined,
@@ -96,6 +87,6 @@ export class PaymentsController {
     @Query('applicationSlug') applicationSlug: string,
     @Query('search') search?: string,
   ) {
-    return this.listOverdueUseCase.execute(applicationSlug ?? 'alquileres', search);
+    return this.payments.listOverdue(applicationSlug ?? 'alquileres', search);
   }
 }

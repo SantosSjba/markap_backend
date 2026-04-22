@@ -1,7 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import { DuplicateEntityException } from '@domain/exceptions';
+
+import { APPLICATION_REPOSITORY } from '@common/constants/injection-tokens';
 
 export interface CreateApplicationInput {
   name: string;

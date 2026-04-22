@@ -1,8 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
+import { APPLICATION_REPOSITORY, VENTAS_REPORTS_REPOSITORY } from '@common/constants/injection-tokens';
 import {
-  VENTAS_REPORTS_REPOSITORY,
   type VentasReportsRepository,
   VENTAS_REPORTS_GRANULARITY,
   type VentasReportsGranularity,

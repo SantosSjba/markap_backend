@@ -1,14 +1,12 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import type { ClientRepository } from '@domain/repositories/client.repository';
-import { CLIENT_REPOSITORY } from '@domain/repositories/client.repository';
 import type { UpdateClientData } from '@domain/repositories/client.repository';
 import type { AgentRepository } from '@domain/repositories/agent.repository';
-import { AGENT_REPOSITORY } from '@domain/repositories/agent.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import type { PropertyRepository } from '@domain/repositories/property.repository';
-import { PROPERTY_REPOSITORY } from '@domain/repositories/property.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+
+import { AGENT_REPOSITORY, APPLICATION_REPOSITORY, CLIENT_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
 
 @Injectable()
 export class UpdateClientUseCase {

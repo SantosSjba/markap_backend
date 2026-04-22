@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Application } from '@domain/entities';
-import type { ApplicationRepository } from '@domain/repositories';
-import { APPLICATION_REPOSITORY } from '@domain/repositories';
+import { APPLICATION_REPOSITORY } from '@common/constants/injection-tokens';
+import type { ApplicationRepository } from '@domain/repositories/application.repository';
 
 /**
  * Get User Applications Use Case

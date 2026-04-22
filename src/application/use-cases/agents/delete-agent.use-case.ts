@@ -1,9 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type { AgentRepository } from '@domain/repositories/agent.repository';
-import { AGENT_REPOSITORY } from '@domain/repositories/agent.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+
+import { AGENT_REPOSITORY, APPLICATION_REPOSITORY } from '@common/constants/injection-tokens';
 
 @Injectable()
 export class DeleteAgentUseCase {

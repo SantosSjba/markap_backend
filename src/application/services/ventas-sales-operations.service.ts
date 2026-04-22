@@ -1,14 +1,17 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import type { PropertyRepository } from '@domain/repositories/property.repository';
-import { PROPERTY_REPOSITORY } from '@domain/repositories/property.repository';
 import type { ClientRepository } from '@domain/repositories/client.repository';
-import { CLIENT_REPOSITORY } from '@domain/repositories/client.repository';
 import type { AgentRepository } from '@domain/repositories/agent.repository';
-import { AGENT_REPOSITORY } from '@domain/repositories/agent.repository';
 import {
+  AGENT_REPOSITORY,
+  APPLICATION_REPOSITORY,
+  CLIENT_REPOSITORY,
+  PROPERTY_REPOSITORY,
   VENTAS_SALES_REPOSITORY,
+  VENTAS_FINANZAS_REPOSITORY,
+} from '@common/constants/injection-tokens';
+import {
   type VentasSalesRepository,
   type ListSaleProcessesFilters,
   type ListSaleSeparationsFilters,
@@ -19,10 +22,7 @@ import {
   type VentasPaymentType,
   type VentasSeparationStatus,
 } from '@domain/repositories/ventas-sales.repository';
-import {
-  VENTAS_FINANZAS_REPOSITORY,
-  type VentasFinanzasRepository,
-} from '@domain/repositories/ventas-finanzas.repository';
+import type { VentasFinanzasRepository } from '@domain/repositories/ventas-finanzas.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 
 const VENTAS_SLUG = 'ventas';

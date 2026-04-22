@@ -1,11 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
+import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY, RENTAL_REPOSITORY } from '@common/constants/injection-tokens';
 import type { RentalRepository } from '@domain/repositories/rental.repository';
-import { RENTAL_REPOSITORY } from '@domain/repositories/rental.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
 import type { PropertyRepository } from '@domain/repositories/property.repository';
-import { PROPERTY_REPOSITORY } from '@domain/repositories/property.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+import { Money } from '@domain/value-objects';
 
 export interface CreateRentalInput {
   applicationSlug?: string;
@@ -50,18 +49,20 @@ export class CreateRentalUseCase {
     if (!applicationId) {
       throw new Error('applicationId or applicationSlug is required');
     }
+    const monthly = Money.create(Number(input.monthlyAmount), input.currency);
+    const security =
+      input.securityDeposit != null
+        ? Money.create(Number(input.securityDeposit), monthly.currency)
+        : null;
     const rental = await this.rentalRepository.create({
       applicationId,
       propertyId: input.propertyId,
       tenantId: input.tenantId,
       startDate: new Date(input.startDate),
       endDate: new Date(input.endDate),
-      currency: input.currency,
-      monthlyAmount: Number(input.monthlyAmount),
-      securityDeposit:
-        input.securityDeposit != null
-          ? Number(input.securityDeposit)
-          : null,
+      currency: monthly.currency,
+      monthlyAmount: monthly.amount,
+      securityDeposit: security ? security.amount : null,
       paymentDueDay: Number(input.paymentDueDay),
       notes: input.notes?.trim() || null,
       enableAlerts: input.enableAlerts ?? true,

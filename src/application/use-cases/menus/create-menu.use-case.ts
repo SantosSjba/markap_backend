@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY } from '@domain/repositories/application.repository';
-import { Inject } from '@nestjs/common';
-import { MenuRepository, CreateMenuData } from '@domain/repositories/menu.repository';
+import type { CreateMenuData } from '@domain/repositories/menu.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+
+import { APPLICATION_REPOSITORY, MenuRepository } from '@common/constants/injection-tokens';
 
 export interface CreateMenuInput {
   applicationId?: string;
