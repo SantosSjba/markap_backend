@@ -11,6 +11,10 @@ import {
   seedRolesAndApplications,
   seedUbigeo,
   seedVentasMenus,
+  seedInteriorismoMenus,
+  seedArquitecturaMenus,
+  seedProduccionMenus,
+  seedContabilidadMenus,
   seedVentasSales,
   seedVentasFinanzas,
   seedVentasConfig,
@@ -27,6 +31,10 @@ async function main() {
   const { adminRoleId, appIdBySlug } = await seedRolesAndApplications(prisma);
   await seedAlquileresMenus(prisma);
   await seedVentasMenus(prisma);
+  await seedInteriorismoMenus(prisma);
+  await seedArquitecturaMenus(prisma);
+  await seedProduccionMenus(prisma);
+  await seedContabilidadMenus(prisma);
   const { adminUser } = await seedAdminUser(prisma, adminRoleId);
   await seedDocumentTypes(prisma);
   await seedUbigeo(prisma);
