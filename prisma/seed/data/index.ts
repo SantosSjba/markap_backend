@@ -6,6 +6,26 @@ export {
   VENTAS_CHILD_MENUS,
   VENTAS_PARENT_MENUS,
 } from './menus-ventas';
+export {
+  INTERIORISMO_APPLICATION_SLUG,
+  INTERIORISMO_CHILD_MENUS,
+  INTERIORISMO_PARENT_MENUS,
+} from './menus-interiorismo';
+export {
+  ARQUITECTURA_APPLICATION_SLUG,
+  ARQUITECTURA_CHILD_MENUS,
+  ARQUITECTURA_PARENT_MENUS,
+} from './menus-arquitectura';
+export {
+  PRODUCCION_APPLICATION_SLUG,
+  PRODUCCION_CHILD_MENUS,
+  PRODUCCION_PARENT_MENUS,
+} from './menus-produccion';
+export {
+  CONTABILIDAD_APPLICATION_SLUG,
+  CONTABILIDAD_CHILD_MENUS,
+  CONTABILIDAD_PARENT_MENUS,
+} from './menus-contabilidad';
 export { PROPERTY_TYPES } from './property-types';
 export { ROLE_APPLICATION_ASSIGNMENTS } from './role-application-assignments';
 export { ROLES } from './roles';
