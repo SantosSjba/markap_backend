@@ -7,9 +7,12 @@ export const INTERIORISMO_PARENT_MENUS = [
   { label: 'Clientes', icon: 'users', path: null, order: 2 },
   { label: 'Presupuestos', icon: 'file-text', path: null, order: 3 },
   { label: 'Materiales', icon: 'layers', path: null, order: 4 },
-  { label: 'Calendario', icon: 'calendar', path: '/interiorismo/calendario', order: 5 },
-  { label: 'Reportes', icon: 'bar-chart', path: '/interiorismo/reportes', order: 6 },
-  { label: 'Configuración', icon: 'settings', path: '/interiorismo/configuracion', order: 7 },
+  { label: 'Ejecución', icon: 'flame', path: '/interiorismo/ejecucion', order: 5 },
+  { label: 'Finanzas', icon: 'wallet', path: '/interiorismo/finanzas', order: 6 },
+  { label: 'Calendario', icon: 'calendar', path: '/interiorismo/calendario', order: 7 },
+  { label: 'Reportes', icon: 'bar-chart', path: '/interiorismo/reportes', order: 8 },
+  { label: 'Documentos', icon: 'files', path: '/interiorismo/documentos', order: 9 },
+  { label: 'Configuración', icon: 'settings', path: '/interiorismo/configuracion', order: 10 },
 ];
 
 export const INTERIORISMO_CHILD_MENUS = [
