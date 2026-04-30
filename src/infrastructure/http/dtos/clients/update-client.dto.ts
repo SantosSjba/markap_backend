@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsOptional,
+  IsIn,
   IsEnum,
   IsObject,
   ValidateNested,
@@ -29,11 +30,11 @@ class UpdateClientAddressDto {
 export class UpdateClientDto {
   @ApiPropertyOptional({
     description: 'Tipo de cliente',
-    enum: ['OWNER', 'TENANT', 'BUYER'],
+    enum: ['OWNER', 'TENANT', 'BUYER', 'RESIDENTIAL', 'CORPORATE'],
   })
   @IsOptional()
-  @IsEnum(['OWNER', 'TENANT', 'BUYER'])
-  clientType?: 'OWNER' | 'TENANT' | 'BUYER';
+  @IsIn(['OWNER', 'TENANT', 'BUYER', 'RESIDENTIAL', 'CORPORATE'])
+  clientType?: 'OWNER' | 'TENANT' | 'BUYER' | 'RESIDENTIAL' | 'CORPORATE';
 
   @ApiPropertyOptional({ description: 'ID del tipo de documento' })
   @IsOptional()

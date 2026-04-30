@@ -82,6 +82,9 @@ export interface ClientStats {
   prospects?: number;
   interested?: number;
   salesClients?: number;
+  /** Solo aplicación interiorismo */
+  residential?: number;
+  corporate?: number;
 }
 
 export interface ClientRepository {

@@ -1,4 +1,9 @@
-export type ClientType = 'OWNER' | 'TENANT' | 'BUYER';
+export type ClientType =
+  | 'OWNER'
+  | 'TENANT'
+  | 'BUYER'
+  | 'RESIDENTIAL'
+  | 'CORPORATE';
 export type SalesPipelineStatus = 'PROSPECT' | 'INTERESTED' | 'CLIENT';
 
 /** Cliente (propietario, inquilino o lead de ventas). */

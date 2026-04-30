@@ -5,6 +5,7 @@ import {
   seedAdminUser,
   seedAlquileresMenus,
   seedDemoAlquileres,
+  seedInteriorismoClients,
   seedDemoVentas,
   seedDocumentTypes,
   seedPropertyTypes,
@@ -40,6 +41,7 @@ async function main() {
   await seedUbigeo(prisma);
   await seedPropertyTypes(prisma);
   await seedDemoAlquileres(prisma, appIdBySlug, adminUser);
+  await seedInteriorismoClients(prisma, appIdBySlug, adminUser);
   await seedDemoVentas(prisma, appIdBySlug, adminUser);
   await seedVentasSales(prisma, appIdBySlug);
   await seedVentasFinanzas(prisma, appIdBySlug);

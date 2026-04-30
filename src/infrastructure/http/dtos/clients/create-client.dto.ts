@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsOptional,
+  IsIn,
   IsEnum,
   IsObject,
   ValidateNested,
@@ -37,11 +38,12 @@ export class CreateClientDto {
   applicationSlug?: string;
 
   @ApiProperty({
-    description: 'Propietario, inquilino o comprador/leads (ventas)',
-    enum: ['OWNER', 'TENANT', 'BUYER'],
+    description:
+      'Propietario, inquilino, comprador (ventas) o cliente interiorismo (residencial/corporativo)',
+    enum: ['OWNER', 'TENANT', 'BUYER', 'RESIDENTIAL', 'CORPORATE'],
   })
-  @IsEnum(['OWNER', 'TENANT', 'BUYER'])
-  clientType: 'OWNER' | 'TENANT' | 'BUYER';
+  @IsIn(['OWNER', 'TENANT', 'BUYER', 'RESIDENTIAL', 'CORPORATE'])
+  clientType: 'OWNER' | 'TENANT' | 'BUYER' | 'RESIDENTIAL' | 'CORPORATE';
 
   @ApiProperty({ description: 'ID del tipo de documento' })
   @IsString()
@@ -109,7 +111,7 @@ export class CreateClientDto {
 
   @ApiPropertyOptional({
     description:
-      'Dirección obligatoria para propietario (ventas o alquileres) e inquilino (alquileres)',
+      'Dirección obligatoria para propietario (ventas o alquileres) e inquilino (alquileres). Opcional en interiorismo.',
   })
   @ValidateIf((o) => o.clientType === 'OWNER' || o.clientType === 'TENANT')
   @IsObject()

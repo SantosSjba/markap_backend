@@ -43,6 +43,10 @@ export {
   SEED_PRIMARY_APPLICATION_SLUG,
 } from './sample-demo';
 export {
+  SAMPLE_INTERIOR_CORPORATE_CLIENT,
+  SAMPLE_INTERIOR_RESIDENTIAL_CLIENT,
+} from './sample-interiorismo';
+export {
   VENTAS_SAMPLE_BUYER_CLIENTS,
   VENTAS_SAMPLE_EXTERNAL_AGENT,
 } from './sample-ventas';

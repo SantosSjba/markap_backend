@@ -6,11 +6,12 @@ import type { AgentRepository } from '@domain/repositories/agent.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { Email, Phone } from '@domain/value-objects';
 import type { SalesPipelineStatus } from '@domain/repositories/client.repository';
+import type { ClientType } from '@domain/entities/client.entity';
 
 export interface CreateClientInput {
   applicationId?: string;
   applicationSlug?: string;
-  clientType: 'OWNER' | 'TENANT' | 'BUYER';
+  clientType: ClientType;
   documentTypeId: string;
   documentNumber: string;
   fullName: string;
@@ -92,7 +93,7 @@ export class CreateClientUseCase {
       if (!input.address) {
         throw new BadRequestException('La dirección es obligatoria');
       }
-    } else {
+    } else if (input.clientType === 'TENANT') {
       if (slug !== 'alquileres') {
         throw new BadRequestException(
           'Los inquilinos deben crearse con applicationSlug alquileres',
@@ -101,6 +102,17 @@ export class CreateClientUseCase {
       if (!input.address) {
         throw new BadRequestException('La dirección es obligatoria');
       }
+    } else if (
+      input.clientType === 'RESIDENTIAL' ||
+      input.clientType === 'CORPORATE'
+    ) {
+      if (slug !== 'interiorismo') {
+        throw new BadRequestException(
+          'Los clientes residencial/corporativo se crean con applicationSlug interiorismo',
+        );
+      }
+    } else {
+      throw new BadRequestException('Tipo de cliente no válido');
     }
 
     const salesStatus: SalesPipelineStatus | null =

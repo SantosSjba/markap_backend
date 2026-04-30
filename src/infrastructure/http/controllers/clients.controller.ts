@@ -27,7 +27,11 @@ export class ClientsController {
   @ApiQuery({ name: 'page', required: false, description: 'Página (1-based)' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items por página' })
   @ApiQuery({ name: 'search', required: false, description: 'Buscar por nombre, documento o email' })
-  @ApiQuery({ name: 'clientType', required: false, enum: ['OWNER', 'TENANT', 'BUYER'] })
+  @ApiQuery({
+    name: 'clientType',
+    required: false,
+    enum: ['OWNER', 'TENANT', 'BUYER', 'RESIDENTIAL', 'CORPORATE'],
+  })
   @ApiQuery({
     name: 'salesStatus',
     required: false,
@@ -41,7 +45,8 @@ export class ClientsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
-    @Query('clientType') clientType?: 'OWNER' | 'TENANT' | 'BUYER',
+    @Query('clientType')
+    clientType?: 'OWNER' | 'TENANT' | 'BUYER' | 'RESIDENTIAL' | 'CORPORATE',
     @Query('salesStatus') salesStatus?: 'PROSPECT' | 'INTERESTED' | 'CLIENT',
     @Query('isActive') isActive?: string,
   ) {
