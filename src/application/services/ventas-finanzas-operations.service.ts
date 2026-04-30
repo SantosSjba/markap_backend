@@ -36,6 +36,14 @@ function isDocCostType(v: string): v is VentasDocCostType {
   return (VENTAS_DOC_COST_TYPES as readonly string[]).includes(v);
 }
 
+function parseValidDateOrThrow(value: string, fieldLabel: string): Date {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    throw new BadRequestException(`${fieldLabel} inválida.`);
+  }
+  return d;
+}
+
 @Injectable()
 export class VentasFinanzasOperationsService {
   constructor(
@@ -86,7 +94,7 @@ export class VentasFinanzasOperationsService {
       kind: body.kind,
       amount: body.amount,
       currency: body.currency?.trim() || 'PEN',
-      dueDate: new Date(body.dueDate),
+      dueDate: parseValidDateOrThrow(body.dueDate, 'Fecha de vencimiento'),
       notes: body.notes ?? null,
     });
   }
@@ -100,7 +108,9 @@ export class VentasFinanzasOperationsService {
     const row = await this.finanzas.markBuyerPaymentPaid(
       id,
       applicationId,
-      body?.paidAt ? new Date(body.paidAt) : undefined,
+      body?.paidAt
+        ? parseValidDateOrThrow(body.paidAt, 'Fecha de pago')
+        : undefined,
     );
     if (!row) throw new EntityNotFoundException('SaleBuyerPayment', id);
     return row;
@@ -120,7 +130,9 @@ export class VentasFinanzasOperationsService {
     const row = await this.finanzas.markCommissionPaid(
       id,
       applicationId,
-      body?.paidAt ? new Date(body.paidAt) : undefined,
+      body?.paidAt
+        ? parseValidDateOrThrow(body.paidAt, 'Fecha de pago')
+        : undefined,
     );
     if (!row) throw new EntityNotFoundException('SaleCommission', id);
     return row;
@@ -194,7 +206,9 @@ export class VentasFinanzasOperationsService {
       amount: body.amount,
       currency: body.currency?.trim() || 'PEN',
       description: body.description ?? null,
-      expenseDate: body.expenseDate ? new Date(body.expenseDate) : new Date(),
+      expenseDate: body.expenseDate
+        ? parseValidDateOrThrow(body.expenseDate, 'Fecha de gasto')
+        : new Date(),
     });
   }
 

@@ -31,6 +31,7 @@ model Application {
   saleClosings     SaleClosing[]
   saleCommissions  SaleCommission[]
   saleDocumentationCosts       SaleDocumentationCost[]
+  saleComplianceChecklists      SaleComplianceChecklist[]
   ventasAgentCommissionProfiles VentasAgentCommissionProfile[]
   ventasPipelineStageConfigs    VentasPipelineStageConfig[]
   ventasNumberingSeries         VentasNumberingSeries[]

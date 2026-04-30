@@ -23,6 +23,7 @@ export { RENTAL_FINANCIAL_CONFIG_REPOSITORY } from '@domain/repositories/rental-
 export { REPORT_REPOSITORY } from '@domain/repositories/report.repository';
 export { ROLE_REPOSITORY } from '@domain/repositories/role.repository';
 export { VENTAS_CONFIG_REPOSITORY } from '@domain/repositories/ventas-config.repository';
+export { VENTAS_COMPLIANCE_REPOSITORY } from '@domain/repositories/ventas-compliance.repository';
 export { VENTAS_FINANZAS_REPOSITORY } from '@domain/repositories/ventas-finanzas.repository';
 export { VENTAS_REPORTS_REPOSITORY } from '@domain/repositories/ventas-reports.repository';
 export { VENTAS_SALES_REPOSITORY } from '@domain/repositories/ventas-sales.repository';

@@ -8,6 +8,7 @@ import {
   APPLICATION_REPOSITORY,
   CLIENT_REPOSITORY,
   PROPERTY_REPOSITORY,
+  VENTAS_COMPLIANCE_REPOSITORY,
   VENTAS_SALES_REPOSITORY,
   VENTAS_FINANZAS_REPOSITORY,
 } from '@common/constants/injection-tokens';
@@ -23,6 +24,7 @@ import {
   type VentasSeparationStatus,
 } from '@domain/repositories/ventas-sales.repository';
 import type { VentasFinanzasRepository } from '@domain/repositories/ventas-finanzas.repository';
+import type { VentasComplianceRepository } from '@domain/repositories/ventas-compliance.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 
 const VENTAS_SLUG = 'ventas';
@@ -43,6 +45,14 @@ function isVentasPaymentType(v: string): v is VentasPaymentType {
   return (VENTAS_PAYMENT_TYPES as readonly string[]).includes(v);
 }
 
+function parseValidDateOrThrow(value: string, fieldLabel: string): Date {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    throw new BadRequestException(`${fieldLabel} inválida.`);
+  }
+  return d;
+}
+
 @Injectable()
 export class VentasSalesOperationsService {
   constructor(
@@ -50,6 +60,8 @@ export class VentasSalesOperationsService {
     private readonly ventasSales: VentasSalesRepository,
     @Inject(VENTAS_FINANZAS_REPOSITORY)
     private readonly ventasFinanzas: VentasFinanzasRepository,
+    @Inject(VENTAS_COMPLIANCE_REPOSITORY)
+    private readonly ventasCompliance: VentasComplianceRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
     @Inject(PROPERTY_REPOSITORY)
@@ -207,8 +219,12 @@ export class VentasSalesOperationsService {
       activityType: body.activityType.trim(),
       title: body.title,
       description: body.description ?? null,
-      scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null,
-      completedAt: body.completedAt ? new Date(body.completedAt) : null,
+      scheduledAt: body.scheduledAt
+        ? parseValidDateOrThrow(body.scheduledAt, 'Fecha programada')
+        : null,
+      completedAt: body.completedAt
+        ? parseValidDateOrThrow(body.completedAt, 'Fecha de completado')
+        : null,
     });
     if (!row) throw new EntityNotFoundException('SaleProcess', processId);
     return row;
@@ -224,7 +240,7 @@ export class VentasSalesOperationsService {
       saleProcessId: processId,
       applicationId,
       title: body.title,
-      dueAt: new Date(body.dueAt),
+      dueAt: parseValidDateOrThrow(body.dueAt, 'Fecha de vencimiento'),
     });
     if (!row) throw new EntityNotFoundException('SaleProcess', processId);
     return row;
@@ -296,17 +312,25 @@ export class VentasSalesOperationsService {
       throw new BadRequestException('El monto de separación debe ser mayor que cero.');
     }
 
-    return this.ventasSales.createSaleSeparation({
+    const created = await this.ventasSales.createSaleSeparation({
       applicationId,
       saleProcessId: body.saleProcessId ?? null,
       propertyId: body.propertyId,
       buyerClientId: body.buyerClientId,
       amount: body.amount,
       currency: body.currency ?? 'PEN',
-      separationDate: new Date(body.separationDate),
-      expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+      separationDate: parseValidDateOrThrow(body.separationDate, 'Fecha de separación'),
+      expiresAt: body.expiresAt
+        ? parseValidDateOrThrow(body.expiresAt, 'Fecha de vencimiento')
+        : null,
       notes: body.notes ?? null,
     });
+    if (!created) {
+      throw new BadRequestException(
+        'No se pudo registrar la separación porque el inmueble ya no está disponible.',
+      );
+    }
+    return created;
   }
 
   async patchSeparation(
@@ -321,19 +345,47 @@ export class VentasSalesOperationsService {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
     const sep = await this.ventasSales.getSaleSeparationById(id, applicationId);
     if (!sep) throw new EntityNotFoundException('SaleSeparation', id);
+    const current = sep as { propertyId: string; status: VentasSeparationStatus };
+
+    if (body.status === 'ACTIVE' && current.status !== 'ACTIVE') {
+      const activeCount = await this.ventasSales.countActiveSeparationsOnProperty(
+        current.propertyId,
+        applicationId,
+      );
+      if (activeCount > 0) {
+        throw new BadRequestException(
+          'No se puede activar esta separación porque ya existe otra separación activa para el inmueble.',
+        );
+      }
+    }
 
     const updated = await this.ventasSales.updateSaleSeparation(id, applicationId, {
       status: body.status,
       notes: body.notes,
-      expiresAt: body.expiresAt !== undefined ? (body.expiresAt ? new Date(body.expiresAt) : null) : undefined,
+      expiresAt:
+        body.expiresAt !== undefined
+          ? body.expiresAt
+            ? parseValidDateOrThrow(body.expiresAt, 'Fecha de vencimiento')
+            : null
+          : undefined,
     });
 
     if (body.status === 'EXPIRED' || body.status === 'CLOSED') {
-      const row = sep as { propertyId: string };
       await this.ventasSales.refreshPropertyListingAfterSeparationChange(
-        row.propertyId,
+        current.propertyId,
         applicationId,
       );
+    }
+    if (body.status === 'ACTIVE') {
+      const ok = await this.ventasSales.ensurePropertyReservedForSeparation(
+        current.propertyId,
+        applicationId,
+      );
+      if (!ok) {
+        throw new BadRequestException(
+          'No se puede activar la separación porque el inmueble no está disponible.',
+        );
+      }
     }
 
     return updated;
@@ -414,6 +466,17 @@ export class VentasSalesOperationsService {
       throw new BadRequestException('El precio final debe ser mayor que cero.');
     }
 
+    const readiness = await this.ventasCompliance.getClosingReadiness(
+      applicationId,
+      body.propertyId,
+      body.buyerClientId,
+    );
+    if (!readiness.ok) {
+      throw new BadRequestException(
+        `La operación no está lista para cierre legal/compliance: ${readiness.missing.join('; ')}`,
+      );
+    }
+
     if (body.saleSeparationId) {
       const sep = await this.ventasSales.getSaleSeparationById(
         body.saleSeparationId,
@@ -486,7 +549,7 @@ export class VentasSalesOperationsService {
       }
     }
 
-    return this.ventasSales.createSaleClosingWithSideEffects({
+    const created = await this.ventasSales.createSaleClosingWithSideEffects({
       applicationId,
       saleProcessId: body.saleProcessId ?? null,
       saleSeparationId: body.saleSeparationId ?? null,
@@ -501,6 +564,12 @@ export class VentasSalesOperationsService {
       commissionAmount: commissionAmount!,
       commissionPercent,
     });
+    if (!created) {
+      throw new BadRequestException(
+        'No se pudo registrar el cierre porque el inmueble ya no está disponible para venta.',
+      );
+    }
+    return created;
   }
 
   async attachClosingContract(

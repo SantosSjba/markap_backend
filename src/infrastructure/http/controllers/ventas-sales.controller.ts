@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -225,7 +226,7 @@ export class VentasSalesController {
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {
-      return { error: 'Archivo requerido' };
+      throw new BadRequestException('Archivo requerido');
     }
     const safeName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
     const dir = join(process.cwd(), 'uploads', 'ventas', 'separations', id);
@@ -289,7 +290,7 @@ export class VentasSalesController {
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {
-      return { error: 'Archivo requerido' };
+      throw new BadRequestException('Archivo requerido');
     }
     const safeName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
     const dir = join(process.cwd(), 'uploads', 'ventas', 'closings', id);

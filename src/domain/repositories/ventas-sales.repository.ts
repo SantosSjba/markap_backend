@@ -119,7 +119,7 @@ export interface VentasSalesRepository {
     separationDate: Date;
     expiresAt?: Date | null;
     notes?: string | null;
-  }): Promise<{ id: string }>;
+  }): Promise<{ id: string } | null>;
 
   updateSaleSeparation(
     id: string,
@@ -147,6 +147,12 @@ export interface VentasSalesRepository {
     propertyId: string,
     applicationId: string,
   ): Promise<void>;
+
+  /** Al reactivar separación, asegura inmueble en RESERVED (si no está SOLD). */
+  ensurePropertyReservedForSeparation(
+    propertyId: string,
+    applicationId: string,
+  ): Promise<boolean>;
 
   listSaleClosings(
     filters: ListSaleClosingsFilters,
@@ -178,5 +184,5 @@ export interface VentasSalesRepository {
     commissionAgentId: string;
     commissionAmount: number;
     commissionPercent?: number | null;
-  }): Promise<{ closingId: string; commissionId: string }>;
+  }): Promise<{ closingId: string; commissionId: string } | null>;
 }

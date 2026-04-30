@@ -1,0 +1,79 @@
+// Cumplimiento legal/operativo para cierre de venta (Peru)
+
+model SaleComplianceChecklist {
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
+  propertyId    String @map("property_id")
+  buyerClientId String @map("buyer_client_id")
+
+  // Due diligence registral/notarial
+  titleStudyChecked            Boolean @default(false) @map("title_study_checked")
+  criChecked                   Boolean @default(false) @map("cri_checked")
+  noLiensChecked               Boolean @default(false) @map("no_liens_checked")
+  municipalTaxClearanceChecked Boolean @default(false) @map("municipal_tax_clearance_checked")
+  minutaSigned                 Boolean @default(false) @map("minuta_signed")
+  publicDeedSigned             Boolean @default(false) @map("public_deed_signed")
+  notarialPartSubmitted        Boolean @default(false) @map("notarial_part_submitted")
+  sunarpStatus                 String  @default("PENDING") @map("sunarp_status")
+  sunarpSubmittedAt            DateTime? @map("sunarp_submitted_at")
+  sunarpObservedAt             DateTime? @map("sunarp_observed_at")
+  sunarpRegisteredAt           DateTime? @map("sunarp_registered_at")
+  sunarpObservationNotes       String? @db.Text @map("sunarp_observation_notes")
+
+  // Tributario
+  alcabalaApplicable Boolean   @default(true) @map("alcabala_applicable")
+  alcabalaAmount     Float?    @map("alcabala_amount")
+  alcabalaPaidAt     DateTime? @map("alcabala_paid_at")
+  rent2Applicable    Boolean   @default(false) @map("rent2_applicable")
+  rent2Amount        Float?    @map("rent2_amount")
+  rent2PaidAt        DateTime? @map("rent2_paid_at")
+
+  // Bancarizacion y soporte de pago
+  bankedPaymentRequired Boolean @default(true) @map("banked_payment_required")
+  bankedPaymentVerified Boolean @default(false) @map("banked_payment_verified")
+  paymentMethod         String? @map("payment_method")
+  bankOperationNumber   String? @map("bank_operation_number")
+  bankName              String? @map("bank_name")
+  bankAccountHolder     String? @map("bank_account_holder")
+  paymentEvidencePath   String? @map("payment_evidence_path")
+
+  // LA/FT (baseline)
+  fundsSourceDeclared     Boolean @default(false) @map("funds_source_declared")
+  beneficialOwnerDeclared Boolean @default(false) @map("beneficial_owner_declared")
+  kycRiskLevel            String  @default("PENDING") @map("kyc_risk_level")
+  complianceNotes         String? @db.Text @map("compliance_notes")
+  nextActionAt            DateTime? @map("next_action_at")
+  lastAlertSentAt         DateTime? @map("last_alert_sent_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application             @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  documents   SaleComplianceDocument[]
+
+  @@unique([applicationId, propertyId, buyerClientId])
+  @@index([applicationId])
+  @@index([propertyId])
+  @@index([buyerClientId])
+  @@index([sunarpStatus])
+  @@map("sale_compliance_checklists")
+}
+
+model SaleComplianceDocument {
+  id          String @id @default(uuid())
+  checklistId String @map("checklist_id")
+  docType     String @map("doc_type")
+  filePath    String @map("file_path")
+  issuedAt    DateTime? @map("issued_at")
+  verifiedAt  DateTime? @map("verified_at")
+  verifiedBy  String? @map("verified_by")
+  notes       String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  checklist SaleComplianceChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@index([checklistId])
+  @@index([docType])
+  @@map("sale_compliance_documents")
+}

@@ -149,11 +149,13 @@ import { VentasSalesController } from './controllers/ventas-sales.controller';
 import { VentasFinanzasController } from './controllers/ventas-finanzas.controller';
 import { VentasReportsController } from './controllers/ventas-reports.controller';
 import { VentasConfigController } from './controllers/ventas-config.controller';
+import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import {
   VentasSalesOperationsService,
   VentasFinanzasOperationsService,
   VentasReportsOperationsService,
   VentasConfigOperationsService,
+  VentasComplianceOperationsService,
 } from '../../application/services';
 
 // Gateways
@@ -197,6 +199,7 @@ import {
     VentasFinanzasController,
     VentasReportsController,
     VentasConfigController,
+    VentasComplianceController,
   ],
   providers: [
     { provide: AGENT_PORT, useClass: AgentPortImpl },
@@ -319,6 +322,7 @@ import {
     VentasFinanzasOperationsService,
     VentasReportsOperationsService,
     VentasConfigOperationsService,
+    VentasComplianceOperationsService,
   ],
   exports: [HashService, TokenService, MailService],
 })

@@ -298,8 +298,21 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     separationDate: Date;
     expiresAt?: Date | null;
     notes?: string | null;
-  }): Promise<{ id: string }> {
+  }): Promise<{ id: string } | null> {
     const row = await this.prisma.$transaction(async (tx) => {
+      const lock = await tx.property.updateMany({
+        where: {
+          id: data.propertyId,
+          applicationId: data.applicationId,
+          deletedAt: null,
+          listingStatus: 'AVAILABLE',
+        },
+        data: { listingStatus: 'RESERVED' },
+      });
+      if (lock.count === 0) {
+        return null;
+      }
+
       const sep = await tx.saleSeparation.create({
         data: {
           applicationId: data.applicationId,
@@ -314,10 +327,6 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           notes: data.notes?.trim() || null,
         },
         select: { id: true },
-      });
-      await tx.property.update({
-        where: { id: data.propertyId, applicationId: data.applicationId },
-        data: { listingStatus: 'RESERVED' },
       });
       if (data.saleProcessId) {
         await tx.saleProcess.update({
@@ -394,6 +403,29 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     }
   }
 
+  async ensurePropertyReservedForSeparation(
+    propertyId: string,
+    applicationId: string,
+  ): Promise<boolean> {
+    const prop = await this.prisma.property.findFirst({
+      where: { id: propertyId, applicationId, deletedAt: null },
+      select: { listingStatus: true },
+    });
+    if (!prop || prop.listingStatus === 'SOLD') return false;
+    if (prop.listingStatus === 'RESERVED') return true;
+
+    const updated = await this.prisma.property.updateMany({
+      where: {
+        id: propertyId,
+        applicationId,
+        deletedAt: null,
+        listingStatus: 'AVAILABLE',
+      },
+      data: { listingStatus: 'RESERVED' },
+    });
+    return updated.count > 0;
+  }
+
   async getSaleClosingById(
     closingId: string,
     applicationId: string,
@@ -456,8 +488,21 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     commissionAgentId: string;
     commissionAmount: number;
     commissionPercent?: number | null;
-  }): Promise<{ closingId: string; commissionId: string }> {
+  }): Promise<{ closingId: string; commissionId: string } | null> {
     return this.prisma.$transaction(async (tx) => {
+      const lock = await tx.property.updateMany({
+        where: {
+          id: data.propertyId,
+          applicationId: data.applicationId,
+          deletedAt: null,
+          listingStatus: { in: ['AVAILABLE', 'RESERVED'] },
+        },
+        data: { listingStatus: 'SOLD' },
+      });
+      if (lock.count === 0) {
+        return null;
+      }
+
       const closing = await tx.saleClosing.create({
         data: {
           applicationId: data.applicationId,
@@ -482,11 +527,6 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           percentApplied: data.commissionPercent ?? null,
           status: 'PENDING',
         },
-      });
-
-      await tx.property.update({
-        where: { id: data.propertyId, applicationId: data.applicationId },
-        data: { listingStatus: 'SOLD' },
       });
 
       if (data.saleSeparationId) {
