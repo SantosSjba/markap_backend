@@ -1,0 +1,158 @@
+/// Proyectos de diseño interior (aplicación interiorismo)
+
+model InteriorProject {
+  id             String @id @default(uuid())
+  applicationId  String @map("application_id")
+  /// Código único por aplicación (ej. INT-PRY-001)
+  code           String @map("code")
+  name           String @map("name")
+  clientId       String @map("client_id")
+  /// REMODELING | INTERIOR_DESIGN | IMPLEMENTATION | FURNITURE
+  projectType    String @map("project_type")
+  /// PROSPECT | DESIGN | QUOTE | APPROVED | IN_PROGRESS | FINISHED | CANCELLED
+  status         String @map("status")
+
+  addressLine       String?   @map("address_line") @db.Text
+  areaSqm           Decimal?  @map("area_sqm") @db.Decimal(12, 2)
+  levelsCount       Int?      @map("levels_count")
+  environmentsNote  String?   @map("environments_note") @db.Text
+  startDate         DateTime? @map("start_date") @db.Date
+  estimatedEndDate  DateTime? @map("estimated_end_date") @db.Date
+
+  designerAgentId    String? @map("designer_agent_id")
+  architectAgentId   String? @map("architect_agent_id")
+  supervisorAgentId  String? @map("supervisor_agent_id")
+  commercialAgentId  String? @map("commercial_agent_id")
+
+  estimatedBudget Decimal? @map("estimated_budget") @db.Decimal(14, 2)
+  projectedCost   Decimal? @map("projected_cost") @db.Decimal(14, 2)
+  /// Porcentaje de margen esperado (ej. 18.50)
+  expectedMargin  Decimal? @map("expected_margin") @db.Decimal(8, 2)
+  /// Avance 0–100 para KPIs de ejecución
+  progressPct     Decimal  @default(0) @map("progress_pct") @db.Decimal(5, 2)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  client           Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  designerAgent    Agent?      @relation("InteriorProjectDesigner", fields: [designerAgentId], references: [id], onDelete: SetNull)
+  architectAgent   Agent?      @relation("InteriorProjectArchitect", fields: [architectAgentId], references: [id], onDelete: SetNull)
+  supervisorAgent  Agent?      @relation("InteriorProjectSupervisor", fields: [supervisorAgentId], references: [id], onDelete: SetNull)
+  commercialAgent  Agent?      @relation("InteriorProjectCommercial", fields: [commercialAgentId], references: [id], onDelete: SetNull)
+
+  budgets     InteriorProjectBudget[]
+  materials   InteriorProjectMaterial[]
+  documents   InteriorProjectDocument[]
+  payments    InteriorProjectPayment[]
+  activities  InteriorProjectActivity[]
+  milestones  InteriorProjectMilestone[]
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@index([clientId])
+  @@index([status])
+  @@index([projectType])
+  @@index([deletedAt])
+  @@map("interior_projects")
+}
+
+model InteriorProjectBudget {
+  id        String  @id @default(uuid())
+  projectId String  @map("project_id")
+  code      String? @map("code")
+  title     String  @map("title")
+  totalAmount Decimal @map("total_amount") @db.Decimal(14, 2)
+  /// DRAFT | SENT | APPROVED | REJECTED
+  status    String  @map("status")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("interior_project_budgets")
+}
+
+model InteriorProjectMaterial {
+  id             String   @id @default(uuid())
+  projectId      String   @map("project_id")
+  name           String   @map("name")
+  quantity       Decimal? @map("quantity") @db.Decimal(12, 3)
+  unit           String?  @map("unit")
+  estimatedCost  Decimal? @map("estimated_cost") @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("interior_project_materials")
+}
+
+model InteriorProjectDocument {
+  id        String  @id @default(uuid())
+  projectId String  @map("project_id")
+  docType   String  @map("doc_type")
+  title     String  @map("title")
+  fileUrl   String? @map("file_url") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("interior_project_documents")
+}
+
+model InteriorProjectPayment {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  paidAt    DateTime @map("paid_at")
+  amount    Decimal  @map("amount") @db.Decimal(14, 2)
+  concept   String   @map("concept") @db.Text
+  /// PENDING | PAID | CANCELLED
+  status    String   @map("status")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("interior_project_payments")
+}
+
+model InteriorProjectActivity {
+  id           String   @id @default(uuid())
+  projectId    String   @map("project_id")
+  /// NOTE | STATUS_CHANGE | MEETING | TASK | OTHER
+  activityType String   @map("activity_type")
+  title        String   @map("title")
+  description  String?  @map("description") @db.Text
+  occurredAt   DateTime @map("occurred_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([occurredAt])
+  @@map("interior_project_activities")
+}
+
+model InteriorProjectMilestone {
+  id          String    @id @default(uuid())
+  projectId   String    @map("project_id")
+  title       String    @map("title")
+  plannedDate DateTime  @map("planned_date") @db.Date
+  completedAt DateTime? @map("completed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("interior_project_milestones")
+}

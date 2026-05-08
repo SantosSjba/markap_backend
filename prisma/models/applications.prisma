@@ -35,6 +35,7 @@ model Application {
   ventasAgentCommissionProfiles VentasAgentCommissionProfile[]
   ventasPipelineStageConfigs    VentasPipelineStageConfig[]
   ventasNumberingSeries         VentasNumberingSeries[]
+  interiorProjects             InteriorProject[]
 
   @@index([slug])
   @@index([isActive])

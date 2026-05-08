@@ -28,6 +28,10 @@ model Agent {
   saleClosings                   SaleClosing[]
   saleCommissions                SaleCommission[]
   ventasCommissionProfiles       VentasAgentCommissionProfile[]
+  interiorProjectsAsDesigner     InteriorProject[] @relation("InteriorProjectDesigner")
+  interiorProjectsAsArchitect    InteriorProject[] @relation("InteriorProjectArchitect")
+  interiorProjectsAsSupervisor   InteriorProject[] @relation("InteriorProjectSupervisor")
+  interiorProjectsAsCommercial   InteriorProject[] @relation("InteriorProjectCommercial")
 
   @@index([applicationId])
   @@index([type])

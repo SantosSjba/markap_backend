@@ -43,6 +43,7 @@ model Client {
   saleProcessesAsBuyer SaleProcess[] @relation("SaleProcessBuyer")
   saleSeparationsAsBuyer SaleSeparation[] @relation("SaleSeparationBuyer")
   saleClosingsAsBuyer    SaleClosing[] @relation("SaleClosingBuyer")
+  interiorProjects       InteriorProject[]
 
   @@index([applicationId])
   @@index([documentTypeId])

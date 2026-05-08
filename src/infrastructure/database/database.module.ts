@@ -26,6 +26,7 @@ import { VentasFinanzasPrismaRepository } from './prisma/repositories/ventas-fin
 import { VentasReportsPrismaRepository } from './prisma/repositories/ventas-reports-prisma.repository';
 import { VentasConfigPrismaRepository } from './prisma/repositories/ventas-config-prisma.repository';
 import { VentasCompliancePrismaRepository } from './prisma/repositories/ventas-compliance-prisma.repository';
+import { InteriorProjectPrismaRepository } from './prisma/repositories/interior-project-prisma.repository';
 import {
   ROLE_REPOSITORY,
   APPLICATION_REPOSITORY,
@@ -43,6 +44,7 @@ import {
   VENTAS_REPORTS_REPOSITORY,
   VENTAS_CONFIG_REPOSITORY,
   VENTAS_COMPLIANCE_REPOSITORY,
+  INTERIOR_PROJECT_REPOSITORY,
 } from '@common/constants/injection-tokens';
 
 @Module({
@@ -124,6 +126,10 @@ import {
       provide: VENTAS_COMPLIANCE_REPOSITORY,
       useClass: VentasCompliancePrismaRepository,
     },
+    {
+      provide: INTERIOR_PROJECT_REPOSITORY,
+      useClass: InteriorProjectPrismaRepository,
+    },
   ],
   exports: [
     PrismaService,
@@ -146,6 +152,7 @@ import {
     VENTAS_REPORTS_REPOSITORY,
     VENTAS_CONFIG_REPOSITORY,
     VENTAS_COMPLIANCE_REPOSITORY,
+    INTERIOR_PROJECT_REPOSITORY,
   ],
 })
 export class DatabaseModule {}

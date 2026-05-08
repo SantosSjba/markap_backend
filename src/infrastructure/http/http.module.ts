@@ -127,6 +127,13 @@ import {
 import { GetAlertConfigUseCase } from '../../application/use-cases/alert-config/get-alert-config.use-case';
 import { UpsertAlertConfigUseCase } from '../../application/use-cases/alert-config/upsert-alert-config.use-case';
 
+import {
+  ListInteriorProjectsUseCase,
+  GetInteriorProjectByIdUseCase,
+  CreateInteriorProjectUseCase,
+  UpdateInteriorProjectUseCase,
+} from '../../application/use-cases/interior-projects';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
@@ -150,6 +157,7 @@ import { VentasFinanzasController } from './controllers/ventas-finanzas.controll
 import { VentasReportsController } from './controllers/ventas-reports.controller';
 import { VentasConfigController } from './controllers/ventas-config.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
+import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import {
   VentasSalesOperationsService,
   VentasFinanzasOperationsService,
@@ -200,6 +208,7 @@ import {
     VentasReportsController,
     VentasConfigController,
     VentasComplianceController,
+    InteriorismoProjectsController,
   ],
   providers: [
     { provide: AGENT_PORT, useClass: AgentPortImpl },
@@ -323,6 +332,11 @@ import {
     VentasReportsOperationsService,
     VentasConfigOperationsService,
     VentasComplianceOperationsService,
+
+    ListInteriorProjectsUseCase,
+    GetInteriorProjectByIdUseCase,
+    CreateInteriorProjectUseCase,
+    UpdateInteriorProjectUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

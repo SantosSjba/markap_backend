@@ -27,6 +27,7 @@ export { VENTAS_COMPLIANCE_REPOSITORY } from '@domain/repositories/ventas-compli
 export { VENTAS_FINANZAS_REPOSITORY } from '@domain/repositories/ventas-finanzas.repository';
 export { VENTAS_REPORTS_REPOSITORY } from '@domain/repositories/ventas-reports.repository';
 export { VENTAS_SALES_REPOSITORY } from '@domain/repositories/ventas-sales.repository';
+export { INTERIOR_PROJECT_REPOSITORY } from '@domain/repositories/interior-project.repository';
 
 export { HashService } from '@domain/services/hash.service';
 export { TokenService } from '@domain/services/token.service';
