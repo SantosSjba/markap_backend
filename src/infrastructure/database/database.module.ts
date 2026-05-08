@@ -28,6 +28,8 @@ import { VentasConfigPrismaRepository } from './prisma/repositories/ventas-confi
 import { VentasCompliancePrismaRepository } from './prisma/repositories/ventas-compliance-prisma.repository';
 import { InteriorProjectPrismaRepository } from './prisma/repositories/interior-project-prisma.repository';
 import { InteriorBudgetPrismaRepository } from './prisma/repositories/interior-budget-prisma.repository';
+import { InteriorCatalogMaterialPrismaRepository } from './prisma/repositories/interior-catalog-material-prisma.repository';
+import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import {
   ROLE_REPOSITORY,
   APPLICATION_REPOSITORY,
@@ -47,6 +49,8 @@ import {
   VENTAS_COMPLIANCE_REPOSITORY,
   INTERIOR_PROJECT_REPOSITORY,
   INTERIOR_BUDGET_REPOSITORY,
+  INTERIOR_CATALOG_MATERIAL_REPOSITORY,
+  INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
 } from '@common/constants/injection-tokens';
 
 @Module({
@@ -136,6 +140,14 @@ import {
       provide: INTERIOR_BUDGET_REPOSITORY,
       useClass: InteriorBudgetPrismaRepository,
     },
+    {
+      provide: INTERIOR_CATALOG_MATERIAL_REPOSITORY,
+      useClass: InteriorCatalogMaterialPrismaRepository,
+    },
+    {
+      provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
+      useClass: InteriorMaterialSupplierPrismaRepository,
+    },
   ],
   exports: [
     PrismaService,
@@ -160,6 +172,8 @@ import {
     VENTAS_COMPLIANCE_REPOSITORY,
     INTERIOR_PROJECT_REPOSITORY,
     INTERIOR_BUDGET_REPOSITORY,
+    INTERIOR_CATALOG_MATERIAL_REPOSITORY,
+    INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   ],
 })
 export class DatabaseModule {}

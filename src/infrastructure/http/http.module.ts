@@ -145,6 +145,25 @@ import {
   RenderInteriorBudgetHtmlUseCase,
 } from '../../application/use-cases/interior-budgets';
 
+import {
+  CreateInteriorCatalogMaterialUseCase,
+  DeleteInteriorCatalogMaterialUseCase,
+  GetInteriorCatalogMaterialByIdUseCase,
+  ListInteriorCatalogMaterialsUseCase,
+  UpdateInteriorCatalogMaterialUseCase,
+} from '../../application/use-cases/interior-catalog-materials';
+
+import {
+  CreateInteriorMaterialSupplierUseCase,
+  DeleteInteriorMaterialSupplierUseCase,
+  GetInteriorMaterialSupplierByIdUseCase,
+  LinkInteriorSupplierCatalogMaterialUseCase,
+  ListInteriorMaterialSuppliersUseCase,
+  RecordInteriorMaterialPurchaseUseCase,
+  UnlinkInteriorSupplierCatalogMaterialUseCase,
+  UpdateInteriorMaterialSupplierUseCase,
+} from '../../application/use-cases/interior-material-suppliers';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
@@ -170,6 +189,8 @@ import { VentasConfigController } from './controllers/ventas-config.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoBudgetsController } from './controllers/interiorismo-budgets.controller';
+import { InteriorismoCatalogMaterialsController } from './controllers/interiorismo-catalog-materials.controller';
+import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import {
   VentasSalesOperationsService,
   VentasFinanzasOperationsService,
@@ -222,6 +243,8 @@ import {
     VentasComplianceController,
     InteriorismoProjectsController,
     InteriorismoBudgetsController,
+    InteriorismoCatalogMaterialsController,
+    InteriorismoMaterialSuppliersController,
   ],
   providers: [
     { provide: AGENT_PORT, useClass: AgentPortImpl },
@@ -359,6 +382,21 @@ import {
     AddInteriorBudgetCommentUseCase,
     AddInteriorBudgetAttachmentUseCase,
     RenderInteriorBudgetHtmlUseCase,
+
+    ListInteriorCatalogMaterialsUseCase,
+    GetInteriorCatalogMaterialByIdUseCase,
+    CreateInteriorCatalogMaterialUseCase,
+    UpdateInteriorCatalogMaterialUseCase,
+    DeleteInteriorCatalogMaterialUseCase,
+
+    ListInteriorMaterialSuppliersUseCase,
+    GetInteriorMaterialSupplierByIdUseCase,
+    CreateInteriorMaterialSupplierUseCase,
+    UpdateInteriorMaterialSupplierUseCase,
+    DeleteInteriorMaterialSupplierUseCase,
+    LinkInteriorSupplierCatalogMaterialUseCase,
+    UnlinkInteriorSupplierCatalogMaterialUseCase,
+    RecordInteriorMaterialPurchaseUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

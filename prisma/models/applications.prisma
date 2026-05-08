@@ -36,6 +36,8 @@ model Application {
   ventasPipelineStageConfigs    VentasPipelineStageConfig[]
   ventasNumberingSeries         VentasNumberingSeries[]
   interiorProjects             InteriorProject[]
+  interiorCatalogMaterials     InteriorCatalogMaterial[]
+  interiorMaterialSuppliers    InteriorMaterialSupplier[]
 
   @@index([slug])
   @@index([isActive])

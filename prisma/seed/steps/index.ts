@@ -3,6 +3,7 @@ export { seedDocumentTypes, seedPropertyTypes } from './catalogs';
 export { seedDemoAlquileres } from './demo-alquileres';
 export { seedInteriorismoClients } from './demo-interiorismo-clients';
 export { seedInteriorismoProjects } from './demo-interiorismo-projects';
+export { seedInteriorismoMaterials } from './demo-interiorismo-materials';
 export { seedDemoVentas } from './demo-ventas';
 export { seedVentasSales } from './seed-ventas-sales';
 export { seedVentasFinanzas } from './seed-ventas-finanzas';
