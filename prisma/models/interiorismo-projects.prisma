@@ -48,6 +48,10 @@ model InteriorProject {
   payments    InteriorProjectPayment[]
   activities  InteriorProjectActivity[]
   milestones  InteriorProjectMilestone[]
+  executionTasks       InteriorExecutionTask[]
+  executionEvidences   InteriorExecutionEvidence[]
+  executionIncidents   InteriorExecutionIncident[]
+  executionActualCosts InteriorExecutionActualCost[]
 
   @@unique([applicationId, code])
   @@index([applicationId])

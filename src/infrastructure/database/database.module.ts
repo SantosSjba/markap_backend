@@ -30,6 +30,7 @@ import { InteriorProjectPrismaRepository } from './prisma/repositories/interior-
 import { InteriorBudgetPrismaRepository } from './prisma/repositories/interior-budget-prisma.repository';
 import { InteriorCatalogMaterialPrismaRepository } from './prisma/repositories/interior-catalog-material-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
+import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import {
   ROLE_REPOSITORY,
   APPLICATION_REPOSITORY,
@@ -51,6 +52,7 @@ import {
   INTERIOR_BUDGET_REPOSITORY,
   INTERIOR_CATALOG_MATERIAL_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
+  INTERIOR_EXECUTION_REPOSITORY,
 } from '@common/constants/injection-tokens';
 
 @Module({
@@ -174,6 +176,7 @@ import {
     INTERIOR_BUDGET_REPOSITORY,
     INTERIOR_CATALOG_MATERIAL_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
+    INTERIOR_EXECUTION_REPOSITORY,
   ],
 })
 export class DatabaseModule {}

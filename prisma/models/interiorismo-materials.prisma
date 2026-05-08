@@ -17,8 +17,9 @@ model InteriorCatalogMaterial {
 
   application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   images         InteriorCatalogMaterialImage[]
-  supplierLinks  InteriorSupplierCatalogLink[]
-  purchases      InteriorMaterialPurchase[]
+  supplierLinks          InteriorSupplierCatalogLink[]
+  purchases              InteriorMaterialPurchase[]
+  executionActualCosts   InteriorExecutionActualCost[]
 
   @@unique([applicationId, code])
   @@index([applicationId])

@@ -164,6 +164,20 @@ import {
   UpdateInteriorMaterialSupplierUseCase,
 } from '../../application/use-cases/interior-material-suppliers';
 
+import {
+  CreateInteriorExecutionActualCostUseCase,
+  CreateInteriorExecutionEvidenceUseCase,
+  CreateInteriorExecutionIncidentUseCase,
+  CreateInteriorExecutionTaskUseCase,
+  DeleteInteriorExecutionActualCostUseCase,
+  DeleteInteriorExecutionEvidenceUseCase,
+  DeleteInteriorExecutionTaskUseCase,
+  GetInteriorExecutionOverviewUseCase,
+  PatchInteriorExecutionProgressUseCase,
+  UpdateInteriorExecutionIncidentUseCase,
+  UpdateInteriorExecutionTaskUseCase,
+} from '../../application/use-cases/interior-execution';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
@@ -191,6 +205,7 @@ import { InteriorismoProjectsController } from './controllers/interiorismo-proje
 import { InteriorismoBudgetsController } from './controllers/interiorismo-budgets.controller';
 import { InteriorismoCatalogMaterialsController } from './controllers/interiorismo-catalog-materials.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
+import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import {
   VentasSalesOperationsService,
   VentasFinanzasOperationsService,
@@ -245,6 +260,7 @@ import {
     InteriorismoBudgetsController,
     InteriorismoCatalogMaterialsController,
     InteriorismoMaterialSuppliersController,
+    InteriorismoExecutionController,
   ],
   providers: [
     { provide: AGENT_PORT, useClass: AgentPortImpl },
@@ -397,6 +413,18 @@ import {
     LinkInteriorSupplierCatalogMaterialUseCase,
     UnlinkInteriorSupplierCatalogMaterialUseCase,
     RecordInteriorMaterialPurchaseUseCase,
+
+    GetInteriorExecutionOverviewUseCase,
+    CreateInteriorExecutionTaskUseCase,
+    UpdateInteriorExecutionTaskUseCase,
+    DeleteInteriorExecutionTaskUseCase,
+    CreateInteriorExecutionEvidenceUseCase,
+    DeleteInteriorExecutionEvidenceUseCase,
+    CreateInteriorExecutionIncidentUseCase,
+    UpdateInteriorExecutionIncidentUseCase,
+    CreateInteriorExecutionActualCostUseCase,
+    DeleteInteriorExecutionActualCostUseCase,
+    PatchInteriorExecutionProgressUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

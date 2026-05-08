@@ -1,0 +1,90 @@
+/// Ejecución de obra: tareas por fase, evidencias, incidencias y costos reales (Interiorismo).
+
+/// DESIGN | PURCHASES | PRODUCTION | INSTALLATION
+/// BACKLOG | IN_PROGRESS | DONE | BLOCKED
+model InteriorExecutionTask {
+  id            String    @id @default(uuid())
+  projectId     String    @map("project_id")
+  phase         String    @map("phase")
+  title         String    @map("title")
+  description   String?   @map("description") @db.Text
+  kanbanStatus  String    @default("BACKLOG") @map("kanban_status")
+  sortOrder     Int       @default(0) @map("sort_order")
+  plannedStart  DateTime? @map("planned_start") @db.Date
+  plannedEnd    DateTime? @map("planned_end") @db.Date
+  /// Avance de la tarea 0–100 (opcional; Kanban puede bastar)
+  progressPct   Decimal   @default(0) @map("progress_pct") @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project    InteriorProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  evidences  InteriorExecutionEvidence[]
+
+  @@index([projectId])
+  @@index([projectId, phase])
+  @@index([projectId, kanbanStatus])
+  @@map("interior_execution_tasks")
+}
+
+/// PHOTO | DOCUMENT | OTHER
+model InteriorExecutionEvidence {
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  taskId      String?  @map("task_id")
+  kind        String   @map("kind")
+  title       String   @map("title")
+  fileUrl     String   @map("file_url") @db.Text
+  capturedAt  DateTime @map("captured_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project InteriorProject        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task    InteriorExecutionTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([taskId])
+  @@map("interior_execution_evidences")
+}
+
+/// LOW | MEDIUM | HIGH — OPEN | IN_PROGRESS | CLOSED
+model InteriorExecutionIncident {
+  id          String    @id @default(uuid())
+  projectId   String    @map("project_id")
+  severity    String    @map("severity")
+  title       String    @map("title")
+  description String?   @map("description") @db.Text
+  status      String    @default("OPEN") @map("status")
+  reportedAt  DateTime  @map("reported_at")
+  closedAt    DateTime? @map("closed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([projectId, status])
+  @@map("interior_execution_incidents")
+}
+
+/// LABOR | MATERIAL | EXPENSE (gastos generales)
+model InteriorExecutionActualCost {
+  id                String   @id @default(uuid())
+  projectId         String   @map("project_id")
+  costCategory      String   @map("cost_category")
+  concept           String   @map("concept") @db.Text
+  amount            Decimal  @map("amount") @db.Decimal(14, 2)
+  occurredAt        DateTime @map("occurred_at") @db.Date
+  catalogMaterialId String?  @map("catalog_material_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project         InteriorProject          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  catalogMaterial InteriorCatalogMaterial? @relation(fields: [catalogMaterialId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([projectId, costCategory])
+  @@index([catalogMaterialId])
+  @@map("interior_execution_actual_costs")
+}
