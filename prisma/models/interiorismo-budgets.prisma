@@ -1,0 +1,146 @@
+/// Presupuestos jerárquicos (MARKAPP: niveles → ambientes → categorías → ítems)
+
+model InteriorBudget {
+  id        String @id @default(uuid())
+  projectId String @map("project_id")
+  code      String @map("code")
+  version   Int    @default(1) @map("version")
+  /// DRAFT | SENT | APPROVED | REJECTED | SUPERSEDED
+  status    String @map("status")
+  title     String? @map("title")
+
+  defaultIgvPct Decimal @default(18) @map("default_igv_pct") @db.Decimal(8, 2)
+
+  /// Σ (base + utilidad) antes de IGV
+  taxableTotal Decimal @default(0) @map("taxable_total") @db.Decimal(16, 2)
+  igvTotal     Decimal @default(0) @map("igv_total") @db.Decimal(16, 2)
+  grandTotal   Decimal @default(0) @map("grand_total") @db.Decimal(16, 2)
+
+  duplicatedFromId String? @map("duplicated_from_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  duplicatedFrom InteriorBudget?  @relation("InteriorBudgetDup", fields: [duplicatedFromId], references: [id], onDelete: SetNull)
+  duplicates     InteriorBudget[] @relation("InteriorBudgetDup")
+
+  levels      InteriorBudgetLevel[]
+  attachments InteriorBudgetAttachment[]
+  comments    InteriorBudgetComment[]
+  history     InteriorBudgetHistoryEntry[]
+
+  @@unique([projectId, code, version])
+  @@index([projectId])
+  @@map("interior_budgets")
+}
+
+model InteriorBudgetLevel {
+  id       String @id @default(uuid())
+  budgetId String @map("budget_id")
+  sortOrder Int   @default(0) @map("sort_order")
+  name     String @map("name")
+
+  budget       InteriorBudget           @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  environments InteriorBudgetEnvironment[]
+
+  @@index([budgetId])
+  @@map("interior_budget_levels")
+}
+
+model InteriorBudgetEnvironment {
+  id       String @id @default(uuid())
+  levelId  String @map("level_id")
+  sortOrder Int   @default(0) @map("sort_order")
+  name     String @map("name")
+
+  level        InteriorBudgetLevel    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  categories   InteriorBudgetCategory[]
+
+  @@index([levelId])
+  @@map("interior_budget_environments")
+}
+
+model InteriorBudgetCategory {
+  id             String @id @default(uuid())
+  environmentId  String @map("environment_id")
+  sortOrder      Int    @default(0) @map("sort_order")
+  name           String @map("name")
+
+  environment InteriorBudgetEnvironment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  items       InteriorBudgetItem[]
+
+  @@index([environmentId])
+  @@map("interior_budget_categories")
+}
+
+model InteriorBudgetItem {
+  id          String @id @default(uuid())
+  categoryId  String @map("category_id")
+  sortOrder   Int    @default(0) @map("sort_order")
+  description String @map("description") @db.Text
+  unit        String @map("unit")
+  quantity    Decimal @map("quantity") @db.Decimal(14, 4)
+  unitPrice   Decimal @map("unit_price") @db.Decimal(14, 4)
+  /// Porcentaje de utilidad sobre base (cantidad × precio)
+  utilityPct  Decimal @default(0) @map("utility_pct") @db.Decimal(10, 4)
+  igvPct      Decimal @map("igv_pct") @db.Decimal(10, 4)
+
+  baseAmount       Decimal @map("base_amount") @db.Decimal(16, 4)
+  utilityAmount    Decimal @map("utility_amount") @db.Decimal(16, 4)
+  amountBeforeIgv  Decimal @map("amount_before_igv") @db.Decimal(16, 4)
+  igvAmount        Decimal @map("igv_amount") @db.Decimal(16, 4)
+  /// Subtotal línea (incluye IGV)
+  lineTotal        Decimal @map("line_total") @db.Decimal(16, 4)
+
+  category InteriorBudgetCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@map("interior_budget_items")
+}
+
+model InteriorBudgetAttachment {
+  id       String @id @default(uuid())
+  budgetId String @map("budget_id")
+  title    String @map("title")
+  fileUrl  String @map("file_url") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  budget InteriorBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([budgetId])
+  @@map("interior_budget_attachments")
+}
+
+model InteriorBudgetComment {
+  id           String   @id @default(uuid())
+  budgetId     String   @map("budget_id")
+  authorUserId String?  @map("author_user_id")
+  body         String   @map("body") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  budget InteriorBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([budgetId])
+  @@map("interior_budget_comments")
+}
+
+model InteriorBudgetHistoryEntry {
+  id           String   @id @default(uuid())
+  budgetId     String   @map("budget_id")
+  eventType    String   @map("event_type")
+  summary      String   @map("summary") @db.Text
+  metadataJson Json?    @map("metadata_json")
+  actorUserId  String?  @map("actor_user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  budget InteriorBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([budgetId])
+  @@index([createdAt])
+  @@map("interior_budget_history")
+}

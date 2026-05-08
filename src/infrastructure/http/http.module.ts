@@ -134,6 +134,17 @@ import {
   UpdateInteriorProjectUseCase,
 } from '../../application/use-cases/interior-projects';
 
+import {
+  ListInteriorBudgetsUseCase,
+  GetInteriorBudgetByIdUseCase,
+  CreateInteriorBudgetUseCase,
+  UpdateInteriorBudgetUseCase,
+  DuplicateInteriorBudgetUseCase,
+  AddInteriorBudgetCommentUseCase,
+  AddInteriorBudgetAttachmentUseCase,
+  RenderInteriorBudgetHtmlUseCase,
+} from '../../application/use-cases/interior-budgets';
+
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
@@ -158,6 +169,7 @@ import { VentasReportsController } from './controllers/ventas-reports.controller
 import { VentasConfigController } from './controllers/ventas-config.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
+import { InteriorismoBudgetsController } from './controllers/interiorismo-budgets.controller';
 import {
   VentasSalesOperationsService,
   VentasFinanzasOperationsService,
@@ -209,6 +221,7 @@ import {
     VentasConfigController,
     VentasComplianceController,
     InteriorismoProjectsController,
+    InteriorismoBudgetsController,
   ],
   providers: [
     { provide: AGENT_PORT, useClass: AgentPortImpl },
@@ -337,6 +350,15 @@ import {
     GetInteriorProjectByIdUseCase,
     CreateInteriorProjectUseCase,
     UpdateInteriorProjectUseCase,
+
+    ListInteriorBudgetsUseCase,
+    GetInteriorBudgetByIdUseCase,
+    CreateInteriorBudgetUseCase,
+    UpdateInteriorBudgetUseCase,
+    DuplicateInteriorBudgetUseCase,
+    AddInteriorBudgetCommentUseCase,
+    AddInteriorBudgetAttachmentUseCase,
+    RenderInteriorBudgetHtmlUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

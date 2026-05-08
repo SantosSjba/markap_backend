@@ -42,7 +42,7 @@ model InteriorProject {
   supervisorAgent  Agent?      @relation("InteriorProjectSupervisor", fields: [supervisorAgentId], references: [id], onDelete: SetNull)
   commercialAgent  Agent?      @relation("InteriorProjectCommercial", fields: [commercialAgentId], references: [id], onDelete: SetNull)
 
-  budgets     InteriorProjectBudget[]
+  budgets     InteriorBudget[]
   materials   InteriorProjectMaterial[]
   documents   InteriorProjectDocument[]
   payments    InteriorProjectPayment[]
@@ -56,24 +56,6 @@ model InteriorProject {
   @@index([projectType])
   @@index([deletedAt])
   @@map("interior_projects")
-}
-
-model InteriorProjectBudget {
-  id        String  @id @default(uuid())
-  projectId String  @map("project_id")
-  code      String? @map("code")
-  title     String  @map("title")
-  totalAmount Decimal @map("total_amount") @db.Decimal(14, 2)
-  /// DRAFT | SENT | APPROVED | REJECTED
-  status    String  @map("status")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@map("interior_project_budgets")
 }
 
 model InteriorProjectMaterial {

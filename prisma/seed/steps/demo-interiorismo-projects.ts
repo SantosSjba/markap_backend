@@ -4,6 +4,7 @@ import {
   SAMPLE_INTERIOR_RESIDENTIAL_CLIENT,
 } from '../data';
 import type { SeedDb } from '../types';
+import { seedInteriorismoDemoBudgets } from './demo-interiorismo-budget-seed';
 
 type AdminUser = { id: string; email: string; firstName: string; lastName: string };
 
@@ -174,22 +175,6 @@ export async function seedInteriorismoProjects(
         projectedCost: 78500,
         expectedMargin: 14.7,
         progressPct: 42,
-        budgets: {
-          create: [
-            {
-              code: 'PRE-001',
-              title: 'Mobiliario fijo cocina y closets',
-              totalAmount: 28500,
-              status: 'APPROVED',
-            },
-            {
-              code: 'PRE-002',
-              title: 'Iluminación y acabados',
-              totalAmount: 14200,
-              status: 'SENT',
-            },
-          ],
-        },
         materials: {
           create: [
             {
@@ -301,16 +286,6 @@ export async function seedInteriorismoProjects(
         projectedCost: 156000,
         expectedMargin: 15.7,
         progressPct: 18,
-        budgets: {
-          create: [
-            {
-              code: 'PRE-C01',
-              title: 'Propuesta mobiliario workstations',
-              totalAmount: 78000,
-              status: 'DRAFT',
-            },
-          ],
-        },
         materials: {
           create: [
             {
@@ -365,4 +340,6 @@ export async function seedInteriorismoProjects(
   } else {
     console.log('   ✓ Proyecto corporativo demo ya existe');
   }
+
+  await seedInteriorismoDemoBudgets(prisma, projRemodel!.id, projCorp!.id);
 }

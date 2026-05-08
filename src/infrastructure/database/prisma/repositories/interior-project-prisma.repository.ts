@@ -37,6 +37,9 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
     if (filters.inProgressOnly) {
       andParts.push({ status: { in: [...IN_PROGRESS_STATUSES] } });
     }
+    if (filters.clientId?.trim()) {
+      andParts.push({ clientId: filters.clientId.trim() });
+    }
     if (filters.status) {
       andParts.push({ status: filters.status });
     }
@@ -106,7 +109,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         architectAgent: { select: { id: true, fullName: true } },
         supervisorAgent: { select: { id: true, fullName: true } },
         commercialAgent: { select: { id: true, fullName: true } },
-        budgets: { orderBy: { createdAt: 'desc' } },
+        budgets: { orderBy: [{ code: 'asc' }, { version: 'desc' }] },
         materials: { orderBy: { createdAt: 'desc' } },
         documents: { orderBy: { createdAt: 'desc' } },
         payments: { orderBy: { paidAt: 'desc' } },
@@ -238,8 +241,9 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       budgets: (row.budgets ?? []).map((b: any) => ({
         id: b.id,
         code: b.code,
-        title: b.title,
-        totalAmount: num(b.totalAmount) ?? 0,
+        title: b.title ?? null,
+        version: b.version ?? 1,
+        totalAmount: num(b.grandTotal) ?? 0,
         status: b.status,
       })),
       materials: (row.materials ?? []).map((m: any) => ({

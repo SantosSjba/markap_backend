@@ -50,6 +50,7 @@ export class InteriorismoProjectsController {
     required: false,
     description: 'true = DESIGN, QUOTE, APPROVED, IN_PROGRESS',
   })
+  @ApiQuery({ name: 'clientId', required: false, description: 'Filtrar proyectos por cliente' })
   @ApiResponse({ status: 200 })
   async list(
     @Query('applicationSlug') applicationSlug?: string,
@@ -58,6 +59,7 @@ export class InteriorismoProjectsController {
     @Query('search') search?: string,
     @Query('status') status?: InteriorProjectStatus,
     @Query('inProgressOnly') inProgressOnly?: string,
+    @Query('clientId') clientId?: string,
   ) {
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'interiorismo',
@@ -66,6 +68,7 @@ export class InteriorismoProjectsController {
       search: search?.trim() || undefined,
       status,
       inProgressOnly: inProgressOnly === 'true',
+      clientId: clientId?.trim() || undefined,
     });
   }
 

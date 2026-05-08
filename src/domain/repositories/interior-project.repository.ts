@@ -38,7 +38,8 @@ export interface InteriorProjectListItem {
 export interface InteriorProjectBudgetDto {
   id: string;
   code: string | null;
-  title: string;
+  title: string | null;
+  version: number;
   totalAmount: number;
   status: string;
 }
@@ -155,6 +156,8 @@ export interface ListInteriorProjectsFilters {
   status?: InteriorProjectStatus;
   /** Si true, solo estados activos de obra/comercialización */
   inProgressOnly?: boolean;
+  /** Filtrar proyectos de un cliente (flujo presupuestos) */
+  clientId?: string;
 }
 
 export interface ListInteriorProjectsResult {
