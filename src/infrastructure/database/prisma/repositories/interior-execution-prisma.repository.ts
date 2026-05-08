@@ -144,7 +144,8 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
     const labor = costs.filter((c) => c.costCategory === 'LABOR').reduce((s, c) => s + num(c.amount), 0);
     const material = costs.filter((c) => c.costCategory === 'MATERIAL').reduce((s, c) => s + num(c.amount), 0);
     const expense = costs.filter((c) => c.costCategory === 'EXPENSE').reduce((s, c) => s + num(c.amount), 0);
-    const totalActual = labor + material + expense;
+    const transport = costs.filter((c) => c.costCategory === 'TRANSPORT').reduce((s, c) => s + num(c.amount), 0);
+    const totalActual = labor + material + expense + transport;
 
     const mappedCosts: InteriorExecutionActualCostDto[] = costs.map((c) => ({
       id: c.id,
@@ -190,7 +191,7 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
         }),
       ),
       actualCosts: mappedCosts,
-      costTotals: { labor, material, expense, total: totalActual },
+      costTotals: { labor, material, expense, transport, total: totalActual },
       budgetReference: {
         budgetId: ref?.id ?? null,
         code: ref?.code ?? null,

@@ -5,6 +5,7 @@ export { seedInteriorismoClients } from './demo-interiorismo-clients';
 export { seedInteriorismoProjects } from './demo-interiorismo-projects';
 export { seedInteriorismoMaterials } from './demo-interiorismo-materials';
 export { seedInteriorismoExecution } from './demo-interiorismo-execution';
+export { seedInteriorismoFinance } from './demo-interiorismo-finance';
 export { seedDemoVentas } from './demo-ventas';
 export { seedVentasSales } from './seed-ventas-sales';
 export { seedVentasFinanzas } from './seed-ventas-finanzas';

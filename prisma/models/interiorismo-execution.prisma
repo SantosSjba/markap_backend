@@ -68,7 +68,7 @@ model InteriorExecutionIncident {
   @@map("interior_execution_incidents")
 }
 
-/// LABOR | MATERIAL | EXPENSE (gastos generales)
+/// LABOR | MATERIAL | EXPENSE | TRANSPORT
 model InteriorExecutionActualCost {
   id                String   @id @default(uuid())
   projectId         String   @map("project_id")

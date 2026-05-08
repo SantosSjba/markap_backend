@@ -265,6 +265,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         amount: num(p.amount) ?? 0,
         concept: p.concept,
         status: p.status,
+        scheduleItemId: p.scheduleItemId ?? null,
       })),
       activities: (row.activities ?? []).map((a: any) => ({
         id: a.id,

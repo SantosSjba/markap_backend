@@ -24,7 +24,7 @@ const KANBAN = ['BACKLOG', 'IN_PROGRESS', 'DONE', 'BLOCKED'] as const;
 const EVIDENCE_KINDS = ['PHOTO', 'DOCUMENT', 'OTHER'] as const;
 const SEVERITY = ['LOW', 'MEDIUM', 'HIGH'] as const;
 const INCIDENT_STATUS = ['OPEN', 'IN_PROGRESS', 'CLOSED'] as const;
-const COST_CAT = ['LABOR', 'MATERIAL', 'EXPENSE'] as const;
+const COST_CAT = ['LABOR', 'MATERIAL', 'EXPENSE', 'TRANSPORT'] as const;
 
 function assertPhase(v: string) {
   if (!(PHASES as readonly string[]).includes(v)) {

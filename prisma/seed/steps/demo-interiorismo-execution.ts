@@ -164,7 +164,7 @@ export async function seedInteriorismoExecution(
       },
       {
         projectId: proj.id,
-        costCategory: 'EXPENSE',
+        costCategory: 'TRANSPORT',
         concept: 'Transporte y estiba materiales',
         amount: new Prisma.Decimal('680'),
         occurredAt: new Date('2026-04-04'),

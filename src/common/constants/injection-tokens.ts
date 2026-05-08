@@ -32,6 +32,7 @@ export { INTERIOR_BUDGET_REPOSITORY } from '@domain/repositories/interior-budget
 export { INTERIOR_CATALOG_MATERIAL_REPOSITORY } from '@domain/repositories/interior-catalog-material.repository';
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';
 export { INTERIOR_EXECUTION_REPOSITORY } from '@domain/repositories/interior-execution.repository';
+export { INTERIOR_FINANCE_REPOSITORY } from '@domain/repositories/interior-finance.repository';
 
 export { HashService } from '@domain/services/hash.service';
 export { TokenService } from '@domain/services/token.service';

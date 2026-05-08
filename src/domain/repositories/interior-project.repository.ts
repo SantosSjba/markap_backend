@@ -65,6 +65,7 @@ export interface InteriorProjectPaymentDto {
   amount: number;
   concept: string;
   status: string;
+  scheduleItemId: string | null;
 }
 
 export interface InteriorProjectActivityDto {

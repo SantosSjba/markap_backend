@@ -52,6 +52,7 @@ model InteriorProject {
   executionEvidences   InteriorExecutionEvidence[]
   executionIncidents   InteriorExecutionIncident[]
   executionActualCosts InteriorExecutionActualCost[]
+  financeIncomeSchedules InteriorFinanceIncomeSchedule[]
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -101,12 +102,15 @@ model InteriorProjectPayment {
   concept   String   @map("concept") @db.Text
   /// PENDING | PAID | CANCELLED
   status    String   @map("status")
+  scheduleItemId String? @map("schedule_item_id")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project       InteriorProject                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scheduleItem  InteriorFinanceIncomeSchedule?   @relation(fields: [scheduleItemId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
+  @@index([scheduleItemId])
   @@map("interior_project_payments")
 }
 

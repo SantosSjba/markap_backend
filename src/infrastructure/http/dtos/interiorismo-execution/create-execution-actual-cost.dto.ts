@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsNumber, IsOptional, IsString, IsUUID, Min, MinLength } from 'class-validator';
 
 export class CreateInteriorExecutionActualCostDto {
-  @ApiProperty({ enum: ['LABOR', 'MATERIAL', 'EXPENSE'] })
+  @ApiProperty({ enum: ['LABOR', 'MATERIAL', 'EXPENSE', 'TRANSPORT'] })
   @IsString()
   costCategory!: string;
 

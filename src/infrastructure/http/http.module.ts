@@ -177,6 +177,15 @@ import {
   UpdateInteriorExecutionIncidentUseCase,
   UpdateInteriorExecutionTaskUseCase,
 } from '../../application/use-cases/interior-execution';
+import {
+  CreateInteriorFinancePaymentUseCase,
+  CreateInteriorFinanceScheduleUseCase,
+  DeleteInteriorFinancePaymentUseCase,
+  DeleteInteriorFinanceScheduleUseCase,
+  GetInteriorFinanceOverviewUseCase,
+  UpdateInteriorFinancePaymentUseCase,
+  UpdateInteriorFinanceScheduleUseCase,
+} from '../../application/use-cases/interior-finance';
 
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -206,6 +215,7 @@ import { InteriorismoBudgetsController } from './controllers/interiorismo-budget
 import { InteriorismoCatalogMaterialsController } from './controllers/interiorismo-catalog-materials.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
+import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
 import {
   VentasSalesOperationsService,
   VentasFinanzasOperationsService,
@@ -261,6 +271,7 @@ import {
     InteriorismoCatalogMaterialsController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
+    InteriorismoFinanceController,
   ],
   providers: [
     { provide: AGENT_PORT, useClass: AgentPortImpl },
@@ -425,6 +436,14 @@ import {
     CreateInteriorExecutionActualCostUseCase,
     DeleteInteriorExecutionActualCostUseCase,
     PatchInteriorExecutionProgressUseCase,
+
+    GetInteriorFinanceOverviewUseCase,
+    CreateInteriorFinanceScheduleUseCase,
+    UpdateInteriorFinanceScheduleUseCase,
+    DeleteInteriorFinanceScheduleUseCase,
+    CreateInteriorFinancePaymentUseCase,
+    UpdateInteriorFinancePaymentUseCase,
+    DeleteInteriorFinancePaymentUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

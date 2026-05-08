@@ -1,0 +1,24 @@
+/// Programación de cobranzas (adelantos y cuotas) por proyecto — Interiorismo.
+
+model InteriorFinanceIncomeSchedule {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  /// ADVANCE | INSTALLMENT | OTHER
+  kind      String   @map("kind")
+  dueDate   DateTime @map("due_date") @db.Date
+  amount    Decimal  @map("amount") @db.Decimal(14, 2)
+  concept   String   @map("concept") @db.Text
+  sortOrder Int      @default(0) @map("sort_order")
+  /// PENDING | PARTIAL | PAID | WAIVED (WAIVED no recalcula por pagos)
+  status    String   @default("PENDING") @map("status")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project   InteriorProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  payments  InteriorProjectPayment[]
+
+  @@index([projectId])
+  @@index([projectId, kind])
+  @@map("interior_finance_income_schedules")
+}
