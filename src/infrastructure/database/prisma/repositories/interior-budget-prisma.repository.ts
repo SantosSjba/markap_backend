@@ -577,4 +577,8 @@ export class InteriorBudgetPrismaRepository implements InteriorBudgetRepository 
       createdAt: a.createdAt.toISOString(),
     };
   }
+
+  async deleteById(id: string): Promise<void> {
+    await this.prisma.interiorBudget.delete({ where: { id } });
+  }
 }

@@ -190,4 +190,7 @@ export interface InteriorBudgetRepository {
     fileUrl: string,
     actorUserId?: string | null,
   ): Promise<InteriorBudgetAttachmentDto>;
+
+  /** Borrado físico; el llamador debe validar permisos y estado (p. ej. solo DRAFT). */
+  deleteById(id: string): Promise<void>;
 }

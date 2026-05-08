@@ -6,3 +6,4 @@ export { DuplicateInteriorBudgetUseCase } from './duplicate-interior-budget.use-
 export { AddInteriorBudgetCommentUseCase } from './add-interior-budget-comment.use-case';
 export { AddInteriorBudgetAttachmentUseCase } from './add-interior-budget-attachment.use-case';
 export { RenderInteriorBudgetHtmlUseCase } from './render-interior-budget-html.use-case';
+export { DeleteInteriorBudgetUseCase } from './delete-interior-budget.use-case';

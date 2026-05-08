@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -26,6 +27,7 @@ import {
   AddInteriorBudgetCommentUseCase,
   CreateInteriorBudgetUseCase,
   DuplicateInteriorBudgetUseCase,
+  DeleteInteriorBudgetUseCase,
   GetInteriorBudgetByIdUseCase,
   ListInteriorBudgetsUseCase,
   RenderInteriorBudgetHtmlUseCase,
@@ -52,6 +54,7 @@ export class InteriorismoBudgetsController {
     private readonly createUc: CreateInteriorBudgetUseCase,
     private readonly updateUc: UpdateInteriorBudgetUseCase,
     private readonly duplicateUc: DuplicateInteriorBudgetUseCase,
+    private readonly deleteUc: DeleteInteriorBudgetUseCase,
     private readonly commentUc: AddInteriorBudgetCommentUseCase,
     private readonly attachmentUc: AddInteriorBudgetAttachmentUseCase,
     private readonly pdfHtmlUc: RenderInteriorBudgetHtmlUseCase,
@@ -123,6 +126,19 @@ export class InteriorismoBudgetsController {
       levels: dto.levels as InteriorBudgetLevelInput[] | undefined,
     };
     return this.createUc.execute(payload, req.user.sub);
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Eliminar presupuesto (solo borrador / DRAFT)',
+  })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async delete(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    await this.deleteUc.execute(id, applicationSlug ?? 'interiorismo');
+    return { ok: true };
   }
 
   @Patch(':id')
