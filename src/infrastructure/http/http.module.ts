@@ -223,6 +223,7 @@ import { VentasSalesController } from './controllers/ventas-sales.controller';
 import { VentasFinanzasController } from './controllers/ventas-finanzas.controller';
 import { VentasReportsController } from './controllers/ventas-reports.controller';
 import { VentasConfigController } from './controllers/ventas-config.controller';
+import { InteriorismoConfigController } from './controllers/interiorismo-config.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoBudgetsController } from './controllers/interiorismo-budgets.controller';
@@ -239,6 +240,7 @@ import {
   VentasReportsOperationsService,
   VentasConfigOperationsService,
   VentasComplianceOperationsService,
+  InteriorismoConfigOperationsService,
 } from '../../application/services';
 
 // Gateways
@@ -282,6 +284,7 @@ import {
     VentasFinanzasController,
     VentasReportsController,
     VentasConfigController,
+    InteriorismoConfigController,
     VentasComplianceController,
     InteriorismoProjectsController,
     InteriorismoBudgetsController,
@@ -415,6 +418,7 @@ import {
     VentasReportsOperationsService,
     VentasConfigOperationsService,
     VentasComplianceOperationsService,
+    InteriorismoConfigOperationsService,
 
     ListInteriorProjectsUseCase,
     GetInteriorProjectByIdUseCase,

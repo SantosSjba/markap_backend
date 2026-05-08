@@ -13,6 +13,7 @@ export * from './password-reset-code.entity';
 export * from './rental-financial-config.entity';
 export * from './report.entity';
 export * from './ventas-config.entity';
+export * from './interiorismo-config.entity';
 export * from './ventas-sales.entity';
 export * from './ventas-finanzas.entity';
 export * from './ventas-reports.entity';

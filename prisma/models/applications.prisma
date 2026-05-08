@@ -35,6 +35,8 @@ model Application {
   ventasAgentCommissionProfiles VentasAgentCommissionProfile[]
   ventasPipelineStageConfigs    VentasPipelineStageConfig[]
   ventasNumberingSeries         VentasNumberingSeries[]
+  interiorismoProjectStageConfigs InteriorismoProjectStageConfig[]
+  interiorismoNumberingSeries     InteriorismoNumberingSeries[]
   interiorProjects             InteriorProject[]
   interiorCatalogMaterials     InteriorCatalogMaterial[]
   interiorMaterialSuppliers    InteriorMaterialSupplier[]

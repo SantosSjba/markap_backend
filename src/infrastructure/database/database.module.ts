@@ -25,6 +25,7 @@ import { VentasSalesPrismaRepository } from './prisma/repositories/ventas-sales-
 import { VentasFinanzasPrismaRepository } from './prisma/repositories/ventas-finanzas-prisma.repository';
 import { VentasReportsPrismaRepository } from './prisma/repositories/ventas-reports-prisma.repository';
 import { VentasConfigPrismaRepository } from './prisma/repositories/ventas-config-prisma.repository';
+import { InteriorismoConfigPrismaRepository } from './prisma/repositories/interiorismo-config-prisma.repository';
 import { VentasCompliancePrismaRepository } from './prisma/repositories/ventas-compliance-prisma.repository';
 import { InteriorProjectPrismaRepository } from './prisma/repositories/interior-project-prisma.repository';
 import { InteriorBudgetPrismaRepository } from './prisma/repositories/interior-budget-prisma.repository';
@@ -51,6 +52,7 @@ import {
   VENTAS_FINANZAS_REPOSITORY,
   VENTAS_REPORTS_REPOSITORY,
   VENTAS_CONFIG_REPOSITORY,
+  INTERIORISMO_CONFIG_REPOSITORY,
   VENTAS_COMPLIANCE_REPOSITORY,
   INTERIOR_PROJECT_REPOSITORY,
   INTERIOR_BUDGET_REPOSITORY,
@@ -139,6 +141,10 @@ import {
       useClass: VentasConfigPrismaRepository,
     },
     {
+      provide: INTERIORISMO_CONFIG_REPOSITORY,
+      useClass: InteriorismoConfigPrismaRepository,
+    },
+    {
       provide: VENTAS_COMPLIANCE_REPOSITORY,
       useClass: VentasCompliancePrismaRepository,
     },
@@ -199,6 +205,7 @@ import {
     VENTAS_FINANZAS_REPOSITORY,
     VENTAS_REPORTS_REPOSITORY,
     VENTAS_CONFIG_REPOSITORY,
+    INTERIORISMO_CONFIG_REPOSITORY,
     VENTAS_COMPLIANCE_REPOSITORY,
     INTERIOR_PROJECT_REPOSITORY,
     INTERIOR_BUDGET_REPOSITORY,
