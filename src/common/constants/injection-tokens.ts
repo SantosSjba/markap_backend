@@ -33,6 +33,9 @@ export { INTERIOR_CATALOG_MATERIAL_REPOSITORY } from '@domain/repositories/inter
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';
 export { INTERIOR_EXECUTION_REPOSITORY } from '@domain/repositories/interior-execution.repository';
 export { INTERIOR_FINANCE_REPOSITORY } from '@domain/repositories/interior-finance.repository';
+export { INTERIOR_CALENDAR_REPOSITORY } from '@domain/repositories/interior-calendar.repository';
+export { INTERIOR_REPORTS_REPOSITORY } from '@domain/repositories/interior-reports.repository';
+export { INTERIOR_PROJECT_DOCUMENT_REPOSITORY } from '@domain/repositories/interior-project-document.repository';
 
 export { HashService } from '@domain/services/hash.service';
 export { TokenService } from '@domain/services/token.service';

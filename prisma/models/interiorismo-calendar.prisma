@@ -1,0 +1,28 @@
+/// Agenda interiorismo: reuniones, visitas, obra, fechas límite manuales y bloques de equipo.
+
+model InteriorCalendarEvent {
+  id              String   @id @default(uuid())
+  applicationId   String   @map("application_id")
+  projectId       String?  @map("project_id")
+  /// MEETING | VISIT | INSTALLATION | DEADLINE | TEAM_BLOCK
+  eventType       String   @map("event_type")
+  title           String   @map("title")
+  description     String?  @map("description") @db.Text
+  location        String?  @map("location") @db.Text
+  startsAt        DateTime @map("starts_at")
+  endsAt          DateTime? @map("ends_at")
+  allDay          Boolean  @default(false) @map("all_day")
+  assignedAgentId String?  @map("assigned_agent_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application   Application    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  project       InteriorProject? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignedAgent Agent?          @relation(fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId, startsAt])
+  @@index([projectId])
+  @@index([assignedAgentId])
+  @@map("interior_calendar_events")
+}

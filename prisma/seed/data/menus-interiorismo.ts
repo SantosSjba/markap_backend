@@ -10,9 +10,9 @@ export const INTERIORISMO_PARENT_MENUS = [
   { label: 'Ejecución', icon: 'flame', path: '/interiorismo/ejecucion', order: 5 },
   { label: 'Finanzas', icon: 'wallet', path: '/interiorismo/finanzas', order: 6 },
   { label: 'Calendario', icon: 'calendar', path: '/interiorismo/calendario', order: 7 },
-  { label: 'Reportes', icon: 'bar-chart', path: '/interiorismo/reportes', order: 8 },
-  { label: 'Documentos', icon: 'files', path: '/interiorismo/documentos', order: 9 },
-  { label: 'Configuración', icon: 'settings', path: '/interiorismo/configuracion', order: 10 },
+  { label: 'Documentos', icon: 'files', path: null, order: 8 },
+  { label: 'Configuración', icon: 'settings', path: '/interiorismo/configuracion', order: 9 },
+  { label: 'Reportes', icon: 'bar-chart', path: '/interiorismo/reportes', order: 10 },
 ];
 
 export const INTERIORISMO_CHILD_MENUS = [
@@ -76,5 +76,43 @@ export const INTERIORISMO_CHILD_MENUS = [
     path: '/interiorismo/materiales/proveedores',
     order: 1,
     parentLabel: 'Materiales',
+  },
+
+  // Documentos
+  {
+    label: 'Contratos',
+    path: '/interiorismo/documentos/contratos',
+    order: 0,
+    parentLabel: 'Documentos',
+  },
+  {
+    label: 'PDFs',
+    path: '/interiorismo/documentos/pdfs',
+    order: 1,
+    parentLabel: 'Documentos',
+  },
+  {
+    label: 'Renderizados',
+    path: '/interiorismo/documentos/renderizados',
+    order: 2,
+    parentLabel: 'Documentos',
+  },
+  {
+    label: 'Planos',
+    path: '/interiorismo/documentos/planos',
+    order: 3,
+    parentLabel: 'Documentos',
+  },
+  {
+    label: 'Facturas',
+    path: '/interiorismo/documentos/facturas',
+    order: 4,
+    parentLabel: 'Documentos',
+  },
+  {
+    label: 'Actas',
+    path: '/interiorismo/documentos/actas',
+    order: 5,
+    parentLabel: 'Documentos',
   },
 ];

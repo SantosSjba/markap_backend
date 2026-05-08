@@ -38,6 +38,7 @@ model Application {
   interiorProjects             InteriorProject[]
   interiorCatalogMaterials     InteriorCatalogMaterial[]
   interiorMaterialSuppliers    InteriorMaterialSupplier[]
+  interiorCalendarEvents       InteriorCalendarEvent[]
 
   @@index([slug])
   @@index([isActive])

@@ -186,6 +186,19 @@ import {
   UpdateInteriorFinancePaymentUseCase,
   UpdateInteriorFinanceScheduleUseCase,
 } from '../../application/use-cases/interior-finance';
+import {
+  CreateInteriorCalendarEventUseCase,
+  DeleteInteriorCalendarEventUseCase,
+  GetInteriorCalendarFeedUseCase,
+  UpdateInteriorCalendarEventUseCase,
+} from '../../application/use-cases/interior-calendar';
+import { GetInteriorReportsDashboardUseCase } from '../../application/use-cases/interior-reports';
+import {
+  CreateInteriorProjectDocumentUseCase,
+  DeleteInteriorProjectDocumentUseCase,
+  ListInteriorProjectDocumentsUseCase,
+  UpdateInteriorProjectDocumentUseCase,
+} from '../../application/use-cases/interior-project-documents';
 
 // Guards
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -216,6 +229,9 @@ import { InteriorismoCatalogMaterialsController } from './controllers/interioris
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
+import { InteriorismoDocumentsController } from './controllers/interiorismo-documents.controller';
+import { InteriorismoCalendarController } from './controllers/interiorismo-calendar.controller';
+import { InteriorismoReportsController } from './controllers/interiorismo-reports.controller';
 import {
   VentasSalesOperationsService,
   VentasFinanzasOperationsService,
@@ -272,6 +288,9 @@ import {
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
     InteriorismoFinanceController,
+    InteriorismoCalendarController,
+    InteriorismoDocumentsController,
+    InteriorismoReportsController,
   ],
   providers: [
     { provide: AGENT_PORT, useClass: AgentPortImpl },
@@ -444,6 +463,18 @@ import {
     CreateInteriorFinancePaymentUseCase,
     UpdateInteriorFinancePaymentUseCase,
     DeleteInteriorFinancePaymentUseCase,
+
+    GetInteriorCalendarFeedUseCase,
+    CreateInteriorCalendarEventUseCase,
+    UpdateInteriorCalendarEventUseCase,
+    DeleteInteriorCalendarEventUseCase,
+
+    ListInteriorProjectDocumentsUseCase,
+    CreateInteriorProjectDocumentUseCase,
+    UpdateInteriorProjectDocumentUseCase,
+    DeleteInteriorProjectDocumentUseCase,
+
+    GetInteriorReportsDashboardUseCase,
   ],
   exports: [HashService, TokenService, MailService],
 })

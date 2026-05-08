@@ -53,6 +53,7 @@ model InteriorProject {
   executionIncidents   InteriorExecutionIncident[]
   executionActualCosts InteriorExecutionActualCost[]
   financeIncomeSchedules InteriorFinanceIncomeSchedule[]
+  calendarEvents         InteriorCalendarEvent[]
 
   @@unique([applicationId, code])
   @@index([applicationId])

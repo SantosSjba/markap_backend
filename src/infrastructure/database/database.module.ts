@@ -32,6 +32,9 @@ import { InteriorCatalogMaterialPrismaRepository } from './prisma/repositories/i
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
+import { InteriorCalendarPrismaRepository } from './prisma/repositories/interior-calendar-prisma.repository';
+import { InteriorReportsPrismaRepository } from './prisma/repositories/interior-reports-prisma.repository';
+import { InteriorProjectDocumentPrismaRepository } from './prisma/repositories/interior-project-document-prisma.repository';
 import {
   ROLE_REPOSITORY,
   APPLICATION_REPOSITORY,
@@ -55,6 +58,9 @@ import {
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
+  INTERIOR_CALENDAR_REPOSITORY,
+  INTERIOR_PROJECT_DOCUMENT_REPOSITORY,
+  INTERIOR_REPORTS_REPOSITORY,
 } from '@common/constants/injection-tokens';
 
 @Module({
@@ -160,6 +166,18 @@ import {
       provide: INTERIOR_FINANCE_REPOSITORY,
       useClass: InteriorFinancePrismaRepository,
     },
+    {
+      provide: INTERIOR_CALENDAR_REPOSITORY,
+      useClass: InteriorCalendarPrismaRepository,
+    },
+    {
+      provide: INTERIOR_PROJECT_DOCUMENT_REPOSITORY,
+      useClass: InteriorProjectDocumentPrismaRepository,
+    },
+    {
+      provide: INTERIOR_REPORTS_REPOSITORY,
+      useClass: InteriorReportsPrismaRepository,
+    },
   ],
   exports: [
     PrismaService,
@@ -188,6 +206,9 @@ import {
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,
     INTERIOR_FINANCE_REPOSITORY,
+    INTERIOR_CALENDAR_REPOSITORY,
+    INTERIOR_PROJECT_DOCUMENT_REPOSITORY,
+    INTERIOR_REPORTS_REPOSITORY,
   ],
 })
 export class DatabaseModule {}
