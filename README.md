@@ -13,7 +13,7 @@ npm install
 
 # 2. Copiar variables de entorno y configurar
 cp .env.example .env
-# Editar .env y configurar DATABASE_URL (MySQL)
+# Editar .env y configurar DATABASE_URL (Neon PostgreSQL)
 
 # 3. Generar cliente Prisma
 npx prisma generate
@@ -34,25 +34,24 @@ La API estará disponible en `http://localhost:3000/api`
 
 ## Migraciones
 
-El proyecto usa **MySQL** y Prisma. Según el entorno, usa uno de estos comandos:
+El proyecto usa **PostgreSQL (Neon)** y Prisma. Según el entorno, usa uno de estos comandos:
 
-### `prisma db push` (recomendado en hosting / cPanel)
+### `prisma db push` (recomendado para Neon / desarrollo rápido)
 
-Sincroniza el `schema.prisma` con la base de datos **sin** generar archivos de migración. No requiere que el usuario de la BD pueda crear bases de datos.
+Sincroniza el `schema.prisma` con la base de datos **sin** generar archivos de migración.
 
-- **Cuándo usarlo:** En hosting compartido (cPanel), donde el usuario MySQL normalmente no tiene permiso para crear bases de datos.
+- **Cuándo usarlo:** Entornos donde quieres aplicar cambios directos al esquema sin mantener historial de migraciones.
 - **Después de cambiar el schema:** ejecuta de nuevo `npx prisma db push` y, si hace falta, `npx prisma generate`.
 
 ```bash
 npx prisma db push
 ```
 
-### `prisma migrate dev` (desarrollo local con MySQL con permisos)
+### `prisma migrate dev` (desarrollo local con historial de migraciones)
 
-Crea archivos de migración y los aplica. Requiere que el usuario de la BD pueda **crear bases de datos**, porque Prisma usa una “shadow database” para calcular los cambios.
+Crea archivos de migración y los aplica. Requiere permisos para crear una **shadow database**.
 
-- **Cuándo usarlo:** En desarrollo local con un MySQL donde el usuario tenga permiso para crear bases de datos.
-- **Nota:** En cPanel/hosting típico fallará con un error de “shadow database” o “permission denied” al crear la BD auxiliar.
+- **Cuándo usarlo:** En desarrollo local cuando quieres versionar cambios del esquema.
 
 ```bash
 npx prisma migrate dev --name nombre_descriptivo
@@ -62,6 +61,6 @@ npx prisma migrate dev --name nombre_descriptivo
 
 | Comando                 | Uso                                                                 |
 |-------------------------|---------------------------------------------------------------------|
-| `npx prisma db push`    | Sincronizar schema con la BD. Sin historial de migraciones. cPanel. |
-| `npx prisma migrate dev`| Crear y aplicar migraciones. Requiere usuario con CREATE DATABASE.  |
+| `npx prisma db push`    | Sincronizar schema con la BD sin historial de migraciones. |
+| `npx prisma migrate dev`| Crear y aplicar migraciones en desarrollo con shadow DB. |
 | `npx prisma generate`  | Regenerar el cliente Prisma tras cambiar el schema.                 |
