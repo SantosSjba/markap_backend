@@ -35,9 +35,8 @@ import { UpdateRentalDto } from '../dtos/rentals/update-rental.dto';
 import { UpsertRentalFinancialConfigDto } from '../dtos/rentals/upsert-rental-financial-config.dto';
 import { SaveCommunicationNoteDto } from '../dtos/rentals/save-communication-note.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { NotificationsService } from '../../../application/services';
-import { mkdir, writeFile } from 'fs/promises';
-import { join } from 'path';
+import { GenArchivoService, NotificationsService } from '../../../application/services';
+import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
 
 const RENTAL_FILE_FIELDS = ['contractFile', 'deliveryActFile'] as const;
 type RentalFileField = (typeof RENTAL_FILE_FIELDS)[number];
@@ -51,7 +50,38 @@ export class RentalsController {
     @Inject(RENTAL_PORT) private readonly rental: RentalPort,
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly genArchivo: GenArchivoService,
   ) {}
+
+  private async persistRentalAttachment(
+    rentalId: string,
+    applicationSlug: string,
+    type: 'CONTRACT' | 'DELIVERY_ACT',
+    file: MulterUploadedFile,
+  ): Promise<void> {
+    const archivo = await this.genArchivo.upload(
+      {
+        applicationSlug,
+        module: 'rentals',
+        entityType: 'rental',
+        entityId: rentalId,
+        category: type,
+      },
+      file,
+    );
+    await this.prisma.rentalAttachment.deleteMany({
+      where: { rentalId, type },
+    });
+    await this.prisma.rentalAttachment.create({
+      data: {
+        rentalId,
+        type,
+        archivoId: archivo.id,
+        filePath: archivo.objectKey,
+        originalFileName: archivo.originalFileName,
+      },
+    });
+  }
 
   @Get()
   @ApiOperation({ summary: 'Listar alquileres (paginado)' })
@@ -182,39 +212,11 @@ export class RentalsController {
     const contractFile = getFirstFile(files?.contractFile);
     const deliveryActFile = getFirstFile(files?.deliveryActFile);
 
-    if (contractFile || deliveryActFile) {
-      const uploadDir = join(process.cwd(), 'uploads', 'rentals', id);
-      await mkdir(uploadDir, { recursive: true });
-
-      if (contractFile) {
-        const f = contractFile;
-        const safeName = `${Date.now()}_${(f.originalname || 'contract').replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        await writeFile(join(uploadDir, safeName), f.buffer);
-        await (this.prisma as any).rentalAttachment.deleteMany({ where: { rentalId: id, type: 'CONTRACT' } });
-        await (this.prisma as any).rentalAttachment.create({
-          data: {
-            rentalId: id,
-            type: 'CONTRACT',
-            filePath: `rentals/${id}/${safeName}`,
-            originalFileName: f.originalname || 'contract',
-          },
-        });
-      }
-
-      if (deliveryActFile) {
-        const f = deliveryActFile;
-        const safeName = `${Date.now()}_${(f.originalname || 'delivery_act').replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        await writeFile(join(uploadDir, safeName), f.buffer);
-        await (this.prisma as any).rentalAttachment.deleteMany({ where: { rentalId: id, type: 'DELIVERY_ACT' } });
-        await (this.prisma as any).rentalAttachment.create({
-          data: {
-            rentalId: id,
-            type: 'DELIVERY_ACT',
-            filePath: `rentals/${id}/${safeName}`,
-            originalFileName: f.originalname || 'delivery_act',
-          },
-        });
-      }
+    if (contractFile) {
+      await this.persistRentalAttachment(id, 'alquileres', 'CONTRACT', contractFile);
+    }
+    if (deliveryActFile) {
+      await this.persistRentalAttachment(id, 'alquileres', 'DELIVERY_ACT', deliveryActFile);
     }
 
     return rental;
@@ -278,39 +280,15 @@ export class RentalsController {
       enableCollectionAlerts: dto.enableCollectionAlerts ?? true,
     });
 
-    const uploadDir = join(process.cwd(), 'uploads', 'rentals', rental.id);
-    await mkdir(uploadDir, { recursive: true });
-
+    const appSlug = dto.applicationSlug ?? 'alquileres';
     const contractFile = getFirstFile(files?.contractFile);
     const deliveryActFile = getFirstFile(files?.deliveryActFile);
 
     if (contractFile) {
-      const f = contractFile;
-      const safeName = `${Date.now()}_${(f.originalname || 'contract').replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const filePath = join(uploadDir, safeName);
-      await writeFile(filePath, f.buffer);
-      await (this.prisma as any).rentalAttachment.create({
-        data: {
-          rentalId: rental.id,
-          type: 'CONTRACT',
-          filePath: `rentals/${rental.id}/${safeName}`,
-          originalFileName: f.originalname || 'contract',
-        },
-      });
+      await this.persistRentalAttachment(rental.id, appSlug, 'CONTRACT', contractFile);
     }
     if (deliveryActFile) {
-      const f = deliveryActFile;
-      const safeName = `${Date.now()}_${(f.originalname || 'delivery_act').replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const filePath = join(uploadDir, safeName);
-      await writeFile(filePath, f.buffer);
-      await (this.prisma as any).rentalAttachment.create({
-        data: {
-          rentalId: rental.id,
-          type: 'DELIVERY_ACT',
-          filePath: `rentals/${rental.id}/${safeName}`,
-          originalFileName: f.originalname || 'delivery_act',
-        },
-      });
+      await this.persistRentalAttachment(rental.id, appSlug, 'DELIVERY_ACT', deliveryActFile);
     }
 
     try {

@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { envConfig, envValidationSchema } from './config';
 import { DatabaseModule } from './infrastructure/database';
 import { HttpModule } from './infrastructure/http';
+import { StorageModule } from './infrastructure/storage/storage.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { HttpModule } from './infrastructure/http';
 
     // Infrastructure modules
     DatabaseModule,
+    StorageModule,
     HttpModule,
   ],
   controllers: [],

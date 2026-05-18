@@ -41,6 +41,7 @@ model Application {
   interiorCatalogMaterials     InteriorCatalogMaterial[]
   interiorMaterialSuppliers    InteriorMaterialSupplier[]
   interiorCalendarEvents       InteriorCalendarEvent[]
+  genArchivos                  GenArchivo[]
 
   @@index([slug])
   @@index([isActive])

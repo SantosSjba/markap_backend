@@ -1,0 +1,36 @@
+// Archivos centralizados (MinIO) — metadatos y ubicación en object storage
+
+model GenArchivo {
+  id               String  @id @default(uuid())
+  applicationId    String? @map("application_id")
+  applicationSlug  String  @map("application_slug")
+  module           String
+  entityType       String  @map("entity_type")
+  entityId         String  @map("entity_id")
+  category         String?
+  bucket           String
+  objectKey        String  @map("object_key")
+  originalFileName String  @map("original_file_name")
+  mimeType         String? @map("mime_type")
+  sizeBytes        Int?    @map("size_bytes")
+  legacyFilePath   String? @map("legacy_file_path")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by")
+  deletedAt DateTime? @map("deleted_at")
+
+  application Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  rentalAttachments           RentalAttachment[]
+  saleComplianceDocuments     SaleComplianceDocument[]
+  saleSeparationReceipts      SaleSeparation[]         @relation("SeparationReceiptArchivo")
+  saleClosingContracts        SaleClosing[]              @relation("ClosingContractArchivo")
+  saleCompliancePaymentProofs SaleComplianceChecklist[]  @relation("CompliancePaymentEvidenceArchivo")
+
+  @@unique([bucket, objectKey])
+  @@index([applicationSlug])
+  @@index([applicationId])
+  @@index([module, entityType, entityId])
+  @@index([deletedAt])
+  @@map("gen_archivos")
+}

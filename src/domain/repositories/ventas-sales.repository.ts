@@ -127,6 +127,7 @@ export interface VentasSalesRepository {
     data: {
       status?: VentasSeparationStatus;
       receiptFilePath?: string | null;
+      receiptArchivoId?: string | null;
       notes?: string | null;
       expiresAt?: Date | null;
     },
@@ -166,7 +167,7 @@ export interface VentasSalesRepository {
   updateSaleClosingContractFile(
     closingId: string,
     applicationId: string,
-    contractFilePath: string,
+    file: { filePath: string; archivoId?: string | null },
   ): Promise<unknown>;
 
   createSaleClosingWithSideEffects(data: {

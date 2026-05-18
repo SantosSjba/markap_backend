@@ -15,15 +15,17 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { VentasComplianceOperationsService } from '../../../application/services/ventas-compliance-operations.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
-import { mkdir, writeFile } from 'fs/promises';
-import { join } from 'path';
+import { GenArchivoService } from '../../../application/services/gen-archivo.service';
 
 @ApiTags('Ventas — Cumplimiento Legal')
 @Controller('ventas-compliance')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class VentasComplianceController {
-  constructor(private readonly compliance: VentasComplianceOperationsService) {}
+  constructor(
+    private readonly compliance: VentasComplianceOperationsService,
+    private readonly genArchivo: GenArchivoService,
+  ) {}
 
   @Get('checklist')
   @ApiOperation({ summary: 'Obtener checklist legal/operativo de una operación (propiedad + comprador)' })
@@ -177,17 +179,24 @@ export class VentasComplianceController {
     if (!body.propertyId || !body.buyerClientId || !body.docType) {
       throw new BadRequestException('propertyId, buyerClientId y docType son obligatorios');
     }
-    const folder = `${body.propertyId}_${body.buyerClientId}`;
-    const safeName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-    const dir = join(process.cwd(), 'uploads', 'ventas', 'compliance', folder);
-    await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, safeName), file.buffer);
-    const relativePath = `ventas/compliance/${folder}/${safeName}`;
+    const slug = applicationSlug ?? 'ventas';
+    const entityId = `${body.propertyId}_${body.buyerClientId}`;
+    const archivo = await this.genArchivo.upload(
+      {
+        applicationSlug: slug,
+        module: 'compliance',
+        entityType: 'sale_operation',
+        entityId,
+        category: body.docType,
+      },
+      file,
+    );
     return this.compliance.addDocument(applicationSlug, {
       propertyId: body.propertyId,
       buyerClientId: body.buyerClientId,
       docType: body.docType,
-      filePath: relativePath,
+      filePath: archivo.objectKey,
+      archivoId: archivo.id,
       issuedAt: body.issuedAt,
       verifiedAt: body.verifiedAt,
       verifiedBy: body.verifiedBy,

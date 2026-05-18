@@ -5,6 +5,8 @@ export class RentalAttachment {
     public readonly type: string,
     public readonly filePath: string,
     public readonly originalFileName: string,
+    public readonly archivoId: string | null = null,
+    public readonly downloadUrl: string | null = null,
   ) {}
 }
 

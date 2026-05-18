@@ -128,17 +128,20 @@ model RentalTenant {
 }
 
 model RentalAttachment {
-  id               String @id @default(uuid())
-  rentalId         String @map("rental_id")
-  type             String @map("type")
-  filePath         String @map("file_path")
-  originalFileName String @map("original_file_name")
+  id               String  @id @default(uuid())
+  rentalId         String  @map("rental_id")
+  type             String  @map("type")
+  archivoId        String? @map("archivo_id")
+  filePath         String  @map("file_path")
+  originalFileName String  @map("original_file_name")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  rental  Rental      @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  archivo GenArchivo? @relation(fields: [archivoId], references: [id], onDelete: SetNull)
 
   @@index([rentalId])
   @@index([type])
+  @@index([archivoId])
   @@map("rental_attachments")
 }

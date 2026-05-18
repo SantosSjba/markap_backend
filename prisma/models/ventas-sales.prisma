@@ -103,13 +103,15 @@ model SaleSeparation {
   expiresAt      DateTime? @map("expires_at")
   /// ACTIVE | EXPIRED | CLOSED
   status         String @default("ACTIVE")
-  receiptFilePath String? @map("receipt_file_path")
-  notes          String? @db.Text
+  receiptFilePath    String? @map("receipt_file_path")
+  receiptArchivoId   String? @map("receipt_archivo_id")
+  notes              String? @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application    Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  receiptArchivo GenArchivo?  @relation("SeparationReceiptArchivo", fields: [receiptArchivoId], references: [id], onDelete: SetNull)
   saleProcess SaleProcess? @relation(fields: [saleProcessId], references: [id], onDelete: SetNull)
   property    Property     @relation(fields: [propertyId], references: [id], onDelete: Restrict)
   buyer       Client       @relation("SaleSeparationBuyer", fields: [buyerClientId], references: [id], onDelete: Restrict)
@@ -134,13 +136,15 @@ model SaleClosing {
   finalPrice        Float @map("final_price")
   /// CASH | CREDIT
   paymentType       String @map("payment_type")
-  contractFilePath  String? @map("contract_file_path")
-  notes             String? @db.Text
-  closedAt          DateTime @default(now()) @map("closed_at")
+  contractFilePath   String? @map("contract_file_path")
+  contractArchivoId  String? @map("contract_archivo_id")
+  notes              String? @db.Text
+  closedAt           DateTime @default(now()) @map("closed_at")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  application Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application     Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  contractArchivo GenArchivo?  @relation("ClosingContractArchivo", fields: [contractArchivoId], references: [id], onDelete: SetNull)
   saleProcess SaleProcess? @relation(fields: [saleProcessId], references: [id], onDelete: SetNull)
   separation  SaleSeparation? @relation(fields: [saleSeparationId], references: [id], onDelete: SetNull)
   property    Property     @relation(fields: [propertyId], references: [id], onDelete: Restrict)

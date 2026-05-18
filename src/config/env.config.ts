@@ -38,6 +38,15 @@ export const envValidationSchema = Joi.object({
   PASSWORD_RESET_GERENCIA_EMAIL: Joi.string()
     .email()
     .default('sistemas@markaphomes.com'),
+
+  // MinIO / S3-compatible object storage
+  MINIO_ENDPOINT: Joi.string().uri().required(),
+  MINIO_ACCESS_KEY: Joi.string().required(),
+  MINIO_SECRET_KEY: Joi.string().required(),
+  MINIO_BUCKET: Joi.string().default('markap'),
+  MINIO_REGION: Joi.string().default('us-east-1'),
+  MINIO_USE_SSL: Joi.boolean().default(true),
+  API_PUBLIC_URL: Joi.string().uri().optional(),
 });
 
 /**
@@ -74,6 +83,15 @@ export const envConfig = () => ({
     gerenciaEmail:
       process.env.PASSWORD_RESET_GERENCIA_EMAIL || 'sistemas@markaphomes.com',
   },
+  storage: {
+    endpoint: process.env.MINIO_ENDPOINT || '',
+    accessKey: process.env.MINIO_ACCESS_KEY || '',
+    secretKey: process.env.MINIO_SECRET_KEY || '',
+    bucket: process.env.MINIO_BUCKET || 'markap',
+    region: process.env.MINIO_REGION || 'us-east-1',
+    useSsl: process.env.MINIO_USE_SSL !== 'false',
+  },
+  apiPublicUrl: process.env.API_PUBLIC_URL || '',
 });
 
 export type EnvConfig = ReturnType<typeof envConfig>;

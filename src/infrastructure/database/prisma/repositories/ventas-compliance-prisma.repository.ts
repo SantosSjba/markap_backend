@@ -172,6 +172,7 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
       data: {
         checklistId: checklist.id,
         docType: data.docType,
+        archivoId: data.archivoId ?? null,
         filePath: data.filePath,
         issuedAt: data.issuedAt ?? null,
         verifiedAt: data.verifiedAt ?? null,

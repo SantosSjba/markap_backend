@@ -394,23 +394,24 @@ export class VentasSalesOperationsService {
   async setSeparationReceipt(
     id: string,
     applicationId: string,
-    relativePath: string,
+    file: { filePath: string; archivoId?: string | null },
   ) {
     const sep = await this.ventasSales.getSaleSeparationById(id, applicationId);
     if (!sep) throw new EntityNotFoundException('SaleSeparation', id);
     return this.ventasSales.updateSaleSeparation(id, applicationId, {
-      receiptFilePath: relativePath,
+      receiptFilePath: file.filePath,
+      receiptArchivoId: file.archivoId ?? null,
     });
   }
 
-  /** Guarda ruta de comprobante tras subir archivo (resuelve applicationId desde slug). */
-  async saveSeparationReceiptPath(
+  /** Guarda comprobante tras subir a MinIO (resuelve applicationId desde slug). */
+  async saveSeparationReceipt(
     separationId: string,
     applicationSlug: string | undefined,
-    relativePath: string,
+    file: { filePath: string; archivoId?: string | null },
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
-    return this.setSeparationReceipt(separationId, applicationId, relativePath);
+    return this.setSeparationReceipt(separationId, applicationId, file);
   }
 
   async listClosings(f: ListSaleClosingsFilters) {
@@ -575,15 +576,11 @@ export class VentasSalesOperationsService {
   async attachClosingContract(
     closingId: string,
     applicationSlug: string | undefined,
-    relativeFilePath: string,
+    file: { filePath: string; archivoId?: string | null },
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
     const row = await this.ventasSales.getSaleClosingById(closingId, applicationId);
     if (!row) throw new EntityNotFoundException('SaleClosing', closingId);
-    return this.ventasSales.updateSaleClosingContractFile(
-      closingId,
-      applicationId,
-      relativeFilePath,
-    );
+    return this.ventasSales.updateSaleClosingContractFile(closingId, applicationId, file);
   }
 }

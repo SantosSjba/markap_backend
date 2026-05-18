@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { GenArchivoService } from '@application/services/gen-archivo.service';
 import { PrismaService } from '../prisma.service';
 import { RentalPrismaMapper } from '../mappers/rental-prisma.mapper';
 import type {
@@ -31,7 +32,10 @@ function resolveTenantClients(r: {
 
 @Injectable()
 export class RentalPrismaRepository implements RentalRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly genArchivo: GenArchivoService,
+  ) {}
 
   async create(data: CreateRentalData): Promise<Rental> {
     const primaryTenantId = data.tenantIds[0];
@@ -163,16 +167,47 @@ export class RentalPrismaRepository implements RentalRepository {
         property: { select: { id: true, code: true, addressLine: true, ownerId: true, owner: { select: { id: true, fullName: true } } } },
         tenant: { select: { id: true, fullName: true } },
         ...rentalTenantsInclude,
-        attachments: { select: { id: true, type: true, filePath: true, originalFileName: true }, orderBy: { id: 'asc' } },
+        attachments: {
+          select: {
+            id: true,
+            type: true,
+            archivoId: true,
+            filePath: true,
+            originalFileName: true,
+          },
+          orderBy: { id: 'asc' },
+        },
       },
     });
     if (!r) return null;
     const tenantClients = resolveTenantClients(r);
     const year = r.startDate instanceof Date ? r.startDate.getFullYear() : new Date(r.startDate).getFullYear();
     const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
-    const attachments: Array<{ id: string; type: string; filePath: string; originalFileName: string }> = r.attachments || [];
-    const contractCount = attachments.filter((a) => a.type === 'CONTRACT').length;
-    const deliveryCount = attachments.filter((a) => a.type === 'DELIVERY_ACT').length;
+    const attachmentRows: Array<{
+      id: string;
+      type: string;
+      archivoId: string | null;
+      filePath: string;
+      originalFileName: string;
+    }> = r.attachments || [];
+    const contractCount = attachmentRows.filter((a) => a.type === 'CONTRACT').length;
+    const deliveryCount = attachmentRows.filter((a) => a.type === 'DELIVERY_ACT').length;
+    const attachments = await Promise.all(
+      attachmentRows.map(async (a) => {
+        const downloadUrl = await this.genArchivo.resolveDownloadUrl(
+          a.archivoId,
+          a.filePath,
+        );
+        return new RentalAttachment(
+          a.id,
+          a.type,
+          a.filePath,
+          a.originalFileName,
+          a.archivoId,
+          downloadUrl,
+        );
+      }),
+    );
     const base = RentalPrismaMapper.toDomain(r);
     return new RentalDetail(
       base,
@@ -188,9 +223,7 @@ export class RentalPrismaRepository implements RentalRepository {
       tenantClients,
       contractCount > 0,
       deliveryCount > 0,
-      attachments.map(
-        (a) => new RentalAttachment(a.id, a.type, a.filePath, a.originalFileName),
-      ),
+      attachments,
     );
   }
 

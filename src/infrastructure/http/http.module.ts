@@ -214,6 +214,7 @@ import { MenusController } from './controllers/menus.controller';
 import { ClientsController } from './controllers/clients.controller';
 import { PropertiesController } from './controllers/properties.controller';
 import { RentalsController } from './controllers/rentals.controller';
+import { GenArchivosController } from './controllers/gen-archivos.controller';
 import { AgentsController } from './controllers/agents.controller';
 import { ReportsController } from './controllers/reports.controller';
 import { NotificationsController } from './controllers/notifications.controller';
@@ -275,6 +276,7 @@ import {
     ClientsController,
     PropertiesController,
     RentalsController,
+    GenArchivosController,
     AgentsController,
     ReportsController,
     NotificationsController,

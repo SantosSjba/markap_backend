@@ -23,15 +23,17 @@ import {
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { VentasSalesOperationsService } from '../../../application/services';
 import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
-import { mkdir, writeFile } from 'fs/promises';
-import { join } from 'path';
+import { GenArchivoService } from '../../../application/services/gen-archivo.service';
 
 @ApiTags('Ventas — CRM')
 @Controller('ventas-sales')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class VentasSalesController {
-  constructor(private readonly ventasSales: VentasSalesOperationsService) {}
+  constructor(
+    private readonly ventasSales: VentasSalesOperationsService,
+    private readonly genArchivo: GenArchivoService,
+  ) {}
 
   @Get('processes')
   @ApiOperation({ summary: 'Listar procesos de venta (pipeline CRM)' })
@@ -228,12 +230,21 @@ export class VentasSalesController {
     if (!file?.buffer?.length) {
       throw new BadRequestException('Archivo requerido');
     }
-    const safeName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-    const dir = join(process.cwd(), 'uploads', 'ventas', 'separations', id);
-    await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, safeName), file.buffer);
-    const relativePath = `ventas/separations/${id}/${safeName}`;
-    return this.ventasSales.saveSeparationReceiptPath(id, applicationSlug, relativePath);
+    const slug = applicationSlug ?? 'ventas';
+    const archivo = await this.genArchivo.upload(
+      {
+        applicationSlug: slug,
+        module: 'separations',
+        entityType: 'sale_separation',
+        entityId: id,
+        category: 'receipt',
+      },
+      file,
+    );
+    return this.ventasSales.saveSeparationReceipt(id, applicationSlug, {
+      filePath: archivo.objectKey,
+      archivoId: archivo.id,
+    });
   }
 
   @Get('closings')
@@ -292,11 +303,20 @@ export class VentasSalesController {
     if (!file?.buffer?.length) {
       throw new BadRequestException('Archivo requerido');
     }
-    const safeName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-    const dir = join(process.cwd(), 'uploads', 'ventas', 'closings', id);
-    await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, safeName), file.buffer);
-    const relativePath = `ventas/closings/${id}/${safeName}`;
-    return this.ventasSales.attachClosingContract(id, applicationSlug, relativePath);
+    const slug = applicationSlug ?? 'ventas';
+    const archivo = await this.genArchivo.upload(
+      {
+        applicationSlug: slug,
+        module: 'closings',
+        entityType: 'sale_closing',
+        entityId: id,
+        category: 'contract',
+      },
+      file,
+    );
+    return this.ventasSales.attachClosingContract(id, applicationSlug, {
+      filePath: archivo.objectKey,
+      archivoId: archivo.id,
+    });
   }
 }

@@ -5,3 +5,4 @@ export * from './ventas-config-operations.service';
 export * from './interiorismo-config-operations.service';
 export * from './ventas-compliance-operations.service';
 export * from './notifications.service';
+export * from './gen-archivo.service';

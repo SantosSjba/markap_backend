@@ -40,6 +40,7 @@ export interface SaleComplianceDocumentCreateData {
   buyerClientId: string;
   docType: string;
   filePath: string;
+  archivoId?: string | null;
   issuedAt?: Date | null;
   verifiedAt?: Date | null;
   verifiedBy?: string | null;

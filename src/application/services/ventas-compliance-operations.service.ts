@@ -11,6 +11,7 @@ import {
 } from '@common/constants/injection-tokens';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { NotificationsService } from './notifications.service';
+import { GenArchivoService } from './gen-archivo.service';
 
 const VENTAS_SLUG = 'ventas';
 const ALLOWED_SUNARP_STATUS = new Set(['PENDING', 'SUBMITTED', 'OBSERVED', 'REGISTERED']);
@@ -48,6 +49,7 @@ export class VentasComplianceOperationsService {
     @Inject(CLIENT_REPOSITORY)
     private readonly clientRepository: ClientRepository,
     private readonly notificationsService: NotificationsService,
+    private readonly genArchivo: GenArchivoService,
   ) {}
 
   private async resolveVentasApplicationId(applicationSlug?: string): Promise<string> {
@@ -201,6 +203,7 @@ export class VentasComplianceOperationsService {
       buyerClientId: string;
       docType: string;
       filePath: string;
+      archivoId?: string | null;
       issuedAt?: string | null;
       verifiedAt?: string | null;
       verifiedBy?: string | null;
@@ -223,6 +226,7 @@ export class VentasComplianceOperationsService {
       buyerClientId: body.buyerClientId,
       docType: body.docType.trim().toUpperCase(),
       filePath: body.filePath.trim(),
+      archivoId: body.archivoId ?? null,
       issuedAt: parseDateOrNull(body.issuedAt),
       verifiedAt: parseDateOrNull(body.verifiedAt),
       verifiedBy: body.verifiedBy?.trim() || null,
@@ -237,7 +241,29 @@ export class VentasComplianceOperationsService {
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
     await this.ensureOperationScope(applicationId, propertyId, buyerClientId);
-    return this.compliance.listDocuments(applicationId, propertyId, buyerClientId);
+    const rows = (await this.compliance.listDocuments(
+      applicationId,
+      propertyId,
+      buyerClientId,
+    )) as Array<{
+      id: string;
+      docType: string;
+      filePath: string;
+      archivoId?: string | null;
+      issuedAt?: Date | null;
+      verifiedAt?: Date | null;
+      verifiedBy?: string | null;
+      notes?: string | null;
+    }>;
+    return Promise.all(
+      rows.map(async (row) => ({
+        ...row,
+        downloadUrl: await this.genArchivo.resolveDownloadUrl(
+          row.archivoId,
+          row.filePath,
+        ),
+      })),
+    );
   }
 
   async getClosingReadiness(

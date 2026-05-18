@@ -345,6 +345,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     data: {
       status?: VentasSeparationStatus;
       receiptFilePath?: string | null;
+      receiptArchivoId?: string | null;
       notes?: string | null;
       expiresAt?: Date | null;
     },
@@ -354,6 +355,9 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       data: {
         ...(data.status !== undefined && { status: data.status }),
         ...(data.receiptFilePath !== undefined && { receiptFilePath: data.receiptFilePath }),
+        ...(data.receiptArchivoId !== undefined && {
+          receiptArchivoId: data.receiptArchivoId,
+        }),
         ...(data.notes !== undefined && { notes: data.notes }),
         ...(data.expiresAt !== undefined && { expiresAt: data.expiresAt }),
       },
@@ -438,11 +442,14 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
   async updateSaleClosingContractFile(
     closingId: string,
     applicationId: string,
-    contractFilePath: string,
+    file: { filePath: string; archivoId?: string | null },
   ): Promise<unknown> {
     return this.prisma.saleClosing.update({
       where: { id: closingId, applicationId },
-      data: { contractFilePath },
+      data: {
+        contractFilePath: file.filePath,
+        contractArchivoId: file.archivoId ?? null,
+      },
     });
   }
 
