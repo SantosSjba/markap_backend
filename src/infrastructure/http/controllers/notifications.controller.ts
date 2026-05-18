@@ -1,4 +1,14 @@
-import { Controller, Get, Patch, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
@@ -46,5 +56,17 @@ export class NotificationsController {
   @ApiResponse({ status: 404 })
   async markAsRead(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.notificationsService.markAsRead(id, req.user.sub);
+  }
+
+  @Post('run-rental-alerts')
+  @ApiOperation({
+    summary: 'Ejecutar alertas de alquileres manualmente (solo NODE_ENV !== production)',
+  })
+  @ApiResponse({ status: 200 })
+  async runRentalAlerts() {
+    if (process.env.NODE_ENV === 'production') {
+      throw new ForbiddenException('No disponible en producción');
+    }
+    return this.notificationsService.processScheduledRentalAlerts();
   }
 }

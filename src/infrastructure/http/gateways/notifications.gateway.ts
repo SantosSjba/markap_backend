@@ -4,9 +4,10 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
 import { Server } from 'socket.io';
-import { UseGuards } from '@nestjs/common';
-import { WsJwtGuard } from '../../../common/guards/ws-jwt.guard';
+import { TokenService } from '@domain/services/token.service';
+import { UserRepository } from '@domain/repositories/user.repository';
 
 export interface NotificationPayload {
   id: string;
@@ -22,23 +23,57 @@ const userIdBySocketId = new Map<string, string>();
 
 @WebSocketGateway({
   namespace: '/notifications',
-  cors: { origin: process.env.FRONTEND_URL || 'http://localhost:5173' },
+  cors: {
+    origin: (process.env.FRONTEND_URL || 'http://localhost:5173')
+      .split(',')
+      .map((o) => o.trim()),
+    credentials: true,
+  },
 })
-@UseGuards(WsJwtGuard)
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  private readonly logger = new Logger(NotificationsGateway.name);
+
   @WebSocketServer()
   server!: Server;
 
-  handleConnection(client: { id: string; user?: { sub: string } }) {
-    const userId = (client as unknown as { user: { sub: string } }).user?.sub;
-    if (userId) {
-      let set = socketIdsByUserId.get(userId);
+  constructor(
+    private readonly tokenService: TokenService,
+    private readonly userRepository: UserRepository,
+  ) {}
+
+  async handleConnection(client: {
+    id: string;
+    disconnect: () => void;
+    handshake: { auth?: { token?: string }; query?: { token?: string } };
+  }) {
+    const token =
+      client.handshake?.auth?.token ||
+      (typeof client.handshake?.query?.token === 'string'
+        ? client.handshake.query.token
+        : undefined);
+
+    if (!token) {
+      client.disconnect();
+      return;
+    }
+
+    try {
+      const payload = this.tokenService.verifyToken(token);
+      const user = await this.userRepository.findById(payload.sub);
+      if (!user?.canAuthenticate) {
+        client.disconnect();
+        return;
+      }
+
+      let set = socketIdsByUserId.get(payload.sub);
       if (!set) {
         set = new Set();
-        socketIdsByUserId.set(userId, set);
+        socketIdsByUserId.set(payload.sub, set);
       }
       set.add(client.id);
-      userIdBySocketId.set(client.id, userId);
+      userIdBySocketId.set(client.id, payload.sub);
+    } catch {
+      client.disconnect();
     }
   }
 
@@ -57,6 +92,8 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   emitToUser(userId: string, payload: NotificationPayload): void {
     const ids = socketIdsByUserId.get(userId);
     if (!ids?.size) return;
-    this.server.to(Array.from(ids)).emit('notification', payload);
+    for (const socketId of ids) {
+      this.server.to(socketId).emit('notification', payload);
+    }
   }
 }

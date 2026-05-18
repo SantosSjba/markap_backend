@@ -248,4 +248,173 @@ export class NotificationsService {
   async countUnread(userId: string) {
     return this.notificationRepository.countUnreadByUserId(userId);
   }
+
+  /**
+   * Job programado: contratos por vencer (30/60/90 días) y pagos pendientes/atrasados.
+   */
+  async processScheduledRentalAlerts(): Promise<{
+    expiring: number;
+    pendingPayments: number;
+    overduePayments: number;
+  }> {
+    const stats = { expiring: 0, pendingPayments: 0, overduePayments: 0 };
+    const today = this.startOfDay(new Date());
+
+    const rentals = await (this.prisma as any).rental.findMany({
+      where: { deletedAt: null, status: 'ACTIVE' },
+      include: {
+        application: { select: { id: true, slug: true } },
+        property: { select: { addressLine: true } },
+        tenant: { select: { fullName: true } },
+        tenants: {
+          orderBy: { sortOrder: 'asc' },
+          include: { client: { select: { fullName: true } } },
+        },
+      },
+    });
+
+    for (const rental of rentals) {
+      const applicationId = rental.applicationId as string;
+      const applicationSlug = rental.application?.slug ?? 'alquileres';
+      const tenantName = this.formatTenantNames(rental);
+      const propertyAddress = rental.property?.addressLine ?? '—';
+
+      if (rental.enableExpirationAlerts) {
+        const end = this.startOfDay(new Date(rental.endDate));
+        const daysLeft = Math.round((end.getTime() - today.getTime()) / 86_400_000);
+        const expiringMap: Record<number, 'RENTAL_EXPIRING_30' | 'RENTAL_EXPIRING_60' | 'RENTAL_EXPIRING_90'> = {
+          30: 'RENTAL_EXPIRING_30',
+          60: 'RENTAL_EXPIRING_60',
+          90: 'RENTAL_EXPIRING_90',
+        };
+        const alertType = expiringMap[daysLeft];
+        if (alertType) {
+          const sent = await this.wasAlertSentRecently(alertType, rental.id, { daysLeft });
+          if (!sent) {
+            await this.notifyRentalExpiring(
+              rental.id,
+              applicationId,
+              applicationSlug,
+              tenantName,
+              propertyAddress,
+              daysLeft,
+              alertType,
+            );
+            stats.expiring += 1;
+          }
+        }
+      }
+    }
+
+    const pendingWindowDays = Number(process.env.RENTAL_ALERT_PENDING_DAYS) || 3;
+    const pendingUntil = new Date(today);
+    pendingUntil.setDate(pendingUntil.getDate() + pendingWindowDays);
+
+    const payments = await (this.prisma as any).payment.findMany({
+      where: {
+        status: 'PENDING',
+        rental: { deletedAt: null, status: 'ACTIVE' },
+      },
+      include: {
+        rental: {
+          include: {
+            application: { select: { id: true, slug: true } },
+            tenant: { select: { fullName: true } },
+            tenants: {
+              orderBy: { sortOrder: 'asc' },
+              include: { client: { select: { fullName: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    for (const payment of payments) {
+      const rental = payment.rental;
+      if (!rental?.enableCollectionAlerts) continue;
+
+      const due = this.startOfDay(new Date(payment.dueDate));
+      const applicationId = rental.applicationId as string;
+      const applicationSlug = rental.application?.slug ?? 'alquileres';
+      const tenantName = this.formatTenantNames(rental);
+
+      if (due.getTime() < today.getTime()) {
+        const sent = await this.wasAlertSentRecently('PAYMENT_OVERDUE', rental.id, {
+          paymentId: payment.id,
+        });
+        if (!sent) {
+          await this.notifyPaymentAlert(
+            payment.id,
+            rental.id,
+            applicationId,
+            applicationSlug,
+            tenantName,
+            'PAYMENT_OVERDUE',
+          );
+          stats.overduePayments += 1;
+        }
+        continue;
+      }
+
+      if (due.getTime() <= pendingUntil.getTime()) {
+        const sent = await this.wasAlertSentRecently('PAYMENT_PENDING', rental.id, {
+          paymentId: payment.id,
+        });
+        if (!sent) {
+          await this.notifyPaymentAlert(
+            payment.id,
+            rental.id,
+            applicationId,
+            applicationSlug,
+            tenantName,
+            'PAYMENT_PENDING',
+          );
+          stats.pendingPayments += 1;
+        }
+      }
+    }
+
+    return stats;
+  }
+
+  private startOfDay(d: Date): Date {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  }
+
+  private formatTenantNames(rental: {
+    tenant?: { fullName: string };
+    tenants?: { client: { fullName: string } }[];
+  }): string {
+    const fromJoin = (rental.tenants ?? [])
+      .map((t) => t.client?.fullName)
+      .filter(Boolean) as string[];
+    if (fromJoin.length) return fromJoin.join(', ');
+    return rental.tenant?.fullName ?? '—';
+  }
+
+  /** Evita duplicar la misma alerta el mismo día. */
+  private async wasAlertSentRecently(
+    type: string,
+    rentalId: string,
+    extra?: { daysLeft?: number; paymentId?: string },
+  ): Promise<boolean> {
+    const since = new Date();
+    since.setHours(since.getHours() - 20);
+
+    const rows = await (this.prisma as any).notification.findMany({
+      where: { type, createdAt: { gte: since } },
+      select: { data: true },
+      take: 200,
+    });
+
+    return rows.some((row: { data: unknown }) => {
+      const data = row.data as Record<string, unknown> | null;
+      if (!data || data.rentalId !== rentalId) return false;
+      if (extra?.daysLeft != null && data.daysLeft !== extra.daysLeft) return false;
+      if (extra?.paymentId != null && data.paymentId !== extra.paymentId) return false;
+      return true;
+    });
+  }
 }

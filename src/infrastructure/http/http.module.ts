@@ -248,7 +248,7 @@ import {
 import { NotificationsGateway } from './gateways/notifications.gateway';
 
 // Services - Notifications
-import { NotificationsService } from '../../application/services';
+import { NotificationsService, RentalAlertsScheduler } from '../../application/services';
 
 import {
   AGENT_PORT,
@@ -327,6 +327,7 @@ import {
     // Notifications (WebSocket + REST)
     NotificationsGateway,
     NotificationsService,
+    RentalAlertsScheduler,
     RegisterUserUseCase,
     LoginUserUseCase,
     GetUserProfileUseCase,
