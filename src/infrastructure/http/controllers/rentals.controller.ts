@@ -131,6 +131,7 @@ export class RentalsController {
       internalAgentId: dto.internalAgentId,
       internalAgentType: dto.internalAgentType,
       internalAgentValue: dto.internalAgentValue,
+      internalAgentName: dto.internalAgentName,
     });
   }
 

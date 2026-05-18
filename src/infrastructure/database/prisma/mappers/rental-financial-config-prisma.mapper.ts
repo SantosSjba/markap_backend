@@ -18,9 +18,11 @@ export class RentalFinancialConfigPrismaMapper {
     internalAgentId: string | null;
     internalAgentType: string;
     internalAgentValue: number | { toNumber?: () => number };
+    internalAgentName: string | null;
     createdAt: Date;
     updatedAt: Date;
     externalAgent?: { fullName: string } | null;
+    internalAgent?: { fullName: string } | null;
   }): RentalFinancialConfig {
     const n = (v: number | { toNumber?: () => number }) =>
       typeof v === 'number' ? v : v.toNumber?.() ?? Number(v);
@@ -37,9 +39,10 @@ export class RentalFinancialConfigPrismaMapper {
       row.externalAgentType as FinancialValueType,
       n(row.externalAgentValue),
       row.externalAgent?.fullName ?? row.externalAgentName,
-      row.internalAgentId,
+      row.internalAgentId ?? null,
       row.internalAgentType as FinancialValueType,
       n(row.internalAgentValue),
+      row.internalAgent?.fullName ?? row.internalAgentName,
       row.createdAt,
       row.updatedAt,
     );

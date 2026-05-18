@@ -68,11 +68,16 @@ export class UpsertRentalFinancialConfigDto {
   @IsString()
   externalAgentName?: string | null;
 
-  @ApiPropertyOptional({ description: 'ID del usuario agente interno' })
+  @ApiPropertyOptional({ description: 'ID del agente interno (tabla agents, type INTERNAL)' })
   @IsOptional()
   @IsString()
   @IsUUID()
   internalAgentId?: string | null;
+
+  @ApiPropertyOptional({ description: 'Nombre del agente interno (si no se usa internalAgentId)' })
+  @IsOptional()
+  @IsString()
+  internalAgentName?: string | null;
 
   @ApiPropertyOptional({ description: 'Tipo de comisión agente interno', enum: ['PERCENT', 'FIXED'] })
   @IsOptional()

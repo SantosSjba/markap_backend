@@ -188,7 +188,7 @@ export async function seedDemoAlquileres(
           rentalId: sampleRental.id,
           ...SAMPLE_RENTAL_FINANCIAL,
           externalAgentId: externalAgent.id,
-          internalAgentId: adminUser.id,
+          internalAgentId: internalAgent.id,
         },
       });
       console.log('   ✅ Rental financial config created');

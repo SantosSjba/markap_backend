@@ -25,6 +25,7 @@ export interface CreateOrUpdateRentalFinancialConfigData {
   internalAgentId?: string | null;
   internalAgentType?: FinancialValueType;
   internalAgentValue?: number;
+  internalAgentName?: string | null;
 }
 
 export const RENTAL_FINANCIAL_CONFIG_REPOSITORY = Symbol('RentalFinancialConfigRepository');

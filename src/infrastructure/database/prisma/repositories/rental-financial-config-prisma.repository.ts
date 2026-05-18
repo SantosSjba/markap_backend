@@ -20,7 +20,10 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
   async findByRentalId(rentalId: string): Promise<RentalFinancialConfig | null> {
     const row = await this.prisma.rentalFinancialConfig.findUnique({
       where: { rentalId },
-      include: { externalAgent: { select: { fullName: true } } },
+      include: {
+        externalAgent: { select: { fullName: true } },
+        internalAgent: { select: { fullName: true } },
+      },
     });
     return row ? RentalFinancialConfigPrismaMapper.toDomain(row) : null;
   }
@@ -43,6 +46,7 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
         internalAgentId: data.internalAgentId ?? null,
         internalAgentType: data.internalAgentType ?? 'FIXED',
         internalAgentValue: data.internalAgentValue ?? 0,
+        internalAgentName: data.internalAgentName ?? null,
       },
       update: {
         ...(data.currency != null && { currency: data.currency }),
@@ -58,8 +62,12 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
         ...(data.internalAgentId !== undefined && { internalAgentId: data.internalAgentId }),
         ...(data.internalAgentType != null && { internalAgentType: data.internalAgentType }),
         ...(data.internalAgentValue != null && { internalAgentValue: data.internalAgentValue }),
+        ...(data.internalAgentName !== undefined && { internalAgentName: data.internalAgentName }),
       },
-      include: { externalAgent: { select: { fullName: true } } },
+      include: {
+        externalAgent: { select: { fullName: true } },
+        internalAgent: { select: { fullName: true } },
+      },
     });
     return RentalFinancialConfigPrismaMapper.toDomain(row);
   }

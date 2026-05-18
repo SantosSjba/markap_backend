@@ -18,6 +18,7 @@ export class RentalFinancialConfig {
     public readonly internalAgentId: string | null,
     public readonly internalAgentType: FinancialValueType,
     public readonly internalAgentValue: number,
+    public readonly internalAgentName: string | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}

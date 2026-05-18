@@ -64,13 +64,14 @@ model RentalFinancialConfig {
   internalAgentId    String? @map("internal_agent_id")
   internalAgentType  String  @default("FIXED") @map("internal_agent_type")
   internalAgentValue Float   @default(0) @map("internal_agent_value")
+  internalAgentName  String? @map("internal_agent_name")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  rental          Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
-  externalAgent   Agent? @relation("ExternalAgent", fields: [externalAgentId], references: [id], onDelete: SetNull)
-  internalAgentUser User?  @relation(fields: [internalAgentId], references: [id], onDelete: SetNull)
+  rental        Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  externalAgent Agent? @relation("ExternalAgent", fields: [externalAgentId], references: [id], onDelete: SetNull)
+  internalAgent Agent? @relation("InternalAgent", fields: [internalAgentId], references: [id], onDelete: SetNull)
 
   @@index([rentalId])
   @@index([internalAgentId])

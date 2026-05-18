@@ -20,9 +20,8 @@ model User {
   userRoles                     UserRole[]
   passwordResetCodes            PasswordResetCode[]
   notifications                 Notification[]
-  agentsAsInternal              Agent[]
-  rentalFinancialConfigsAsAgent RentalFinancialConfig[]
-  alertConfigs                  AlertConfig[]
+  agentsAsInternal Agent[]
+  alertConfigs     AlertConfig[]
 
   @@index([email])
   @@index([isActive])

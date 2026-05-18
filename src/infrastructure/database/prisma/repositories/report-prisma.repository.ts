@@ -456,7 +456,7 @@ export class ReportPrismaRepository implements ReportRepository {
         financialConfig: {
           include: {
             externalAgent: { select: { fullName: true } },
-            internalAgentUser: { select: { firstName: true, lastName: true } },
+            internalAgent: { select: { fullName: true } },
           },
         },
       },
@@ -490,9 +490,8 @@ export class ReportPrismaRepository implements ReportRepository {
       const rentalCode = `ALQ-${year}-${shortId}`;
 
       const externalAgentName = cfg?.externalAgent?.fullName ?? cfg?.externalAgentName ?? null;
-      const internalAgentName = cfg?.internalAgentUser
-        ? `${cfg.internalAgentUser.firstName} ${cfg.internalAgentUser.lastName}`.trim()
-        : null;
+      const internalAgentName =
+        cfg?.internalAgent?.fullName ?? cfg?.internalAgentName ?? null;
 
       return new FinancialDistributionReportItem(
         r.id,
