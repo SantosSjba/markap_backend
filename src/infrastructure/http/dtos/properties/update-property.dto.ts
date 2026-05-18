@@ -9,8 +9,12 @@ import {
   IsArray,
   ValidateNested,
   IsIn,
+  IsObject,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { UBIGEO_OTHER_DISTRICT_ID } from '@common/constants/ubigeo-other.constants';
+import { LocationCustomDto } from '../clients/location-custom.dto';
 import { PropertyMediaItemDto } from './property-media-item.dto';
 
 export class UpdatePropertyDto {
@@ -30,6 +34,15 @@ export class UpdatePropertyDto {
   @ApiProperty({ description: 'ID del distrito (ubigeo)' })
   @IsString()
   districtId: string;
+
+  @ApiPropertyOptional({
+    description: 'Ubicación libre cuando distrito = Otros; null si vuelve a ubigeo peruano',
+  })
+  @ValidateIf((o) => o.districtId === UBIGEO_OTHER_DISTRICT_ID)
+  @IsObject()
+  @ValidateNested()
+  @Type(() => LocationCustomDto)
+  locationCustom?: LocationCustomDto | null;
 
   @ApiPropertyOptional({ description: 'Descripción de la propiedad' })
   @IsOptional()

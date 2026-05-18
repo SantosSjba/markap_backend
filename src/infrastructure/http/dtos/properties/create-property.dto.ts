@@ -9,8 +9,12 @@ import {
   IsArray,
   ValidateNested,
   IsIn,
+  IsObject,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { UBIGEO_OTHER_DISTRICT_ID } from '@common/constants/ubigeo-other.constants';
+import { LocationCustomDto } from '../clients/location-custom.dto';
 import { PropertyMediaItemDto } from './property-media-item.dto';
 
 export class CreatePropertyDto {
@@ -40,6 +44,15 @@ export class CreatePropertyDto {
   @ApiProperty({ description: 'ID del distrito (ubigeo)' })
   @IsString()
   districtId: string;
+
+  @ApiPropertyOptional({
+    description: 'Ubicación libre cuando distrito = Otros (país, departamento, provincia, distrito)',
+  })
+  @ValidateIf((o) => o.districtId === UBIGEO_OTHER_DISTRICT_ID)
+  @IsObject()
+  @ValidateNested()
+  @Type(() => LocationCustomDto)
+  locationCustom?: LocationCustomDto;
 
   @ApiPropertyOptional({ description: 'Descripción de la propiedad' })
   @IsOptional()

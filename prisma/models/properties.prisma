@@ -8,6 +8,8 @@ model Property {
 
   addressLine String  @map("address_line")
   districtId  String  @map("district_id")
+  /// Ubicación fuera del ubigeo peruano (cuando distrito = Otros)
+  locationCustom Json? @map("location_custom")
   description String? @db.Text
 
   area          Float?  @map("area")

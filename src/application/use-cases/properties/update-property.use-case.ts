@@ -2,6 +2,7 @@ import { Injectable, Inject, NotFoundException, BadRequestException } from '@nes
 import type { PropertyRepository } from '@domain/repositories/property.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import type { Property, UpdatePropertyData } from '@domain/repositories/property.repository';
+import { assertClientAddressLocation } from '@application/validators/client-address-location.validator';
 
 import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
 
@@ -56,6 +57,18 @@ export class UpdatePropertyUseCase {
         );
       }
     }
-    return this.propertyRepository.update(data);
+    const districtId = data.districtId ?? existing.districtId;
+    const locationInput =
+      data.locationCustom !== undefined
+        ? data.locationCustom
+        : existing.locationCustom;
+    const locationCustom = assertClientAddressLocation(districtId, locationInput);
+
+    return this.propertyRepository.update({
+      ...data,
+      ...(data.districtId !== undefined || data.locationCustom !== undefined
+        ? { locationCustom }
+        : {}),
+    });
   }
 }

@@ -1,6 +1,14 @@
 /** Elemento multimedia en ficha de propiedad. */
 export type PropertyMediaItem = { url: string; kind: 'photo' | 'plan' };
 
+/** Ubicación libre cuando districtId = ubigeo "Otros". */
+export type PropertyLocationCustom = {
+  country: string;
+  department: string;
+  province: string;
+  district: string;
+};
+
 export type PropertyDistrict = {
   id: string;
   name: string;
@@ -24,6 +32,7 @@ export class Property {
     public readonly addressLine: string,
     public readonly districtId: string,
     public readonly district: PropertyDistrict,
+    public readonly locationCustom: PropertyLocationCustom | null,
     public readonly description: string | null,
     public readonly area: number | null,
     public readonly bedrooms: number | null,

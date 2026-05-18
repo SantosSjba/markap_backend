@@ -1,6 +1,7 @@
 import type {
   Property,
   PropertyListItem,
+  PropertyLocationCustom,
   PropertyMediaItem,
   PropertyStats,
 } from '@domain/entities/property.entity';
@@ -32,6 +33,7 @@ export interface CreatePropertyData {
   propertyTypeId: string;
   addressLine: string;
   districtId: string;
+  locationCustom?: PropertyLocationCustom | null;
   description?: string | null;
   area?: number | null;
   bedrooms?: number | null;
@@ -58,6 +60,7 @@ export interface UpdatePropertyData {
   propertyTypeId?: string;
   addressLine?: string;
   districtId?: string;
+  locationCustom?: PropertyLocationCustom | null;
   description?: string | null;
   area?: number | null;
   bedrooms?: number | null;

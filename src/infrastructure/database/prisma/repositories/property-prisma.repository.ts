@@ -23,6 +23,9 @@ export class PropertyPrismaRepository implements PropertyRepository {
       propertyType: { connect: { id: data.propertyTypeId } },
       addressLine: data.addressLine.trim(),
       district: { connect: { id: data.districtId } },
+      locationCustom: PropertyPrismaMapper.locationToJson(data.locationCustom) as
+        | Prisma.InputJsonValue
+        | undefined,
       description: data.description?.trim() || null,
       area: data.area ?? null,
       bedrooms: data.bedrooms ?? null,
@@ -226,6 +229,11 @@ export class PropertyPrismaRepository implements PropertyRepository {
       updatePayload.propertyType = { connect: { id: data.propertyTypeId } };
     if (data.addressLine !== undefined) updatePayload.addressLine = data.addressLine.trim();
     if (data.districtId !== undefined) updatePayload.district = { connect: { id: data.districtId } };
+    if (data.locationCustom !== undefined) {
+      updatePayload.locationCustom = PropertyPrismaMapper.locationToJson(
+        data.locationCustom,
+      ) as Prisma.InputJsonValue;
+    }
     if (data.description !== undefined) updatePayload.description = data.description?.trim() || null;
     if (data.area !== undefined) updatePayload.area = data.area;
     if (data.bedrooms !== undefined) updatePayload.bedrooms = data.bedrooms;

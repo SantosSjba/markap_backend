@@ -1,7 +1,9 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import type { PropertyRepository } from '@domain/repositories/property.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import type { PropertyLocationCustom } from '@domain/entities/property.entity';
 import { EntityNotFoundException } from '@domain/exceptions';
+import { assertClientAddressLocation } from '@application/validators/client-address-location.validator';
 
 import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
 
@@ -20,6 +22,7 @@ export interface CreatePropertyInput {
   propertyTypeId: string;
   addressLine: string;
   districtId: string;
+  locationCustom?: PropertyLocationCustom | null;
   description?: string | null;
   area?: number | null;
   bedrooms?: number | null;
@@ -81,12 +84,18 @@ export class CreatePropertyUseCase {
       );
     }
 
+    const locationCustom = assertClientAddressLocation(
+      input.districtId,
+      input.locationCustom,
+    );
+
     return this.propertyRepository.create({
       applicationId,
       code: input.code,
       propertyTypeId: input.propertyTypeId,
       addressLine: input.addressLine,
       districtId: input.districtId,
+      locationCustom,
       description: input.description,
       area: input.area,
       bedrooms: input.bedrooms,

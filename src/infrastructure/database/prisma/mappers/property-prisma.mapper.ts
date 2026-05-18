@@ -1,6 +1,11 @@
 import { Prisma } from '@prisma/client';
-import type { PropertyDistrict, PropertyMediaItem } from '@domain/entities/property.entity';
+import type {
+  PropertyDistrict,
+  PropertyLocationCustom,
+  PropertyMediaItem,
+} from '@domain/entities/property.entity';
 import { Property } from '@domain/entities/property.entity';
+import { parseLocationCustom } from '@application/validators/client-address-location.validator';
 
 export class PropertyPrismaMapper {
   static parseMediaItems(raw: Prisma.JsonValue | null | undefined): PropertyMediaItem[] | null {
@@ -16,6 +21,14 @@ export class PropertyPrismaMapper {
       out.push({ url, kind });
     }
     return out.length ? out : null;
+  }
+
+  static locationToJson(
+    value: PropertyLocationCustom | null | undefined,
+  ): Prisma.InputJsonValue | typeof Prisma.JsonNull | undefined {
+    if (value === undefined) return undefined;
+    if (value === null) return Prisma.JsonNull;
+    return value as Prisma.InputJsonValue;
   }
 
   static mediaToJson(
@@ -65,6 +78,7 @@ export class PropertyPrismaMapper {
       property.addressLine,
       property.districtId,
       district,
+      parseLocationCustom(property.locationCustom),
       property.description,
       property.area,
       property.bedrooms,
