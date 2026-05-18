@@ -1,4 +1,4 @@
-import { INTERIORISMO_APPLICATION_SLUG } from '../data';
+import { INTERIORISMO_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
 
 const DEMO_PROJECT_CODE = 'INT-REM-LIM-001';
@@ -41,8 +41,8 @@ export async function seedInteriorismoCalendar(prisma: SeedDb, appIdBySlug: Reco
         applicationId: interiorAppId,
         projectId: proj.id,
         eventType: 'MEETING',
-        title: 'Reunión cliente — avance mobiliario cocina',
-        description: 'Presencial + revisión muestras',
+        title: seedPrueba('Reunión cliente — avance mobiliario cocina'),
+        description: seedPrueba('Presencial + revisión muestras'),
         location: 'Oficina / obra según confirme cliente',
         startsAt: new Date('2026-05-12T16:00:00.000Z'),
         endsAt: new Date('2026-05-12T17:30:00.000Z'),
@@ -53,7 +53,7 @@ export async function seedInteriorismoCalendar(prisma: SeedDb, appIdBySlug: Reco
         applicationId: interiorAppId,
         projectId: proj.id,
         eventType: 'VISIT',
-        title: 'Visita taller — estado muebles dormitorio',
+        title: seedPrueba('Visita taller — estado muebles dormitorio'),
         location: 'Taller proveedor',
         startsAt: new Date('2026-05-18T14:00:00.000Z'),
         endsAt: new Date('2026-05-18T15:30:00.000Z'),
@@ -64,7 +64,7 @@ export async function seedInteriorismoCalendar(prisma: SeedDb, appIdBySlug: Reco
         applicationId: interiorAppId,
         projectId: proj.id,
         eventType: 'INSTALLATION',
-        title: 'Instalación luminarias y ripados — primer día',
+        title: seedPrueba('Instalación luminarias y ripados — primer día'),
         startsAt: new Date('2026-06-03T13:00:00.000Z'),
         endsAt: new Date('2026-06-03T18:00:00.000Z'),
         allDay: false,
@@ -74,8 +74,8 @@ export async function seedInteriorismoCalendar(prisma: SeedDb, appIdBySlug: Reco
         applicationId: interiorAppId,
         projectId: null,
         eventType: 'TEAM_BLOCK',
-        title: 'Bloque equipo — planificación semanal interiorismo',
-        description: 'Sin proyecto asignado: coordinación interna',
+        title: seedPrueba('Bloque equipo — planificación semanal interiorismo'),
+        description: seedPrueba('Sin proyecto asignado: coordinación interna'),
         startsAt: new Date('2026-05-09T13:00:00.000Z'),
         endsAt: new Date('2026-05-09T14:00:00.000Z'),
         allDay: false,
@@ -85,7 +85,7 @@ export async function seedInteriorismoCalendar(prisma: SeedDb, appIdBySlug: Reco
         applicationId: interiorAppId,
         projectId: proj.id,
         eventType: 'DEADLINE',
-        title: 'Entrega renders finales área social',
+        title: seedPrueba('Entrega renders finales área social'),
         startsAt: new Date('2026-05-25T23:59:00.000Z'),
         allDay: true,
         assignedAgentId: designer?.id ?? null,

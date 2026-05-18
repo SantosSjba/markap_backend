@@ -1,3 +1,4 @@
+import { seedPrueba } from '../data';
 import type { SeedDb } from '../types';
 
 /**
@@ -81,7 +82,7 @@ export async function seedVentasFinanzas(
           dueDate: pastDue,
           status: 'PAID',
           paidAt: new Date(),
-          notes: 'Inicial (seed)',
+          notes: seedPrueba('Inicial (seed)'),
         },
         {
           saleClosingId: closing.id,
@@ -90,7 +91,7 @@ export async function seedVentasFinanzas(
           currency: 'PEN',
           dueDate: pastDue,
           status: 'PENDING',
-          notes: 'Cuota vencida demo',
+          notes: seedPrueba('Cuota vencida demo'),
         },
         {
           saleClosingId: closing.id,
@@ -99,7 +100,7 @@ export async function seedVentasFinanzas(
           currency: 'PEN',
           dueDate: future,
           status: 'PENDING',
-          notes: 'Cuota próxima',
+          notes: seedPrueba('Cuota próxima'),
         },
       ],
     });
@@ -118,7 +119,7 @@ export async function seedVentasFinanzas(
           applicationId: ventasAppId,
           saleClosingId: closing.id,
           costType: 'NOTARY',
-          description: 'Escritura pública (seed)',
+          description: seedPrueba('Escritura pública (seed)'),
           amount: 4200,
           currency: 'PEN',
           expenseDate: new Date(),
@@ -127,7 +128,7 @@ export async function seedVentasFinanzas(
           applicationId: ventasAppId,
           saleClosingId: closing.id,
           costType: 'REGISTRY',
-          description: 'Inscripción registral (seed)',
+          description: seedPrueba('Inscripción registral (seed)'),
           amount: 2800,
           currency: 'PEN',
           expenseDate: new Date(),

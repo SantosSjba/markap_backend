@@ -2,6 +2,7 @@ import {
   INTERIORISMO_APPLICATION_SLUG,
   SAMPLE_INTERIOR_CORPORATE_CLIENT,
   SAMPLE_INTERIOR_RESIDENTIAL_CLIENT,
+  seedPrueba,
 } from '../data';
 import type { SeedDb } from '../types';
 import { seedInteriorismoDemoBudgets } from './demo-interiorismo-budget-seed';
@@ -63,11 +64,12 @@ export async function seedInteriorismoProjects(
     console.log('   ✅ Agente interno interiorismo');
   }
 
+  const designerName = seedPrueba('Elena Rivas Prieto');
   let designer = await prisma.agent.findFirst({
     where: {
       applicationId: interiorAppId,
       type: 'EXTERNAL',
-      fullName: 'Elena Rivas Prieto',
+      fullName: designerName,
     },
   });
   if (!designer) {
@@ -75,7 +77,7 @@ export async function seedInteriorismoProjects(
       data: {
         applicationId: interiorAppId,
         type: 'EXTERNAL',
-        fullName: 'Elena Rivas Prieto',
+        fullName: designerName,
         email: 'elena.rivas@studio-diseno.ejemplo.com',
         phone: '987223344',
         isActive: true,
@@ -84,11 +86,12 @@ export async function seedInteriorismoProjects(
     console.log('   ✅ Diseñadora exterior');
   }
 
+  const architectName = seedPrueba('Marco Luna Quispe');
   let architect = await prisma.agent.findFirst({
     where: {
       applicationId: interiorAppId,
       type: 'EXTERNAL',
-      fullName: 'Marco Luna Quispe',
+      fullName: architectName,
     },
   });
   if (!architect) {
@@ -96,7 +99,7 @@ export async function seedInteriorismoProjects(
       data: {
         applicationId: interiorAppId,
         type: 'EXTERNAL',
-        fullName: 'Marco Luna Quispe',
+        fullName: architectName,
         email: 'marco.luna@arq-demo.ejemplo.com',
         phone: '987445566',
         isActive: true,
@@ -105,11 +108,12 @@ export async function seedInteriorismoProjects(
     console.log('   ✅ Arquitecto exterior');
   }
 
+  const supervisorName = seedPrueba('Juliana Costa Vega');
   let supervisor = await prisma.agent.findFirst({
     where: {
       applicationId: interiorAppId,
       type: 'EXTERNAL',
-      fullName: 'Juliana Costa Vega',
+      fullName: supervisorName,
     },
   });
   if (!supervisor) {
@@ -117,7 +121,7 @@ export async function seedInteriorismoProjects(
       data: {
         applicationId: interiorAppId,
         type: 'EXTERNAL',
-        fullName: 'Juliana Costa Vega',
+        fullName: supervisorName,
         email: 'juliana.costa@obra-demo.ejemplo.com',
         phone: '987778899',
         isActive: true,
@@ -126,11 +130,12 @@ export async function seedInteriorismoProjects(
     console.log('   ✅ Supervisora exterior');
   }
 
+  const commercialName = seedPrueba('Pedro Salinas Méndez');
   let commercial = await prisma.agent.findFirst({
     where: {
       applicationId: interiorAppId,
       type: 'EXTERNAL',
-      fullName: 'Pedro Salinas Méndez',
+      fullName: commercialName,
     },
   });
   if (!commercial) {
@@ -138,7 +143,7 @@ export async function seedInteriorismoProjects(
       data: {
         applicationId: interiorAppId,
         type: 'EXTERNAL',
-        fullName: 'Pedro Salinas Méndez',
+        fullName: commercialName,
         email: 'pedro.salinas@comercial-demo.ejemplo.com',
         phone: '987990011',
         isActive: true,
@@ -157,7 +162,7 @@ export async function seedInteriorismoProjects(
       data: {
         applicationId: interiorAppId,
         code: codeRemodel,
-        name: 'Remodelación integral — Miraflores',
+        name: seedPrueba('Remodelación integral — Miraflores'),
         clientId: residential.id,
         projectType: 'REMODELING',
         status: 'IN_PROGRESS',
@@ -178,13 +183,13 @@ export async function seedInteriorismoProjects(
         materials: {
           create: [
             {
-              name: 'Melamina blanca alto brillo',
+              name: seedPrueba('Melamina blanca alto brillo'),
               quantity: 42,
               unit: 'm²',
               estimatedCost: 8900,
             },
             {
-              name: 'Porcelanato 60×120 sala',
+              name: seedPrueba('Porcelanato 60×120 sala'),
               quantity: 48,
               unit: 'm²',
               estimatedCost: 6200,
@@ -195,12 +200,12 @@ export async function seedInteriorismoProjects(
           create: [
             {
               docType: 'PLANO',
-              title: 'Planta arquitectónica — revisión B',
+              title: seedPrueba('Planta arquitectónica — revisión B'),
               fileUrl: null,
             },
             {
               docType: 'RENDER',
-              title: 'Render living vista ventanal',
+              title: seedPrueba('Render living vista ventanal'),
               fileUrl: null,
             },
           ],
@@ -210,13 +215,13 @@ export async function seedInteriorismoProjects(
             {
               paidAt: new Date('2026-03-05'),
               amount: 15000,
-              concept: 'Anticipo diseño y supervisión',
+              concept: seedPrueba('Anticipo diseño y supervisión'),
               status: 'PAID',
             },
             {
               paidAt: new Date('2026-04-12'),
               amount: 22000,
-              concept: 'Segunda cuota mobiliario',
+              concept: seedPrueba('Segunda cuota mobiliario'),
               status: 'PAID',
             },
           ],
@@ -225,14 +230,14 @@ export async function seedInteriorismoProjects(
           create: [
             {
               activityType: 'NOTE',
-              title: 'Kick-off con cliente',
-              description: 'Definidos materiales preferentes y ventanas de obra.',
+              title: seedPrueba('Kick-off con cliente'),
+              description: seedPrueba('Definidos materiales preferentes y ventanas de obra.'),
               occurredAt: new Date('2026-03-02T10:00:00Z'),
             },
             {
               activityType: 'STATUS_CHANGE',
-              title: 'Estado: Diseño → En ejecución',
-              description: 'Planos aprobados por condominio.',
+              title: seedPrueba('Estado: Diseño → En ejecución'),
+              description: seedPrueba('Planos aprobados por condominio.'),
               occurredAt: new Date('2026-05-18T15:30:00Z'),
             },
           ],
@@ -240,12 +245,12 @@ export async function seedInteriorismoProjects(
         milestones: {
           create: [
             {
-              title: 'Demoliciones livianas',
+              title: seedPrueba('Demoliciones livianas'),
               plannedDate: new Date('2026-04-01'),
               completedAt: new Date('2026-04-03'),
             },
             {
-              title: 'Instalación mobiliario cocina',
+              title: seedPrueba('Instalación mobiliario cocina'),
               plannedDate: new Date('2026-07-15'),
               completedAt: null,
             },
@@ -268,7 +273,7 @@ export async function seedInteriorismoProjects(
       data: {
         applicationId: interiorAppId,
         code: codeCorp,
-        name: 'Diseño de oficinas corporativas — Sur',
+        name: seedPrueba('Diseño de oficinas corporativas — Sur'),
         clientId: corporate.id,
         projectType: 'INTERIOR_DESIGN',
         status: 'QUOTE',
@@ -289,7 +294,7 @@ export async function seedInteriorismoProjects(
         materials: {
           create: [
             {
-              name: 'Piso vinílico instalación flotante',
+              name: seedPrueba('Piso vinílico instalación flotante'),
               quantity: 280,
               unit: 'm²',
               estimatedCost: 22400,
@@ -300,7 +305,7 @@ export async function seedInteriorismoProjects(
           create: [
             {
               docType: 'CONTRATO',
-              title: 'Borrador contrato marco servicios',
+              title: seedPrueba('Borrador contrato marco servicios'),
               fileUrl: null,
             },
           ],
@@ -310,7 +315,7 @@ export async function seedInteriorismoProjects(
             {
               paidAt: new Date('2026-05-28'),
               amount: 28000,
-              concept: 'Honorarios conceptuales fase 1',
+              concept: seedPrueba('Honorarios conceptuales fase 1'),
               status: 'PAID',
             },
           ],
@@ -319,8 +324,8 @@ export async function seedInteriorismoProjects(
           create: [
             {
               activityType: 'MEETING',
-              title: 'Presentación moodboard gerencia',
-              description: 'Lineamiento materiales nobles y paleta institucional.',
+              title: seedPrueba('Presentación moodboard gerencia'),
+              description: seedPrueba('Lineamiento materiales nobles y paleta institucional.'),
               occurredAt: new Date('2026-05-22T14:00:00Z'),
             },
           ],
@@ -328,7 +333,7 @@ export async function seedInteriorismoProjects(
         milestones: {
           create: [
             {
-              title: 'Entrega anteproyecto revisión RRHH',
+              title: seedPrueba('Entrega anteproyecto revisión RRHH'),
               plannedDate: new Date('2026-06-20'),
               completedAt: null,
             },

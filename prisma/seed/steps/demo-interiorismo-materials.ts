@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { INTERIORISMO_APPLICATION_SLUG } from '../data';
+import { INTERIORISMO_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
 
 /**
@@ -29,7 +29,7 @@ export async function seedInteriorismoMaterials(
     data: {
       applicationId: interiorAppId,
       code: 'MAT-PISO-001',
-      name: 'Porcelanato 60×60 Alaska Blanco',
+      name: seedPrueba('Porcelanato 60×60 Alaska Blanco'),
       category: 'Pisos',
       brand: 'Cerámica Sur',
       unit: 'm²',
@@ -49,7 +49,7 @@ export async function seedInteriorismoMaterials(
     data: {
       applicationId: interiorAppId,
       code: 'MAT-PNT-014',
-      name: 'Látex premium lavable blanco',
+      name: seedPrueba('Látex premium lavable blanco'),
       category: 'Pinturas',
       brand: 'ColorTech',
       unit: 'gal',
@@ -65,9 +65,9 @@ export async function seedInteriorismoMaterials(
   const supNorth = await prisma.interiorMaterialSupplier.create({
     data: {
       applicationId: interiorAppId,
-      companyName: 'Distribuidora Norte SAC',
+      companyName: seedPrueba('Distribuidora Norte SAC'),
       ruc: '20123456781',
-      contactName: 'Rosa Méndez',
+      contactName: seedPrueba('Rosa Méndez'),
       phone: '987112233',
       email: 'ventas@dist-norte-demo.pe',
     },
@@ -76,9 +76,9 @@ export async function seedInteriorismoMaterials(
   const supCenter = await prisma.interiorMaterialSupplier.create({
     data: {
       applicationId: interiorAppId,
-      companyName: 'Acabados del Centro EIRL',
+      companyName: seedPrueba('Acabados del Centro EIRL'),
       ruc: '20987654321',
-      contactName: 'Luis Prado',
+      contactName: seedPrueba('Luis Prado'),
       phone: '982554433',
       email: 'comercial@acabados-demo.pe',
     },
@@ -117,7 +117,7 @@ export async function seedInteriorismoMaterials(
         unitPrice: new Prisma.Decimal('78'),
         totalAmount: new Prisma.Decimal('3744'),
         invoiceRef: 'F001-908822',
-        notes: 'Obra corporativo demo',
+        notes: seedPrueba('Obra corporativo demo'),
       },
       {
         supplierId: supNorth.id,
@@ -137,7 +137,7 @@ export async function seedInteriorismoMaterials(
         unitPrice: new Prisma.Decimal('450'),
         totalAmount: new Prisma.Decimal('450'),
         invoiceRef: 'B011-44102',
-        notes: 'Flete y misceláneo',
+        notes: seedPrueba('Flete y misceláneo'),
       },
     ],
   });

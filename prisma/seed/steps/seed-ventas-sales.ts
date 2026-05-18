@@ -1,3 +1,4 @@
+import { seedPrueba } from '../data';
 import type { SeedDb } from '../types';
 
 const CODE_CRM_ACTIVE = 'VNT-PRC-SEED-CRM';
@@ -70,22 +71,22 @@ async function seedCrmActiveProcess(prisma: SeedDb, ventasAppId: string): Promis
         agentId: agent.id,
         pipelineStage: 'NEGOTIATION',
         status: 'ACTIVE',
-        title: 'Demo pipeline — Carmen Vega (negociación)',
+        title: seedPrueba('Demo pipeline — Carmen Vega (negociación)'),
       },
     });
 
     await tx.saleProcessNote.create({
       data: {
         saleProcessId: process.id,
-        body: 'Cliente pide descuento por pago al contado. Enviar propuesta antes del viernes.',
+        body: seedPrueba('Cliente pide descuento por pago al contado. Enviar propuesta antes del viernes.'),
       },
     });
     await tx.saleProcessActivity.create({
       data: {
         saleProcessId: process.id,
         activityType: 'CALL',
-        title: 'Llamada de seguimiento',
-        description: 'Acordó revisar números con el cónyuge.',
+        title: seedPrueba('Llamada de seguimiento'),
+        description: seedPrueba('Acordó revisar números con el cónyuge.'),
       },
     });
     const tomorrow = new Date();
@@ -93,7 +94,7 @@ async function seedCrmActiveProcess(prisma: SeedDb, ventasAppId: string): Promis
     await tx.saleProcessReminder.create({
       data: {
         saleProcessId: process.id,
-        title: 'Enviar cotización actualizada',
+        title: seedPrueba('Enviar cotización actualizada'),
         dueAt: tomorrow,
       },
     });
@@ -145,22 +146,22 @@ async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promi
         agentId: agent.id,
         pipelineStage: 'NEGOTIATION',
         status: 'ACTIVE',
-        title: 'Lead demo — Torre Vista Mar (cierre seed)',
+        title: seedPrueba('Lead demo — Torre Vista Mar (cierre seed)'),
       },
     });
 
     await tx.saleProcessNote.create({
       data: {
         saleProcessId: process.id,
-        body: 'Cliente interesado en visitar planta 8. Coordinar con portero.',
+        body: seedPrueba('Cliente interesado en visitar planta 8. Coordinar con portero.'),
       },
     });
     await tx.saleProcessActivity.create({
       data: {
         saleProcessId: process.id,
         activityType: 'VISIT',
-        title: 'Visita programada',
-        description: 'Recorrido con pareja decisora',
+        title: seedPrueba('Visita programada'),
+        description: seedPrueba('Recorrido con pareja decisora'),
         completedAt: new Date(),
       },
     });
@@ -169,7 +170,7 @@ async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promi
     await tx.saleProcessReminder.create({
       data: {
         saleProcessId: process.id,
-        title: 'Llamar para feedback post-visita',
+        title: seedPrueba('Llamar para feedback post-visita'),
         dueAt: tomorrow,
       },
     });
@@ -184,7 +185,7 @@ async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promi
         currency: 'PEN',
         separationDate: new Date(),
         status: 'ACTIVE',
-        notes: 'Separación demo (seed)',
+        notes: seedPrueba('Separación demo (seed)'),
       },
     });
 
@@ -208,7 +209,7 @@ async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promi
         agentId: agent.id,
         finalPrice: 380000,
         paymentType: 'CREDIT',
-        notes: 'Cierre demo — comisión pendiente de pago',
+        notes: seedPrueba('Cierre demo — comisión pendiente de pago'),
       },
     });
 

@@ -1,8 +1,10 @@
 /** Datos demo para módulo Ventas (clientes BUYER / CRM, inventario). */
 
+import { seedPrueba } from './seed-demo-prueba';
+
 export const VENTAS_SAMPLE_EXTERNAL_AGENT = {
-  fullName: 'Lucía Torres Mendoza',
-  email: 'lucia.torres.ventas@markap.demo',
+  fullName: seedPrueba('Lucía Torres Mendoza'),
+  email: 'lucia.torres.ventas.prueba@markap.demo',
   phone: '999111222',
   documentNumber: '44556677',
 };
@@ -22,32 +24,32 @@ export const VENTAS_SAMPLE_BUYER_CLIENTS: {
 }[] = [
   {
     documentNumber: '40123456',
-    fullName: 'Roberto Díaz Castillo',
+    fullName: seedPrueba('Roberto Díaz Castillo'),
     primaryPhone: '987654321',
-    primaryEmail: 'roberto.diaz.seed@ejemplo.com',
+    primaryEmail: 'roberto.diaz.prueba@ejemplo.com',
     salesStatus: 'PROSPECT',
     leadOrigin: 'FACEBOOK',
     assignedAgent: 'internal',
   },
   {
     documentNumber: '40234567',
-    fullName: 'Carmen Vega Ríos',
+    fullName: seedPrueba('Carmen Vega Ríos'),
     primaryPhone: '976543210',
-    primaryEmail: 'carmen.vega.seed@ejemplo.com',
+    primaryEmail: 'carmen.vega.prueba@ejemplo.com',
     salesStatus: 'INTERESTED',
     leadOrigin: 'WEB',
     assignedAgent: 'external',
   },
   {
     documentNumber: '40345678',
-    fullName: 'Diego Salas Núñez',
+    fullName: seedPrueba('Diego Salas Núñez'),
     primaryPhone: '965432109',
-    primaryEmail: 'diego.salas.seed@ejemplo.com',
+    primaryEmail: 'diego.salas.prueba@ejemplo.com',
     salesStatus: 'CLIENT',
     leadOrigin: 'REFERIDO',
     assignedAgent: null,
   },
-]
+];
 
 /** Propietarios para inventario de propiedades en Ventas (clientType OWNER). */
 export const VENTAS_SAMPLE_PROPERTY_OWNERS: {
@@ -58,17 +60,17 @@ export const VENTAS_SAMPLE_PROPERTY_OWNERS: {
 }[] = [
   {
     documentNumber: '41888999',
-    fullName: 'Rosa Quispe Huamán',
+    fullName: seedPrueba('Rosa Quispe Huamán'),
     primaryPhone: '944001122',
-    primaryEmail: 'rosa.owner.ventas@ejemplo.com',
+    primaryEmail: 'rosa.owner.prueba@ejemplo.com',
   },
   {
     documentNumber: '41777888',
-    fullName: 'Grupo Inmobiliario Norte EIRL — contacto',
+    fullName: seedPrueba('Grupo Inmobiliario Norte EIRL — contacto'),
     primaryPhone: '933445566',
-    primaryEmail: 'contacto.norte.ventas@ejemplo.com',
+    primaryEmail: 'contacto.norte.prueba@ejemplo.com',
   },
-]
+];
 
 /** Propiedades en venta (application ventas). `propertyTypeCode` debe existir en seed (ej. DEP). */
 export const VENTAS_SAMPLE_PROPERTIES: {
@@ -87,12 +89,12 @@ export const VENTAS_SAMPLE_PROPERTIES: {
 }[] = [
   {
     code: 'VNT-SEED-001',
-    addressLine: 'Av. Pardo 420, Miraflores',
-    description: 'Departamento con vista al mar, acabados de primera.',
+    addressLine: seedPrueba('Av. Pardo 420, Miraflores'),
+    description: seedPrueba('Departamento con vista al mar, acabados de primera.'),
     area: 118.5,
     bedrooms: 3,
     bathrooms: 2,
-    projectName: 'Torre Vista Mar',
+    projectName: seedPrueba('Torre Vista Mar'),
     salePrice: 385000,
     listingStatus: 'AVAILABLE',
     propertyTypeCode: 'DEP',
@@ -107,12 +109,12 @@ export const VENTAS_SAMPLE_PROPERTIES: {
   },
   {
     code: 'VNT-SEED-002',
-    addressLine: 'Calle Los Laureles 180, San Isidro',
-    description: 'Piso intermedio, listo para escritura.',
+    addressLine: seedPrueba('Calle Los Laureles 180, San Isidro'),
+    description: seedPrueba('Piso intermedio, listo para escritura.'),
     area: 95,
     bedrooms: 2,
     bathrooms: 2,
-    projectName: 'Residencial Los Laureles',
+    projectName: seedPrueba('Residencial Los Laureles'),
     salePrice: 295000,
     listingStatus: 'RESERVED',
     propertyTypeCode: 'DEP',
@@ -126,8 +128,8 @@ export const VENTAS_SAMPLE_PROPERTIES: {
   },
   {
     code: 'VNT-SEED-003',
-    addressLine: 'Mz. K Lt. 12, Urbanización El Trébol',
-    description: 'Terreno en esquina, documentos en regla.',
+    addressLine: seedPrueba('Mz. K Lt. 12, Urbanización El Trébol'),
+    description: seedPrueba('Terreno en esquina, documentos en regla.'),
     area: 200,
     bedrooms: 0,
     bathrooms: 0,
@@ -141,12 +143,12 @@ export const VENTAS_SAMPLE_PROPERTIES: {
   /** Inmueble solo para proceso CRM ACTIVE en pipeline (no se cierra en el seed largo). */
   {
     code: 'VNT-SEED-CRM',
-    addressLine: 'Jr. Lima 210, Barranco',
-    description: 'Demo pipeline: oportunidad activa en etapa negociación.',
+    addressLine: seedPrueba('Jr. Lima 210, Barranco'),
+    description: seedPrueba('Demo pipeline: oportunidad activa en etapa negociación.'),
     area: 72,
     bedrooms: 2,
     bathrooms: 1,
-    projectName: 'Edificio Barranco Centro',
+    projectName: seedPrueba('Edificio Barranco Centro'),
     salePrice: 265000,
     listingStatus: 'AVAILABLE',
     propertyTypeCode: 'DEP',
@@ -158,4 +160,4 @@ export const VENTAS_SAMPLE_PROPERTIES: {
       },
     ],
   },
-]
+];

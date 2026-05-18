@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { computeInteriorBudgetLine } from '../../../src/domain/interior-budget/interior-budget-calculations';
+import { seedPrueba } from '../data';
 import type { SeedDb } from '../types';
 import type { InteriorBudgetLevelInput } from '../../../src/domain/repositories/interior-budget.repository';
 
@@ -238,7 +239,7 @@ export async function seedInteriorismoDemoBudgets(
 ): Promise<void> {
   await upsertBudget(prisma, remodelProjectId, {
     code: 'PRE-001',
-    title: 'Mobiliario fijo cocina y closets',
+    title: seedPrueba('Mobiliario fijo cocina y closets'),
     status: 'APPROVED',
     defaultIgvPct: 18,
     levels: REMODEL_PRE001_LEVELS,
@@ -246,7 +247,7 @@ export async function seedInteriorismoDemoBudgets(
 
   await upsertBudget(prisma, remodelProjectId, {
     code: 'PRE-002',
-    title: 'Iluminación y acabados',
+    title: seedPrueba('Iluminación y acabados'),
     status: 'SENT',
     defaultIgvPct: 18,
     levels: REMODEL_PRE002_LEVELS,
@@ -254,7 +255,7 @@ export async function seedInteriorismoDemoBudgets(
 
   await upsertBudget(prisma, corpProjectId, {
     code: 'PRE-C01',
-    title: 'Propuesta mobiliario workstations',
+    title: seedPrueba('Propuesta mobiliario workstations'),
     status: 'DRAFT',
     defaultIgvPct: 18,
     levels: CORP_PRE_LEVELS,

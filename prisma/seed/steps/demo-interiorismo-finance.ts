@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { INTERIORISMO_APPLICATION_SLUG } from '../data';
+import { INTERIORISMO_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
 
 const DEMO_PROJECT_CODE = 'INT-REM-LIM-001';
@@ -36,7 +36,7 @@ export async function seedInteriorismoFinance(prisma: SeedDb, appIdBySlug: Recor
       kind: 'ADVANCE',
       dueDate: new Date('2026-03-10'),
       amount: new Prisma.Decimal('12000'),
-      concept: 'Adelanto 30% — firma de contrato',
+      concept: seedPrueba('Adelanto 30% — firma de contrato'),
       sortOrder: 0,
       status: 'PENDING',
     },
@@ -48,7 +48,7 @@ export async function seedInteriorismoFinance(prisma: SeedDb, appIdBySlug: Recor
       kind: 'INSTALLMENT',
       dueDate: new Date('2026-04-15'),
       amount: new Prisma.Decimal('15000'),
-      concept: 'Cuota 1 — inicio de compras',
+      concept: seedPrueba('Cuota 1 — inicio de compras'),
       sortOrder: 1,
       status: 'PENDING',
     },
@@ -60,7 +60,7 @@ export async function seedInteriorismoFinance(prisma: SeedDb, appIdBySlug: Recor
       kind: 'INSTALLMENT',
       dueDate: new Date('2026-06-01'),
       amount: new Prisma.Decimal('18000'),
-      concept: 'Cuota 2 — avance de obra',
+      concept: seedPrueba('Cuota 2 — avance de obra'),
       sortOrder: 2,
       status: 'PENDING',
     },
@@ -71,7 +71,7 @@ export async function seedInteriorismoFinance(prisma: SeedDb, appIdBySlug: Recor
       projectId: proj.id,
       paidAt: new Date('2026-03-12T11:00:00.000Z'),
       amount: new Prisma.Decimal('12000'),
-      concept: 'Transferencia — adelanto 30%',
+      concept: seedPrueba('Transferencia — adelanto 30%'),
       status: 'PAID',
       scheduleItemId: adv.id,
     },
@@ -87,7 +87,7 @@ export async function seedInteriorismoFinance(prisma: SeedDb, appIdBySlug: Recor
       projectId: proj.id,
       paidAt: new Date('2026-04-16T09:30:00.000Z'),
       amount: new Prisma.Decimal('8000'),
-      concept: 'Transferencia parcial — cuota 1',
+      concept: seedPrueba('Transferencia parcial — cuota 1'),
       status: 'PAID',
       scheduleItemId: q1.id,
     },
@@ -103,7 +103,7 @@ export async function seedInteriorismoFinance(prisma: SeedDb, appIdBySlug: Recor
       projectId: proj.id,
       paidAt: new Date('2026-05-02T14:00:00.000Z'),
       amount: new Prisma.Decimal('3500'),
-      concept: 'Factura extra — variación luminarias',
+      concept: seedPrueba('Factura extra — variación luminarias'),
       status: 'PAID',
       scheduleItemId: null,
     },

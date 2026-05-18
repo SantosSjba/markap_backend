@@ -51,3 +51,4 @@ export {
   VENTAS_SAMPLE_EXTERNAL_AGENT,
 } from './sample-ventas';
 export { DEPARTMENTS, DISTRICTS, PROVINCES } from './ubigeo';
+export { SEED_PRUEBA_SUFFIX, seedPrueba } from './seed-demo-prueba';

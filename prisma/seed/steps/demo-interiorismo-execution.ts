@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { INTERIORISMO_APPLICATION_SLUG } from '../data';
+import { INTERIORISMO_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
 
 const DEMO_PROJECT_CODE = 'INT-REM-LIM-001';
@@ -43,7 +43,7 @@ export async function seedInteriorismoExecution(
       {
         projectId: proj.id,
         phase: 'DESIGN',
-        title: 'Entrega planimetría mobiliario cocina',
+        title: seedPrueba('Entrega planimetría mobiliario cocina'),
         description: 'DWG + renders finales para fabricación',
         kanbanStatus: 'DONE',
         sortOrder: 0,
@@ -54,7 +54,7 @@ export async function seedInteriorismoExecution(
       {
         projectId: proj.id,
         phase: 'DESIGN',
-        title: 'Selección de textil y luminarias dormitorio',
+        title: seedPrueba('Selección de textil y luminarias dormitorio'),
         kanbanStatus: 'IN_PROGRESS',
         sortOrder: 1,
         plannedStart: new Date('2026-04-01'),
@@ -64,7 +64,7 @@ export async function seedInteriorismoExecution(
       {
         projectId: proj.id,
         phase: 'PURCHASES',
-        title: 'OC melamina y herrajes',
+        title: seedPrueba('OC melamina y herrajes'),
         kanbanStatus: 'IN_PROGRESS',
         sortOrder: 0,
         plannedStart: new Date('2026-04-05'),
@@ -74,7 +74,7 @@ export async function seedInteriorismoExecution(
       {
         projectId: proj.id,
         phase: 'PRODUCTION',
-        title: 'Fabricación muebles cocina — taller',
+        title: seedPrueba('Fabricación muebles cocina — taller'),
         kanbanStatus: 'BACKLOG',
         sortOrder: 0,
         plannedStart: new Date('2026-05-01'),
@@ -84,7 +84,7 @@ export async function seedInteriorismoExecution(
       {
         projectId: proj.id,
         phase: 'INSTALLATION',
-        title: 'Montaje en obra — semana 1',
+        title: seedPrueba('Montaje en obra — semana 1'),
         kanbanStatus: 'BACKLOG',
         sortOrder: 0,
         plannedStart: new Date('2026-06-20'),
@@ -107,7 +107,7 @@ export async function seedInteriorismoExecution(
         projectId: proj.id,
         taskId: taskForPhoto,
         kind: 'PHOTO',
-        title: 'Avance diseño — vista living',
+        title: seedPrueba('Avance diseño — vista living'),
         fileUrl: 'https://picsum.photos/seed/markap-exec-living/960/540',
         capturedAt: new Date('2026-04-02T16:00:00.000Z'),
       },
@@ -115,7 +115,7 @@ export async function seedInteriorismoExecution(
         projectId: proj.id,
         taskId: null,
         kind: 'DOCUMENT',
-        title: 'Acta reunión cliente — cambios cocina',
+        title: seedPrueba('Acta reunión cliente — cambios cocina'),
         fileUrl: 'https://example.com/docs/acta-cocina-demo.pdf',
         capturedAt: new Date('2026-03-28T10:30:00.000Z'),
       },
@@ -127,16 +127,16 @@ export async function seedInteriorismoExecution(
       {
         projectId: proj.id,
         severity: 'MEDIUM',
-        title: 'Demora en muestra de mesón',
-        description: 'Proveedor reprogramó visita a taller',
+        title: seedPrueba('Demora en muestra de mesón'),
+        description: seedPrueba('Proveedor reprogramó visita a taller'),
         status: 'OPEN',
         reportedAt: new Date('2026-04-08T09:00:00.000Z'),
       },
       {
         projectId: proj.id,
         severity: 'LOW',
-        title: 'Ajuste tonalidad pintura dormitorio',
-        description: 'Cliente solicitó muestra adicional',
+        title: seedPrueba('Ajuste tonalidad pintura dormitorio'),
+        description: seedPrueba('Cliente solicitó muestra adicional'),
         status: 'CLOSED',
         reportedAt: new Date('2026-03-22T14:00:00.000Z'),
         closedAt: new Date('2026-03-25T11:00:00.000Z'),
@@ -149,7 +149,7 @@ export async function seedInteriorismoExecution(
       {
         projectId: proj.id,
         costCategory: 'LABOR',
-        concept: 'Maestro carpintero — instalación parcial',
+        concept: seedPrueba('Maestro carpintero — instalación parcial'),
         amount: new Prisma.Decimal('4200'),
         occurredAt: new Date('2026-04-01'),
         catalogMaterialId: null,
@@ -157,7 +157,7 @@ export async function seedInteriorismoExecution(
       {
         projectId: proj.id,
         costCategory: 'MATERIAL',
-        concept: mat ? 'Compra porcelanato referencia catálogo' : 'Compra porcelanato obra',
+        concept: seedPrueba(mat ? 'Compra porcelanato referencia catálogo' : 'Compra porcelanato obra'),
         amount: new Prisma.Decimal('3850.5'),
         occurredAt: new Date('2026-04-03'),
         catalogMaterialId: mat?.id ?? null,
@@ -165,7 +165,7 @@ export async function seedInteriorismoExecution(
       {
         projectId: proj.id,
         costCategory: 'TRANSPORT',
-        concept: 'Transporte y estiba materiales',
+        concept: seedPrueba('Transporte y estiba materiales'),
         amount: new Prisma.Decimal('680'),
         occurredAt: new Date('2026-04-04'),
         catalogMaterialId: null,
