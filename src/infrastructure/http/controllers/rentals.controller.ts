@@ -164,7 +164,8 @@ export class RentalsController {
       paymentDueDay: dto.paymentDueDay != null ? Number(dto.paymentDueDay) : undefined,
       notes: dto.notes,
       status: dto.status,
-      enableAlerts: dto.enableAlerts != null ? Boolean(dto.enableAlerts) : undefined,
+      enableExpirationAlerts: dto.enableExpirationAlerts,
+      enableCollectionAlerts: dto.enableCollectionAlerts,
     });
 
     const contractFile = getFirstFile(files?.contractFile);
@@ -257,7 +258,8 @@ export class RentalsController {
         dto.securityDeposit != null ? Number(dto.securityDeposit) : null,
       paymentDueDay: Number(dto.paymentDueDay) || 5,
       notes: dto.notes,
-      enableAlerts: dto.enableAlerts ?? true,
+      enableExpirationAlerts: dto.enableExpirationAlerts ?? true,
+      enableCollectionAlerts: dto.enableCollectionAlerts ?? true,
     });
 
     const uploadDir = join(process.cwd(), 'uploads', 'rentals', rental.id);

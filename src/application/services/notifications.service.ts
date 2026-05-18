@@ -110,7 +110,7 @@ export class NotificationsService {
   /**
    * Notifica a los usuarios con roles ADMIN/MANAGER cuando se crea un alquiler.
    * Solo envía a los usuarios que tienen channelInApp habilitado en su AlertConfig.
-   * Además respeta el campo enableAlerts del alquiler (si es false, no notifica).
+   * Respeta enableExpirationAlerts del contrato.
    */
   async notifyRentalCreated(
     rentalId: string,
@@ -121,9 +121,9 @@ export class NotificationsService {
     // Verificar si el alquiler tiene habilitadas las alertas
     const rental = await (this.prisma as any).rental.findUnique({
       where: { id: rentalId },
-      select: { enableAlerts: true, applicationId: true },
+      select: { enableExpirationAlerts: true, applicationId: true },
     });
-    if (!rental || !rental.enableAlerts) return;
+    if (!rental || !rental.enableExpirationAlerts) return;
 
     const userIds = await this.getUserIdsByRoleCodes([...RENTAL_NOTIFICATION_ROLE_CODES]);
     if (userIds.length === 0) return;
@@ -162,12 +162,11 @@ export class NotificationsService {
     daysLeft: number,
     alertType: 'RENTAL_EXPIRING_30' | 'RENTAL_EXPIRING_60' | 'RENTAL_EXPIRING_90',
   ): Promise<void> {
-    // Verificar si el alquiler tiene habilitadas las alertas
     const rental = await (this.prisma as any).rental.findUnique({
       where: { id: rentalId },
-      select: { enableAlerts: true },
+      select: { enableExpirationAlerts: true },
     });
-    if (!rental || !rental.enableAlerts) return;
+    if (!rental || !rental.enableExpirationAlerts) return;
 
     const userIds = await this.getUserIdsByRoleCodes([...RENTAL_NOTIFICATION_ROLE_CODES]);
     if (userIds.length === 0) return;
@@ -199,12 +198,11 @@ export class NotificationsService {
     tenantName: string,
     alertType: 'PAYMENT_PENDING' | 'PAYMENT_OVERDUE',
   ): Promise<void> {
-    // Verificar si el alquiler tiene habilitadas las alertas
     const rental = await (this.prisma as any).rental.findUnique({
       where: { id: rentalId },
-      select: { enableAlerts: true },
+      select: { enableCollectionAlerts: true },
     });
-    if (!rental || !rental.enableAlerts) return;
+    if (!rental || !rental.enableCollectionAlerts) return;
 
     const userIds = await this.getUserIdsByRoleCodes([...RENTAL_NOTIFICATION_ROLE_CODES]);
     if (userIds.length === 0) return;

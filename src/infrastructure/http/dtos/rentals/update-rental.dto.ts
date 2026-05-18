@@ -9,7 +9,8 @@ import {
   IsIn,
   IsBoolean,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { parseOptionalBoolean } from '@common/utils/parse-boolean.util';
 
 export class UpdateRentalDto {
   @ApiPropertyOptional({ description: 'Fecha de inicio (ISO)', example: '2025-01-01' })
@@ -61,8 +62,15 @@ export class UpdateRentalDto {
   @IsIn(['ACTIVE', 'EXPIRED', 'CANCELLED'])
   status?: string;
 
-  @ApiPropertyOptional({ description: 'Recibir alertas y notificaciones para este contrato' })
+  @ApiPropertyOptional({ description: 'Alertas de vencimiento de contrato' })
   @IsOptional()
+  @Transform(({ value }) => parseOptionalBoolean(value))
   @IsBoolean()
-  enableAlerts?: boolean;
+  enableExpirationAlerts?: boolean;
+
+  @ApiPropertyOptional({ description: 'Alertas de cobranza' })
+  @IsOptional()
+  @Transform(({ value }) => parseOptionalBoolean(value))
+  @IsBoolean()
+  enableCollectionAlerts?: boolean;
 }

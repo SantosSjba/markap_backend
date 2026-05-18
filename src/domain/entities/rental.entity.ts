@@ -23,7 +23,8 @@ export class Rental {
     public readonly paymentDueDay: number,
     public readonly notes: string | null,
     public readonly status: string,
-    public readonly enableAlerts: boolean,
+    public readonly enableExpirationAlerts: boolean,
+    public readonly enableCollectionAlerts: boolean,
   ) {}
 }
 
@@ -79,7 +80,8 @@ export class RentalDetail extends Rental {
       rental.paymentDueDay,
       rental.notes,
       rental.status,
-      rental.enableAlerts,
+      rental.enableExpirationAlerts,
+      rental.enableCollectionAlerts,
     );
   }
 }

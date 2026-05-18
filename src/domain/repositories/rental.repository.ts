@@ -18,7 +18,8 @@ export interface CreateRentalData {
   securityDeposit?: number | null;
   paymentDueDay: number;
   notes?: string | null;
-  enableAlerts?: boolean;
+  enableExpirationAlerts?: boolean;
+  enableCollectionAlerts?: boolean;
 }
 
 export interface ListRentalsFilters {
@@ -45,7 +46,8 @@ export interface UpdateRentalData {
   paymentDueDay?: number;
   notes?: string | null;
   status?: string;
-  enableAlerts?: boolean;
+  enableExpirationAlerts?: boolean;
+  enableCollectionAlerts?: boolean;
 }
 
 export interface RentalRepository {

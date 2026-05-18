@@ -55,7 +55,8 @@ export class RentalPrismaMapper {
     paymentDueDay: number;
     notes: string | null;
     status: string;
-    enableAlerts: boolean;
+    enableExpirationAlerts: boolean;
+    enableCollectionAlerts: boolean;
   }): Rental {
     const n = (v: number | { toNumber?: () => number } | null | undefined): number | null => {
       if (v == null) return null;
@@ -74,7 +75,8 @@ export class RentalPrismaMapper {
       r.paymentDueDay,
       r.notes,
       r.status,
-      r.enableAlerts,
+      r.enableExpirationAlerts,
+      r.enableCollectionAlerts,
     );
   }
 }

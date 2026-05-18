@@ -9,7 +9,8 @@ import {
   IsDateString,
   IsBoolean,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { parseOptionalBoolean } from '@common/utils/parse-boolean.util';
 
 export class CreateRentalDto {
   @ApiPropertyOptional({ default: 'alquileres' })
@@ -65,10 +66,20 @@ export class CreateRentalDto {
   notes?: string;
 
   @ApiPropertyOptional({
-    description: 'Recibir alertas y notificaciones para este contrato',
+    description: 'Alertas de vencimiento de contrato (30/60/90 días y registro)',
     default: true,
   })
   @IsOptional()
+  @Transform(({ value }) => parseOptionalBoolean(value))
   @IsBoolean()
-  enableAlerts?: boolean;
+  enableExpirationAlerts?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Alertas de cobranza (pagos pendientes y atrasados)',
+    default: true,
+  })
+  @IsOptional()
+  @Transform(({ value }) => parseOptionalBoolean(value))
+  @IsBoolean()
+  enableCollectionAlerts?: boolean;
 }

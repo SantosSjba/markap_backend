@@ -28,7 +28,8 @@ export class RentalPrismaRepository implements RentalRepository {
         securityDeposit: data.securityDeposit ?? null,
         paymentDueDay: data.paymentDueDay,
         notes: data.notes?.trim() || null,
-        enableAlerts: data.enableAlerts ?? true,
+        enableExpirationAlerts: data.enableExpirationAlerts ?? true,
+        enableCollectionAlerts: data.enableCollectionAlerts ?? true,
       },
     });
     return RentalPrismaMapper.toDomain(rental);
@@ -210,7 +211,12 @@ export class RentalPrismaRepository implements RentalRepository {
         ...(data.paymentDueDay != null && { paymentDueDay: data.paymentDueDay }),
         ...(data.notes !== undefined && { notes: data.notes?.trim() || null }),
         ...(data.status != null && { status: data.status }),
-        ...(data.enableAlerts !== undefined && { enableAlerts: data.enableAlerts }),
+        ...(data.enableExpirationAlerts !== undefined && {
+          enableExpirationAlerts: data.enableExpirationAlerts,
+        }),
+        ...(data.enableCollectionAlerts !== undefined && {
+          enableCollectionAlerts: data.enableCollectionAlerts,
+        }),
       },
     });
     return RentalPrismaMapper.toDomain(r);

@@ -15,7 +15,8 @@ export interface UpdateRentalInput {
   paymentDueDay?: number;
   notes?: string | null;
   status?: string;
-  enableAlerts?: boolean;
+  enableExpirationAlerts?: boolean;
+  enableCollectionAlerts?: boolean;
 }
 
 @Injectable()
@@ -39,7 +40,12 @@ export class UpdateRentalUseCase {
     if (input.paymentDueDay != null) data.paymentDueDay = input.paymentDueDay;
     if (input.notes !== undefined) data.notes = input.notes;
     if (input.status != null) data.status = input.status;
-    if (input.enableAlerts !== undefined) data.enableAlerts = input.enableAlerts;
+    if (input.enableExpirationAlerts !== undefined) {
+      data.enableExpirationAlerts = input.enableExpirationAlerts;
+    }
+    if (input.enableCollectionAlerts !== undefined) {
+      data.enableCollectionAlerts = input.enableCollectionAlerts;
+    }
     return this.rentalRepository.update(input.id, data);
   }
 }

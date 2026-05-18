@@ -14,8 +14,9 @@ model Rental {
   paymentDueDay   Int      @default(5) @map("payment_due_day")
   notes           String?  @db.Text
 
-  status       String  @default("ACTIVE") @map("status")
-  enableAlerts Boolean @default(true) @map("enable_alerts")
+  status                  String  @default("ACTIVE") @map("status")
+  enableExpirationAlerts  Boolean @default(true) @map("enable_expiration_alerts")
+  enableCollectionAlerts  Boolean @default(true) @map("enable_collection_alerts")
 
   lastCommunicationNote String?   @db.Text @map("last_communication_note")
   lastCommunicationDate DateTime? @map("last_communication_date")
