@@ -63,6 +63,10 @@ export class UsersController {
       createdBy: req.user.sub,
     });
 
+    for (const roleId of dto.roleIds ?? []) {
+      await this.assignUserRoleUseCase.execute(user.id, roleId, req.user.sub);
+    }
+
     return UserHttpMapper.toResponseWithRoleEntities(user, []);
   }
 
