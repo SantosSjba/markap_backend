@@ -7,6 +7,7 @@ import { EntityNotFoundException } from '@domain/exceptions';
 import { Email, Phone } from '@domain/value-objects';
 import type { SalesPipelineStatus } from '@domain/repositories/client.repository';
 import type { ClientType } from '@domain/entities/client.entity';
+import { assertClientAddressLocation } from '@application/validators/client-address-location.validator';
 
 export interface CreateClientInput {
   applicationId?: string;
@@ -29,6 +30,12 @@ export interface CreateClientInput {
     addressLine: string;
     districtId: string;
     reference?: string | null;
+    locationCustom?: {
+      country: string;
+      department: string;
+      province: string;
+      district: string;
+    } | null;
   };
 }
 
@@ -122,6 +129,15 @@ export class CreateClientUseCase {
     const primaryEmail = Email.create(input.primaryEmail).value;
     const secondary = Phone.optional(input.secondaryPhone);
 
+    let address = input.address;
+    if (address) {
+      const locationCustom = assertClientAddressLocation(
+        address.districtId,
+        address.locationCustom,
+      );
+      address = { ...address, locationCustom };
+    }
+
     return this.clientRepository.create({
       applicationId,
       clientType: input.clientType,
@@ -140,7 +156,7 @@ export class CreateClientUseCase {
         input.clientType === 'BUYER' ? input.leadOrigin?.trim() || null : null,
       assignedAgentId:
         input.clientType === 'BUYER' ? input.assignedAgentId ?? null : null,
-      address: input.address,
+      address,
     });
   }
 }

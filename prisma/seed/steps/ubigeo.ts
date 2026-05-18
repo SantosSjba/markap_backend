@@ -1,4 +1,5 @@
 import { DEPARTMENTS, DISTRICTS, PROVINCES } from '../data';
+import { UBIGEO_OTHER_SEED } from '../data/ubigeo-other';
 import type { SeedDb } from '../types';
 
 export async function seedUbigeo(prisma: SeedDb): Promise<void> {
@@ -58,4 +59,22 @@ export async function seedUbigeo(prisma: SeedDb): Promise<void> {
 
   await bulkUpsertDistricts(DISTRICTS);
   console.log(`   ✅ ${DISTRICTS.length} districts`);
+
+  const o = UBIGEO_OTHER_SEED;
+  await prisma.department.upsert({
+    where: { id: o.department.id },
+    update: { name: o.department.name },
+    create: o.department,
+  });
+  await prisma.province.upsert({
+    where: { id: o.province.id },
+    update: { departmentId: o.province.departmentId, name: o.province.name },
+    create: o.province,
+  });
+  await prisma.district.upsert({
+    where: { id: o.district.id },
+    update: { provinceId: o.district.provinceId, name: o.district.name },
+    create: o.district,
+  });
+  console.log(`   ✅ Ubigeo "${o.department.name}" (extranjero / sin ubigeo)`);
 }

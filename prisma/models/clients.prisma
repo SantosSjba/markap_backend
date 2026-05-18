@@ -61,6 +61,8 @@ model Address {
   addressType String  @map("address_type")
   addressLine String  @map("address_line")
   districtId  String  @map("district_id")
+  /// Ubicación fuera del ubigeo peruano (cuando distrito = Otros): país, departamento, provincia, distrito libres
+  locationCustom Json? @map("location_custom")
   reference   String? @db.Text
   isPrimary   Boolean @default(true) @map("is_primary")
 

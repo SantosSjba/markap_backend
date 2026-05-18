@@ -5,6 +5,7 @@ import type { AgentRepository } from '@domain/repositories/agent.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import type { PropertyRepository } from '@domain/repositories/property.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+import { assertClientAddressLocation } from '@application/validators/client-address-location.validator';
 
 import { AGENT_REPOSITORY, APPLICATION_REPOSITORY, CLIENT_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
 
@@ -66,6 +67,31 @@ export class UpdateClientUseCase {
       }
     }
 
-    return this.clientRepository.update(id, data);
+    let payload = data;
+    if (data.address) {
+      const districtId =
+        data.address.districtId ?? existing.primaryAddress?.districtId;
+      if (districtId) {
+        const locationInput =
+          data.address.locationCustom !== undefined
+            ? data.address.locationCustom
+            : existing.primaryAddress?.locationCustom;
+        const locationCustom = assertClientAddressLocation(
+          districtId,
+          locationInput,
+        );
+        payload = {
+          ...data,
+          address: {
+            ...data.address,
+            ...(data.address.locationCustom !== undefined || locationCustom
+              ? { locationCustom }
+              : {}),
+          },
+        };
+      }
+    }
+
+    return this.clientRepository.update(id, payload);
   }
 }

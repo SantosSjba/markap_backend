@@ -10,6 +10,8 @@ import {
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { UBIGEO_OTHER_DISTRICT_ID } from '@common/constants/ubigeo-other.constants';
+import { LocationCustomDto } from './location-custom.dto';
 
 class CreateClientAddressDto {
   @ApiProperty({ description: 'Dirección completa' })
@@ -19,6 +21,15 @@ class CreateClientAddressDto {
   @ApiProperty({ description: 'ID del distrito (ubigeo)' })
   @IsString()
   districtId: string;
+
+  @ApiPropertyOptional({
+    description: 'Ubicación libre cuando distrito = Otros (país, departamento, provincia, distrito)',
+  })
+  @ValidateIf((o) => o.districtId === UBIGEO_OTHER_DISTRICT_ID)
+  @IsObject()
+  @ValidateNested()
+  @Type(() => LocationCustomDto)
+  locationCustom?: LocationCustomDto;
 
   @ApiPropertyOptional({ description: 'Referencia' })
   @IsOptional()

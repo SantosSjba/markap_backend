@@ -1,6 +1,20 @@
-import type { Client, ClientDetail, ClientListItem, ClientType, SalesPipelineStatus } from '../entities/client.entity';
+import type {
+  Client,
+  ClientDetail,
+  ClientListItem,
+  ClientType,
+  LocationCustom,
+  SalesPipelineStatus,
+} from '../entities/client.entity';
 
-export type { Client, ClientDetail, ClientListItem, ClientType, SalesPipelineStatus } from '../entities/client.entity';
+export type {
+  Client,
+  ClientDetail,
+  ClientListItem,
+  ClientType,
+  LocationCustom,
+  SalesPipelineStatus,
+} from '../entities/client.entity';
 
 export interface AddressData {
   id: string;
@@ -32,6 +46,7 @@ export interface CreateClientData {
     addressLine: string;
     districtId: string;
     reference?: string | null;
+    locationCustom?: LocationCustom | null;
   };
 }
 
@@ -54,6 +69,7 @@ export interface UpdateClientData {
     addressLine?: string;
     districtId?: string;
     reference?: string | null;
+    locationCustom?: LocationCustom | null;
   };
 }
 

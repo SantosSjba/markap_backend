@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { ClientPrismaMapper } from '../mappers/client-prisma.mapper';
 import type {
@@ -13,6 +14,15 @@ import type {
   ClientStats,
   SalesPipelineStatus,
 } from '@domain/repositories/client.repository';
+import { parseLocationCustom } from '@application/validators/client-address-location.validator';
+
+function toLocationCustomJson(
+  value: { country: string; department: string; province: string; district: string } | null | undefined,
+): Prisma.InputJsonValue | typeof Prisma.JsonNull | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return Prisma.JsonNull;
+  return value as Prisma.InputJsonValue;
+}
 
 @Injectable()
 export class ClientPrismaRepository implements ClientRepository {
@@ -44,6 +54,7 @@ export class ClientPrismaRepository implements ClientRepository {
                   addressType: 'FISCAL',
                   addressLine: data.address.addressLine.trim(),
                   districtId: data.address.districtId,
+                  locationCustom: toLocationCustomJson(data.address.locationCustom),
                   reference: data.address.reference?.trim() || null,
                   isPrimary: true,
                 },
@@ -91,6 +102,7 @@ export class ClientPrismaRepository implements ClientRepository {
             addressLine: primaryAddress.addressLine,
             districtId: primaryAddress.districtId,
             reference: primaryAddress.reference,
+            locationCustom: parseLocationCustom(primaryAddress.locationCustom),
             district: {
               id: primaryAddress.district.id,
               name: primaryAddress.district.name,
@@ -145,6 +157,9 @@ export class ClientPrismaRepository implements ClientRepository {
               addressLine: data.address.addressLine.trim(),
             }),
             ...(data.address.districtId !== undefined && { districtId: data.address.districtId }),
+            ...(data.address.locationCustom !== undefined && {
+              locationCustom: toLocationCustomJson(data.address.locationCustom),
+            }),
             ...(data.address.reference !== undefined && {
               reference: data.address.reference?.trim() || null,
             }),
@@ -160,6 +175,7 @@ export class ClientPrismaRepository implements ClientRepository {
               addressType: 'FISCAL',
               addressLine: line,
               districtId,
+              locationCustom: toLocationCustomJson(data.address.locationCustom),
               reference: data.address.reference?.trim() || null,
               isPrimary: true,
             },

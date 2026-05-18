@@ -6,6 +6,13 @@ export type ClientType =
   | 'CORPORATE';
 export type SalesPipelineStatus = 'PROSPECT' | 'INTERESTED' | 'CLIENT';
 
+export interface LocationCustom {
+  country: string;
+  department: string;
+  province: string;
+  district: string;
+}
+
 /** Cliente (propietario, inquilino o lead de ventas). */
 export class Client {
   constructor(
@@ -59,6 +66,7 @@ export class ClientDetail extends Client {
       addressLine: string;
       districtId: string;
       reference: string | null;
+      locationCustom: LocationCustom | null;
       district: {
         id: string;
         name: string;

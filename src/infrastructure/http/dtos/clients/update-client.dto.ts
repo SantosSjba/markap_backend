@@ -6,9 +6,12 @@ import {
   IsEnum,
   IsObject,
   ValidateNested,
+  ValidateIf,
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { UBIGEO_OTHER_DISTRICT_ID } from '@common/constants/ubigeo-other.constants';
+import { LocationCustomDto } from './location-custom.dto';
 
 class UpdateClientAddressDto {
   @ApiPropertyOptional({ description: 'Dirección completa' })
@@ -20,6 +23,15 @@ class UpdateClientAddressDto {
   @IsOptional()
   @IsString()
   districtId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Ubicación libre cuando distrito = Otros',
+  })
+  @ValidateIf((o) => o.districtId === UBIGEO_OTHER_DISTRICT_ID)
+  @IsObject()
+  @ValidateNested()
+  @Type(() => LocationCustomDto)
+  locationCustom?: LocationCustomDto | null;
 
   @ApiPropertyOptional({ description: 'Referencia' })
   @IsOptional()
