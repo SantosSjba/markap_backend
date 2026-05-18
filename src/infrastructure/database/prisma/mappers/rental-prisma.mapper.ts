@@ -6,6 +6,7 @@ export class RentalPrismaMapper {
     startDate: Date;
     property: { id: string; addressLine: string; code: string; owner: { id: string; fullName: string } };
     tenant: { id: string; fullName: string };
+    tenants?: { client: { id: string; fullName: string } }[];
     endDate: Date;
     currency: string;
     monthlyAmount: number | { toNumber?: () => number };
@@ -22,14 +23,19 @@ export class RentalPrismaMapper {
       if (v == null) return null;
       return typeof v === 'number' ? v : v.toNumber?.() ?? Number(v);
     };
+    const tenantClients =
+      r.tenants?.length ? r.tenants.map((rt) => rt.client) : [r.tenant];
+    const primary = tenantClients[0] ?? r.tenant;
+    const tenantName = tenantClients.map((t) => t.fullName).join(', ');
+
     return new RentalListItem(
       r.id,
       `ALQ-${year}-${shortId}`,
       r.property.id,
       r.property.addressLine,
       r.property.code,
-      r.tenant.id,
-      r.tenant.fullName,
+      primary.id,
+      tenantName,
       r.property.owner.id,
       r.property.owner.fullName,
       r.startDate,

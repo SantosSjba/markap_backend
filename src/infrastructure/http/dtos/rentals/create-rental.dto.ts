@@ -23,10 +23,18 @@ export class CreateRentalDto {
   @IsUUID()
   propertyId: string;
 
-  @ApiProperty({ description: 'ID del inquilino (cliente tipo TENANT)' })
+  @ApiPropertyOptional({ description: 'ID del inquilino principal (legacy)' })
+  @IsOptional()
   @IsString()
   @IsUUID()
-  tenantId: string;
+  tenantId?: string;
+
+  @ApiPropertyOptional({
+    description: 'IDs de inquilinos (JSON array o repetido en form-data)',
+    type: [String],
+  })
+  @IsOptional()
+  tenantIds?: string | string[];
 
   @ApiProperty({ description: 'Fecha de inicio (ISO)', example: '2025-01-01' })
   @IsDateString()

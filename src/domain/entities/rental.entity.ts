@@ -63,6 +63,7 @@ export class RentalDetail extends Rental {
       owner: { id: string; fullName: string };
     },
     public readonly tenant: { id: string; fullName: string },
+    public readonly tenants: { id: string; fullName: string }[],
     public readonly hasContract: boolean,
     public readonly hasDeliveryAct: boolean,
     public readonly attachments: RentalAttachment[],

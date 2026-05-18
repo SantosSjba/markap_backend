@@ -14,7 +14,9 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  BadRequestException,
 } from '@nestjs/common';
+import { parseTenantIds } from '@common/utils/parse-tenant-ids.util';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
@@ -154,6 +156,14 @@ export class RentalsController {
     @Body() dto: UpdateRentalDto,
     @UploadedFiles() files?: UploadedFilesMap<RentalFileField>,
   ) {
+    const tenantIds =
+      dto.tenantIds !== undefined
+        ? parseTenantIds(dto.tenantIds)
+        : undefined;
+    if (tenantIds !== undefined && tenantIds.length === 0) {
+      throw new BadRequestException('Debe indicar al menos un inquilino');
+    }
+
     const rental = await this.rental.updateRental({
       id,
       startDate: dto.startDate,
@@ -166,6 +176,7 @@ export class RentalsController {
       status: dto.status,
       enableExpirationAlerts: dto.enableExpirationAlerts,
       enableCollectionAlerts: dto.enableCollectionAlerts,
+      tenantIds,
     });
 
     const contractFile = getFirstFile(files?.contractFile);
@@ -246,10 +257,15 @@ export class RentalsController {
     @UploadedFiles()
     files?: UploadedFilesMap<RentalFileField>,
   ) {
+    const tenantIds = parseTenantIds(dto.tenantIds, dto.tenantId);
+    if (tenantIds.length === 0) {
+      throw new BadRequestException('Debe indicar al menos un inquilino');
+    }
+
     const rental = await this.rental.createRental({
       applicationSlug: dto.applicationSlug ?? 'alquileres',
       propertyId: dto.propertyId,
-      tenantId: dto.tenantId,
+      tenantIds,
       startDate: dto.startDate,
       endDate: dto.endDate,
       currency: dto.currency ?? 'PEN',
@@ -303,7 +319,7 @@ export class RentalsController {
         await this.notificationsService.notifyRentalCreated(
           rental.id,
           dto.applicationSlug ?? 'alquileres',
-          detail.tenant.fullName,
+          detail.tenants.map((t) => t.fullName).join(', '),
           detail.property.addressLine,
         );
       }

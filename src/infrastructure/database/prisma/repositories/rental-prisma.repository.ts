@@ -11,16 +11,35 @@ import type {
 import { RentalAttachment, RentalDetail, RentalStats } from '@domain/entities/rental.entity';
 import type { Rental } from '@domain/entities/rental.entity';
 
+const rentalTenantsInclude = {
+  tenants: {
+    include: { client: { select: { id: true, fullName: true } } },
+    orderBy: { sortOrder: 'asc' as const },
+  },
+};
+
+function resolveTenantClients(r: {
+  tenant?: { id: string; fullName: string };
+  tenants?: { client: { id: string; fullName: string } }[];
+}): { id: string; fullName: string }[] {
+  if (r.tenants?.length) {
+    return r.tenants.map((rt) => rt.client);
+  }
+  if (r.tenant) return [r.tenant];
+  return [];
+}
+
 @Injectable()
 export class RentalPrismaRepository implements RentalRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateRentalData): Promise<Rental> {
+    const primaryTenantId = data.tenantIds[0];
     const rental = await (this.prisma as any).rental.create({
       data: {
         applicationId: data.applicationId,
         propertyId: data.propertyId,
-        tenantId: data.tenantId,
+        tenantId: primaryTenantId,
         startDate: data.startDate,
         endDate: data.endDate,
         currency: data.currency,
@@ -30,6 +49,12 @@ export class RentalPrismaRepository implements RentalRepository {
         notes: data.notes?.trim() || null,
         enableExpirationAlerts: data.enableExpirationAlerts ?? true,
         enableCollectionAlerts: data.enableCollectionAlerts ?? true,
+        tenants: {
+          create: data.tenantIds.map((clientId, sortOrder) => ({
+            clientId,
+            sortOrder,
+          })),
+        },
       },
     });
     return RentalPrismaMapper.toDomain(rental);
@@ -55,6 +80,11 @@ export class RentalPrismaRepository implements RentalRepository {
         { property: { code: { contains: filters.search.trim() } } },
         { property: { addressLine: { contains: filters.search.trim() } } },
         { tenant: { fullName: { contains: filters.search.trim() } } },
+        {
+          tenants: {
+            some: { client: { fullName: { contains: filters.search.trim() } } },
+          },
+        },
         { property: { owner: { fullName: { contains: filters.search.trim() } } } },
       ];
     }
@@ -65,6 +95,7 @@ export class RentalPrismaRepository implements RentalRepository {
         include: {
           property: { select: { id: true, code: true, addressLine: true, ownerId: true, owner: { select: { id: true, fullName: true } } } },
           tenant: { select: { id: true, fullName: true } },
+          ...rentalTenantsInclude,
           attachments: { where: { type: 'CONTRACT' }, select: { id: true } },
         },
         orderBy: [{ startDate: 'desc' }, { createdAt: 'desc' }],
@@ -131,10 +162,12 @@ export class RentalPrismaRepository implements RentalRepository {
       include: {
         property: { select: { id: true, code: true, addressLine: true, ownerId: true, owner: { select: { id: true, fullName: true } } } },
         tenant: { select: { id: true, fullName: true } },
+        ...rentalTenantsInclude,
         attachments: { select: { id: true, type: true, filePath: true, originalFileName: true }, orderBy: { id: 'asc' } },
       },
     });
     if (!r) return null;
+    const tenantClients = resolveTenantClients(r);
     const year = r.startDate instanceof Date ? r.startDate.getFullYear() : new Date(r.startDate).getFullYear();
     const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
     const attachments: Array<{ id: string; type: string; filePath: string; originalFileName: string }> = r.attachments || [];
@@ -151,7 +184,8 @@ export class RentalPrismaRepository implements RentalRepository {
         ownerId: r.property.ownerId,
         owner: { id: r.property.owner.id, fullName: r.property.owner.fullName },
       },
-      { id: r.tenant.id, fullName: r.tenant.fullName },
+      tenantClients[0] ?? { id: r.tenant.id, fullName: r.tenant.fullName },
+      tenantClients,
       contractCount > 0,
       deliveryCount > 0,
       attachments.map(
@@ -187,6 +221,7 @@ export class RentalPrismaRepository implements RentalRepository {
         ...activeRental,
         OR: [
           { tenantId: clientId },
+          { tenants: { some: { clientId } } },
           {
             property: {
               ownerId: clientId,
@@ -200,24 +235,41 @@ export class RentalPrismaRepository implements RentalRepository {
   }
 
   async update(id: string, data: UpdateRentalData): Promise<Rental> {
-    const r = await (this.prisma as any).rental.update({
-      where: { id },
-      data: {
-        ...(data.startDate != null && { startDate: data.startDate }),
-        ...(data.endDate != null && { endDate: data.endDate }),
-        ...(data.currency != null && { currency: data.currency }),
-        ...(data.monthlyAmount != null && { monthlyAmount: data.monthlyAmount }),
-        ...(data.securityDeposit !== undefined && { securityDeposit: data.securityDeposit }),
-        ...(data.paymentDueDay != null && { paymentDueDay: data.paymentDueDay }),
-        ...(data.notes !== undefined && { notes: data.notes?.trim() || null }),
-        ...(data.status != null && { status: data.status }),
-        ...(data.enableExpirationAlerts !== undefined && {
-          enableExpirationAlerts: data.enableExpirationAlerts,
-        }),
-        ...(data.enableCollectionAlerts !== undefined && {
-          enableCollectionAlerts: data.enableCollectionAlerts,
-        }),
-      },
+    const patch: Record<string, unknown> = {
+      ...(data.startDate != null && { startDate: data.startDate }),
+      ...(data.endDate != null && { endDate: data.endDate }),
+      ...(data.currency != null && { currency: data.currency }),
+      ...(data.monthlyAmount != null && { monthlyAmount: data.monthlyAmount }),
+      ...(data.securityDeposit !== undefined && { securityDeposit: data.securityDeposit }),
+      ...(data.paymentDueDay != null && { paymentDueDay: data.paymentDueDay }),
+      ...(data.notes !== undefined && { notes: data.notes?.trim() || null }),
+      ...(data.status != null && { status: data.status }),
+      ...(data.enableExpirationAlerts !== undefined && {
+        enableExpirationAlerts: data.enableExpirationAlerts,
+      }),
+      ...(data.enableCollectionAlerts !== undefined && {
+        enableCollectionAlerts: data.enableCollectionAlerts,
+      }),
+    };
+
+    if (data.tenantIds?.length) {
+      patch.tenantId = data.tenantIds[0];
+    }
+
+    const r = await this.prisma.$transaction(async (tx) => {
+      if (data.tenantIds?.length) {
+        await (tx as any).rentalTenant.deleteMany({ where: { rentalId: id } });
+        patch.tenants = {
+          create: data.tenantIds.map((clientId, sortOrder) => ({
+            clientId,
+            sortOrder,
+          })),
+        };
+      }
+      return (tx as any).rental.update({
+        where: { id },
+        data: patch,
+      });
     });
     return RentalPrismaMapper.toDomain(r);
   }

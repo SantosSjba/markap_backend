@@ -39,7 +39,8 @@ model Client {
   assignedAgent     Agent?      @relation("ClientAssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
   addresses         Address[]
   propertiesAsOwner Property[]
-  rentalsAsTenant   Rental[]
+  rentalsAsTenant   Rental[]       @relation("RentalPrimaryTenant")
+  rentalTenants     RentalTenant[] @relation("RentalTenants")
   saleProcessesAsBuyer SaleProcess[] @relation("SaleProcessBuyer")
   saleSeparationsAsBuyer SaleSeparation[] @relation("SaleSeparationBuyer")
   saleClosingsAsBuyer    SaleClosing[] @relation("SaleClosingBuyer")

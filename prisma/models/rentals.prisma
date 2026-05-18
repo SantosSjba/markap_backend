@@ -30,7 +30,8 @@ model Rental {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   property    Property    @relation(fields: [propertyId], references: [id], onDelete: Restrict)
-  tenant      Client      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  tenant      Client      @relation("RentalPrimaryTenant", fields: [tenantId], references: [id], onDelete: Restrict)
+  tenants     RentalTenant[]
 
   attachments     RentalAttachment[]
   financialConfig RentalFinancialConfig?
@@ -109,6 +110,21 @@ model Payment {
   @@index([status])
   @@index([dueDate])
   @@map("payments")
+}
+
+model RentalTenant {
+  id        String @id @default(uuid())
+  rentalId  String @map("rental_id")
+  clientId  String @map("client_id")
+  sortOrder Int    @default(0) @map("sort_order")
+
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  client Client @relation("RentalTenants", fields: [clientId], references: [id], onDelete: Restrict)
+
+  @@unique([rentalId, clientId])
+  @@index([rentalId])
+  @@index([clientId])
+  @@map("rental_tenants")
 }
 
 model RentalAttachment {

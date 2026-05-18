@@ -11,6 +11,7 @@ export interface CreateRentalData {
   applicationId: string;
   propertyId: string;
   tenantId: string;
+  tenantIds: string[];
   startDate: Date;
   endDate: Date;
   currency: string;
@@ -48,6 +49,7 @@ export interface UpdateRentalData {
   status?: string;
   enableExpirationAlerts?: boolean;
   enableCollectionAlerts?: boolean;
+  tenantIds?: string[];
 }
 
 export interface RentalRepository {

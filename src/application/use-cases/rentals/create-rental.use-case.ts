@@ -10,7 +10,7 @@ export interface CreateRentalInput {
   applicationSlug?: string;
   applicationId?: string;
   propertyId: string;
-  tenantId: string;
+  tenantIds: string[];
   startDate: string; // ISO date
   endDate: string;
   currency: string;
@@ -58,7 +58,8 @@ export class CreateRentalUseCase {
     const rental = await this.rentalRepository.create({
       applicationId,
       propertyId: input.propertyId,
-      tenantId: input.tenantId,
+      tenantIds: input.tenantIds,
+      tenantId: input.tenantIds[0],
       startDate: new Date(input.startDate),
       endDate: new Date(input.endDate),
       currency: monthly.currency,

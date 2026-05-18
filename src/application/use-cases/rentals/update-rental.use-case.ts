@@ -17,6 +17,7 @@ export interface UpdateRentalInput {
   status?: string;
   enableExpirationAlerts?: boolean;
   enableCollectionAlerts?: boolean;
+  tenantIds?: string[];
 }
 
 @Injectable()
@@ -45,6 +46,9 @@ export class UpdateRentalUseCase {
     }
     if (input.enableCollectionAlerts !== undefined) {
       data.enableCollectionAlerts = input.enableCollectionAlerts;
+    }
+    if (input.tenantIds !== undefined) {
+      data.tenantIds = input.tenantIds;
     }
     return this.rentalRepository.update(input.id, data);
   }

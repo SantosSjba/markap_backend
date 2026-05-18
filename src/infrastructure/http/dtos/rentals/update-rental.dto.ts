@@ -8,6 +8,7 @@ import {
   IsDateString,
   IsIn,
   IsBoolean,
+  IsUUID,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { parseOptionalBoolean } from '@common/utils/parse-boolean.util';
@@ -73,4 +74,11 @@ export class UpdateRentalDto {
   @Transform(({ value }) => parseOptionalBoolean(value))
   @IsBoolean()
   enableCollectionAlerts?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'IDs de inquilinos del contrato',
+    type: [String],
+  })
+  @IsOptional()
+  tenantIds?: string | string[];
 }
