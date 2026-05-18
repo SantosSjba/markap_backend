@@ -36,7 +36,7 @@ export interface CreateClientData {
   legalRepresentativePosition?: string | null;
   primaryPhone: string;
   secondaryPhone?: string | null;
-  primaryEmail: string;
+  primaryEmail: string | null;
   secondaryEmail?: string | null;
   notes?: string | null;
   salesStatus?: SalesPipelineStatus | null;
@@ -59,7 +59,7 @@ export interface UpdateClientData {
   legalRepresentativePosition?: string | null;
   primaryPhone?: string;
   secondaryPhone?: string | null;
-  primaryEmail?: string;
+  primaryEmail?: string | null;
   secondaryEmail?: string | null;
   notes?: string | null;
   salesStatus?: SalesPipelineStatus | null;

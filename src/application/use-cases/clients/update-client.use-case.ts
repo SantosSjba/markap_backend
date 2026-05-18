@@ -6,6 +6,7 @@ import type { ApplicationRepository } from '@domain/repositories/application.rep
 import type { PropertyRepository } from '@domain/repositories/property.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { assertClientAddressLocation } from '@application/validators/client-address-location.validator';
+import { Email } from '@domain/value-objects';
 
 import { AGENT_REPOSITORY, APPLICATION_REPOSITORY, CLIENT_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
 
@@ -67,7 +68,19 @@ export class UpdateClientUseCase {
       }
     }
 
-    let payload = data;
+    let payload: UpdateClientData = { ...data };
+
+    if (data.primaryEmail !== undefined) {
+      const clientType = data.clientType ?? existing.clientType;
+      const isAlquileresClient = clientType === 'OWNER' || clientType === 'TENANT';
+      payload.primaryEmail = isAlquileresClient
+        ? Email.optional(data.primaryEmail)
+        : Email.create(data.primaryEmail ?? '').value;
+      if (!isAlquileresClient && !payload.primaryEmail) {
+        throw new BadRequestException('El email principal es obligatorio');
+      }
+    }
+
     if (data.address) {
       const districtId =
         data.address.districtId ?? existing.primaryAddress?.districtId;

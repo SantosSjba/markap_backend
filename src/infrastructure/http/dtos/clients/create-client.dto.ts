@@ -87,9 +87,10 @@ export class CreateClientDto {
   @IsString()
   secondaryPhone?: string | null;
 
-  @ApiProperty({ description: 'Email principal' })
+  @ApiPropertyOptional({ description: 'Email principal (opcional en alquileres)' })
+  @IsOptional()
   @IsString()
-  primaryEmail: string;
+  primaryEmail?: string | null;
 
   @ApiPropertyOptional({ description: 'Email secundario' })
   @IsOptional()

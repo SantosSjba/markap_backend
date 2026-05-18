@@ -14,7 +14,7 @@ model Client {
 
   primaryPhone   String  @map("primary_phone")
   secondaryPhone String? @map("secondary_phone")
-  primaryEmail   String  @map("primary_email")
+  primaryEmail   String? @map("primary_email")
   secondaryEmail String? @map("secondary_email")
 
   notes String? @db.Text

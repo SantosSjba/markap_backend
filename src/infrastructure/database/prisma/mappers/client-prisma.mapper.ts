@@ -12,7 +12,7 @@ type ClientRow = {
   legalRepresentativePosition: string | null;
   primaryPhone: string;
   secondaryPhone: string | null;
-  primaryEmail: string;
+  primaryEmail: string | null;
   secondaryEmail: string | null;
   notes: string | null;
   salesStatus: string | null;

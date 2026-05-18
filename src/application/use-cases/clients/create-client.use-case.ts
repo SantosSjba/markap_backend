@@ -20,7 +20,7 @@ export interface CreateClientInput {
   legalRepresentativePosition?: string | null;
   primaryPhone: string;
   secondaryPhone?: string | null;
-  primaryEmail: string;
+  primaryEmail?: string | null;
   secondaryEmail?: string | null;
   notes?: string | null;
   salesStatus?: SalesPipelineStatus | null;
@@ -126,7 +126,14 @@ export class CreateClientUseCase {
       input.clientType === 'BUYER' ? input.salesStatus ?? 'PROSPECT' : null;
 
     const primaryPhone = Phone.create(input.primaryPhone).value;
-    const primaryEmail = Email.create(input.primaryEmail).value;
+    const isAlquileresClient =
+      input.clientType === 'OWNER' || input.clientType === 'TENANT';
+    const primaryEmail = isAlquileresClient
+      ? Email.optional(input.primaryEmail)
+      : Email.create(input.primaryEmail ?? '').value;
+    if (!isAlquileresClient && !primaryEmail) {
+      throw new BadRequestException('El email principal es obligatorio');
+    }
     const secondary = Phone.optional(input.secondaryPhone);
 
     let address = input.address;
