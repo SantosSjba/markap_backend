@@ -78,7 +78,7 @@ export class AgentPrismaRepository implements AgentRepository {
           user: { select: { id: true, firstName: true, lastName: true } },
           documentType: { select: { code: true, name: true } },
         },
-        orderBy: { fullName: 'asc' },
+        orderBy: { createdAt: 'desc' },
         skip: (filters.page - 1) * filters.limit,
         take: filters.limit,
       }),

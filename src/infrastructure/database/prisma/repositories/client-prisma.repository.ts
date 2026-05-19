@@ -261,7 +261,7 @@ export class ClientPrismaRepository implements ClientRepository {
           documentType: true,
           assignedAgent: { select: { id: true, fullName: true } },
         },
-        orderBy: { fullName: 'asc' },
+        orderBy: { createdAt: 'desc' },
         skip: (filters.page - 1) * filters.limit,
         take: filters.limit,
       }),

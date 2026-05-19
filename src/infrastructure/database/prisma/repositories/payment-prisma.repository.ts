@@ -141,7 +141,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
           },
         },
       },
-      orderBy: [{ dueDate: 'asc' }, { rental: { tenant: { fullName: 'asc' } } }],
+      orderBy: [{ createdAt: 'desc' }, { dueDate: 'desc' }],
     });
 
     const today = new Date();
@@ -240,7 +240,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
             },
           },
         },
-        orderBy: { paidDate: 'desc' },
+        orderBy: [{ paidDate: 'desc' }, { createdAt: 'desc' }],
       }),
       this.prisma.payment.count({ where }),
     ]);
@@ -328,7 +328,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
           },
         },
       },
-      orderBy: { dueDate: 'asc' },
+      orderBy: [{ createdAt: 'desc' }, { dueDate: 'desc' }],
     });
 
     // Pre-fetch lastCommunicationNote/Date for rentals in the result set
@@ -380,7 +380,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
       // Último pago pagado
       const lastPaidPayment = await this.prisma.payment.findFirst({
         where: { rentalId: rental.id, status: 'PAID' },
-        orderBy: { paidDate: 'desc' },
+        orderBy: [{ paidDate: 'desc' }, { createdAt: 'desc' }],
         select: { paidDate: true },
       });
 

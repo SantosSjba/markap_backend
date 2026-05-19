@@ -104,7 +104,7 @@ export class RentalPrismaRepository implements RentalRepository {
           ...rentalTenantsInclude,
           attachments: { where: { type: 'CONTRACT' }, select: { id: true } },
         },
-        orderBy: [{ startDate: 'desc' }, { createdAt: 'desc' }],
+        orderBy: [{ createdAt: 'desc' }, { startDate: 'desc' }],
         skip: (filters.page - 1) * filters.limit,
         take: filters.limit,
       }),

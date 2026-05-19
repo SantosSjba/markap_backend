@@ -124,7 +124,7 @@ export class ReportPrismaRepository implements ReportRepository {
       include: {
         owner: { select: { fullName: true } },
       },
-      orderBy: { code: 'asc' },
+      orderBy: { createdAt: 'desc' },
     });
 
     return properties.map((p: any) => ReportPrismaMapper.toPropertyWithoutContractItem(p));
@@ -156,6 +156,7 @@ export class ReportPrismaRepository implements ReportRepository {
     const clients = await (this.prisma as any).client.findMany({
       where: { id: { in: tenantIds }, deletedAt: null },
       select: { id: true, fullName: true },
+      orderBy: { createdAt: 'desc' },
     });
     const countByTenant = Object.fromEntries(
       tenantsWithActive.map((g: any) => [g.tenantId, g._count.id]),

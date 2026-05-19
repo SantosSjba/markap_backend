@@ -111,7 +111,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
           district: { select: { name: true } },
           propertyType: { select: { name: true } },
         },
-        orderBy: { code: 'asc' },
+        orderBy: { createdAt: 'desc' },
         skip: (filters.page - 1) * filters.limit,
         take: filters.limit,
       }),
