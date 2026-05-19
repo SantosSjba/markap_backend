@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { containsI } from '@common/utils/prisma-contains-insensitive.util';
 import { GenArchivoService } from '@application/services/gen-archivo.service';
 import { PrismaService } from '../prisma.service';
 import { RentalPrismaMapper } from '../mappers/rental-prisma.mapper';
@@ -80,16 +81,17 @@ export class RentalPrismaRepository implements RentalRepository {
       where.status = filters.status;
     }
     if (filters.search?.trim()) {
+      const q = filters.search.trim();
       where.OR = [
-        { property: { code: { contains: filters.search.trim() } } },
-        { property: { addressLine: { contains: filters.search.trim() } } },
-        { tenant: { fullName: { contains: filters.search.trim() } } },
+        { property: { code: containsI(q) } },
+        { property: { addressLine: containsI(q) } },
+        { tenant: { fullName: containsI(q) } },
         {
           tenants: {
-            some: { client: { fullName: { contains: filters.search.trim() } } },
+            some: { client: { fullName: containsI(q) } },
           },
         },
-        { property: { owner: { fullName: { contains: filters.search.trim() } } } },
+        { property: { owner: { fullName: containsI(q) } } },
       ];
     }
 

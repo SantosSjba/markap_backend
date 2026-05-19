@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { containsI } from '@common/utils/prisma-contains-insensitive.util';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { ClientPrismaMapper } from '../mappers/client-prisma.mapper';
@@ -244,9 +245,9 @@ export class ClientPrismaRepository implements ClientRepository {
       const q = filters.search.trim();
       andParts.push({
         OR: [
-          { fullName: { contains: q } },
-          { documentNumber: { contains: q } },
-          { primaryEmail: { contains: q } },
+          { fullName: containsI(q) },
+          { documentNumber: containsI(q) },
+          { primaryEmail: containsI(q) },
         ],
       });
     }

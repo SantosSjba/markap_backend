@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { containsI } from '@common/utils/prisma-contains-insensitive.util';
 import { PrismaService } from '../prisma.service';
 import { PaymentPrismaMapper } from '../mappers/payment-prisma.mapper';
 import type {
@@ -117,11 +118,11 @@ export class PaymentPrismaRepository implements PaymentRepository {
           applicationId: app.id,
           status: 'ACTIVE',
           deletedAt: null,
-          ...(filters.search
+          ...(filters.search?.trim()
             ? {
                 OR: [
-                  { tenant: { fullName: { contains: filters.search } } },
-                  { property: { addressLine: { contains: filters.search } } },
+                  { tenant: { fullName: containsI(filters.search.trim()) } },
+                  { property: { addressLine: containsI(filters.search.trim()) } },
                 ],
               }
             : {}),
@@ -206,20 +207,19 @@ export class PaymentPrismaRepository implements PaymentRepository {
     if (filters.periodYear) where.periodYear = filters.periodYear;
     if (filters.periodMonth) where.periodMonth = filters.periodMonth;
     if (filters.paymentMethod) where.paymentMethod = filters.paymentMethod;
-    if (filters.search) {
+    if (filters.search?.trim()) {
+      const q = filters.search.trim();
       where.rental = {
         ...where.rental,
         OR: [
-          { tenant: { fullName: { contains: filters.search } } },
-          { property: { addressLine: { contains: filters.search } } },
+          { tenant: { fullName: containsI(q) } },
+          { property: { addressLine: containsI(q) } },
         ],
       };
-      if (filters.search) {
-        where.OR = [
-          ...(where.OR ?? []),
-          { referenceNumber: { contains: filters.search } },
-        ];
-      }
+      where.OR = [
+        ...(where.OR ?? []),
+        { referenceNumber: containsI(q) },
+      ];
     }
 
     const [payments, total] = await Promise.all([
@@ -293,12 +293,13 @@ export class PaymentPrismaRepository implements PaymentRepository {
       rental: { applicationId: app.id, status: 'ACTIVE', deletedAt: null },
     };
 
-    if (search) {
+    if (search?.trim()) {
+      const q = search.trim();
       where.rental = {
         ...where.rental,
         OR: [
-          { tenant: { fullName: { contains: search } } },
-          { property: { addressLine: { contains: search } } },
+          { tenant: { fullName: containsI(q) } },
+          { property: { addressLine: containsI(q) } },
         ],
       };
     }

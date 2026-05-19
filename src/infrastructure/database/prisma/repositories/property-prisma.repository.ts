@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { containsI } from '@common/utils/prisma-contains-insensitive.util';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { PropertyPrismaMapper } from '../mappers/property-prisma.mapper';
@@ -95,10 +96,10 @@ export class PropertyPrismaRepository implements PropertyRepository {
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       where.OR = [
-        { code: { contains: q } },
-        { addressLine: { contains: q } },
-        { projectName: { contains: q } },
-        { owner: { fullName: { contains: q } } },
+        { code: containsI(q) },
+        { addressLine: containsI(q) },
+        { projectName: containsI(q) },
+        { owner: { fullName: containsI(q) } },
       ];
     }
 

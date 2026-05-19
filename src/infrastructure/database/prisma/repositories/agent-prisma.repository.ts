@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { containsI } from '@common/utils/prisma-contains-insensitive.util';
 import { PrismaService } from '../prisma.service';
 import { AgentPrismaMapper } from '../mappers/agent-prisma.mapper';
 import type { Agent, AgentListItem } from '@domain/entities/agent.entity';
@@ -63,10 +64,10 @@ export class AgentPrismaRepository implements AgentRepository {
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       where.OR = [
-        { fullName: { contains: q } },
-        { email: { contains: q } },
-        { phone: { contains: q } },
-        { documentNumber: { contains: q } },
+        { fullName: containsI(q) },
+        { email: containsI(q) },
+        { phone: containsI(q) },
+        { documentNumber: containsI(q) },
       ];
     }
 
