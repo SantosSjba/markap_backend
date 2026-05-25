@@ -126,12 +126,14 @@ export class CreateClientUseCase {
       input.clientType === 'BUYER' ? input.salesStatus ?? 'PROSPECT' : null;
 
     const primaryPhone = Phone.create(input.primaryPhone).value;
-    const isAlquileresClient =
-      input.clientType === 'OWNER' || input.clientType === 'TENANT';
-    const primaryEmail = isAlquileresClient
+    const isPrimaryEmailOptional =
+      input.clientType === 'OWNER' ||
+      input.clientType === 'TENANT' ||
+      input.clientType === 'BUYER';
+    const primaryEmail = isPrimaryEmailOptional
       ? Email.optional(input.primaryEmail)
       : Email.create(input.primaryEmail ?? '').value;
-    if (!isAlquileresClient && !primaryEmail) {
+    if (!isPrimaryEmailOptional && !primaryEmail) {
       throw new BadRequestException('El email principal es obligatorio');
     }
     const secondary = Phone.optional(input.secondaryPhone);

@@ -72,11 +72,14 @@ export class UpdateClientUseCase {
 
     if (data.primaryEmail !== undefined) {
       const clientType = data.clientType ?? existing.clientType;
-      const isAlquileresClient = clientType === 'OWNER' || clientType === 'TENANT';
-      payload.primaryEmail = isAlquileresClient
+      const isPrimaryEmailOptional =
+        clientType === 'OWNER' ||
+        clientType === 'TENANT' ||
+        clientType === 'BUYER';
+      payload.primaryEmail = isPrimaryEmailOptional
         ? Email.optional(data.primaryEmail)
         : Email.create(data.primaryEmail ?? '').value;
-      if (!isAlquileresClient && !payload.primaryEmail) {
+      if (!isPrimaryEmailOptional && !payload.primaryEmail) {
         throw new BadRequestException('El email principal es obligatorio');
       }
     }
