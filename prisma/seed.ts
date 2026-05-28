@@ -14,6 +14,7 @@ import {
   seedDemoVentas,
   seedDocumentTypes,
   seedCurrencies,
+  seedSaleFinancingChannels,
   seedPropertyTypes,
   seedRolesAndApplications,
   seedUbigeo,
@@ -45,6 +46,7 @@ async function main() {
   const { adminUser } = await seedAdminUser(prisma, adminRoleId);
   await seedDocumentTypes(prisma);
   await seedCurrencies(prisma);
+  await seedSaleFinancingChannels(prisma);
   await seedUbigeo(prisma);
   await seedPropertyTypes(prisma);
   await seedDemoAlquileres(prisma, appIdBySlug, adminUser);

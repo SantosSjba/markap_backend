@@ -54,6 +54,7 @@ export interface VentasSalesRepository {
     agentId?: string | null;
     pipelineStage: VentasPipelineStage;
     title?: string | null;
+    financingChannelId?: string | null;
   }): Promise<{ id: string }>;
 
   listSaleProcesses(
@@ -73,9 +74,12 @@ export interface VentasSalesRepository {
       status?: VentasSaleProcessStatus;
       agentId?: string | null;
       title?: string | null;
+      financingChannelId?: string | null;
       closedAt?: Date | null;
     },
   ): Promise<unknown>;
+
+  listSaleFinancingChannels(): Promise<unknown[]>;
 
   addSaleProcessNote(
     saleProcessId: string,

@@ -1,5 +1,6 @@
 export { APPLICATIONS } from './applications';
 export { CURRENCIES } from './currencies';
+export { SALE_FINANCING_CHANNELS } from './sale-financing-channels';
 export { DOCUMENT_TYPES } from './document-types';
 export { ALQUILERES_CHILD_MENUS, ALQUILERES_PARENT_MENUS } from './menus-alquileres';
 export {

@@ -52,6 +52,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     agentId?: string | null;
     pipelineStage: VentasPipelineStage;
     title?: string | null;
+    financingChannelId?: string | null;
   }): Promise<{ id: string }> {
     const row = await this.prisma.$transaction(async (tx) => {
       const created = await tx.saleProcess.create({
@@ -64,6 +65,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           pipelineStage: data.pipelineStage,
           status: 'ACTIVE',
           title: data.title?.trim() || null,
+          financingChannelId: data.financingChannelId ?? null,
         },
         select: { id: true },
       });
@@ -169,9 +171,11 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           select: {
             id: true,
             fullName: true,
+            documentNumber: true,
             primaryPhone: true,
             primaryEmail: true,
             clientType: true,
+            documentType: { select: { name: true } },
           },
         },
         buyers: {
@@ -180,9 +184,11 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
               select: {
                 id: true,
                 fullName: true,
+                documentNumber: true,
                 primaryPhone: true,
                 primaryEmail: true,
                 clientType: true,
+                documentType: { select: { name: true } },
               },
             },
           },
@@ -194,9 +200,11 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
               select: {
                 id: true,
                 fullName: true,
+                documentNumber: true,
                 primaryPhone: true,
                 primaryEmail: true,
                 clientType: true,
+                documentType: { select: { name: true } },
               },
             },
           },
@@ -208,8 +216,28 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
             code: true,
             addressLine: true,
             salePrice: true,
+            saleCurrency: true,
+            projectName: true,
             listingStatus: true,
+            area: true,
+            bedrooms: true,
+            bathrooms: true,
+            propertyType: { select: { name: true } },
+            district: {
+              select: {
+                name: true,
+                province: {
+                  select: {
+                    name: true,
+                    department: { select: { name: true } },
+                  },
+                },
+              },
+            },
           },
+        },
+        financingChannel: {
+          select: { id: true, code: true, name: true, category: true },
         },
         agent: { select: { id: true, fullName: true } },
         notes: { orderBy: { createdAt: 'desc' } },
@@ -232,6 +260,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       status?: VentasSaleProcessStatus;
       agentId?: string | null;
       title?: string | null;
+      financingChannelId?: string | null;
       closedAt?: Date | null;
     },
   ): Promise<unknown> {
@@ -242,8 +271,19 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
         ...(data.status !== undefined && { status: data.status }),
         ...(data.agentId !== undefined && { agentId: data.agentId }),
         ...(data.title !== undefined && { title: data.title }),
+        ...(data.financingChannelId !== undefined && {
+          financingChannelId: data.financingChannelId,
+        }),
         ...(data.closedAt !== undefined && { closedAt: data.closedAt }),
       },
+    });
+  }
+
+  async listSaleFinancingChannels(): Promise<unknown[]> {
+    return this.prisma.saleFinancingChannel.findMany({
+      where: { isActive: true },
+      orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
+      select: { id: true, code: true, name: true, category: true, sortOrder: true },
     });
   }
 

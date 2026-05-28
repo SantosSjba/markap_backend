@@ -26,6 +26,9 @@ import {
 import type { VentasFinanzasRepository } from '@domain/repositories/ventas-finanzas.repository';
 import type { VentasComplianceRepository } from '@domain/repositories/ventas-compliance.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
+import { assertActiveSaleFinancingChannel } from '@application/validators/sale-financing-channel.validator';
+import { mapSaleProcessDetail } from '@infrastructure/http/mappers/ventas-sale-process.mapper';
 
 const VENTAS_SLUG = 'ventas';
 
@@ -70,7 +73,12 @@ export class VentasSalesOperationsService {
     private readonly clientRepository: ClientRepository,
     @Inject(AGENT_REPOSITORY)
     private readonly agentRepository: AgentRepository,
+    private readonly prisma: PrismaService,
   ) {}
+
+  async listFinancingChannels() {
+    return this.ventasSales.listSaleFinancingChannels();
+  }
 
   private async resolveVentasApplicationId(applicationSlug?: string): Promise<string> {
     assertVentasApp(applicationSlug ?? VENTAS_SLUG);
@@ -94,6 +102,7 @@ export class VentasSalesOperationsService {
       agentId?: string | null;
       title?: string | null;
       pipelineStage?: string;
+      financingChannelId?: string | null;
     },
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
@@ -155,6 +164,11 @@ export class VentasSalesOperationsService {
       stage = body.pipelineStage;
     }
 
+    const financingChannelId = await assertActiveSaleFinancingChannel(
+      this.prisma,
+      body.financingChannelId,
+    );
+
     const code = await this.ventasSales.nextProcessCode(applicationId);
     return this.ventasSales.createSaleProcess({
       applicationId,
@@ -166,6 +180,7 @@ export class VentasSalesOperationsService {
       agentId: body.agentId ?? null,
       pipelineStage: stage,
       title: body.title ?? null,
+      financingChannelId,
     });
   }
 
@@ -173,7 +188,7 @@ export class VentasSalesOperationsService {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
     const row = await this.ventasSales.getSaleProcessById(id, applicationId);
     if (!row) throw new EntityNotFoundException('SaleProcess', id);
-    return row;
+    return mapSaleProcessDetail(row as Record<string, unknown>);
   }
 
   async updateProcess(
@@ -184,6 +199,7 @@ export class VentasSalesOperationsService {
       status?: 'ACTIVE' | 'WON' | 'LOST';
       agentId?: string | null;
       title?: string | null;
+      financingChannelId?: string | null;
     },
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
@@ -212,8 +228,16 @@ export class VentasSalesOperationsService {
     }
     if (body.agentId !== undefined) patch.agentId = body.agentId;
     if (body.title !== undefined) patch.title = body.title;
+    if (body.financingChannelId !== undefined) {
+      patch.financingChannelId = await assertActiveSaleFinancingChannel(
+        this.prisma,
+        body.financingChannelId,
+      );
+    }
 
-    return this.ventasSales.updateSaleProcess(id, applicationId, patch);
+    const updated = await this.ventasSales.updateSaleProcess(id, applicationId, patch);
+    const detail = await this.ventasSales.getSaleProcessById(id, applicationId);
+    return detail ? mapSaleProcessDetail(detail as Record<string, unknown>) : updated;
   }
 
   async addNote(

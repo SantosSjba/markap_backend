@@ -35,6 +35,12 @@ export class VentasSalesController {
     private readonly genArchivo: GenArchivoService,
   ) {}
 
+  @Get('financing-channels')
+  @ApiOperation({ summary: 'Catálogo de bancos y medios de pago (proceso de venta)' })
+  listFinancingChannels() {
+    return this.ventasSales.listFinancingChannels();
+  }
+
   @Get('processes')
   @ApiOperation({ summary: 'Listar procesos de venta (pipeline CRM)' })
   @ApiQuery({ name: 'applicationSlug', required: false })
@@ -75,6 +81,7 @@ export class VentasSalesController {
       agentId?: string | null;
       title?: string | null;
       pipelineStage?: string;
+      financingChannelId?: string | null;
     },
   ) {
     return this.ventasSales.createProcess(applicationSlug, body);
@@ -102,6 +109,7 @@ export class VentasSalesController {
       status?: 'ACTIVE' | 'WON' | 'LOST';
       agentId?: string | null;
       title?: string | null;
+      financingChannelId?: string | null;
     },
   ) {
     return this.ventasSales.updateProcess(id, applicationSlug, body);

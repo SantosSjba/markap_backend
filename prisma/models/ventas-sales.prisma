@@ -14,6 +14,8 @@ model SaleProcess {
   /// ACTIVE | WON | LOST
   status         String @default("ACTIVE")
   title          String?
+  /// Medio de pago / banco con el que se gestiona la venta (catálogo sale_financing_channels)
+  financingChannelId String? @map("financing_channel_id")
   closedAt       DateTime? @map("closed_at")
 
   createdAt DateTime  @default(now()) @map("created_at")
@@ -24,6 +26,7 @@ model SaleProcess {
   buyer       Client      @relation("SaleProcessBuyer", fields: [buyerClientId], references: [id], onDelete: Restrict)
   property    Property    @relation(fields: [propertyId], references: [id], onDelete: Restrict)
   agent       Agent?      @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  financingChannel SaleFinancingChannel? @relation(fields: [financingChannelId], references: [id], onDelete: SetNull)
 
   notes       SaleProcessNote[]
   activities  SaleProcessActivity[]
