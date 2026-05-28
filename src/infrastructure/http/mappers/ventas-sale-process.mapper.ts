@@ -26,6 +26,46 @@ type OwnerLink = {
   };
 };
 
+type OwnerClientShape = OwnerLink['owner'];
+
+type PropertyOwnerLinkRow = {
+  isPrimary?: boolean;
+  owner: OwnerClientShape;
+};
+
+function mapParticipantClient(client: OwnerClientShape, isPrimary?: boolean) {
+  return {
+    id: client.id,
+    fullName: client.fullName,
+    documentNumber: client.documentNumber,
+    documentTypeName: client.documentType?.name ?? null,
+    primaryPhone: client.primaryPhone,
+    primaryEmail: client.primaryEmail,
+    clientType: client.clientType,
+    ...(isPrimary !== undefined ? { isPrimary } : {}),
+  };
+}
+
+function ownersFromPropertyRecord(property: Record<string, unknown>): ReturnType<typeof mapParticipantClient>[] {
+  const seen = new Set<string>();
+  const out: ReturnType<typeof mapParticipantClient>[] = [];
+
+  const push = (client: OwnerClientShape | null | undefined) => {
+    if (!client?.id || seen.has(client.id)) return;
+    seen.add(client.id);
+    out.push(mapParticipantClient(client));
+  };
+
+  push(property.owner as OwnerClientShape | null | undefined);
+
+  const links = (property.owners as PropertyOwnerLinkRow[] | undefined) ?? [];
+  for (const link of links) {
+    push(link.owner);
+  }
+
+  return out;
+}
+
 function mapCommissionRow(c: Record<string, unknown>) {
   const amount = prismaAmountToNumber(c.amount);
   const deductiblesRaw = (c.deductibles as Record<string, unknown>[] | undefined) ?? [];
@@ -78,25 +118,15 @@ export function mapSaleProcessDetail(row: Record<string, unknown>): Record<strin
     (row.commission ? [row.commission as Record<string, unknown>] : []);
 
   const buyers = buyersRaw.map((l) => ({
-    id: l.buyer.id,
-    fullName: l.buyer.fullName,
-    documentNumber: l.buyer.documentNumber,
-    documentTypeName: l.buyer.documentType?.name ?? null,
-    primaryPhone: l.buyer.primaryPhone,
-    primaryEmail: l.buyer.primaryEmail,
-    clientType: l.buyer.clientType,
+    ...mapParticipantClient(l.buyer),
     isPrimary: l.isPrimary,
   }));
 
-  const owners = ownersRaw.map((l) => ({
-    id: l.owner.id,
-    fullName: l.owner.fullName,
-    documentNumber: l.owner.documentNumber,
-    documentTypeName: l.owner.documentType?.name ?? null,
-    primaryPhone: l.owner.primaryPhone,
-    primaryEmail: l.owner.primaryEmail,
-    clientType: l.owner.clientType,
-  }));
+  let owners = ownersRaw.map((l) => mapParticipantClient(l.owner));
+
+  if (!owners.length && property) {
+    owners = ownersFromPropertyRecord(property);
+  }
 
   const commissions = commissionsRaw.map(mapCommissionRow);
 
@@ -115,6 +145,8 @@ export function mapSaleProcessDetail(row: Record<string, unknown>): Record<strin
         district.province?.department?.name,
       ].filter(Boolean)
     : [];
+
+  const primaryOwner = owners[0] ?? null;
 
   return {
     ...row,
@@ -138,6 +170,7 @@ export function mapSaleProcessDetail(row: Record<string, unknown>): Record<strin
           propertyTypeName:
             (property.propertyType as { name?: string } | null | undefined)?.name ?? null,
           locationLabel: locationParts.length ? locationParts.join(', ') : null,
+          primaryOwner,
         }
       : property,
   };

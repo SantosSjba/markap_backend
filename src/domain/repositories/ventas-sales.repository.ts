@@ -15,7 +15,7 @@ export type VentasSeparationStatus = (typeof VENTAS_SEPARATION_STATUS)[number];
 export const VENTAS_PAYMENT_TYPES = ['CASH', 'CREDIT'] as const;
 export type VentasPaymentType = (typeof VENTAS_PAYMENT_TYPES)[number];
 
-export const VENTAS_COMMISSION_STATUS = ['PENDING', 'PARTIAL', 'PAID'] as const;
+export const VENTAS_COMMISSION_STATUS = ['PENDING', 'PARTIAL', 'PAID', 'CANCELLED'] as const;
 
 export interface ListSaleProcessesFilters {
   applicationSlug: string;
@@ -85,6 +85,12 @@ export interface VentasSalesRepository {
     applicationId: string,
   ): Promise<unknown | null>;
 
+  /** Rellena vínculos de propietario si el proceso se creó sin ellos (legacy). */
+  ensureSaleProcessOwnerLinksFromProperty(
+    saleProcessId: string,
+    propertyId: string,
+  ): Promise<void>;
+
   updateSaleProcess(
     id: string,
     applicationId: string,
@@ -95,8 +101,12 @@ export interface VentasSalesRepository {
       title?: string | null;
       financingChannelId?: string | null;
       closedAt?: Date | null;
+      lostReason?: string | null;
     },
   ): Promise<unknown>;
+
+  /** Anula comisiones del proceso (venta caída). */
+  cancelProcessCommissions(saleProcessId: string, applicationId: string): Promise<number>;
 
   listSaleFinancingChannels(): Promise<unknown[]>;
 

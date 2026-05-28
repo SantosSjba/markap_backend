@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import {
   deriveBuyerPaymentDisplayStatus,
@@ -273,8 +273,19 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
   ): Promise<unknown | null> {
     const row = await this.prisma.saleCommission.findFirst({
       where: { id, applicationId },
+      include: { saleProcess: { select: { status: true } } },
     });
     if (!row) return null;
+    if (row.status === 'CANCELLED') {
+      throw new BadRequestException(
+        'Esta comisión fue anulada porque la venta se registró como caída.',
+      );
+    }
+    if (row.saleProcess?.status === 'LOST') {
+      throw new BadRequestException(
+        'La venta está caída; no se pueden registrar pagos de comisión.',
+      );
+    }
     if (row.status === 'PAID') {
       return this.prisma.saleCommission.findFirst({
         where: { id },
@@ -305,9 +316,23 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
   ): Promise<unknown | null> {
     const part = await this.prisma.saleCommissionPaymentPart.findFirst({
       where: { id: partId, saleCommission: { applicationId } },
-      include: { saleCommission: true },
+      include: {
+        saleCommission: {
+          include: { saleProcess: { select: { status: true } } },
+        },
+      },
     });
     if (!part) return null;
+    if (part.saleCommission.status === 'CANCELLED') {
+      throw new BadRequestException(
+        'Esta comisión fue anulada porque la venta se registró como caída.',
+      );
+    }
+    if (part.saleCommission.saleProcess?.status === 'LOST') {
+      throw new BadRequestException(
+        'La venta está caída; no se pueden registrar pagos de comisión.',
+      );
+    }
     if (part.status === 'PAID') {
       return this.prisma.saleCommission.findFirst({
         where: { id: part.saleCommissionId },
@@ -339,12 +364,20 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       where: { id: commissionId, applicationId },
       include: {
         closing: true,
-        saleProcess: { include: { property: { select: { salePrice: true } } } },
+        saleProcess: {
+          select: { status: true, property: { select: { salePrice: true } } },
+        },
         deductibles: true,
         paymentParts: { orderBy: { partNumber: 'asc' } },
       },
     });
     if (!row) return null;
+    if (row.status === 'CANCELLED') {
+      throw new BadRequestException('No se puede recalcular una comisión anulada.');
+    }
+    if (row.saleProcess?.status === 'LOST') {
+      throw new BadRequestException('La venta está caída; la comisión ya no aplica.');
+    }
 
     const profile = await this.prisma.ventasAgentCommissionProfile.findUnique({
       where: {

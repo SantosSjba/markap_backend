@@ -38,6 +38,7 @@ import {
   type SaleCommissionDeductibleInput,
   type SaleCommissionPaymentPartInput,
 } from '@common/utils/sale-commission.util';
+import { isForwardPipelineStage } from '@common/utils/pipeline-stage.util';
 
 const VENTAS_SLUG = 'ventas';
 
@@ -303,8 +304,17 @@ export class VentasSalesOperationsService {
 
   async getProcessById(id: string, applicationSlug?: string) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
-    const row = await this.ventasSales.getSaleProcessById(id, applicationId);
+    let row = await this.ventasSales.getSaleProcessById(id, applicationId);
     if (!row) throw new EntityNotFoundException('SaleProcess', id);
+
+    const ownersOnRow = (row as { owners?: unknown[] }).owners ?? [];
+    const propertyId = (row as { propertyId?: string }).propertyId;
+    if (!ownersOnRow.length && propertyId) {
+      await this.ventasSales.ensureSaleProcessOwnerLinksFromProperty(id, propertyId);
+      row = await this.ventasSales.getSaleProcessById(id, applicationId);
+      if (!row) throw new EntityNotFoundException('SaleProcess', id);
+    }
+
     return mapSaleProcessDetail(row as Record<string, unknown>);
   }
 
@@ -317,11 +327,18 @@ export class VentasSalesOperationsService {
       agentId?: string | null;
       title?: string | null;
       financingChannelId?: string | null;
+      lostReason?: string | null;
     },
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
     const existing = await this.ventasSales.getSaleProcessById(id, applicationId);
     if (!existing) throw new EntityNotFoundException('SaleProcess', id);
+
+    const cur = existing as {
+      status: 'ACTIVE' | 'WON' | 'LOST';
+      pipelineStage: string;
+      propertyId: string;
+    };
 
     if (body.agentId) {
       const ag = await this.agentRepository.findById(body.agentId);
@@ -330,19 +347,61 @@ export class VentasSalesOperationsService {
       }
     }
 
+    if (cur.status === 'LOST') {
+      if (body.pipelineStage !== undefined && body.pipelineStage !== cur.pipelineStage) {
+        throw new BadRequestException(
+          'La venta está registrada como caída. No se puede modificar la etapa del pipeline.',
+        );
+      }
+      if (body.status !== undefined && body.status !== 'LOST') {
+        throw new BadRequestException(
+          'La venta está caída. No se puede reactivar el proceso desde esta pantalla.',
+        );
+      }
+    }
+
+    if (cur.status === 'WON') {
+      if (body.pipelineStage !== undefined && body.pipelineStage !== cur.pipelineStage) {
+        throw new BadRequestException(
+          'El proceso ya está ganado. No se puede cambiar la etapa del pipeline.',
+        );
+      }
+    }
+
     const patch: Parameters<VentasSalesRepository['updateSaleProcess']>[2] = {};
+
     if (body.pipelineStage !== undefined) {
       if (!isVentasPipelineStage(body.pipelineStage)) {
         throw new BadRequestException(`Etapa inválida: ${VENTAS_PIPELINE_STAGES.join(', ')}`);
       }
+      if (cur.status === 'ACTIVE' && !isForwardPipelineStage(cur.pipelineStage, body.pipelineStage)) {
+        throw new BadRequestException(
+          'No se puede retroceder de etapa. Si la venta no continúa, registre la venta como caída.',
+        );
+      }
       patch.pipelineStage = body.pipelineStage;
     }
+
+    const markingLost = body.status === 'LOST';
     if (body.status !== undefined) {
-      patch.status = body.status;
-      if (body.status === 'WON' || body.status === 'LOST') {
+      if (body.status === 'LOST') {
+        const reason = body.lostReason?.trim() ?? '';
+        if (reason.length < 5) {
+          throw new BadRequestException(
+            'Indique el motivo de la venta caída (mínimo 5 caracteres).',
+          );
+        }
+        patch.status = 'LOST';
+        patch.lostReason = reason;
         patch.closedAt = new Date();
+      } else {
+        patch.status = body.status;
+        if (body.status === 'WON') {
+          patch.closedAt = new Date();
+        }
       }
     }
+
     if (body.agentId !== undefined) patch.agentId = body.agentId;
     if (body.title !== undefined) patch.title = body.title;
     if (body.financingChannelId !== undefined) {
@@ -352,9 +411,23 @@ export class VentasSalesOperationsService {
       );
     }
 
-    const updated = await this.ventasSales.updateSaleProcess(id, applicationId, patch);
+    await this.ventasSales.updateSaleProcess(id, applicationId, patch);
+
+    if (markingLost) {
+      await this.ventasSales.cancelProcessCommissions(id, applicationId);
+      const reason = patch.lostReason ?? '';
+      await this.ventasSales.addSaleProcessActivity({
+        saleProcessId: id,
+        applicationId,
+        activityType: 'OTHER',
+        title: 'Venta caída',
+        description: reason,
+        completedAt: new Date(),
+      });
+    }
+
     const detail = await this.ventasSales.getSaleProcessById(id, applicationId);
-    return detail ? mapSaleProcessDetail(detail as Record<string, unknown>) : updated;
+    return detail ? mapSaleProcessDetail(detail as Record<string, unknown>) : existing;
   }
 
   async addNote(

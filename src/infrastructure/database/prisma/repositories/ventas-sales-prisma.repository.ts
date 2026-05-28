@@ -225,6 +225,41 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     };
   }
 
+  async ensureSaleProcessOwnerLinksFromProperty(
+    saleProcessId: string,
+    propertyId: string,
+  ): Promise<void> {
+    const existing = await this.prisma.saleProcessOwnerLink.count({
+      where: { saleProcessId },
+    });
+    if (existing > 0) return;
+
+    const property = await this.prisma.property.findFirst({
+      where: { id: propertyId, deletedAt: null },
+      select: {
+        ownerId: true,
+        owners: { select: { ownerClientId: true } },
+      },
+    });
+    if (!property) return;
+
+    const ownerClientIds = Array.from(
+      new Set([
+        property.ownerId,
+        ...property.owners.map((o) => o.ownerClientId),
+      ].filter(Boolean)),
+    );
+    if (!ownerClientIds.length) return;
+
+    await this.prisma.saleProcessOwnerLink.createMany({
+      data: ownerClientIds.map((ownerClientId) => ({
+        saleProcessId,
+        ownerClientId,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
   async getSaleProcessById(
     id: string,
     applicationId: string,
@@ -287,7 +322,35 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
             area: true,
             bedrooms: true,
             bathrooms: true,
+            ownerId: true,
             propertyType: { select: { name: true } },
+            owner: {
+              select: {
+                id: true,
+                fullName: true,
+                documentNumber: true,
+                primaryPhone: true,
+                primaryEmail: true,
+                clientType: true,
+                documentType: { select: { name: true } },
+              },
+            },
+            owners: {
+              include: {
+                owner: {
+                  select: {
+                    id: true,
+                    fullName: true,
+                    documentNumber: true,
+                    primaryPhone: true,
+                    primaryEmail: true,
+                    clientType: true,
+                    documentType: { select: { name: true } },
+                  },
+                },
+              },
+              orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }],
+            },
             district: {
               select: {
                 name: true,
@@ -342,6 +405,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       title?: string | null;
       financingChannelId?: string | null;
       closedAt?: Date | null;
+      lostReason?: string | null;
     },
   ): Promise<unknown> {
     return this.prisma.saleProcess.update({
@@ -355,8 +419,24 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           financingChannelId: data.financingChannelId,
         }),
         ...(data.closedAt !== undefined && { closedAt: data.closedAt }),
+        ...(data.lostReason !== undefined && { lostReason: data.lostReason }),
       },
     });
+  }
+
+  async cancelProcessCommissions(
+    saleProcessId: string,
+    applicationId: string,
+  ): Promise<number> {
+    const result = await this.prisma.saleCommission.updateMany({
+      where: {
+        saleProcessId,
+        applicationId,
+        status: { notIn: ['PAID', 'CANCELLED'] },
+      },
+      data: { status: 'CANCELLED', paidAt: null },
+    });
+    return result.count;
   }
 
   async listSaleFinancingChannels(): Promise<unknown[]> {

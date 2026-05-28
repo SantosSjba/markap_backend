@@ -127,6 +127,8 @@ export class VentasSalesController {
       agentId?: string | null;
       title?: string | null;
       financingChannelId?: string | null;
+      /** Obligatorio si status = LOST (venta caída) */
+      lostReason?: string | null;
     },
   ) {
     return this.ventasSales.updateProcess(id, applicationSlug, body);

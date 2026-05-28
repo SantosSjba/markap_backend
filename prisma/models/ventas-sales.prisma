@@ -13,6 +13,8 @@ model SaleProcess {
   pipelineStage  String @map("pipeline_stage")
   /// ACTIVE | WON | LOST
   status         String @default("ACTIVE")
+  /// Motivo registrado al marcar la venta como caída (status = LOST)
+  lostReason     String? @db.Text @map("lost_reason")
   title          String?
   /// Medio de pago / banco con el que se gestiona la venta (catálogo sale_financing_channels)
   financingChannelId String? @map("financing_channel_id")
@@ -213,7 +215,7 @@ model SaleCommission {
   amount         Float
   /// Porcentaje (0–100) cuando calculationType = PERCENT
   percentApplied Float? @map("percent_applied")
-  /// PENDING | PARTIAL | PAID
+  /// PENDING | PARTIAL | PAID | CANCELLED (proceso caído o anulado)
   status         String @default("PENDING")
   paidAt         DateTime? @map("paid_at")
 
