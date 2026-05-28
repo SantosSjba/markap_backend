@@ -3,6 +3,8 @@ import type { PropertyRepository } from '@domain/repositories/property.repositor
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import type { Property, UpdatePropertyData } from '@domain/repositories/property.repository';
 import { assertClientAddressLocation } from '@application/validators/client-address-location.validator';
+import { assertActiveSaleCurrency } from '@application/validators/sale-currency.validator';
+import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
 
 import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
 
@@ -21,6 +23,7 @@ export class UpdatePropertyUseCase {
     private readonly propertyRepository: PropertyRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
   async execute(
@@ -64,8 +67,14 @@ export class UpdatePropertyUseCase {
         : existing.locationCustom;
     const locationCustom = assertClientAddressLocation(districtId, locationInput);
 
+    let saleCurrency: string | undefined;
+    if (data.saleCurrency !== undefined) {
+      saleCurrency = await assertActiveSaleCurrency(this.prisma, data.saleCurrency);
+    }
+
     return this.propertyRepository.update({
       ...data,
+      ...(saleCurrency !== undefined ? { saleCurrency } : {}),
       ...(data.districtId !== undefined || data.locationCustom !== undefined
         ? { locationCustom }
         : {}),

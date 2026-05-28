@@ -94,6 +94,7 @@ export class PropertyPrismaMapper {
       property.maintenanceAmount,
       property.depositMonths,
       property.salePrice,
+      property.saleCurrency ?? 'PEN',
       property.projectName,
       PropertyPrismaMapper.parseMediaItems(property.mediaItems),
       property.listingStatus,

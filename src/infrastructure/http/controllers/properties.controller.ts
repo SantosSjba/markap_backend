@@ -83,6 +83,17 @@ export class PropertiesController {
     });
   }
 
+  @Get('currencies')
+  @ApiOperation({ summary: 'Listar monedas activas (precio de venta, etc.)' })
+  @ApiResponse({ status: 200 })
+  async getCurrencies() {
+    return this.prisma.currency.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      select: { id: true, code: true, name: true, symbol: true },
+    });
+  }
+
   @Get('departments')
   @ApiOperation({ summary: 'Listar departamentos del Perú' })
   @ApiResponse({ status: 200 })
@@ -239,6 +250,7 @@ export class PropertiesController {
         maintenanceAmount: dto.maintenanceAmount,
         depositMonths: dto.depositMonths,
         salePrice: dto.salePrice,
+        saleCurrency: dto.saleCurrency,
         projectName: dto.projectName,
         mediaItems: dto.mediaItems,
         listingStatus: dto.listingStatus,
@@ -274,6 +286,7 @@ export class PropertiesController {
       maintenanceAmount: dto.maintenanceAmount,
       depositMonths: dto.depositMonths,
       salePrice: dto.salePrice,
+      saleCurrency: dto.saleCurrency,
       projectName: dto.projectName,
       mediaItems: dto.mediaItems,
       listingStatus: dto.listingStatus,

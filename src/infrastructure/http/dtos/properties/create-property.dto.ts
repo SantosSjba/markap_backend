@@ -143,12 +143,18 @@ export class CreatePropertyDto {
   @Min(0)
   depositMonths?: number | null;
 
-  @ApiPropertyOptional({ description: 'Precio de venta (S/) — inventario Ventas' })
+  @ApiPropertyOptional({ description: 'Precio de venta — inventario Ventas' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   salePrice?: number | null;
+
+  @ApiPropertyOptional({ description: 'Moneda del precio de venta (código catálogo, ej. PEN, USD)', default: 'PEN' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  saleCurrency?: string;
 
   @ApiPropertyOptional({ description: 'Proyecto / urbanización' })
   @IsOptional()

@@ -13,6 +13,7 @@ import {
   seedInteriorismoCalendar,
   seedDemoVentas,
   seedDocumentTypes,
+  seedCurrencies,
   seedPropertyTypes,
   seedRolesAndApplications,
   seedUbigeo,
@@ -43,6 +44,7 @@ async function main() {
   await seedContabilidadMenus(prisma);
   const { adminUser } = await seedAdminUser(prisma, adminRoleId);
   await seedDocumentTypes(prisma);
+  await seedCurrencies(prisma);
   await seedUbigeo(prisma);
   await seedPropertyTypes(prisma);
   await seedDemoAlquileres(prisma, appIdBySlug, adminUser);

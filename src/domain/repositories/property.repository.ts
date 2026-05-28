@@ -49,6 +49,7 @@ export interface CreatePropertyData {
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
   salePrice?: number | null;
+  saleCurrency?: string;
   projectName?: string | null;
   mediaItems?: PropertyMediaItem[] | null;
   listingStatus?: string | null;
@@ -76,6 +77,7 @@ export interface UpdatePropertyData {
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
   salePrice?: number | null;
+  saleCurrency?: string;
   projectName?: string | null;
   mediaItems?: PropertyMediaItem[] | null;
   listingStatus?: string | null;

@@ -29,3 +29,18 @@ model PropertyType {
 
   @@map("property_types")
 }
+
+/// Monedas para precios de venta (Ventas) y otros montos
+model Currency {
+  id        String  @id @default(uuid())
+  code      String  @unique
+  name      String
+  symbol    String
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("currencies")
+}

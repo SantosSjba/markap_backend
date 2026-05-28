@@ -1,4 +1,4 @@
-import { DOCUMENT_TYPES, PROPERTY_TYPES } from '../data';
+import { CURRENCIES, DOCUMENT_TYPES, PROPERTY_TYPES } from '../data';
 import type { SeedDb } from '../types';
 
 export async function seedDocumentTypes(prisma: SeedDb): Promise<void> {
@@ -23,4 +23,27 @@ export async function seedPropertyTypes(prisma: SeedDb): Promise<void> {
     });
   }
   console.log('   ✅ Property types created');
+}
+
+export async function seedCurrencies(prisma: SeedDb): Promise<void> {
+  console.log('\n💱 Creating currencies...');
+  for (const c of CURRENCIES) {
+    await prisma.currency.upsert({
+      where: { code: c.code },
+      create: {
+        code: c.code,
+        name: c.name,
+        symbol: c.symbol,
+        sortOrder: c.sortOrder,
+        isActive: true,
+      },
+      update: {
+        name: c.name,
+        symbol: c.symbol,
+        sortOrder: c.sortOrder,
+        isActive: true,
+      },
+    });
+  }
+  console.log('   ✅ Currencies created');
 }

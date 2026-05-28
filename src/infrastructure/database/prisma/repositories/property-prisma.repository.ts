@@ -42,6 +42,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
       maintenanceAmount: data.maintenanceAmount ?? null,
       depositMonths: data.depositMonths ?? null,
       salePrice: data.salePrice ?? null,
+      saleCurrency: data.saleCurrency ?? 'PEN',
       projectName: data.projectName?.trim() || null,
       listingStatus: data.listingStatus ?? null,
     };
@@ -159,6 +160,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
             p.owner?.fullName ?? '',
             p.monthlyRent,
             p.salePrice,
+            p.saleCurrency ?? 'PEN',
             p.projectName,
             p.listingStatus,
             isVentasList ? false : activeRentalPropertyIds.has(p.id),
@@ -250,6 +252,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
     if (data.maintenanceAmount !== undefined) updatePayload.maintenanceAmount = data.maintenanceAmount;
     if (data.depositMonths !== undefined) updatePayload.depositMonths = data.depositMonths;
     if (data.salePrice !== undefined) updatePayload.salePrice = data.salePrice;
+    if (data.saleCurrency !== undefined) updatePayload.saleCurrency = data.saleCurrency;
     if (data.projectName !== undefined) updatePayload.projectName = data.projectName?.trim() || null;
     if (data.mediaItems !== undefined)
       updatePayload.mediaItems = PropertyPrismaMapper.mediaToJson(data.mediaItems) as Prisma.InputJsonValue;

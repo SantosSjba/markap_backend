@@ -1,5 +1,5 @@
 export { seedAdminUser } from './admin-user';
-export { seedDocumentTypes, seedPropertyTypes } from './catalogs';
+export { seedDocumentTypes, seedCurrencies, seedPropertyTypes } from './catalogs';
 export { seedDemoAlquileres } from './demo-alquileres';
 export { seedInteriorismoClients } from './demo-interiorismo-clients';
 export { seedInteriorismoProjects } from './demo-interiorismo-projects';

@@ -4,6 +4,8 @@ import type { ApplicationRepository } from '@domain/repositories/application.rep
 import type { PropertyLocationCustom } from '@domain/entities/property.entity';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { assertClientAddressLocation } from '@application/validators/client-address-location.validator';
+import { assertActiveSaleCurrency } from '@application/validators/sale-currency.validator';
+import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
 
 import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
 
@@ -38,6 +40,7 @@ export interface CreatePropertyInput {
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
   salePrice?: number | null;
+  saleCurrency?: string;
   projectName?: string | null;
   mediaItems?: { url: string; kind: 'photo' | 'plan' }[] | null;
   listingStatus?: string | null;
@@ -50,6 +53,7 @@ export class CreatePropertyUseCase {
     private readonly propertyRepository: PropertyRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
   async execute(input: CreatePropertyInput) {
@@ -89,6 +93,8 @@ export class CreatePropertyUseCase {
       input.locationCustom,
     );
 
+    const saleCurrency = await assertActiveSaleCurrency(this.prisma, input.saleCurrency);
+
     return this.propertyRepository.create({
       applicationId,
       code: input.code,
@@ -111,6 +117,7 @@ export class CreatePropertyUseCase {
       maintenanceAmount: input.maintenanceAmount,
       depositMonths: input.depositMonths,
       salePrice: input.salePrice,
+      saleCurrency,
       projectName: input.projectName,
       mediaItems: input.mediaItems ?? undefined,
       listingStatus,

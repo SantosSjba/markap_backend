@@ -29,8 +29,10 @@ model Property {
   maintenanceAmount Float? @map("maintenance_amount")
   depositMonths     Int?   @map("deposit_months")
 
-  /// Precio de venta (S/) — inventario Ventas
-  salePrice   Float?  @map("sale_price")
+  /// Precio de venta — inventario Ventas
+  salePrice    Float?  @map("sale_price")
+  /// Código de moneda del precio de venta (catálogo currencies, ej. PEN, USD)
+  saleCurrency String  @default("PEN") @map("sale_currency")
   /// Nombre del proyecto / urbanización (Ventas)
   projectName String? @map("project_name")
   /// Multimedia: [{ "url": string, "kind": "photo" | "plan" }]
