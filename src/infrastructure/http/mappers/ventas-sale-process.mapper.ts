@@ -25,6 +25,20 @@ type OwnerLink = {
   };
 };
 
+function mapCommissionRow(c: Record<string, unknown>) {
+  return {
+    id: c.id,
+    amount: prismaAmountToNumber(c.amount),
+    calculationType: c.calculationType as string,
+    percentApplied:
+      c.percentApplied != null ? Number(c.percentApplied) : null,
+    status: c.status,
+    paidAt: c.paidAt,
+    saleClosingId: c.saleClosingId ?? null,
+    agent: c.agent as { id: string; fullName: string; type?: string },
+  };
+}
+
 /** Normaliza detalle de proceso para la API (participantes planos, montos numéricos). */
 export function mapSaleProcessDetail(row: Record<string, unknown>): Record<string, unknown> {
   const property = row.property as Record<string, unknown> | null;
@@ -32,6 +46,9 @@ export function mapSaleProcessDetail(row: Record<string, unknown>): Record<strin
 
   const buyersRaw = (row.buyers as BuyerLink[] | undefined) ?? [];
   const ownersRaw = (row.owners as OwnerLink[] | undefined) ?? [];
+  const commissionsRaw =
+    (row.commissions as Record<string, unknown>[] | undefined) ??
+    (row.commission ? [row.commission as Record<string, unknown>] : []);
 
   const buyers = buyersRaw.map((l) => ({
     id: l.buyer.id,
@@ -54,6 +71,8 @@ export function mapSaleProcessDetail(row: Record<string, unknown>): Record<strin
     clientType: l.owner.clientType,
   }));
 
+  const commissions = commissionsRaw.map(mapCommissionRow);
+
   const district = property?.district as
     | {
         name: string;
@@ -75,6 +94,8 @@ export function mapSaleProcessDetail(row: Record<string, unknown>): Record<strin
     buyer: buyers.find((b) => b.isPrimary) ?? buyers[0] ?? row.buyer,
     buyers,
     owners,
+    commissions,
+    commission: commissions[0] ?? null,
     financingChannel: financingChannel
       ? {
           id: financingChannel.id,

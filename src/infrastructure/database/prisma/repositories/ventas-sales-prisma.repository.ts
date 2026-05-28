@@ -53,6 +53,12 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     pipelineStage: VentasPipelineStage;
     title?: string | null;
     financingChannelId?: string | null;
+    commissions?: {
+      agentId: string;
+      calculationType: 'PERCENT' | 'FIXED';
+      amount: number;
+      percentApplied?: number | null;
+    }[];
   }): Promise<{ id: string }> {
     const row = await this.prisma.$transaction(async (tx) => {
       const created = await tx.saleProcess.create({
@@ -93,9 +99,29 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
         });
       }
 
+      if (data.commissions?.length) {
+        await tx.saleCommission.createMany({
+          data: data.commissions.map((c) => ({
+            applicationId: data.applicationId,
+            saleProcessId: created.id,
+            agentId: c.agentId,
+            calculationType: c.calculationType,
+            amount: c.amount,
+            percentApplied: c.percentApplied ?? null,
+            status: 'PENDING',
+          })),
+        });
+      }
+
       return created;
     });
     return row;
+  }
+
+  async countProcessCommissions(saleProcessId: string, applicationId: string): Promise<number> {
+    return this.prisma.saleCommission.count({
+      where: { saleProcessId, applicationId },
+    });
   }
 
   async listSaleProcesses(
@@ -240,6 +266,19 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           select: { id: true, code: true, name: true, category: true },
         },
         agent: { select: { id: true, fullName: true } },
+        commissions: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            amount: true,
+            calculationType: true,
+            percentApplied: true,
+            status: true,
+            paidAt: true,
+            saleClosingId: true,
+            agent: { select: { id: true, fullName: true, type: true } },
+          },
+        },
         notes: { orderBy: { createdAt: 'desc' } },
         activities: { orderBy: { createdAt: 'desc' } },
         reminders: { orderBy: { dueAt: 'asc' } },
@@ -577,7 +616,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           buyer: { select: { id: true, fullName: true } },
           property: { select: { id: true, code: true, addressLine: true } },
           agent: { select: { id: true, fullName: true } },
-          commission: true,
+          commissions: true,
         },
         orderBy: { closedAt: 'desc' },
         skip: (filters.page - 1) * filters.limit,
@@ -585,7 +624,15 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       }),
       this.prisma.saleClosing.count({ where }),
     ]);
-    return { data: rows as unknown[], total };
+    const data = rows.map((row) => {
+      const r = row as { commissions?: { amount: number; status: string }[] };
+      return {
+        ...row,
+        commission: r.commissions?.[0] ?? null,
+        commissionsTotal: (r.commissions ?? []).reduce((s, c) => s + c.amount, 0),
+      };
+    });
+    return { data: data as unknown[], total };
   }
 
   async createSaleClosingWithSideEffects(data: {
@@ -599,7 +646,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     paymentType: VentasPaymentType;
     contractFilePath?: string | null;
     notes?: string | null;
-    commissionAgentId: string;
+    commissionAgentId?: string | null;
     commissionAmount: number;
     commissionPercent?: number | null;
   }): Promise<{ closingId: string; commissionId: string } | null> {
@@ -632,16 +679,44 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
         },
       });
 
-      const commission = await tx.saleCommission.create({
-        data: {
-          applicationId: data.applicationId,
-          saleClosingId: closing.id,
-          agentId: data.commissionAgentId,
-          amount: data.commissionAmount,
-          percentApplied: data.commissionPercent ?? null,
-          status: 'PENDING',
-        },
-      });
+      let commissionId: string;
+      const processCommissions =
+        data.saleProcessId != null
+          ? await tx.saleCommission.findMany({
+              where: { saleProcessId: data.saleProcessId, applicationId: data.applicationId },
+            })
+          : [];
+
+      if (processCommissions.length > 0) {
+        for (const row of processCommissions) {
+          let amount = row.amount;
+          if (row.calculationType === 'PERCENT' && row.percentApplied != null) {
+            amount =
+              Math.round(data.finalPrice * (row.percentApplied / 100) * 100) / 100;
+          }
+          await tx.saleCommission.update({
+            where: { id: row.id },
+            data: { saleClosingId: closing.id, amount },
+          });
+        }
+        commissionId = processCommissions[0]!.id;
+      } else if (data.commissionAgentId) {
+        const created = await tx.saleCommission.create({
+          data: {
+            applicationId: data.applicationId,
+            saleClosingId: closing.id,
+            agentId: data.commissionAgentId,
+            calculationType:
+              data.commissionPercent != null ? 'PERCENT' : 'FIXED',
+            amount: data.commissionAmount,
+            percentApplied: data.commissionPercent ?? null,
+            status: 'PENDING',
+          },
+        });
+        commissionId = created.id;
+      } else {
+        commissionId = '';
+      }
 
       if (data.saleSeparationId) {
         await tx.saleSeparation.update({
@@ -661,7 +736,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
         });
       }
 
-      return { closingId: closing.id, commissionId: commission.id };
+      return { closingId: closing.id, commissionId };
     });
   }
 }

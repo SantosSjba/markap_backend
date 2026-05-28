@@ -55,7 +55,15 @@ export interface VentasSalesRepository {
     pipelineStage: VentasPipelineStage;
     title?: string | null;
     financingChannelId?: string | null;
+    commissions?: {
+      agentId: string;
+      calculationType: 'PERCENT' | 'FIXED';
+      amount: number;
+      percentApplied?: number | null;
+    }[];
   }): Promise<{ id: string }>;
+
+  countProcessCommissions(saleProcessId: string, applicationId: string): Promise<number>;
 
   listSaleProcesses(
     filters: ListSaleProcessesFilters,
@@ -186,8 +194,8 @@ export interface VentasSalesRepository {
     paymentType: VentasPaymentType;
     contractFilePath?: string | null;
     notes?: string | null;
-    /** Agente al que se registra la comisión (obligatorio) */
-    commissionAgentId: string;
+    /** Comisión manual en cierre si el proceso no tiene comisiones */
+    commissionAgentId?: string | null;
     commissionAmount: number;
     commissionPercent?: number | null;
   }): Promise<{ closingId: string; commissionId: string } | null>;

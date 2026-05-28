@@ -5,6 +5,8 @@ import {
 } from '../data';
 import type { SeedDb } from '../types';
 
+const DEPRECATED_MENU_PATHS = ['/ventas/pagos'];
+
 export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
   console.log('\n📂 Creating menus for Ventas...');
   const ventasApp = await prisma.application.findUnique({
@@ -40,7 +42,7 @@ export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
     } else {
       await prisma.menu.update({
         where: { id: existingMenu.id },
-        data: { label: m.label, icon: m.icon, path: m.path, order: m.order },
+        data: { label: m.label, icon: m.icon, path: m.path, order: m.order, isActive: true },
       });
       ventasMenuIds[m.label] = existingMenu.id;
       console.log(`   ✅ Ventas menu "${m.label}" updated`);
@@ -54,8 +56,7 @@ export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
     const existing = await prisma.menu.findFirst({
       where: {
         applicationId: ventasApp.id,
-        label: m.label,
-        parentId,
+        path: m.path,
       },
     });
     if (!existing) {
@@ -71,6 +72,29 @@ export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
         },
       });
       console.log(`   ✅ Ventas submenu "${m.label}" created`);
+    } else {
+      await prisma.menu.update({
+        where: { id: existing.id },
+        data: {
+          parentId,
+          label: m.label,
+          path: m.path,
+          order: m.order,
+          isActive: true,
+        },
+      });
+      console.log(`   ✅ Ventas submenu "${m.label}" updated`);
     }
+  }
+
+  const deactivated = await prisma.menu.updateMany({
+    where: {
+      applicationId: ventasApp.id,
+      path: { in: DEPRECATED_MENU_PATHS },
+    },
+    data: { isActive: false },
+  });
+  if (deactivated.count > 0) {
+    console.log(`   ✅ ${deactivated.count} menú(es) obsoleto(s) desactivado(s) (Pagos)`);
   }
 }

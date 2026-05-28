@@ -36,9 +36,8 @@ export const VENTAS_CHILD_MENUS = [
   { label: 'Procesos de Venta', path: '/ventas/procesos', order: 0, parentLabel: 'Ventas' },
   { label: 'Separaciones', path: '/ventas/separaciones', order: 1, parentLabel: 'Ventas' },
   { label: 'Cierres', path: '/ventas/cierres', order: 2, parentLabel: 'Ventas' },
+  { label: 'Comisiones', path: '/ventas/comisiones', order: 3, parentLabel: 'Ventas' },
 
   // Finanzas
-  { label: 'Pagos', path: '/ventas/pagos', order: 0, parentLabel: 'Finanzas' },
-  { label: 'Comisiones', path: '/ventas/comisiones', order: 1, parentLabel: 'Finanzas' },
-  { label: 'Costos de Documentación', path: '/ventas/costos-documentacion', order: 2, parentLabel: 'Finanzas' },
+  { label: 'Costos de Documentación', path: '/ventas/costos-documentacion', order: 0, parentLabel: 'Finanzas' },
 ];

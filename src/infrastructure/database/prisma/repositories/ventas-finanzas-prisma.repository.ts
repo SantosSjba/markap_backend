@@ -214,7 +214,16 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
               property: { select: { id: true, code: true, addressLine: true } },
             },
           },
-          agent: { select: { id: true, fullName: true } },
+          saleProcess: {
+            select: {
+              id: true,
+              code: true,
+              status: true,
+              property: { select: { id: true, code: true, addressLine: true, salePrice: true } },
+              buyer: { select: { id: true, fullName: true } },
+            },
+          },
+          agent: { select: { id: true, fullName: true, type: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip: (filters.page - 1) * filters.limit,
@@ -252,6 +261,15 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
             property: { select: { id: true, code: true, addressLine: true } },
           },
         },
+        saleProcess: {
+          select: {
+            id: true,
+            code: true,
+            status: true,
+            property: { select: { id: true, code: true, addressLine: true, salePrice: true } },
+            buyer: { select: { id: true, fullName: true } },
+          },
+        },
         agent: { select: { id: true, fullName: true } },
       },
     });
@@ -263,7 +281,10 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
   ): Promise<unknown | null> {
     const row = await this.prisma.saleCommission.findFirst({
       where: { id: commissionId, applicationId },
-      include: { closing: true },
+      include: {
+        closing: true,
+        saleProcess: { include: { property: { select: { salePrice: true } } } },
+      },
     });
     if (!row) return null;
 
@@ -275,16 +296,31 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
         },
       },
     });
-    if (!profile) return null;
 
-    const amount =
-      Math.round(row.closing.finalPrice * (profile.commissionPercent / 100) * 100) / 100;
+    if (row.calculationType === 'FIXED') {
+      return row;
+    }
+
+    const basePrice =
+      row.closing?.finalPrice ??
+      (row.saleProcess?.property?.salePrice != null
+        ? Number(row.saleProcess.property.salePrice)
+        : null);
+    if (basePrice == null || basePrice <= 0) return null;
+
+    const pct =
+      row.percentApplied ??
+      profile?.commissionPercent ??
+      null;
+    if (pct == null) return null;
+
+    const amount = Math.round(basePrice * (pct / 100) * 100) / 100;
 
     return this.prisma.saleCommission.update({
       where: { id: commissionId },
       data: {
         amount,
-        percentApplied: profile.commissionPercent,
+        percentApplied: pct,
       },
       include: {
         closing: {
@@ -294,6 +330,15 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
             closedAt: true,
             buyer: { select: { id: true, fullName: true } },
             property: { select: { id: true, code: true, addressLine: true } },
+          },
+        },
+        saleProcess: {
+          select: {
+            id: true,
+            code: true,
+            status: true,
+            property: { select: { id: true, code: true, addressLine: true, salePrice: true } },
+            buyer: { select: { id: true, fullName: true } },
           },
         },
         agent: { select: { id: true, fullName: true } },
@@ -370,7 +415,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       where: { id: closingId, applicationId },
       include: {
         documentationCosts: true,
-        commission: true,
+        commissions: true,
         buyer: { select: { id: true, fullName: true } },
         property: { select: { id: true, code: true } },
       },
@@ -378,8 +423,11 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
     if (!closing) return null;
 
     const documentationCostsTotal = closing.documentationCosts.reduce((s, c) => s + c.amount, 0);
-    const commissionAmount = closing.commission?.amount ?? 0;
+    const commissionAmount = closing.commissions.reduce((s, c) => s + c.amount, 0);
     const netEstimated = closing.finalPrice - documentationCostsTotal - commissionAmount;
+    const allPaid =
+      closing.commissions.length > 0 &&
+      closing.commissions.every((c) => c.status === 'PAID');
 
     return {
       closingId: closing.id,
@@ -388,7 +436,11 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       property: closing.property,
       documentationCostsTotal,
       commissionAmount,
-      commissionStatus: closing.commission?.status ?? null,
+      commissionStatus: closing.commissions.length
+        ? allPaid
+          ? 'PAID'
+          : 'PENDING'
+        : null,
       netEstimated,
     };
   }

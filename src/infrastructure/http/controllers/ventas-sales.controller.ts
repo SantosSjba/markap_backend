@@ -82,6 +82,12 @@ export class VentasSalesController {
       title?: string | null;
       pipelineStage?: string;
       financingChannelId?: string | null;
+      commissions?: {
+        agentId: string;
+        calculationType: 'PERCENT' | 'FIXED';
+        percent?: number | null;
+        fixedAmount?: number | null;
+      }[];
     },
   ) {
     return this.ventasSales.createProcess(applicationSlug, body);

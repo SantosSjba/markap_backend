@@ -103,6 +103,12 @@ export class VentasSalesOperationsService {
       title?: string | null;
       pipelineStage?: string;
       financingChannelId?: string | null;
+      commissions?: {
+        agentId: string;
+        calculationType: 'PERCENT' | 'FIXED';
+        percent?: number | null;
+        fixedAmount?: number | null;
+      }[];
     },
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
@@ -169,6 +175,72 @@ export class VentasSalesOperationsService {
       body.financingChannelId,
     );
 
+    const salePrice = property.salePrice;
+    const commissionsInput = body.commissions ?? [];
+    const agentIds = new Set<string>();
+    const resolvedCommissions: {
+      agentId: string;
+      calculationType: 'PERCENT' | 'FIXED';
+      amount: number;
+      percentApplied: number | null;
+    }[] = [];
+
+    for (const row of commissionsInput) {
+      if (!row.agentId?.trim()) continue;
+      if (agentIds.has(row.agentId)) {
+        throw new BadRequestException(
+          'No puede repetir el mismo asesor en las comisiones del proceso.',
+        );
+      }
+      agentIds.add(row.agentId);
+
+      const ag = await this.agentRepository.findById(row.agentId);
+      if (!ag || ag.applicationId !== applicationId) {
+        throw new BadRequestException(
+          'Uno de los asesores de comisión no existe o no pertenece a Ventas.',
+        );
+      }
+
+      const calculationType = row.calculationType === 'FIXED' ? 'FIXED' : 'PERCENT';
+      let amount = 0;
+      let percentApplied: number | null = null;
+
+      if (calculationType === 'FIXED') {
+        if (row.fixedAmount == null || row.fixedAmount < 0) {
+          throw new BadRequestException(
+            'Indique un monto fijo válido para cada comisión.',
+          );
+        }
+        amount = Math.round(row.fixedAmount * 100) / 100;
+      } else {
+        if (row.percent == null || row.percent < 0 || row.percent > 100) {
+          throw new BadRequestException(
+            'El porcentaje de comisión debe estar entre 0 y 100.',
+          );
+        }
+        percentApplied = row.percent;
+        if (salePrice != null && salePrice > 0) {
+          amount = Math.round(salePrice * (row.percent / 100) * 100) / 100;
+        }
+      }
+
+      resolvedCommissions.push({
+        agentId: row.agentId,
+        calculationType,
+        amount,
+        percentApplied,
+      });
+    }
+
+    const primaryAgentId =
+      body.agentId ?? resolvedCommissions[0]?.agentId ?? null;
+    if (primaryAgentId && !agentIds.has(primaryAgentId)) {
+      const ag = await this.agentRepository.findById(primaryAgentId);
+      if (!ag || ag.applicationId !== applicationId) {
+        throw new BadRequestException('El asesor del proceso no existe o no pertenece a Ventas.');
+      }
+    }
+
     const code = await this.ventasSales.nextProcessCode(applicationId);
     return this.ventasSales.createSaleProcess({
       applicationId,
@@ -177,10 +249,11 @@ export class VentasSalesOperationsService {
       buyerClientIds: buyerIds,
       propertyId: body.propertyId,
       ownerClientIds: ownerIds,
-      agentId: body.agentId ?? null,
+      agentId: primaryAgentId,
       pipelineStage: stage,
       title: body.title ?? null,
       financingChannelId,
+      commissions: resolvedCommissions,
     });
   }
 
@@ -558,44 +631,52 @@ export class VentasSalesOperationsService {
       }
     }
 
-    let commissionAgentId = body.commissionAgentId ?? body.agentId ?? null;
-    if (!commissionAgentId && body.saleProcessId) {
-      const proc = (await this.ventasSales.getSaleProcessById(
-        body.saleProcessId,
-        applicationId,
-      )) as { agentId: string | null } | null;
-      commissionAgentId = proc?.agentId ?? null;
-    }
-    if (!commissionAgentId) {
-      throw new BadRequestException(
-        'Indique el agente para la comisión (commissionAgentId o agentId del cierre / proceso).',
-      );
-    }
+    const processCommissionCount = body.saleProcessId
+      ? await this.ventasSales.countProcessCommissions(body.saleProcessId, applicationId)
+      : 0;
 
-    let commissionAmount = body.commissionAmount;
+    let commissionAgentId = body.commissionAgentId ?? body.agentId ?? null;
+    let commissionAmount = body.commissionAmount ?? 0;
     let commissionPercent = body.commissionPercent ?? null;
 
-    if (body.commissionAutoFromProfile) {
-      const pct = await this.ventasFinanzas.getAgentCommissionPercent(
-        applicationId,
-        commissionAgentId,
-      );
-      if (pct == null) {
+    if (processCommissionCount === 0) {
+      if (!commissionAgentId && body.saleProcessId) {
+        const proc = (await this.ventasSales.getSaleProcessById(
+          body.saleProcessId,
+          applicationId,
+        )) as { agentId: string | null } | null;
+        commissionAgentId = proc?.agentId ?? null;
+      }
+      if (!commissionAgentId) {
         throw new BadRequestException(
-          'No hay porcentaje configurado para este asesor. Configúrelo en Finanzas → Comisiones.',
+          'Indique el agente para la comisión o defina comisiones al crear el proceso.',
         );
       }
-      commissionPercent = pct;
-      commissionAmount = Math.round(body.finalPrice * (pct / 100) * 100) / 100;
-    } else if (commissionAmount == null || commissionAmount < 0) {
-      throw new BadRequestException(
-        'Indique commissionAmount o active commissionAutoFromProfile con perfil de % del asesor.',
-      );
-    }
 
-    const ag = await this.agentRepository.findById(commissionAgentId);
-    if (!ag || ag.applicationId !== applicationId) {
-      throw new BadRequestException('El agente de comisión no existe o no pertenece a Ventas.');
+      if (body.commissionAutoFromProfile) {
+        const pct = await this.ventasFinanzas.getAgentCommissionPercent(
+          applicationId,
+          commissionAgentId,
+        );
+        if (pct == null) {
+          throw new BadRequestException(
+            'No hay porcentaje configurado para este asesor en el cierre manual.',
+          );
+        }
+        commissionPercent = pct;
+        commissionAmount = Math.round(body.finalPrice * (pct / 100) * 100) / 100;
+      } else if (commissionAmount == null || commissionAmount < 0) {
+        throw new BadRequestException('Indique el monto de comisión para el cierre.');
+      }
+
+      const ag = await this.agentRepository.findById(commissionAgentId);
+      if (!ag || ag.applicationId !== applicationId) {
+        throw new BadRequestException('El agente de comisión no existe o no pertenece a Ventas.');
+      }
+    } else {
+      commissionAgentId = null;
+      commissionAmount = 0;
+      commissionPercent = null;
     }
 
     if (body.agentId) {
