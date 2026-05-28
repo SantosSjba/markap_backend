@@ -213,7 +213,7 @@ model SaleCommission {
   amount         Float
   /// Porcentaje (0–100) cuando calculationType = PERCENT
   percentApplied Float? @map("percent_applied")
-  /// PENDING | PAID
+  /// PENDING | PARTIAL | PAID
   status         String @default("PENDING")
   paidAt         DateTime? @map("paid_at")
 
@@ -223,6 +223,8 @@ model SaleCommission {
   saleProcess SaleProcess? @relation(fields: [saleProcessId], references: [id], onDelete: Cascade)
   closing     SaleClosing? @relation(fields: [saleClosingId], references: [id], onDelete: Cascade)
   agent       Agent       @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  paymentParts SaleCommissionPaymentPart[]
+  deductibles  SaleCommissionDeductible[]
 
   @@unique([saleProcessId, agentId])
   @@index([applicationId])
@@ -231,6 +233,45 @@ model SaleCommission {
   @@index([saleProcessId])
   @@index([saleClosingId])
   @@map("sale_commissions")
+}
+
+/// Cuota del pago de comisión al asesor (configurable al crear el proceso).
+model SaleCommissionPaymentPart {
+  id               String   @id @default(uuid())
+  saleCommissionId String   @map("sale_commission_id")
+  partNumber       Int      @map("part_number")
+  label            String?
+  amount           Float
+  dueDate          DateTime? @map("due_date")
+  /// PENDING | PAID
+  status           String   @default("PENDING")
+  paidAt           DateTime? @map("paid_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  saleCommission SaleCommission @relation(fields: [saleCommissionId], references: [id], onDelete: Cascade)
+
+  @@unique([saleCommissionId, partNumber])
+  @@index([saleCommissionId])
+  @@index([status])
+  @@map("sale_commission_payment_parts")
+}
+
+/// Deducible descontado de la comisión bruta (pasajes, impuestos, etc.).
+model SaleCommissionDeductible {
+  id               String   @id @default(uuid())
+  saleCommissionId String   @map("sale_commission_id")
+  /// TRAVEL | TAX | NOTARY | REGISTRY | OTHER
+  deductibleType   String   @map("deductible_type")
+  description      String?  @db.Text
+  amount           Float
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  saleCommission SaleCommission @relation(fields: [saleCommissionId], references: [id], onDelete: Cascade)
+
+  @@index([saleCommissionId])
+  @@map("sale_commission_deductibles")
 }
 
 /// Pago del comprador vinculado al cierre (inicial o cuota). OVERDUE se deriva en API si PENDING y vencido.

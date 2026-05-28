@@ -18,7 +18,7 @@ export interface ListCommissionsFilters {
   applicationSlug: string;
   page: number;
   limit: number;
-  status?: 'PENDING' | 'PAID';
+  status?: 'PENDING' | 'PARTIAL' | 'PAID';
   agentId?: string;
 }
 
@@ -60,6 +60,12 @@ export interface VentasFinanzasRepository {
   listCommissions(filters: ListCommissionsFilters): Promise<{ data: unknown[]; total: number }>;
 
   markCommissionPaid(id: string, applicationId: string, paidAt?: Date): Promise<unknown | null>;
+
+  markCommissionPaymentPartPaid(
+    partId: string,
+    applicationId: string,
+    paidAt?: Date,
+  ): Promise<unknown | null>;
 
   recalculateCommissionFromProfile(
     commissionId: string,

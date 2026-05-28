@@ -1,4 +1,5 @@
 import { prismaAmountToNumber } from '@infrastructure/database/prisma/mappers/ventas-sales-prisma.mapper';
+import { mapCommissionEnrichment } from '@common/utils/sale-commission.util';
 
 type BuyerLink = {
   isPrimary: boolean;
@@ -26,9 +27,33 @@ type OwnerLink = {
 };
 
 function mapCommissionRow(c: Record<string, unknown>) {
+  const amount = prismaAmountToNumber(c.amount);
+  const deductiblesRaw = (c.deductibles as Record<string, unknown>[] | undefined) ?? [];
+  const paymentPartsRaw = (c.paymentParts as Record<string, unknown>[] | undefined) ?? [];
+  const deductibles = deductiblesRaw.map((d) => ({
+    id: d.id,
+    deductibleType: d.deductibleType,
+    description: d.description ?? null,
+    amount: prismaAmountToNumber(d.amount),
+  }));
+  const paymentParts = paymentPartsRaw.map((p) => ({
+    id: p.id,
+    partNumber: p.partNumber,
+    label: p.label ?? null,
+    amount: prismaAmountToNumber(p.amount),
+    dueDate: p.dueDate ?? null,
+    status: p.status,
+    paidAt: p.paidAt ?? null,
+  }));
+  const enrichment = mapCommissionEnrichment({
+    amount,
+    deductibles,
+    paymentParts,
+  });
   return {
     id: c.id,
-    amount: prismaAmountToNumber(c.amount),
+    amount,
+    ...enrichment,
     calculationType: c.calculationType as string,
     percentApplied:
       c.percentApplied != null ? Number(c.percentApplied) : null,
@@ -36,6 +61,8 @@ function mapCommissionRow(c: Record<string, unknown>) {
     paidAt: c.paidAt,
     saleClosingId: c.saleClosingId ?? null,
     agent: c.agent as { id: string; fullName: string; type?: string },
+    deductibles,
+    paymentParts,
   };
 }
 

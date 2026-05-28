@@ -29,6 +29,15 @@ import { EntityNotFoundException } from '@domain/exceptions';
 import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
 import { assertActiveSaleFinancingChannel } from '@application/validators/sale-financing-channel.validator';
 import { mapSaleProcessDetail } from '@infrastructure/http/mappers/ventas-sale-process.mapper';
+import {
+  assertPaymentPartsMatchNet,
+  assertValidDeductibleType,
+  computeNetPayable,
+  resolvePaymentPartAmounts,
+  roundMoney,
+  type SaleCommissionDeductibleInput,
+  type SaleCommissionPaymentPartInput,
+} from '@common/utils/sale-commission.util';
 
 const VENTAS_SLUG = 'ventas';
 
@@ -108,6 +117,8 @@ export class VentasSalesOperationsService {
         calculationType: 'PERCENT' | 'FIXED';
         percent?: number | null;
         fixedAmount?: number | null;
+        paymentParts?: SaleCommissionPaymentPartInput[];
+        deductibles?: SaleCommissionDeductibleInput[];
       }[];
     },
   ) {
@@ -183,6 +194,17 @@ export class VentasSalesOperationsService {
       calculationType: 'PERCENT' | 'FIXED';
       amount: number;
       percentApplied: number | null;
+      paymentParts: {
+        partNumber: number;
+        label: string | null;
+        amount: number;
+        dueDate: Date | null;
+      }[];
+      deductibles: {
+        deductibleType: string;
+        description: string | null;
+        amount: number;
+      }[];
     }[] = [];
 
     for (const row of commissionsInput) {
@@ -224,11 +246,33 @@ export class VentasSalesOperationsService {
         }
       }
 
+      const deductibles: {
+        deductibleType: string;
+        description: string | null;
+        amount: number;
+      }[] = [];
+      for (const d of row.deductibles ?? []) {
+        if (d.amount == null || d.amount < 0) {
+          throw new BadRequestException('Cada deducible debe tener un monto válido.');
+        }
+        deductibles.push({
+          deductibleType: assertValidDeductibleType(d.deductibleType),
+          description: d.description?.trim() || null,
+          amount: roundMoney(d.amount),
+        });
+      }
+
+      const net = computeNetPayable(amount, deductibles);
+      const paymentParts = resolvePaymentPartAmounts(net, row.paymentParts ?? []);
+      assertPaymentPartsMatchNet(net, paymentParts);
+
       resolvedCommissions.push({
         agentId: row.agentId,
         calculationType,
         amount,
         percentApplied,
+        paymentParts,
+        deductibles,
       });
     }
 

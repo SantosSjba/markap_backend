@@ -138,6 +138,23 @@ export class VentasFinanzasOperationsService {
     return row;
   }
 
+  async markCommissionPaymentPartPaid(
+    partId: string,
+    applicationSlug: string | undefined,
+    body?: { paidAt?: string | null },
+  ) {
+    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const row = await this.finanzas.markCommissionPaymentPartPaid(
+      partId,
+      applicationId,
+      body?.paidAt
+        ? parseValidDateOrThrow(body.paidAt, 'Fecha de pago')
+        : undefined,
+    );
+    if (!row) throw new EntityNotFoundException('SaleCommissionPaymentPart', partId);
+    return row;
+  }
+
   async recalculateCommission(id: string, applicationSlug: string | undefined) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
     const row = await this.finanzas.recalculateCommissionFromProfile(id, applicationId);

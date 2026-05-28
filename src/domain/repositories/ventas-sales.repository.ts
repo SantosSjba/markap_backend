@@ -15,7 +15,7 @@ export type VentasSeparationStatus = (typeof VENTAS_SEPARATION_STATUS)[number];
 export const VENTAS_PAYMENT_TYPES = ['CASH', 'CREDIT'] as const;
 export type VentasPaymentType = (typeof VENTAS_PAYMENT_TYPES)[number];
 
-export const VENTAS_COMMISSION_STATUS = ['PENDING', 'PAID'] as const;
+export const VENTAS_COMMISSION_STATUS = ['PENDING', 'PARTIAL', 'PAID'] as const;
 
 export interface ListSaleProcessesFilters {
   applicationSlug: string;
@@ -60,6 +60,17 @@ export interface VentasSalesRepository {
       calculationType: 'PERCENT' | 'FIXED';
       amount: number;
       percentApplied?: number | null;
+      paymentParts?: {
+        partNumber: number;
+        label: string | null;
+        amount: number;
+        dueDate: Date | null;
+      }[];
+      deductibles?: {
+        deductibleType: string;
+        description: string | null;
+        amount: number;
+      }[];
     }[];
   }): Promise<{ id: string }>;
 

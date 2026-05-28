@@ -11,6 +11,10 @@ import type {
   VentasSeparationStatus,
   VentasPaymentType,
 } from '@domain/repositories/ventas-sales.repository';
+import {
+  computeNetPayable,
+  scaleCommissionPaymentPartsToNet,
+} from '@common/utils/sale-commission.util';
 
 @Injectable()
 export class VentasSalesPrismaRepository implements VentasSalesRepository {
@@ -58,6 +62,17 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       calculationType: 'PERCENT' | 'FIXED';
       amount: number;
       percentApplied?: number | null;
+      paymentParts?: {
+        partNumber: number;
+        label: string | null;
+        amount: number;
+        dueDate: Date | null;
+      }[];
+      deductibles?: {
+        deductibleType: string;
+        description: string | null;
+        amount: number;
+      }[];
     }[];
   }): Promise<{ id: string }> {
     const row = await this.prisma.$transaction(async (tx) => {
@@ -100,17 +115,41 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       }
 
       if (data.commissions?.length) {
-        await tx.saleCommission.createMany({
-          data: data.commissions.map((c) => ({
-            applicationId: data.applicationId,
-            saleProcessId: created.id,
-            agentId: c.agentId,
-            calculationType: c.calculationType,
-            amount: c.amount,
-            percentApplied: c.percentApplied ?? null,
-            status: 'PENDING',
-          })),
-        });
+        for (const c of data.commissions) {
+          const commission = await tx.saleCommission.create({
+            data: {
+              applicationId: data.applicationId,
+              saleProcessId: created.id,
+              agentId: c.agentId,
+              calculationType: c.calculationType,
+              amount: c.amount,
+              percentApplied: c.percentApplied ?? null,
+              status: 'PENDING',
+            },
+          });
+          if (c.paymentParts?.length) {
+            await tx.saleCommissionPaymentPart.createMany({
+              data: c.paymentParts.map((p) => ({
+                saleCommissionId: commission.id,
+                partNumber: p.partNumber,
+                label: p.label,
+                amount: p.amount,
+                dueDate: p.dueDate,
+                status: 'PENDING',
+              })),
+            });
+          }
+          if (c.deductibles?.length) {
+            await tx.saleCommissionDeductible.createMany({
+              data: c.deductibles.map((d) => ({
+                saleCommissionId: commission.id,
+                deductibleType: d.deductibleType,
+                description: d.description,
+                amount: d.amount,
+              })),
+            });
+          }
+        }
       }
 
       return created;
@@ -277,6 +316,8 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
             paidAt: true,
             saleClosingId: true,
             agent: { select: { id: true, fullName: true, type: true } },
+            paymentParts: { orderBy: { partNumber: 'asc' } },
+            deductibles: { orderBy: { createdAt: 'asc' } },
           },
         },
         notes: { orderBy: { createdAt: 'desc' } },
@@ -694,10 +735,15 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
             amount =
               Math.round(data.finalPrice * (row.percentApplied / 100) * 100) / 100;
           }
+          const deductibles = await tx.saleCommissionDeductible.findMany({
+            where: { saleCommissionId: row.id },
+          });
+          const net = computeNetPayable(amount, deductibles);
           await tx.saleCommission.update({
             where: { id: row.id },
             data: { saleClosingId: closing.id, amount },
           });
+          await scaleCommissionPaymentPartsToNet(tx, row.id, net);
         }
         commissionId = processCommissions[0]!.id;
       } else if (data.commissionAgentId) {

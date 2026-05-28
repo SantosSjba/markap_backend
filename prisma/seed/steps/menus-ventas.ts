@@ -5,7 +5,7 @@ import {
 } from '../data';
 import type { SeedDb } from '../types';
 
-const DEPRECATED_MENU_PATHS = ['/ventas/pagos'];
+const DEPRECATED_MENU_PATHS = ['/ventas/pagos', '/ventas/costos-documentacion'];
 
 export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
   console.log('\n📂 Creating menus for Ventas...');
@@ -95,6 +95,17 @@ export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
     data: { isActive: false },
   });
   if (deactivated.count > 0) {
-    console.log(`   ✅ ${deactivated.count} menú(es) obsoleto(s) desactivado(s) (Pagos)`);
+    console.log(`   ✅ ${deactivated.count} menú(es) obsoleto(s) desactivado(s)`);
+  }
+
+  const finanzasParent = await prisma.menu.findFirst({
+    where: { applicationId: ventasApp.id, label: 'Finanzas', parentId: null },
+  });
+  if (finanzasParent) {
+    await prisma.menu.update({
+      where: { id: finanzasParent.id },
+      data: { isActive: false },
+    });
+    console.log('   ✅ Menú padre "Finanzas" desactivado');
   }
 }

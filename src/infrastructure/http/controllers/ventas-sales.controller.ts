@@ -87,6 +87,17 @@ export class VentasSalesController {
         calculationType: 'PERCENT' | 'FIXED';
         percent?: number | null;
         fixedAmount?: number | null;
+        paymentParts?: {
+          label?: string | null;
+          amount?: number | null;
+          percentOfNet?: number | null;
+          dueDate?: string | null;
+        }[];
+        deductibles?: {
+          deductibleType: string;
+          description?: string | null;
+          amount: number;
+        }[];
       }[];
     },
   ) {

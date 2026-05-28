@@ -11,11 +11,9 @@ export const VENTAS_PARENT_MENUS = [
 
   { label: 'Ventas', icon: 'file-text', path: null, order: 4 },
 
-  { label: 'Finanzas', icon: 'dollar-sign', path: null, order: 5 },
+  { label: 'Reportes', icon: 'bar-chart', path: '/ventas/reportes', order: 5 },
 
-  { label: 'Reportes', icon: 'bar-chart', path: '/ventas/reportes', order: 6 },
-
-  { label: 'Configuración', icon: 'settings', path: '/ventas/configuracion', order: 7 },
+  { label: 'Configuración', icon: 'settings', path: '/ventas/configuracion', order: 6 },
 ];
 
 export const VENTAS_CHILD_MENUS = [
@@ -37,7 +35,4 @@ export const VENTAS_CHILD_MENUS = [
   { label: 'Separaciones', path: '/ventas/separaciones', order: 1, parentLabel: 'Ventas' },
   { label: 'Cierres', path: '/ventas/cierres', order: 2, parentLabel: 'Ventas' },
   { label: 'Comisiones', path: '/ventas/comisiones', order: 3, parentLabel: 'Ventas' },
-
-  // Finanzas
-  { label: 'Costos de Documentación', path: '/ventas/costos-documentacion', order: 0, parentLabel: 'Finanzas' },
 ];

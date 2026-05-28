@@ -74,13 +74,13 @@ export class VentasFinanzasController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
-  @ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'PAID'] })
+  @ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'PARTIAL', 'PAID'] })
   @ApiQuery({ name: 'agentId', required: false })
   async listCommissions(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Query('status') status?: 'PENDING' | 'PAID',
+    @Query('status') status?: 'PENDING' | 'PARTIAL' | 'PAID',
     @Query('agentId') agentId?: string,
   ) {
     return this.finanzas.listCommissions({
@@ -93,7 +93,7 @@ export class VentasFinanzasController {
   }
 
   @Patch('commissions/:id/mark-paid')
-  @ApiOperation({ summary: 'Marcar comisión como pagada' })
+  @ApiOperation({ summary: 'Marcar comisión como pagada (todas las partes)' })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async markCommissionPaid(
     @Param('id') id: string,
@@ -101,6 +101,17 @@ export class VentasFinanzasController {
     @Body() body?: { paidAt?: string | null },
   ) {
     return this.finanzas.markCommissionPaid(id, applicationSlug, body);
+  }
+
+  @Patch('commission-payment-parts/:partId/mark-paid')
+  @ApiOperation({ summary: 'Marcar una parte del pago de comisión como pagada' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async markCommissionPaymentPartPaid(
+    @Param('partId') partId: string,
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body() body?: { paidAt?: string | null },
+  ) {
+    return this.finanzas.markCommissionPaymentPartPaid(partId, applicationSlug, body);
   }
 
   @Post('commissions/:id/recalculate-from-profile')
