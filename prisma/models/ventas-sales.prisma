@@ -28,6 +28,8 @@ model SaleProcess {
   notes       SaleProcessNote[]
   activities  SaleProcessActivity[]
   reminders   SaleProcessReminder[]
+  buyers      SaleProcessBuyerLink[]
+  owners      SaleProcessOwnerLink[]
   separations SaleSeparation[]
   closings    SaleClosing[]
 
@@ -39,6 +41,40 @@ model SaleProcess {
   @@index([pipelineStage])
   @@index([status])
   @@map("sale_processes")
+}
+
+/// Participantes compradores adicionales (o principal) de un proceso
+model SaleProcessBuyerLink {
+  id            String  @id @default(uuid())
+  saleProcessId String  @map("sale_process_id")
+  buyerClientId String  @map("buyer_client_id")
+  isPrimary     Boolean @default(false) @map("is_primary")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  saleProcess SaleProcess @relation(fields: [saleProcessId], references: [id], onDelete: Cascade)
+  buyer      Client      @relation("SaleProcessBuyers", fields: [buyerClientId], references: [id], onDelete: Restrict)
+
+  @@unique([saleProcessId, buyerClientId])
+  @@index([buyerClientId])
+  @@index([saleProcessId, isPrimary])
+  @@map("sale_process_buyers")
+}
+
+/// Propietarios asociados al proceso (copropietarios)
+model SaleProcessOwnerLink {
+  id            String @id @default(uuid())
+  saleProcessId String @map("sale_process_id")
+  ownerClientId String @map("owner_client_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  saleProcess SaleProcess @relation(fields: [saleProcessId], references: [id], onDelete: Cascade)
+  owner      Client      @relation("SaleProcessOwners", fields: [ownerClientId], references: [id], onDelete: Restrict)
+
+  @@unique([saleProcessId, ownerClientId])
+  @@index([ownerClientId])
+  @@map("sale_process_owners")
 }
 
 model SaleProcessNote {

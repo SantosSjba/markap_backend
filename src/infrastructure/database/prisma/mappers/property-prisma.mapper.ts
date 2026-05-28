@@ -3,6 +3,7 @@ import type {
   PropertyDistrict,
   PropertyLocationCustom,
   PropertyMediaItem,
+  PropertyOwnerSummary,
 } from '@domain/entities/property.entity';
 import { Property } from '@domain/entities/property.entity';
 import { parseLocationCustom } from '@application/validators/client-address-location.validator';
@@ -44,17 +45,64 @@ export class PropertyPrismaMapper {
     return cleaned.length ? (cleaned as Prisma.InputJsonValue) : Prisma.JsonNull;
   }
 
-  static toDomain(
-    property: Prisma.PropertyGetPayload<{
+  static mapOwners(
+    rows:
+      | {
+          isPrimary: boolean;
+          owner: { id: string; fullName: string; documentNumber: string };
+        }[]
+      | undefined,
+  ): PropertyOwnerSummary[] {
+    if (!rows?.length) return [];
+    return rows.map((r) => ({
+      id: r.owner.id,
+      fullName: r.owner.fullName,
+      documentNumber: r.owner.documentNumber,
+      isPrimary: r.isPrimary,
+    }));
+  }
+
+  static toDomain(property: {
+    id: string;
+    applicationId: string;
+    code: string;
+    propertyTypeId: string;
+    addressLine: string;
+    districtId: string;
+    district: Prisma.PropertyGetPayload<{
       include: {
         district: {
-          include: {
-            province: { include: { department: true } };
-          };
+          include: { province: { include: { department: true } } };
         };
       };
-    }>,
-  ): Property {
+    }>['district'];
+    locationCustom: Prisma.JsonValue | null;
+    description: string | null;
+    area: number | null;
+    bedrooms: number | null;
+    bathrooms: number | null;
+    ageYears: number | null;
+    floorLevel: string | null;
+    parkingSpaces: number | null;
+    partida1: string | null;
+    partida2: string | null;
+    partida3: string | null;
+    ownerId: string;
+    monthlyRent: number | null;
+    maintenanceAmount: number | null;
+    depositMonths: number | null;
+    salePrice: number | null;
+    saleCurrency: string | null;
+    projectName: string | null;
+    mediaItems: Prisma.JsonValue | null;
+    listingStatus: string | null;
+    isActive: boolean;
+    owner?: { id: string; fullName: string; documentNumber: string };
+    owners?: {
+      isPrimary: boolean;
+      owner: { id: string; fullName: string; documentNumber: string };
+    }[];
+  }): Property {
     const district: PropertyDistrict = property.district
       ? {
           id: property.district.id,
@@ -69,6 +117,21 @@ export class PropertyPrismaMapper {
           },
         }
       : null;
+
+    const mappedOwners = PropertyPrismaMapper.mapOwners(property.owners);
+    const owners =
+      mappedOwners.length > 0
+        ? mappedOwners
+        : property.owner
+          ? [
+              {
+                id: property.owner.id,
+                fullName: property.owner.fullName,
+                documentNumber: property.owner.documentNumber,
+                isPrimary: true,
+              },
+            ]
+          : [];
 
     return new Property(
       property.id,
@@ -90,6 +153,7 @@ export class PropertyPrismaMapper {
       property.partida2,
       property.partida3,
       property.ownerId,
+      owners,
       property.monthlyRent,
       property.maintenanceAmount,
       property.depositMonths,

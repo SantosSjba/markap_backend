@@ -72,8 +72,21 @@ export class UpdatePropertyUseCase {
       saleCurrency = await assertActiveSaleCurrency(this.prisma, data.saleCurrency);
     }
 
+    let ownerPatch: Pick<UpdatePropertyData, 'ownerId' | 'ownerClientIds'> = {};
+    if (data.ownerClientIds !== undefined || data.ownerId !== undefined) {
+      const primary = data.ownerId ?? existing.ownerId;
+      const ownerClientIds = Array.from(
+        new Set([primary, ...(data.ownerClientIds ?? existing.owners.map((o) => o.id))].filter(Boolean)),
+      );
+      if (!ownerClientIds.length) {
+        throw new BadRequestException('Debe indicar al menos un propietario.');
+      }
+      ownerPatch = { ownerId: ownerClientIds[0], ownerClientIds };
+    }
+
     return this.propertyRepository.update({
       ...data,
+      ...ownerPatch,
       ...(saleCurrency !== undefined ? { saleCurrency } : {}),
       ...(data.districtId !== undefined || data.locationCustom !== undefined
         ? { locationCustom }

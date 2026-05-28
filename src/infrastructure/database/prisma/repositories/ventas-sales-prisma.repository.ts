@@ -46,23 +46,52 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     applicationId: string;
     code: string;
     buyerClientId: string;
+    buyerClientIds?: string[];
     propertyId: string;
+    ownerClientIds?: string[];
     agentId?: string | null;
     pipelineStage: VentasPipelineStage;
     title?: string | null;
   }): Promise<{ id: string }> {
-    const row = await this.prisma.saleProcess.create({
-      data: {
-        applicationId: data.applicationId,
-        code: data.code,
-        buyerClientId: data.buyerClientId,
-        propertyId: data.propertyId,
-        agentId: data.agentId ?? null,
-        pipelineStage: data.pipelineStage,
-        status: 'ACTIVE',
-        title: data.title?.trim() || null,
-      },
-      select: { id: true },
+    const row = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.saleProcess.create({
+        data: {
+          applicationId: data.applicationId,
+          code: data.code,
+          buyerClientId: data.buyerClientId,
+          propertyId: data.propertyId,
+          agentId: data.agentId ?? null,
+          pipelineStage: data.pipelineStage,
+          status: 'ACTIVE',
+          title: data.title?.trim() || null,
+        },
+        select: { id: true },
+      });
+
+      const buyers = Array.from(
+        new Set([data.buyerClientId, ...(data.buyerClientIds ?? [])].filter(Boolean)),
+      );
+      if (buyers.length) {
+        await tx.saleProcessBuyerLink.createMany({
+          data: buyers.map((buyerId) => ({
+            saleProcessId: created.id,
+            buyerClientId: buyerId,
+            isPrimary: buyerId === data.buyerClientId,
+          })),
+        });
+      }
+
+      const owners = Array.from(new Set((data.ownerClientIds ?? []).filter(Boolean)));
+      if (owners.length) {
+        await tx.saleProcessOwnerLink.createMany({
+          data: owners.map((ownerId) => ({
+            saleProcessId: created.id,
+            ownerClientId: ownerId,
+          })),
+        });
+      }
+
+      return created;
     });
     return row;
   }
@@ -87,6 +116,8 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
         { code: { contains: q } },
         { title: { contains: q } },
         { buyer: { fullName: { contains: q } } },
+        { buyers: { some: { buyer: { fullName: { contains: q } } } } },
+        { owners: { some: { owner: { fullName: { contains: q } } } } },
         { property: { code: { contains: q } } },
       ];
     }
@@ -96,6 +127,14 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
         where,
         include: {
           buyer: { select: { id: true, fullName: true, primaryPhone: true } },
+          buyers: {
+            include: { buyer: { select: { id: true, fullName: true, primaryPhone: true } } },
+            orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+          },
+          owners: {
+            include: { owner: { select: { id: true, fullName: true } } },
+            orderBy: { createdAt: 'asc' },
+          },
           property: { select: { id: true, code: true, addressLine: true, salePrice: true } },
           agent: { select: { id: true, fullName: true } },
         },
@@ -134,6 +173,34 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
             primaryEmail: true,
             clientType: true,
           },
+        },
+        buyers: {
+          include: {
+            buyer: {
+              select: {
+                id: true,
+                fullName: true,
+                primaryPhone: true,
+                primaryEmail: true,
+                clientType: true,
+              },
+            },
+          },
+          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+        },
+        owners: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                fullName: true,
+                primaryPhone: true,
+                primaryEmail: true,
+                clientType: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
         },
         property: {
           select: {

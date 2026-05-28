@@ -53,6 +53,7 @@ model Property {
   propertyType PropertyType @relation(fields: [propertyTypeId], references: [id], onDelete: Restrict)
   district     District     @relation(fields: [districtId], references: [id], onDelete: Restrict)
   owner        Client       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  owners       PropertyOwnerLink[]
   rentals      Rental[]
   saleProcesses SaleProcess[]
   saleSeparations SaleSeparation[]
@@ -64,4 +65,22 @@ model Property {
   @@index([ownerId])
   @@index([deletedAt])
   @@map("properties")
+}
+
+/// Copropietarios / propietarios adicionales del inmueble (el principal sigue en owner_id).
+model PropertyOwnerLink {
+  id            String  @id @default(uuid())
+  propertyId    String  @map("property_id")
+  ownerClientId String  @map("owner_client_id")
+  isPrimary     Boolean @default(false) @map("is_primary")
+  sortOrder     Int     @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  owner    Client   @relation("PropertyOwners", fields: [ownerClientId], references: [id], onDelete: Restrict)
+
+  @@unique([propertyId, ownerClientId])
+  @@index([propertyId])
+  @@index([ownerClientId])
+  @@map("property_owners")
 }

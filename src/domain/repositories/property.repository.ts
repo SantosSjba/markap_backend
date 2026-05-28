@@ -45,6 +45,7 @@ export interface CreatePropertyData {
   partida2?: string | null;
   partida3?: string | null;
   ownerId: string;
+  ownerClientIds?: string[];
   monthlyRent?: number | null;
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
@@ -73,6 +74,7 @@ export interface UpdatePropertyData {
   partida2?: string | null;
   partida3?: string | null;
   ownerId?: string;
+  ownerClientIds?: string[];
   monthlyRent?: number | null;
   maintenanceAmount?: number | null;
   depositMonths?: number | null;

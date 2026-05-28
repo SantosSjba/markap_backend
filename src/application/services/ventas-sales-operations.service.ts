@@ -88,7 +88,9 @@ export class VentasSalesOperationsService {
     applicationSlug: string | undefined,
     body: {
       buyerClientId: string;
+      buyerClientIds?: string[];
       propertyId: string;
+      ownerClientIds?: string[];
       agentId?: string | null;
       title?: string | null;
       pipelineStage?: string;
@@ -96,17 +98,44 @@ export class VentasSalesOperationsService {
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
 
-    const buyer = await this.clientRepository.findById(body.buyerClientId);
-    if (!buyer || buyer.applicationId !== applicationId) {
-      throw new EntityNotFoundException('Client', body.buyerClientId);
+    const buyerIds = Array.from(
+      new Set([body.buyerClientId, ...(body.buyerClientIds ?? [])].filter(Boolean)),
+    );
+    if (!buyerIds.length) {
+      throw new BadRequestException('Debe indicar al menos un comprador.');
     }
-    if (buyer.clientType !== 'BUYER') {
-      throw new BadRequestException('El proceso comercial debe asociarse a un cliente comprador / lead.');
+    for (const buyerId of buyerIds) {
+      const buyer = await this.clientRepository.findById(buyerId);
+      if (!buyer || buyer.applicationId !== applicationId) {
+        throw new EntityNotFoundException('Client', buyerId);
+      }
+      if (buyer.clientType !== 'BUYER') {
+        throw new BadRequestException(
+          `El cliente ${buyer.fullName} no es comprador. El proceso comercial solo acepta compradores.`,
+        );
+      }
     }
 
     const property = await this.propertyRepository.findById(body.propertyId);
     if (!property || property.applicationId !== applicationId) {
       throw new EntityNotFoundException('Property', body.propertyId);
+    }
+    const ownerIds = Array.from(
+      new Set([
+        property.ownerId,
+        ...(property.owners?.map((o) => o.id) ?? []),
+      ].filter(Boolean)),
+    );
+    for (const ownerId of ownerIds) {
+      const owner = await this.clientRepository.findById(ownerId);
+      if (!owner || owner.applicationId !== applicationId) {
+        throw new EntityNotFoundException('Client', ownerId);
+      }
+      if (owner.clientType !== 'OWNER') {
+        throw new BadRequestException(
+          `El cliente ${owner.fullName} no es propietario. Solo se permiten propietarios en la operación.`,
+        );
+      }
     }
 
     if (body.agentId) {
@@ -131,7 +160,9 @@ export class VentasSalesOperationsService {
       applicationId,
       code,
       buyerClientId: body.buyerClientId,
+      buyerClientIds: buyerIds,
       propertyId: body.propertyId,
+      ownerClientIds: ownerIds,
       agentId: body.agentId ?? null,
       pipelineStage: stage,
       title: body.title ?? null,

@@ -18,7 +18,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreatePropertyData): Promise<Property> {
-    const createData: Prisma.PropertyCreateInput = {
+    const createData: Omit<Prisma.PropertyCreateInput, 'owner'> = {
       application: { connect: { id: data.applicationId } },
       code: data.code.trim(),
       propertyType: { connect: { id: data.propertyTypeId } },
@@ -37,7 +37,6 @@ export class PropertyPrismaRepository implements PropertyRepository {
       partida1: data.partida1?.trim() || null,
       partida2: data.partida2?.trim() || null,
       partida3: data.partida3?.trim() || null,
-      owner: { connect: { id: data.ownerId } },
       monthlyRent: data.monthlyRent ?? null,
       maintenanceAmount: data.maintenanceAmount ?? null,
       depositMonths: data.depositMonths ?? null,
@@ -50,8 +49,29 @@ export class PropertyPrismaRepository implements PropertyRepository {
       createData.mediaItems = PropertyPrismaMapper.mediaToJson(data.mediaItems) as Prisma.InputJsonValue;
     }
 
-    const property = await this.prisma.property.create({
-      data: createData,
+    const ownerClientIds = Array.from(
+      new Set([data.ownerId, ...(data.ownerClientIds ?? [])].filter(Boolean)),
+    );
+    const primaryOwnerId = ownerClientIds[0] ?? data.ownerId;
+
+    const property = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.property.create({
+        data: {
+          ...createData,
+          owner: { connect: { id: primaryOwnerId } },
+        },
+      });
+      if (ownerClientIds.length) {
+        await tx.propertyOwnerLink.createMany({
+          data: ownerClientIds.map((ownerId, index) => ({
+            propertyId: created.id,
+            ownerClientId: ownerId,
+            isPrimary: ownerId === primaryOwnerId,
+            sortOrder: index,
+          })),
+        });
+      }
+      return created;
     });
     const full = await this.findById(property.id);
     if (!full) throw new Error('Property create failed');
@@ -68,6 +88,13 @@ export class PropertyPrismaRepository implements PropertyRepository {
               include: { department: true },
             },
           },
+        },
+        owner: { select: { id: true, fullName: true, documentNumber: true } },
+        owners: {
+          include: {
+            owner: { select: { id: true, fullName: true, documentNumber: true } },
+          },
+          orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }],
         },
       },
     });
@@ -248,6 +275,10 @@ export class PropertyPrismaRepository implements PropertyRepository {
     if (data.partida2 !== undefined) updatePayload.partida2 = data.partida2?.trim() || null;
     if (data.partida3 !== undefined) updatePayload.partida3 = data.partida3?.trim() || null;
     if (data.ownerId !== undefined) updatePayload.owner = { connect: { id: data.ownerId } };
+    const ownerClientIds =
+      data.ownerClientIds !== undefined
+        ? Array.from(new Set(data.ownerClientIds.filter(Boolean)))
+        : undefined;
     if (data.monthlyRent !== undefined) updatePayload.monthlyRent = data.monthlyRent;
     if (data.maintenanceAmount !== undefined) updatePayload.maintenanceAmount = data.maintenanceAmount;
     if (data.depositMonths !== undefined) updatePayload.depositMonths = data.depositMonths;
@@ -258,9 +289,25 @@ export class PropertyPrismaRepository implements PropertyRepository {
       updatePayload.mediaItems = PropertyPrismaMapper.mediaToJson(data.mediaItems) as Prisma.InputJsonValue;
     if (data.listingStatus !== undefined) updatePayload.listingStatus = data.listingStatus;
 
-    await this.prisma.property.update({
-      where: { id: data.id },
-      data: updatePayload,
+    await this.prisma.$transaction(async (tx) => {
+      await tx.property.update({
+        where: { id: data.id },
+        data: updatePayload,
+      });
+      if (ownerClientIds !== undefined) {
+        const primaryOwnerId = data.ownerId ?? existing.ownerId;
+        await tx.propertyOwnerLink.deleteMany({ where: { propertyId: data.id } });
+        if (ownerClientIds.length) {
+          await tx.propertyOwnerLink.createMany({
+            data: ownerClientIds.map((ownerId, index) => ({
+              propertyId: data.id,
+              ownerClientId: ownerId,
+              isPrimary: ownerId === primaryOwnerId,
+              sortOrder: index,
+            })),
+          });
+        }
+      }
     });
     const full = await this.findById(data.id);
     if (!full) throw new Error('Property update failed');

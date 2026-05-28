@@ -36,6 +36,7 @@ export interface CreatePropertyInput {
   partida2?: string | null;
   partida3?: string | null;
   ownerId: string;
+  ownerClientIds?: string[];
   monthlyRent?: number | null;
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
@@ -95,6 +96,13 @@ export class CreatePropertyUseCase {
 
     const saleCurrency = await assertActiveSaleCurrency(this.prisma, input.saleCurrency);
 
+    const ownerClientIds = Array.from(
+      new Set([input.ownerId, ...(input.ownerClientIds ?? [])].filter(Boolean)),
+    );
+    if (!ownerClientIds.length) {
+      throw new BadRequestException('Debe indicar al menos un propietario.');
+    }
+
     return this.propertyRepository.create({
       applicationId,
       code: input.code,
@@ -112,7 +120,8 @@ export class CreatePropertyUseCase {
       partida1: input.partida1,
       partida2: input.partida2,
       partida3: input.partida3,
-      ownerId: input.ownerId,
+      ownerId: ownerClientIds[0],
+      ownerClientIds,
       monthlyRent: input.monthlyRent,
       maintenanceAmount: input.maintenanceAmount,
       depositMonths: input.depositMonths,

@@ -69,7 +69,9 @@ export class VentasSalesController {
     @Body()
     body: {
       buyerClientId: string;
+      buyerClientIds?: string[];
       propertyId: string;
+      ownerClientIds?: string[];
       agentId?: string | null;
       title?: string | null;
       pipelineStage?: string;

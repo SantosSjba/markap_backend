@@ -117,10 +117,19 @@ export class CreatePropertyDto {
   @MaxLength(100)
   partida3?: string | null;
 
-  @ApiProperty({ description: 'ID del propietario (cliente tipo OWNER)' })
+  @ApiProperty({ description: 'ID del propietario principal (cliente tipo OWNER)' })
   @IsString()
   @IsUUID()
   ownerId: string;
+
+  @ApiPropertyOptional({
+    description: 'IDs de copropietarios / propietarios adicionales (incluye el principal)',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  ownerClientIds?: string[];
 
   @ApiPropertyOptional({ description: 'Alquiler mensual (S/)' })
   @IsOptional()

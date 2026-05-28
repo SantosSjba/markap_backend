@@ -1,6 +1,14 @@
 /** Elemento multimedia en ficha de propiedad. */
 export type PropertyMediaItem = { url: string; kind: 'photo' | 'plan' };
 
+/** Propietario vinculado al inmueble (tabla property_owners). */
+export type PropertyOwnerSummary = {
+  id: string;
+  fullName: string;
+  documentNumber: string;
+  isPrimary: boolean;
+};
+
 /** Ubicación libre cuando districtId = ubigeo "Otros". */
 export type PropertyLocationCustom = {
   country: string;
@@ -44,6 +52,7 @@ export class Property {
     public readonly partida2: string | null,
     public readonly partida3: string | null,
     public readonly ownerId: string,
+    public readonly owners: PropertyOwnerSummary[] = [],
     public readonly monthlyRent: number | null,
     public readonly maintenanceAmount: number | null,
     public readonly depositMonths: number | null,

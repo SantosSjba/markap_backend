@@ -49,7 +49,9 @@ export interface VentasSalesRepository {
     applicationId: string;
     code: string;
     buyerClientId: string;
+    buyerClientIds?: string[];
     propertyId: string;
+    ownerClientIds?: string[];
     agentId?: string | null;
     pipelineStage: VentasPipelineStage;
     title?: string | null;
