@@ -159,7 +159,11 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
 
   async countProcessCommissions(saleProcessId: string, applicationId: string): Promise<number> {
     return this.prisma.saleCommission.count({
-      where: { saleProcessId, applicationId },
+      where: {
+        saleProcessId,
+        applicationId,
+        status: { notIn: ['CANCELLED'] },
+      },
     });
   }
 
@@ -428,15 +432,81 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     saleProcessId: string,
     applicationId: string,
   ): Promise<number> {
-    const result = await this.prisma.saleCommission.updateMany({
-      where: {
-        saleProcessId,
-        applicationId,
-        status: { notIn: ['PAID', 'CANCELLED'] },
-      },
-      data: { status: 'CANCELLED', paidAt: null },
+    return this.prisma.$transaction(async (tx) => {
+      const rows = await tx.saleCommission.findMany({
+        where: {
+          saleProcessId,
+          applicationId,
+          status: { notIn: ['PAID', 'CANCELLED'] },
+        },
+        include: { paymentParts: { select: { status: true } } },
+      });
+      let count = 0;
+      for (const row of rows) {
+        const hasPaidPart = row.paymentParts.some((p) => p.status === 'PAID');
+        if (hasPaidPart) continue;
+        await tx.saleCommission.update({
+          where: { id: row.id },
+          data: { status: 'CANCELLED', paidAt: null },
+        });
+        count += 1;
+      }
+      return count;
     });
-    return result.count;
+  }
+
+  async applySaleProcessLost(
+    saleProcessId: string,
+    applicationId: string,
+    data: { lostReason: string; closedAt: Date; activityDescription: string },
+  ): Promise<unknown | null> {
+    const applied = await this.prisma.$transaction(async (tx) => {
+      const proc = await tx.saleProcess.findFirst({
+        where: { id: saleProcessId, applicationId, deletedAt: null },
+      });
+      if (!proc || proc.status !== 'ACTIVE') return false;
+
+      await tx.saleProcess.update({
+        where: { id: saleProcessId },
+        data: {
+          status: 'LOST',
+          lostReason: data.lostReason,
+          closedAt: data.closedAt,
+        },
+      });
+
+      const commissions = await tx.saleCommission.findMany({
+        where: {
+          saleProcessId,
+          applicationId,
+          status: { notIn: ['PAID', 'CANCELLED'] },
+        },
+        include: { paymentParts: { select: { status: true } } },
+      });
+      for (const row of commissions) {
+        const hasPaidPart = row.paymentParts.some((p) => p.status === 'PAID');
+        if (hasPaidPart) continue;
+        await tx.saleCommission.update({
+          where: { id: row.id },
+          data: { status: 'CANCELLED', paidAt: null },
+        });
+      }
+
+      await tx.saleProcessActivity.create({
+        data: {
+          saleProcessId,
+          activityType: 'OTHER',
+          title: 'Venta caída',
+          description: data.activityDescription,
+          completedAt: new Date(),
+        },
+      });
+
+      return true;
+    });
+
+    if (!applied) return null;
+    return this.getSaleProcessById(saleProcessId, applicationId);
   }
 
   async listSaleFinancingChannels(): Promise<unknown[]> {
@@ -804,7 +874,11 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       const processCommissions =
         data.saleProcessId != null
           ? await tx.saleCommission.findMany({
-              where: { saleProcessId: data.saleProcessId, applicationId: data.applicationId },
+              where: {
+                saleProcessId: data.saleProcessId,
+                applicationId: data.applicationId,
+                status: { notIn: ['CANCELLED'] },
+              },
             })
           : [];
 

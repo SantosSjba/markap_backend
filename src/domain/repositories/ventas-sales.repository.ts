@@ -108,6 +108,13 @@ export interface VentasSalesRepository {
   /** Anula comisiones del proceso (venta caída). */
   cancelProcessCommissions(saleProcessId: string, applicationId: string): Promise<number>;
 
+  /** Marca proceso LOST, anula comisiones y registra actividad (transacción atómica). */
+  applySaleProcessLost(
+    saleProcessId: string,
+    applicationId: string,
+    data: { lostReason: string; closedAt: Date; activityDescription: string },
+  ): Promise<unknown | null>;
+
   listSaleFinancingChannels(): Promise<unknown[]>;
 
   addSaleProcessNote(

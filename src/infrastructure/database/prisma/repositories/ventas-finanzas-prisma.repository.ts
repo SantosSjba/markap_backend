@@ -498,17 +498,18 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
     });
     if (!closing) return null;
 
-    const commissionGross = closing.commissions.reduce((s, c) => s + c.amount, 0);
-    const commissionDeductiblesTotal = closing.commissions.reduce(
+    const activeCommissions = closing.commissions.filter((c) => c.status !== 'CANCELLED');
+    const commissionGross = activeCommissions.reduce((s, c) => s + c.amount, 0);
+    const commissionDeductiblesTotal = activeCommissions.reduce(
       (s, c) => s + c.deductibles.reduce((ds, d) => ds + d.amount, 0),
       0,
     );
     const commissionNetPayable = Math.max(0, commissionGross - commissionDeductiblesTotal);
     const netEstimated = closing.finalPrice - commissionNetPayable;
     const allPaid =
-      closing.commissions.length > 0 &&
-      closing.commissions.every((c) => c.status === 'PAID');
-    const anyPartial = closing.commissions.some((c) => c.status === 'PARTIAL');
+      activeCommissions.length > 0 &&
+      activeCommissions.every((c) => c.status === 'PAID');
+    const anyPartial = activeCommissions.some((c) => c.status === 'PARTIAL');
 
     return {
       closingId: closing.id,
@@ -520,7 +521,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       commissionGross,
       commissionNetPayable,
       commissionAmount: commissionNetPayable,
-      commissionStatus: closing.commissions.length
+      commissionStatus: activeCommissions.length
         ? allPaid
           ? 'PAID'
           : anyPartial

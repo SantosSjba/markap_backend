@@ -54,6 +54,8 @@ function isVentasPipelineStage(v: string): v is VentasPipelineStage {
   return (VENTAS_PIPELINE_STAGES as readonly string[]).includes(v);
 }
 
+type SaleProcessStatusRow = { status: 'ACTIVE' | 'WON' | 'LOST' };
+
 function isVentasPaymentType(v: string): v is VentasPaymentType {
   return (VENTAS_PAYMENT_TYPES as readonly string[]).includes(v);
 }
@@ -95,6 +97,22 @@ export class VentasSalesOperationsService {
     const app = await this.applicationRepository.findBySlug(VENTAS_SLUG);
     if (!app) throw new EntityNotFoundException('Application', VENTAS_SLUG);
     return app.id;
+  }
+
+  private async assertSaleProcessAllowsFollowUp(
+    processId: string,
+    applicationId: string,
+  ): Promise<void> {
+    const p = (await this.ventasSales.getSaleProcessById(
+      processId,
+      applicationId,
+    )) as SaleProcessStatusRow | null;
+    if (!p) throw new EntityNotFoundException('SaleProcess', processId);
+    if (p.status !== 'ACTIVE') {
+      throw new BadRequestException(
+        'Solo procesos activos admiten notas, actividades o recordatorios.',
+      );
+    }
   }
 
   async listProcesses(f: ListSaleProcessesFilters) {
@@ -366,6 +384,16 @@ export class VentasSalesOperationsService {
           'El proceso ya está ganado. No se puede cambiar la etapa del pipeline.',
         );
       }
+      const triesToChangeWon =
+        body.status !== undefined ||
+        body.agentId !== undefined ||
+        body.title !== undefined ||
+        body.financingChannelId !== undefined;
+      if (triesToChangeWon) {
+        throw new BadRequestException(
+          'El proceso ya está ganado; no se puede modificar desde esta pantalla.',
+        );
+      }
     }
 
     const patch: Parameters<VentasSalesRepository['updateSaleProcess']>[2] = {};
@@ -385,6 +413,13 @@ export class VentasSalesOperationsService {
     const markingLost = body.status === 'LOST';
     if (body.status !== undefined) {
       if (body.status === 'LOST') {
+        if (cur.status !== 'ACTIVE') {
+          throw new BadRequestException(
+            cur.status === 'LOST'
+              ? 'La venta ya está registrada como caída.'
+              : 'Solo un proceso activo puede marcarse como venta caída.',
+          );
+        }
         const reason = body.lostReason?.trim() ?? '';
         if (reason.length < 5) {
           throw new BadRequestException(
@@ -394,11 +429,16 @@ export class VentasSalesOperationsService {
         patch.status = 'LOST';
         patch.lostReason = reason;
         patch.closedAt = new Date();
+      } else if (body.status === 'WON') {
+        throw new BadRequestException(
+          'Registre la venta ganada desde Cierres, no desde la ficha del proceso.',
+        );
+      } else if (body.status === 'ACTIVE' && cur.status === 'WON') {
+        throw new BadRequestException(
+          'No se puede reactivar un proceso ya ganado desde esta pantalla.',
+        );
       } else {
         patch.status = body.status;
-        if (body.status === 'WON') {
-          patch.closedAt = new Date();
-        }
       }
     }
 
@@ -411,23 +451,26 @@ export class VentasSalesOperationsService {
       );
     }
 
-    await this.ventasSales.updateSaleProcess(id, applicationId, patch);
-
     if (markingLost) {
-      await this.ventasSales.cancelProcessCommissions(id, applicationId);
       const reason = patch.lostReason ?? '';
-      await this.ventasSales.addSaleProcessActivity({
-        saleProcessId: id,
-        applicationId,
-        activityType: 'OTHER',
-        title: 'Venta caída',
-        description: reason,
-        completedAt: new Date(),
+      const lost = await this.ventasSales.applySaleProcessLost(id, applicationId, {
+        lostReason: reason,
+        closedAt: patch.closedAt ?? new Date(),
+        activityDescription: reason,
       });
+      if (!lost) {
+        throw new BadRequestException('No se pudo registrar la venta caída.');
+      }
+      return mapSaleProcessDetail(lost as Record<string, unknown>);
+    }
+
+    if (Object.keys(patch).length > 0) {
+      await this.ventasSales.updateSaleProcess(id, applicationId, patch);
     }
 
     const detail = await this.ventasSales.getSaleProcessById(id, applicationId);
-    return detail ? mapSaleProcessDetail(detail as Record<string, unknown>) : existing;
+    if (!detail) throw new EntityNotFoundException('SaleProcess', id);
+    return mapSaleProcessDetail(detail as Record<string, unknown>);
   }
 
   async addNote(
@@ -436,6 +479,7 @@ export class VentasSalesOperationsService {
     body: { text: string; createdBy?: string | null },
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    await this.assertSaleProcessAllowsFollowUp(processId, applicationId);
     const row = await this.ventasSales.addSaleProcessNote(
       processId,
       applicationId,
@@ -458,6 +502,7 @@ export class VentasSalesOperationsService {
     },
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    await this.assertSaleProcessAllowsFollowUp(processId, applicationId);
     const row = await this.ventasSales.addSaleProcessActivity({
       saleProcessId: processId,
       applicationId,
@@ -481,6 +526,7 @@ export class VentasSalesOperationsService {
     body: { title: string; dueAt: string },
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    await this.assertSaleProcessAllowsFollowUp(processId, applicationId);
     const row = await this.ventasSales.addSaleProcessReminder({
       saleProcessId: processId,
       applicationId,
@@ -549,8 +595,16 @@ export class VentasSalesOperationsService {
     }
 
     if (body.saleProcessId) {
-      const p = await this.ventasSales.getSaleProcessById(body.saleProcessId, applicationId);
+      const p = (await this.ventasSales.getSaleProcessById(
+        body.saleProcessId,
+        applicationId,
+      )) as { status: string } | null;
       if (!p) throw new EntityNotFoundException('SaleProcess', body.saleProcessId);
+      if (p.status !== 'ACTIVE') {
+        throw new BadRequestException(
+          'Solo se puede separar sobre un proceso de venta activo.',
+        );
+      }
     }
 
     if (body.amount <= 0) {
@@ -741,10 +795,15 @@ export class VentasSalesOperationsService {
       const proc = await this.ventasSales.getSaleProcessById(
         body.saleProcessId,
         applicationId,
-      ) as { propertyId: string; buyerClientId: string } | null;
+      ) as { propertyId: string; buyerClientId: string; status: string } | null;
       if (!proc) throw new EntityNotFoundException('SaleProcess', body.saleProcessId);
       if (proc.propertyId !== body.propertyId || proc.buyerClientId !== body.buyerClientId) {
         throw new BadRequestException('El proceso no coincide con propiedad ni comprador del cierre.');
+      }
+      if (proc.status !== 'ACTIVE') {
+        throw new BadRequestException(
+          'Solo se puede cerrar un proceso de venta activo. Las ventas caídas o ya ganadas no admiten cierre.',
+        );
       }
     }
 
