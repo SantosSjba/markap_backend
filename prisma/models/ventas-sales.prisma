@@ -9,7 +9,7 @@ model SaleProcess {
   buyerClientId  String @map("buyer_client_id")
   propertyId     String @map("property_id")
   agentId        String? @map("agent_id")
-  /// PROSPECT | VISIT | NEGOTIATION | SEPARATION | CLOSING
+  /// SEPARATION | ARRAS | MINUTA | PUBLIC_DEED
   pipelineStage  String @map("pipeline_stage")
   /// ACTIVE | WON | LOST
   status         String @default("ACTIVE")

@@ -144,7 +144,7 @@ export const VENTAS_SAMPLE_PROPERTIES: {
   {
     code: 'VNT-SEED-CRM',
     addressLine: seedPrueba('Jr. Lima 210, Barranco'),
-    description: seedPrueba('Demo pipeline: oportunidad activa en etapa negociación.'),
+    description: seedPrueba('Demo pipeline: oportunidad activa en contrato de arras.'),
     area: 72,
     bedrooms: 2,
     bathrooms: 1,

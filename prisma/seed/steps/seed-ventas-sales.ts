@@ -9,7 +9,7 @@ const CODE_CLOSED_JOURNEY = 'VNT-PRC-SEED-001';
  * Idempotente por código de proceso.
  *
  * Nota: el flujo cerrado deja el proceso en WON (no aparece en el Kanban, que filtra ACTIVE).
- * Por eso existe VNT-PRC-SEED-CRM en etapa NEGOTIATION siempre ACTIVE.
+ * Por eso existe VNT-PRC-SEED-CRM en etapa ARRAS siempre ACTIVE.
  */
 export async function seedVentasSales(
   prisma: SeedDb,
@@ -69,9 +69,9 @@ async function seedCrmActiveProcess(prisma: SeedDb, ventasAppId: string): Promis
         buyerClientId: buyer.id,
         propertyId: prop.id,
         agentId: agent.id,
-        pipelineStage: 'NEGOTIATION',
+        pipelineStage: 'ARRAS',
         status: 'ACTIVE',
-        title: seedPrueba('Demo pipeline — Carmen Vega (negociación)'),
+        title: seedPrueba('Demo pipeline — Carmen Vega (contrato de arras)'),
       },
     });
 
@@ -100,7 +100,7 @@ async function seedCrmActiveProcess(prisma: SeedDb, ventasAppId: string): Promis
     });
   });
 
-  console.log(`   ✅ ${CODE_CRM_ACTIVE} — ACTIVE / NEGOTIATION (visible en pipeline y listado)`);
+  console.log(`   ✅ ${CODE_CRM_ACTIVE} — ACTIVE / ARRAS (visible en pipeline y listado)`);
 }
 
 async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promise<void> {
@@ -144,7 +144,7 @@ async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promi
         buyerClientId: buyer.id,
         propertyId: propAvailable.id,
         agentId: agent.id,
-        pipelineStage: 'NEGOTIATION',
+        pipelineStage: 'ARRAS',
         status: 'ACTIVE',
         title: seedPrueba('Lead demo — Torre Vista Mar (cierre seed)'),
       },
@@ -238,7 +238,7 @@ async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promi
       where: { id: process.id },
       data: {
         status: 'WON',
-        pipelineStage: 'CLOSING',
+        pipelineStage: 'PUBLIC_DEED',
         closedAt: new Date(),
       },
     });

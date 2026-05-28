@@ -10,11 +10,10 @@ import { EntityNotFoundException } from '@domain/exceptions';
 const VENTAS_SLUG = 'ventas';
 
 const REQUIRED_PIPELINE_CODES = new Set([
-  'PROSPECT',
-  'VISIT',
-  'NEGOTIATION',
   'SEPARATION',
-  'CLOSING',
+  'ARRAS',
+  'MINUTA',
+  'PUBLIC_DEED',
 ]);
 
 function assertVentasSlug(slug: string | undefined | null): void {
@@ -80,14 +79,14 @@ export class VentasConfigOperationsService {
     const codes = new Set(stages.map((s) => s.code));
     if (codes.size !== REQUIRED_PIPELINE_CODES.size || ![...REQUIRED_PIPELINE_CODES].every((c) => codes.has(c))) {
       throw new BadRequestException(
-        'Debe enviar exactamente las etapas: PROSPECT, VISIT, NEGOTIATION, SEPARATION, CLOSING.',
+        'Debe enviar exactamente las etapas: SEPARATION, ARRAS, MINUTA, PUBLIC_DEED.',
       );
     }
     if (!stages.every((s) => s.label?.trim())) {
       throw new BadRequestException('Cada etapa requiere una etiqueta.');
     }
     if (stages.filter((s) => s.isActive).length < REQUIRED_PIPELINE_CODES.size) {
-      throw new BadRequestException('Las cinco etapas deben permanecer activas en el pipeline.');
+      throw new BadRequestException('Las cuatro etapas deben permanecer activas en el pipeline.');
     }
     await this.config.replacePipelineStages(
       applicationId,

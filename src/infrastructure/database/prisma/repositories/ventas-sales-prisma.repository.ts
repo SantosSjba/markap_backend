@@ -615,7 +615,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           where: { id: data.saleProcessId, applicationId: data.applicationId },
           data: {
             status: 'WON',
-            pipelineStage: 'CLOSING',
+            pipelineStage: 'PUBLIC_DEED',
             closedAt: new Date(),
           },
         });

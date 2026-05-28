@@ -3,7 +3,7 @@
 model VentasPipelineStageConfig {
   id            String @id @default(uuid())
   applicationId String @map("application_id")
-  /// Código fijo alineado con backend (PROSPECT, VISIT, …)
+  /// Código fijo alineado con backend (SEPARATION, ARRAS, MINUTA, PUBLIC_DEED)
   code          String
   label         String
   sortOrder     Int    @map("sort_order")

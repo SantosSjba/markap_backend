@@ -9,11 +9,10 @@ import { VentasPropertyTypeCatalogItem } from '@domain/entities/ventas-config.en
 import type { VentasNumberingSeries, VentasPipelineStage } from '@domain/entities/ventas-config.entity';
 
 const DEFAULT_STAGES: VentasPipelineStageInput[] = [
-  { code: 'PROSPECT', label: 'Prospecto', sortOrder: 0, isActive: true },
-  { code: 'VISIT', label: 'Visita', sortOrder: 1, isActive: true },
-  { code: 'NEGOTIATION', label: 'Negociación', sortOrder: 2, isActive: true },
-  { code: 'SEPARATION', label: 'Separación', sortOrder: 3, isActive: true },
-  { code: 'CLOSING', label: 'Cierre', sortOrder: 4, isActive: true },
+  { code: 'SEPARATION', label: 'Separación', sortOrder: 0, isActive: true },
+  { code: 'ARRAS', label: 'Contrato de arras', sortOrder: 1, isActive: true },
+  { code: 'MINUTA', label: 'Minuta', sortOrder: 2, isActive: true },
+  { code: 'PUBLIC_DEED', label: 'Escritura pública', sortOrder: 3, isActive: true },
 ];
 
 @Injectable()

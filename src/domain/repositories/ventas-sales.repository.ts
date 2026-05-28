@@ -1,9 +1,8 @@
 export const VENTAS_PIPELINE_STAGES = [
-  'PROSPECT',
-  'VISIT',
-  'NEGOTIATION',
   'SEPARATION',
-  'CLOSING',
+  'ARRAS',
+  'MINUTA',
+  'PUBLIC_DEED',
 ] as const;
 export type VentasPipelineStage = (typeof VENTAS_PIPELINE_STAGES)[number];
 

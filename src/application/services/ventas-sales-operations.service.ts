@@ -145,7 +145,7 @@ export class VentasSalesOperationsService {
       }
     }
 
-    let stage: VentasPipelineStage = 'PROSPECT';
+    let stage: VentasPipelineStage = 'SEPARATION';
     if (body.pipelineStage) {
       if (!isVentasPipelineStage(body.pipelineStage)) {
         throw new BadRequestException(

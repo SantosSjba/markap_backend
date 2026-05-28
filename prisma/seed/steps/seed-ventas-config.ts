@@ -1,8 +1,15 @@
 import type { SeedDb } from '../types';
 
+const PIPELINE_STAGES = [
+  { code: 'SEPARATION', label: 'Separación', sortOrder: 0, isActive: true },
+  { code: 'ARRAS', label: 'Contrato de arras', sortOrder: 1, isActive: true },
+  { code: 'MINUTA', label: 'Minuta', sortOrder: 2, isActive: true },
+  { code: 'PUBLIC_DEED', label: 'Escritura pública', sortOrder: 3, isActive: true },
+] as const;
+
 /**
- * Parametrización Ventas (pipeline + numeración). Idempotente via ensure logic en repositorio.
- * Aquí solo invocamos la misma semántica que el runtime para entornos sin primer request HTTP.
+ * Parametrización Ventas (pipeline + numeración).
+ * Pipeline: siempre sincroniza las 4 etapas oficiales del proceso de venta.
  */
 export async function seedVentasConfig(
   prisma: SeedDb,
@@ -14,23 +21,34 @@ export async function seedVentasConfig(
     return;
   }
 
-  const nPipeline = await prisma.ventasPipelineStageConfig.count({
+  await prisma.ventasPipelineStageConfig.deleteMany({
     where: { applicationId: ventasAppId },
   });
-  if (nPipeline === 0) {
-    await prisma.ventasPipelineStageConfig.createMany({
-      data: [
-        { applicationId: ventasAppId, code: 'PROSPECT', label: 'Prospecto', sortOrder: 0, isActive: true },
-        { applicationId: ventasAppId, code: 'VISIT', label: 'Visita', sortOrder: 1, isActive: true },
-        { applicationId: ventasAppId, code: 'NEGOTIATION', label: 'Negociación', sortOrder: 2, isActive: true },
-        { applicationId: ventasAppId, code: 'SEPARATION', label: 'Separación', sortOrder: 3, isActive: true },
-        { applicationId: ventasAppId, code: 'CLOSING', label: 'Cierre', sortOrder: 4, isActive: true },
-      ],
-    });
-    console.log('\n   ✓ ventas-config: etapas de pipeline por defecto');
-  } else {
-    console.log('\n   ✓ ventas-config: pipeline ya existe — skip');
-  }
+  await prisma.ventasPipelineStageConfig.createMany({
+    data: PIPELINE_STAGES.map((s) => ({
+      applicationId: ventasAppId,
+      code: s.code,
+      label: s.label,
+      sortOrder: s.sortOrder,
+      isActive: s.isActive,
+    })),
+  });
+  console.log('\n   ✓ ventas-config: etapas de pipeline (Separación → Escritura pública)');
+
+  // Migrar procesos con etapas antiguas del embudo CRM previo
+  await prisma.$executeRaw`
+    UPDATE sale_processes sp
+    SET pipeline_stage = CASE sp.pipeline_stage
+      WHEN 'SEPARATION' THEN 'SEPARATION'
+      WHEN 'CLOSING' THEN 'PUBLIC_DEED'
+      WHEN 'PUBLIC_DEED' THEN 'PUBLIC_DEED'
+      WHEN 'ARRAS' THEN 'ARRAS'
+      WHEN 'MINUTA' THEN 'MINUTA'
+      ELSE 'SEPARATION'
+    END
+    WHERE sp.application_id = ${ventasAppId}::text
+      AND sp.pipeline_stage NOT IN ('SEPARATION', 'ARRAS', 'MINUTA', 'PUBLIC_DEED')
+  `;
 
   const nSeries = await prisma.ventasNumberingSeries.count({
     where: { applicationId: ventasAppId, seriesKey: 'SALE_PROCESS' },
