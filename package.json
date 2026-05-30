@@ -24,6 +24,7 @@
     "prisma:studio": "prisma studio",
     "prisma:push": "prisma db push",
     "prisma:seed": "prisma db seed",
+    "prisma:seed:prod": "ts-node prisma/seed-prod.ts",
     "prisma:seed:ubigeo-other": "ts-node prisma/scripts/seed-ubigeo-other.ts"
   },
   "dependencies": {
