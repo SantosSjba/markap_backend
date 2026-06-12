@@ -10,6 +10,10 @@ import {
   IsDateString,
 } from 'class-validator';
 
+import {
+  INTERIOR_PROJECT_STATUS_CODES,
+} from '@domain/constants/interior-project-stages.constants';
+
 const PROJECT_TYPES = [
   'REMODELING',
   'INTERIOR_DESIGN',
@@ -17,15 +21,7 @@ const PROJECT_TYPES = [
   'FURNITURE',
 ] as const;
 
-const PROJECT_STATUSES = [
-  'PROSPECT',
-  'DESIGN',
-  'QUOTE',
-  'APPROVED',
-  'IN_PROGRESS',
-  'FINISHED',
-  'CANCELLED',
-] as const;
+const PROJECT_STATUSES = [...INTERIOR_PROJECT_STATUS_CODES] as const;
 
 export class UpdateInteriorProjectDto {
   @ApiPropertyOptional()

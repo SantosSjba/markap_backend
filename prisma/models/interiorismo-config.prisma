@@ -3,7 +3,7 @@
 model InteriorismoProjectStageConfig {
   id            String @id @default(uuid())
   applicationId String @map("application_id")
-  /// Código alineado con estado de proyecto (PROSPECT, DESIGN, …)
+  /// Código alineado con estado de proyecto (DESIGN, QUOTE, APPROVED, IN_PROGRESS, FINISHED)
   code          String
   label         String
   sortOrder     Int    @map("sort_order")

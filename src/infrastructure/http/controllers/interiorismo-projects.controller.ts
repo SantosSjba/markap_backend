@@ -48,7 +48,7 @@ export class InteriorismoProjectsController {
   @ApiQuery({
     name: 'inProgressOnly',
     required: false,
-    description: 'true = DESIGN, QUOTE, APPROVED, IN_PROGRESS',
+    description: 'true = DESIGN, QUOTE, APPROVED, IN_PROGRESS (proyectos activos)',
   })
   @ApiQuery({ name: 'clientId', required: false, description: 'Filtrar proyectos por cliente' })
   @ApiResponse({ status: 200 })

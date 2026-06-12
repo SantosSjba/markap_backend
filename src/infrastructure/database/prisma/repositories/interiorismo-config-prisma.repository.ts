@@ -7,16 +7,11 @@ import {
   type InteriorismoProjectStageInput,
 } from '@domain/repositories/interiorismo-config.repository';
 import type { InteriorismoNumberingSeries, InteriorismoProjectStage } from '@domain/entities/interiorismo-config.entity';
-
-const DEFAULT_STAGES: InteriorismoProjectStageInput[] = [
-  { code: 'PROSPECT', label: 'Prospecto', sortOrder: 0, isActive: true },
-  { code: 'DESIGN', label: 'Diseño', sortOrder: 1, isActive: true },
-  { code: 'QUOTE', label: 'Cotización', sortOrder: 2, isActive: true },
-  { code: 'APPROVED', label: 'Aprobado', sortOrder: 3, isActive: true },
-  { code: 'IN_PROGRESS', label: 'En ejecución', sortOrder: 4, isActive: true },
-  { code: 'FINISHED', label: 'Finalizado', sortOrder: 5, isActive: true },
-  { code: 'CANCELLED', label: 'Cancelado', sortOrder: 6, isActive: true },
-];
+import {
+  INTERIOR_PROJECT_LEGACY_STAGE_CODES,
+  INTERIOR_PROJECT_LIFECYCLE_CODE_SET,
+  INTERIOR_PROJECT_LIFECYCLE_STAGES,
+} from '@domain/constants/interior-project-stages.constants';
 
 @Injectable()
 export class InteriorismoConfigPrismaRepository implements InteriorismoConfigRepository {
@@ -68,21 +63,41 @@ export class InteriorismoConfigPrismaRepository implements InteriorismoConfigRep
     return InteriorismoConfigPrismaMapper.toNumberingSeries(row);
   }
 
-  async ensureDefaults(applicationId: string): Promise<void> {
-    const nStages = await this.prisma.interiorismoProjectStageConfig.count({
+  /** Alinea etapas al ciclo de 5 estados y migra proyectos con estados obsoletos. */
+  async syncProjectStages(applicationId: string): Promise<void> {
+    const existing = await this.prisma.interiorismoProjectStageConfig.findMany({
       where: { applicationId },
+      select: { code: true },
     });
-    if (nStages === 0) {
-      await this.prisma.interiorismoProjectStageConfig.createMany({
-        data: DEFAULT_STAGES.map((s) => ({
-          applicationId,
-          code: s.code,
-          label: s.label,
-          sortOrder: s.sortOrder,
-          isActive: s.isActive,
-        })),
-      });
+    const existingCodes = new Set(existing.map((r) => r.code));
+    const hasLegacy = INTERIOR_PROJECT_LEGACY_STAGE_CODES.some((c) => existingCodes.has(c));
+    const hasExactLifecycle =
+      existing.length === INTERIOR_PROJECT_LIFECYCLE_STAGES.length &&
+      [...INTERIOR_PROJECT_LIFECYCLE_CODE_SET].every((c) => existingCodes.has(c));
+
+    if (existing.length === 0 || hasLegacy || !hasExactLifecycle) {
+      await this.replaceProjectStages(applicationId, INTERIOR_PROJECT_LIFECYCLE_STAGES);
+    } else {
+      for (const stage of INTERIOR_PROJECT_LIFECYCLE_STAGES) {
+        await this.prisma.interiorismoProjectStageConfig.updateMany({
+          where: { applicationId, code: stage.code },
+          data: {
+            label: stage.label,
+            sortOrder: stage.sortOrder,
+            isActive: true,
+          },
+        });
+      }
     }
+
+    await this.prisma.interiorProject.updateMany({
+      where: { applicationId, status: 'PROSPECT', deletedAt: null },
+      data: { status: 'DESIGN' },
+    });
+  }
+
+  async ensureDefaults(applicationId: string): Promise<void> {
+    await this.syncProjectStages(applicationId);
 
     const nSeries = await this.prisma.interiorismoNumberingSeries.count({
       where: { applicationId, seriesKey: INTERIOR_PROJECT_SERIES_KEY },

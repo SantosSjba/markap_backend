@@ -6,19 +6,13 @@ import {
   type InteriorismoConfigRepository,
   type InteriorismoProjectStageInput,
 } from '@domain/repositories/interiorismo-config.repository';
+import {
+  INTERIOR_PROJECT_LIFECYCLE_CODE_SET,
+  INTERIOR_PROJECT_LIFECYCLE_STAGES,
+} from '@domain/constants/interior-project-stages.constants';
 import { EntityNotFoundException } from '@domain/exceptions';
 
 const INTERIORISMO_SLUG = 'interiorismo';
-
-const REQUIRED_STAGE_CODES = new Set([
-  'PROSPECT',
-  'DESIGN',
-  'QUOTE',
-  'APPROVED',
-  'IN_PROGRESS',
-  'FINISHED',
-  'CANCELLED',
-]);
 
 function assertInteriorismoSlug(slug: string | undefined | null): void {
   if (slug?.trim() !== INTERIORISMO_SLUG) {
@@ -79,16 +73,19 @@ export class InteriorismoConfigOperationsService {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const stages = body.stages ?? [];
     const codes = new Set(stages.map((s) => s.code));
-    if (codes.size !== REQUIRED_STAGE_CODES.size || ![...REQUIRED_STAGE_CODES].every((c) => codes.has(c))) {
+    if (
+      codes.size !== INTERIOR_PROJECT_LIFECYCLE_CODE_SET.size ||
+      ![...INTERIOR_PROJECT_LIFECYCLE_CODE_SET].every((c) => codes.has(c))
+    ) {
       throw new BadRequestException(
-        'Debe enviar exactamente las etapas: PROSPECT, DESIGN, QUOTE, APPROVED, IN_PROGRESS, FINISHED, CANCELLED.',
+        'Debe enviar exactamente las etapas: DESIGN, QUOTE, APPROVED, IN_PROGRESS, FINISHED.',
       );
     }
     if (!stages.every((s) => s.label?.trim())) {
       throw new BadRequestException('Cada etapa requiere una etiqueta.');
     }
-    if (stages.filter((s) => s.isActive).length < REQUIRED_STAGE_CODES.size) {
-      throw new BadRequestException('Las siete etapas deben permanecer activas.');
+    if (stages.filter((s) => s.isActive).length < INTERIOR_PROJECT_LIFECYCLE_STAGES.length) {
+      throw new BadRequestException('Las cinco etapas deben permanecer activas.');
     }
     await this.config.replaceProjectStages(
       applicationId,

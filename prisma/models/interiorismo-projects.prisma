@@ -9,7 +9,7 @@ model InteriorProject {
   clientId       String @map("client_id")
   /// REMODELING | INTERIOR_DESIGN | IMPLEMENTATION | FURNITURE
   projectType    String @map("project_type")
-  /// PROSPECT | DESIGN | QUOTE | APPROVED | IN_PROGRESS | FINISHED | CANCELLED
+  /// DESIGN | QUOTE | APPROVED | IN_PROGRESS | FINISHED | CANCELLED
   status         String @map("status")
 
   addressLine       String?   @map("address_line") @db.Text

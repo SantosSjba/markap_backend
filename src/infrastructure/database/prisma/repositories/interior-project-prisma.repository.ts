@@ -10,7 +10,11 @@ import type {
   UpdateInteriorProjectData,
 } from '@domain/repositories/interior-project.repository';
 
-const IN_PROGRESS_STATUSES = ['DESIGN', 'QUOTE', 'APPROVED', 'IN_PROGRESS'] as const;
+import {
+  INTERIOR_PROJECT_ACTIVE_STATUS_CODES,
+} from '@domain/constants/interior-project-stages.constants';
+
+const IN_PROGRESS_STATUSES = [...INTERIOR_PROJECT_ACTIVE_STATUS_CODES] as const;
 
 function num(v: unknown): number | null {
   if (v === null || v === undefined) return null;

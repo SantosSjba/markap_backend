@@ -4,14 +4,15 @@ export type InteriorProjectType =
   | 'IMPLEMENTATION'
   | 'FURNITURE';
 
-export type InteriorProjectStatus =
-  | 'PROSPECT'
+export type InteriorProjectLifecycleStatus =
   | 'DESIGN'
   | 'QUOTE'
   | 'APPROVED'
   | 'IN_PROGRESS'
-  | 'FINISHED'
-  | 'CANCELLED';
+  | 'FINISHED';
+
+/** Ciclo comercial + cancelación administrativa. */
+export type InteriorProjectStatus = InteriorProjectLifecycleStatus | 'CANCELLED';
 
 export interface InteriorProjectAgentRef {
   id: string;

@@ -74,6 +74,12 @@ export class CreateInteriorProjectUseCase {
       );
     }
 
+    if (input.status === 'CANCELLED') {
+      throw new BadRequestException(
+        'No se puede crear un proyecto directamente como cancelado.',
+      );
+    }
+
     await this.assertAgents(app.id, [
       input.designerAgentId,
       input.architectAgentId,
