@@ -88,10 +88,15 @@ export class CreateInteriorProjectDto {
   @IsUUID()
   designerAgentId?: string | null;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Arquitecto Jr' })
   @IsOptional()
   @IsUUID()
-  architectAgentId?: string | null;
+  architectJrAgentId?: string | null;
+
+  @ApiPropertyOptional({ description: 'Arquitecto Sr' })
+  @IsOptional()
+  @IsUUID()
+  architectSrAgentId?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -86,26 +86,48 @@ export async function seedInteriorismoProjects(
     console.log('   ✅ Diseñadora exterior');
   }
 
-  const architectName = seedPrueba('Marco Luna Quispe');
-  let architect = await prisma.agent.findFirst({
+  const architectJrName = seedPrueba('Sofía Mendoza Arce');
+  let architectJr = await prisma.agent.findFirst({
     where: {
       applicationId: interiorAppId,
       type: 'EXTERNAL',
-      fullName: architectName,
+      fullName: architectJrName,
     },
   });
-  if (!architect) {
-    architect = await prisma.agent.create({
+  if (!architectJr) {
+    architectJr = await prisma.agent.create({
       data: {
         applicationId: interiorAppId,
         type: 'EXTERNAL',
-        fullName: architectName,
-        email: 'marco.luna@arq-demo.ejemplo.com',
+        fullName: architectJrName,
+        email: 'sofia.mendoza@arq-jr-demo.ejemplo.com',
+        phone: '987334455',
+        isActive: true,
+      },
+    });
+    console.log('   ✅ Arquitecto Jr exterior');
+  }
+
+  const architectSrName = seedPrueba('Marco Luna Quispe');
+  let architectSr = await prisma.agent.findFirst({
+    where: {
+      applicationId: interiorAppId,
+      type: 'EXTERNAL',
+      fullName: architectSrName,
+    },
+  });
+  if (!architectSr) {
+    architectSr = await prisma.agent.create({
+      data: {
+        applicationId: interiorAppId,
+        type: 'EXTERNAL',
+        fullName: architectSrName,
+        email: 'marco.luna@arq-sr-demo.ejemplo.com',
         phone: '987445566',
         isActive: true,
       },
     });
-    console.log('   ✅ Arquitecto exterior');
+    console.log('   ✅ Arquitecto Sr exterior');
   }
 
   const supervisorName = seedPrueba('Juliana Costa Vega');
@@ -173,7 +195,8 @@ export async function seedInteriorismoProjects(
         startDate: new Date('2026-03-01'),
         estimatedEndDate: new Date('2026-08-30'),
         designerAgentId: designer.id,
-        architectAgentId: architect.id,
+        architectJrAgentId: architectJr.id,
+        architectSrAgentId: architectSr.id,
         supervisorAgentId: supervisor.id,
         commercialAgentId: commercial.id,
         estimatedBudget: 92000,
@@ -284,7 +307,8 @@ export async function seedInteriorismoProjects(
         startDate: new Date('2026-06-01'),
         estimatedEndDate: new Date('2026-11-15'),
         designerAgentId: designer.id,
-        architectAgentId: architect.id,
+        architectJrAgentId: architectJr.id,
+        architectSrAgentId: architectSr.id,
         supervisorAgentId: internalAgent.id,
         commercialAgentId: commercial.id,
         estimatedBudget: 185000,

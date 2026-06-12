@@ -92,7 +92,8 @@ export interface InteriorProjectDetail extends InteriorProjectListItem {
   startDate: string | null;
   estimatedEndDate: string | null;
   designerAgent: InteriorProjectAgentRef | null;
-  architectAgent: InteriorProjectAgentRef | null;
+  architectJrAgent: InteriorProjectAgentRef | null;
+  architectSrAgent: InteriorProjectAgentRef | null;
   supervisorAgent: InteriorProjectAgentRef | null;
   commercialAgent: InteriorProjectAgentRef | null;
   estimatedBudget: number | null;
@@ -120,7 +121,8 @@ export interface CreateInteriorProjectData {
   startDate?: Date | null;
   estimatedEndDate?: Date | null;
   designerAgentId?: string | null;
-  architectAgentId?: string | null;
+  architectJrAgentId?: string | null;
+  architectSrAgentId?: string | null;
   supervisorAgentId?: string | null;
   commercialAgentId?: string | null;
   estimatedBudget?: number | null;
@@ -141,7 +143,8 @@ export interface UpdateInteriorProjectData {
   startDate?: Date | null;
   estimatedEndDate?: Date | null;
   designerAgentId?: string | null;
-  architectAgentId?: string | null;
+  architectJrAgentId?: string | null;
+  architectSrAgentId?: string | null;
   supervisorAgentId?: string | null;
   commercialAgentId?: string | null;
   estimatedBudget?: number | null;

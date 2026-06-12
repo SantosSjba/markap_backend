@@ -20,9 +20,10 @@ model InteriorProject {
   estimatedEndDate  DateTime? @map("estimated_end_date") @db.Date
 
   designerAgentId    String? @map("designer_agent_id")
-  architectAgentId   String? @map("architect_agent_id")
-  supervisorAgentId  String? @map("supervisor_agent_id")
-  commercialAgentId  String? @map("commercial_agent_id")
+  architectJrAgentId   String? @map("architect_jr_agent_id")
+  architectSrAgentId   String? @map("architect_agent_id")
+  supervisorAgentId    String? @map("supervisor_agent_id")
+  commercialAgentId    String? @map("commercial_agent_id")
 
   estimatedBudget Decimal? @map("estimated_budget") @db.Decimal(14, 2)
   projectedCost   Decimal? @map("projected_cost") @db.Decimal(14, 2)
@@ -38,7 +39,8 @@ model InteriorProject {
   application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   client           Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
   designerAgent    Agent?      @relation("InteriorProjectDesigner", fields: [designerAgentId], references: [id], onDelete: SetNull)
-  architectAgent   Agent?      @relation("InteriorProjectArchitect", fields: [architectAgentId], references: [id], onDelete: SetNull)
+  architectJrAgent Agent?      @relation("InteriorProjectArchitectJr", fields: [architectJrAgentId], references: [id], onDelete: SetNull)
+  architectSrAgent Agent?      @relation("InteriorProjectArchitectSr", fields: [architectSrAgentId], references: [id], onDelete: SetNull)
   supervisorAgent  Agent?      @relation("InteriorProjectSupervisor", fields: [supervisorAgentId], references: [id], onDelete: SetNull)
   commercialAgent  Agent?      @relation("InteriorProjectCommercial", fields: [commercialAgentId], references: [id], onDelete: SetNull)
 

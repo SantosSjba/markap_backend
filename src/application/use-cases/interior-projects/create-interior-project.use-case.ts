@@ -34,7 +34,8 @@ export class CreateInteriorProjectUseCase {
     startDate?: Date | null;
     estimatedEndDate?: Date | null;
     designerAgentId?: string | null;
-    architectAgentId?: string | null;
+    architectJrAgentId?: string | null;
+    architectSrAgentId?: string | null;
     supervisorAgentId?: string | null;
     commercialAgentId?: string | null;
     estimatedBudget?: number | null;
@@ -82,7 +83,8 @@ export class CreateInteriorProjectUseCase {
 
     await this.assertAgents(app.id, [
       input.designerAgentId,
-      input.architectAgentId,
+      input.architectJrAgentId,
+      input.architectSrAgentId,
       input.supervisorAgentId,
       input.commercialAgentId,
     ]);
@@ -101,7 +103,8 @@ export class CreateInteriorProjectUseCase {
       startDate: input.startDate,
       estimatedEndDate: input.estimatedEndDate,
       designerAgentId: input.designerAgentId,
-      architectAgentId: input.architectAgentId,
+      architectJrAgentId: input.architectJrAgentId,
+      architectSrAgentId: input.architectSrAgentId,
       supervisorAgentId: input.supervisorAgentId,
       commercialAgentId: input.commercialAgentId,
       estimatedBudget: input.estimatedBudget,

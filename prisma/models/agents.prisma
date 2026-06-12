@@ -30,7 +30,8 @@ model Agent {
   saleCommissions                SaleCommission[]
   ventasCommissionProfiles       VentasAgentCommissionProfile[]
   interiorProjectsAsDesigner     InteriorProject[] @relation("InteriorProjectDesigner")
-  interiorProjectsAsArchitect    InteriorProject[] @relation("InteriorProjectArchitect")
+  interiorProjectsAsArchitectJr  InteriorProject[] @relation("InteriorProjectArchitectJr")
+  interiorProjectsAsArchitectSr  InteriorProject[] @relation("InteriorProjectArchitectSr")
   interiorProjectsAsSupervisor   InteriorProject[] @relation("InteriorProjectSupervisor")
   interiorProjectsAsCommercial   InteriorProject[] @relation("InteriorProjectCommercial")
   interiorCalendarEvents          InteriorCalendarEvent[]

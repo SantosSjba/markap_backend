@@ -32,7 +32,8 @@ export class UpdateInteriorProjectUseCase {
       startDate?: Date | null;
       estimatedEndDate?: Date | null;
       designerAgentId?: string | null;
-      architectAgentId?: string | null;
+      architectJrAgentId?: string | null;
+      architectSrAgentId?: string | null;
       supervisorAgentId?: string | null;
       commercialAgentId?: string | null;
       estimatedBudget?: number | null;
@@ -72,7 +73,8 @@ export class UpdateInteriorProjectUseCase {
 
     await this.assertAgents(projectRow.applicationId, [
       data.designerAgentId,
-      data.architectAgentId,
+      data.architectJrAgentId,
+      data.architectSrAgentId,
       data.supervisorAgentId,
       data.commercialAgentId,
     ]);

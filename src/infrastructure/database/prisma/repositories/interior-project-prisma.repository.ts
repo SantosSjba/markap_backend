@@ -110,7 +110,8 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       include: {
         client: { select: { id: true, fullName: true, documentNumber: true } },
         designerAgent: { select: { id: true, fullName: true } },
-        architectAgent: { select: { id: true, fullName: true } },
+        architectJrAgent: { select: { id: true, fullName: true } },
+        architectSrAgent: { select: { id: true, fullName: true } },
         supervisorAgent: { select: { id: true, fullName: true } },
         commercialAgent: { select: { id: true, fullName: true } },
         budgets: { orderBy: [{ code: 'asc' }, { version: 'desc' }] },
@@ -143,7 +144,8 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         startDate: data.startDate ?? null,
         estimatedEndDate: data.estimatedEndDate ?? null,
         designerAgentId: data.designerAgentId ?? null,
-        architectAgentId: data.architectAgentId ?? null,
+        architectJrAgentId: data.architectJrAgentId ?? null,
+        architectSrAgentId: data.architectSrAgentId ?? null,
         supervisorAgentId: data.supervisorAgentId ?? null,
         commercialAgentId: data.commercialAgentId ?? null,
         estimatedBudget: data.estimatedBudget ?? null,
@@ -175,7 +177,8 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
     if (data.startDate !== undefined) patch.startDate = data.startDate;
     if (data.estimatedEndDate !== undefined) patch.estimatedEndDate = data.estimatedEndDate;
     if (data.designerAgentId !== undefined) patch.designerAgentId = data.designerAgentId;
-    if (data.architectAgentId !== undefined) patch.architectAgentId = data.architectAgentId;
+    if (data.architectJrAgentId !== undefined) patch.architectJrAgentId = data.architectJrAgentId;
+    if (data.architectSrAgentId !== undefined) patch.architectSrAgentId = data.architectSrAgentId;
     if (data.supervisorAgentId !== undefined) patch.supervisorAgentId = data.supervisorAgentId;
     if (data.commercialAgentId !== undefined) patch.commercialAgentId = data.commercialAgentId;
     if (data.estimatedBudget !== undefined) {
@@ -230,8 +233,11 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       designerAgent: row.designerAgent
         ? { id: row.designerAgent.id, fullName: row.designerAgent.fullName }
         : null,
-      architectAgent: row.architectAgent
-        ? { id: row.architectAgent.id, fullName: row.architectAgent.fullName }
+      architectJrAgent: row.architectJrAgent
+        ? { id: row.architectJrAgent.id, fullName: row.architectJrAgent.fullName }
+        : null,
+      architectSrAgent: row.architectSrAgent
+        ? { id: row.architectSrAgent.id, fullName: row.architectSrAgent.fullName }
         : null,
       supervisorAgent: row.supervisorAgent
         ? { id: row.supervisorAgent.id, fullName: row.supervisorAgent.fullName }
