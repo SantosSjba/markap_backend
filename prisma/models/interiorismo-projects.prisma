@@ -13,6 +13,15 @@ model InteriorProject {
   status         String @map("status")
 
   addressLine       String?   @map("address_line") @db.Text
+  city              String?   @map("city")
+  /// I | II | III — nivel de intervención (Excel)
+  interventionLevel String?   @map("intervention_level")
+  /// Ej. "30 DÍAS HÁBILES"
+  executionTimeNote String?   @map("execution_time_note") @db.Text
+  currency          String    @default("PEN") @map("currency")
+  /// Utilidad por defecto sobre costo presupuestado (Excel: 20%)
+  defaultUtilityPct Decimal   @default(20) @map("default_utility_pct") @db.Decimal(8, 2)
+  defaultIgvPct     Decimal   @default(18) @map("default_igv_pct") @db.Decimal(8, 2)
   areaSqm           Decimal?  @map("area_sqm") @db.Decimal(12, 2)
   levelsCount       Int?      @map("levels_count")
   environmentsNote  String?   @map("environments_note") @db.Text
@@ -44,7 +53,8 @@ model InteriorProject {
   supervisorAgent  Agent?      @relation("InteriorProjectSupervisor", fields: [supervisorAgentId], references: [id], onDelete: SetNull)
   commercialAgent  Agent?      @relation("InteriorProjectCommercial", fields: [commercialAgentId], references: [id], onDelete: SetNull)
 
-  budgets     InteriorBudget[]
+  budgets        InteriorBudget[]
+  budgetSections InteriorProjectSection[]
   materials   InteriorProjectMaterial[]
   documents   InteriorProjectDocument[]
   payments    InteriorProjectPayment[]
@@ -103,6 +113,8 @@ model InteriorProjectPayment {
   paidAt    DateTime @map("paid_at")
   amount    Decimal  @map("amount") @db.Decimal(14, 2)
   concept   String   @map("concept") @db.Text
+  /// ABONO | PAGO_FINAL | SALDO | OTHER
+  paymentType String @default("OTHER") @map("payment_type")
   /// PENDING | PAID | CANCELLED
   status    String   @map("status")
   scheduleItemId String? @map("schedule_item_id")

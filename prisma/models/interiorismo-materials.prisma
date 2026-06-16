@@ -54,6 +54,7 @@ model InteriorMaterialSupplier {
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   catalogLinks  InteriorSupplierCatalogLink[]
   purchases     InteriorMaterialPurchase[]
+  budgetLineItems InteriorProjectLineItem[]
 
   @@unique([applicationId, ruc])
   @@index([applicationId])

@@ -29,6 +29,7 @@ export { VENTAS_FINANZAS_REPOSITORY } from '@domain/repositories/ventas-finanzas
 export { VENTAS_REPORTS_REPOSITORY } from '@domain/repositories/ventas-reports.repository';
 export { VENTAS_SALES_REPOSITORY } from '@domain/repositories/ventas-sales.repository';
 export { INTERIOR_PROJECT_REPOSITORY } from '@domain/repositories/interior-project.repository';
+export { INTERIOR_PROJECT_BUDGET_REPOSITORY } from '@domain/repositories/interior-project-budget.repository';
 export { INTERIOR_BUDGET_REPOSITORY } from '@domain/repositories/interior-budget.repository';
 export { INTERIOR_CATALOG_MATERIAL_REPOSITORY } from '@domain/repositories/interior-catalog-material.repository';
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';

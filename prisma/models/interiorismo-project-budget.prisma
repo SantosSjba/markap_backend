@@ -1,0 +1,63 @@
+/// Presupuesto por proyecto (modelo Excel: sección → partida → abonos proveedor)
+
+model InteriorProjectSection {
+  id        String @id @default(uuid())
+  projectId String @map("project_id")
+  name      String @map("name")
+  sortOrder Int    @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project   InteriorProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  lineItems InteriorProjectLineItem[]
+
+  @@index([projectId])
+  @@map("interior_project_sections")
+}
+
+model InteriorProjectLineItem {
+  id        String @id @default(uuid())
+  sectionId String @map("section_id")
+  sortOrder Int    @default(0) @map("sort_order")
+  description String @map("description") @db.Text
+
+  /// Costo presupuestado al cliente (columna "Costo" del Excel)
+  budgetedCost Decimal @default(0) @map("budgeted_cost") @db.Decimal(14, 2)
+  /// IGV selectivo por ítem (luminarias instaladas, etc.)
+  hasIgv       Boolean @default(false) @map("has_igv")
+
+  /// Gestión de compras (columnas internas)
+  actualPurchaseCost Decimal? @map("actual_purchase_cost") @db.Decimal(14, 2)
+  supplierName       String?  @map("supplier_name")
+  supplierId         String?  @map("supplier_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  section          InteriorProjectSection            @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  materialSupplier InteriorMaterialSupplier?         @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierPayments InteriorLineItemSupplierPayment[]
+
+  @@index([sectionId])
+  @@index([supplierId])
+  @@map("interior_project_line_items")
+}
+
+model InteriorLineItemSupplierPayment {
+  id            String   @id @default(uuid())
+  lineItemId    String   @map("line_item_id")
+  /// 1, 2, 3… (Excel permite hasta 3 abonos por partida)
+  paymentNumber Int      @map("payment_number")
+  amount        Decimal  @map("amount") @db.Decimal(14, 2)
+  paidAt        DateTime @map("paid_at") @db.Date
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  lineItem InteriorProjectLineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+
+  @@unique([lineItemId, paymentNumber])
+  @@index([lineItemId])
+  @@map("interior_line_item_supplier_payments")
+}

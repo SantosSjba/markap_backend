@@ -135,6 +135,19 @@ import {
 } from '../../application/use-cases/interior-projects';
 
 import {
+  CreateInteriorLineItemSupplierPaymentUseCase,
+  CreateInteriorProjectBudgetLineItemUseCase,
+  CreateInteriorProjectBudgetSectionUseCase,
+  DeleteInteriorLineItemSupplierPaymentUseCase,
+  DeleteInteriorProjectBudgetLineItemUseCase,
+  DeleteInteriorProjectBudgetSectionUseCase,
+  GetInteriorProjectBudgetUseCase,
+  GetInteriorProjectSettlementUseCase,
+  UpdateInteriorProjectBudgetLineItemUseCase,
+  UpdateInteriorProjectBudgetSectionUseCase,
+} from '../../application/use-cases/interior-project-budget';
+
+import {
   ListInteriorBudgetsUseCase,
   GetInteriorBudgetByIdUseCase,
   CreateInteriorBudgetUseCase,
@@ -227,6 +240,7 @@ import { VentasConfigController } from './controllers/ventas-config.controller';
 import { InteriorismoConfigController } from './controllers/interiorismo-config.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
+import { InteriorismoProjectBudgetController } from './controllers/interiorismo-project-budget.controller';
 import { InteriorismoBudgetsController } from './controllers/interiorismo-budgets.controller';
 import { InteriorismoCatalogMaterialsController } from './controllers/interiorismo-catalog-materials.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
@@ -289,6 +303,7 @@ import {
     InteriorismoConfigController,
     VentasComplianceController,
     InteriorismoProjectsController,
+    InteriorismoProjectBudgetController,
     InteriorismoBudgetsController,
     InteriorismoCatalogMaterialsController,
     InteriorismoMaterialSuppliersController,
@@ -427,6 +442,17 @@ import {
     GetInteriorProjectByIdUseCase,
     CreateInteriorProjectUseCase,
     UpdateInteriorProjectUseCase,
+
+    GetInteriorProjectBudgetUseCase,
+    GetInteriorProjectSettlementUseCase,
+    CreateInteriorProjectBudgetSectionUseCase,
+    UpdateInteriorProjectBudgetSectionUseCase,
+    DeleteInteriorProjectBudgetSectionUseCase,
+    CreateInteriorProjectBudgetLineItemUseCase,
+    UpdateInteriorProjectBudgetLineItemUseCase,
+    DeleteInteriorProjectBudgetLineItemUseCase,
+    CreateInteriorLineItemSupplierPaymentUseCase,
+    DeleteInteriorLineItemSupplierPaymentUseCase,
 
     ListInteriorBudgetsUseCase,
     GetInteriorBudgetByIdUseCase,
