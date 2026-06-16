@@ -1,6 +1,6 @@
 /**
  * Inserta solo el ubigeo "Otros" (99 / 9999 / 999999).
- * Uso: npx ts-node prisma/scripts/seed-ubigeo-other.ts
+ * Uso: pnpm exec ts-node prisma/scripts/seed-ubigeo-other.ts
  */
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';

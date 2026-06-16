@@ -5,6 +5,7 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "packageManager": "pnpm@11.5.0",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -25,7 +26,8 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "prisma db seed",
     "prisma:seed:prod": "ts-node prisma/seed-prod.ts",
-    "prisma:seed:ubigeo-other": "ts-node prisma/scripts/seed-ubigeo-other.ts"
+    "prisma:seed:ubigeo-other": "ts-node prisma/scripts/seed-ubigeo-other.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1049.0",

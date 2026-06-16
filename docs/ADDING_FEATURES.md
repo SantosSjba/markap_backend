@@ -86,7 +86,7 @@ Cada use case debe **inyectar solo puertos** (repositorios/servicios definidos e
 ### Paso 1.9 — Prisma (esquema y migración)
 
 - En `prisma/models/` (o `prisma/schema.prisma` solo para `generator`/`datasource`): definir el modelo `Product` (o el que corresponda).
-- Ejecutar `npx prisma migrate dev` para crear la migración.
+- Ejecutar `pnpm exec prisma migrate dev` para crear la migración.
 
 ---
 

@@ -54,7 +54,7 @@ async function seedCrmActiveProcess(prisma: SeedDb, ventasAppId: string): Promis
       '\n⚠️  seed-ventas-sales (pipeline ACTIVE): falta comprador DNI 40234567, propiedad VNT-SEED-CRM o agente.',
     );
     console.log(
-      '   → Ejecute el seed completo: npm run prisma:seed (asegure demo-ventas + nueva fila VNT-SEED-CRM en sample-ventas).',
+      '   → Ejecute el seed completo: pnpm run prisma:seed (asegure demo-ventas + nueva fila VNT-SEED-CRM en sample-ventas).',
     );
     return;
   }

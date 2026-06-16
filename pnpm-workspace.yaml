@@ -1,0 +1,13 @@
+packages:
+  - '.'
+
+publicHoistPattern:
+  - '@nestjs/*'
+  - '@prisma/*'
+
+allowBuilds:
+  '@prisma/engines': true
+  '@scarf/scarf': true
+  bcrypt: true
+  prisma: true
+  unrs-resolver: true

@@ -4,7 +4,7 @@
  * ni demos de Interiorismo.
  *
  * Uso (con DATABASE_URL apuntando a producción):
- *   npx ts-node prisma/seed-prod.ts
+ *   pnpm exec ts-node prisma/seed-prod.ts
  */
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
