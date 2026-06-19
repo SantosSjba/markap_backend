@@ -1,5 +1,13 @@
 export const INTERIORISMO_APPLICATION_SLUG = 'interiorismo';
 
+/** Retirados del sidebar: presupuesto, compras y liquidación viven en el detalle de Proyecto. */
+export const INTERIORISMO_OBSOLETE_PARENT_LABELS = ['Presupuestos', 'Finanzas'] as const;
+
+export const INTERIORISMO_OBSOLETE_MENU_PATH_PREFIXES = [
+  '/interiorismo/finanzas',
+  '/interiorismo/presupuestos',
+] as const;
+
 /**
  * Orden = flujo operativo:
  * Cliente → Proyecto (presupuesto/compras/liquidación) → Materiales → Ejecución → Calendario → Documentos → Reportes → Config

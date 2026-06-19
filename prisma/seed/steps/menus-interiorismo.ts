@@ -1,6 +1,8 @@
 import {
   INTERIORISMO_APPLICATION_SLUG,
   INTERIORISMO_CHILD_MENUS,
+  INTERIORISMO_OBSOLETE_MENU_PATH_PREFIXES,
+  INTERIORISMO_OBSOLETE_PARENT_LABELS,
   INTERIORISMO_PARENT_MENUS,
 } from '../data';
 import type { SeedDb } from '../types';
@@ -80,20 +82,40 @@ export async function seedInteriorismoMenus(prisma: SeedDb): Promise<void> {
     }
   }
 
-  const deactivated = await prisma.menu.updateMany({
+  const pathDeactivated = await prisma.menu.updateMany({
     where: {
       applicationId: app.id,
       isActive: true,
-      OR: [
-        { path: '/interiorismo/finanzas' },
-        { path: { startsWith: '/interiorismo/finanzas/' } },
-        { path: '/interiorismo/presupuestos' },
-        { path: { startsWith: '/interiorismo/presupuestos/' } },
-      ],
+      OR: INTERIORISMO_OBSOLETE_MENU_PATH_PREFIXES.flatMap((prefix) => [
+        { path: prefix },
+        { path: { startsWith: `${prefix}/` } },
+      ]),
     },
     data: { isActive: false },
   });
-  if (deactivated.count > 0) {
-    console.log(`   ✅ ${deactivated.count} menú(es) obsoleto(s) desactivado(s)`);
+  if (pathDeactivated.count > 0) {
+    console.log(`   ✅ ${pathDeactivated.count} menú(es) obsoleto(s) por ruta desactivado(s)`);
+  }
+
+  for (const label of INTERIORISMO_OBSOLETE_PARENT_LABELS) {
+    const parent = await prisma.menu.findFirst({
+      where: { applicationId: app.id, label, parentId: null },
+    });
+    if (!parent) continue;
+
+    const childDeactivated = await prisma.menu.updateMany({
+      where: { applicationId: app.id, parentId: parent.id, isActive: true },
+      data: { isActive: false },
+    });
+
+    if (parent.isActive || childDeactivated.count > 0) {
+      await prisma.menu.update({
+        where: { id: parent.id },
+        data: { isActive: false },
+      });
+      console.log(
+        `   ✅ Menú obsoleto "${label}" desactivado${childDeactivated.count ? ` (+${childDeactivated.count} hijo(s))` : ''}`,
+      );
+    }
   }
 }
