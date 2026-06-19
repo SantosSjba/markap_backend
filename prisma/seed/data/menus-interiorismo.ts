@@ -1,20 +1,37 @@
 export const INTERIORISMO_APPLICATION_SLUG = 'interiorismo';
 
-/** Padres con `path: null` cuando tienen submenú (mismo criterio que Ventas). */
+/**
+ * Orden = flujo operativo:
+ * Cliente → Proyecto (presupuesto/compras/liquidación) → Materiales → Ejecución → Calendario → Documentos → Reportes → Config
+ */
 export const INTERIORISMO_PARENT_MENUS = [
   { label: 'Dashboard', icon: 'layout-dashboard', path: '/interiorismo', order: 0 },
-  { label: 'Proyectos', icon: 'folder-kanban', path: null, order: 1 },
-  { label: 'Clientes', icon: 'users', path: null, order: 2 },
+  { label: 'Clientes', icon: 'users', path: null, order: 1 },
+  { label: 'Proyectos', icon: 'folder-kanban', path: null, order: 2 },
   { label: 'Materiales', icon: 'layers', path: null, order: 3 },
   { label: 'Ejecución', icon: 'flame', path: '/interiorismo/ejecucion', order: 4 },
   { label: 'Calendario', icon: 'calendar', path: '/interiorismo/calendario', order: 5 },
   { label: 'Documentos', icon: 'files', path: null, order: 6 },
-  { label: 'Configuración', icon: 'settings', path: '/interiorismo/configuracion', order: 7 },
-  { label: 'Reportes', icon: 'bar-chart', path: '/interiorismo/reportes', order: 8 },
+  { label: 'Reportes', icon: 'bar-chart', path: '/interiorismo/reportes', order: 7 },
+  { label: 'Configuración', icon: 'settings', path: '/interiorismo/configuracion', order: 8 },
 ];
 
 export const INTERIORISMO_CHILD_MENUS = [
-  // Proyectos
+  // Clientes (primero: todo proyecto requiere cliente)
+  {
+    label: 'Listado de clientes',
+    path: '/interiorismo/clientes',
+    order: 0,
+    parentLabel: 'Clientes',
+  },
+  {
+    label: 'Nuevo cliente',
+    path: '/interiorismo/clientes/nuevo',
+    order: 1,
+    parentLabel: 'Clientes',
+  },
+
+  // Proyectos (presupuesto, compras y liquidación viven en el detalle)
   {
     label: 'Listado de proyectos',
     path: '/interiorismo/proyectos',
@@ -34,23 +51,7 @@ export const INTERIORISMO_CHILD_MENUS = [
     parentLabel: 'Proyectos',
   },
 
-  // Clientes
-  {
-    label: 'Listado de clientes',
-    path: '/interiorismo/clientes',
-    order: 0,
-    parentLabel: 'Clientes',
-  },
-  {
-    label: 'Nuevo cliente',
-    path: '/interiorismo/clientes/nuevo',
-    order: 1,
-    parentLabel: 'Clientes',
-  },
-
-  // Presupuestos — gestionados dentro de Proyectos (tab Presupuesto)
-
-  // Materiales
+  // Materiales (catálogo y proveedores antes de compras en obra)
   {
     label: 'Catálogo',
     path: '/interiorismo/materiales/catalogo',
@@ -64,7 +65,7 @@ export const INTERIORISMO_CHILD_MENUS = [
     parentLabel: 'Materiales',
   },
 
-  // Documentos
+  // Documentos (orden del ciclo de vida del proyecto)
   {
     label: 'Contratos',
     path: '/interiorismo/documentos/contratos',
@@ -72,8 +73,8 @@ export const INTERIORISMO_CHILD_MENUS = [
     parentLabel: 'Documentos',
   },
   {
-    label: 'PDFs',
-    path: '/interiorismo/documentos/pdfs',
+    label: 'Planos',
+    path: '/interiorismo/documentos/planos',
     order: 1,
     parentLabel: 'Documentos',
   },
@@ -84,8 +85,8 @@ export const INTERIORISMO_CHILD_MENUS = [
     parentLabel: 'Documentos',
   },
   {
-    label: 'Planos',
-    path: '/interiorismo/documentos/planos',
+    label: 'PDFs',
+    path: '/interiorismo/documentos/pdfs',
     order: 3,
     parentLabel: 'Documentos',
   },

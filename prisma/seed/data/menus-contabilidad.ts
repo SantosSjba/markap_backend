@@ -1,5 +1,9 @@
 export const CONTABILIDAD_APPLICATION_SLUG = 'contabilidad';
 
+/**
+ * Orden = flujo contable:
+ * Plan de cuentas → Asientos → Compras/Ventas → Tesorería (Bancos/Caja) → Impuestos → Reportes → Config
+ */
 export const CONTABILIDAD_PARENT_MENUS = [
   { label: 'Dashboard', icon: 'layout-dashboard', path: '/contabilidad', order: 0 },
   { label: 'Plan de cuentas', icon: 'list-tree', path: null, order: 1 },

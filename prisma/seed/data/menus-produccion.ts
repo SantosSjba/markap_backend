@@ -1,36 +1,21 @@
 export const PRODUCCION_APPLICATION_SLUG = 'produccion';
 
+/**
+ * Orden = flujo operativo:
+ * Productos → Inventario → Proveedores → Órdenes de trabajo → Producción (taller) → Reportes → Config
+ */
 export const PRODUCCION_PARENT_MENUS = [
   { label: 'Dashboard', icon: 'layout-dashboard', path: '/produccion', order: 0 },
-  { label: 'Órdenes de trabajo', icon: 'clipboard-list', path: null, order: 1 },
-  { label: 'Productos', icon: 'boxes', path: null, order: 2 },
-  { label: 'Inventario', icon: 'warehouse', path: null, order: 3 },
-  { label: 'Proveedores', icon: 'truck', path: null, order: 4 },
+  { label: 'Productos', icon: 'boxes', path: null, order: 1 },
+  { label: 'Inventario', icon: 'warehouse', path: null, order: 2 },
+  { label: 'Proveedores', icon: 'truck', path: null, order: 3 },
+  { label: 'Órdenes de trabajo', icon: 'clipboard-list', path: null, order: 4 },
   { label: 'Producción', icon: 'kanban', path: null, order: 5 },
   { label: 'Reportes', icon: 'bar-chart', path: '/produccion/reportes', order: 6 },
   { label: 'Configuración', icon: 'settings', path: '/produccion/configuracion', order: 7 },
 ];
 
 export const PRODUCCION_CHILD_MENUS = [
-  // Órdenes de trabajo
-  {
-    label: 'Listado de órdenes',
-    path: '/produccion/ordenes-trabajo',
-    order: 0,
-    parentLabel: 'Órdenes de trabajo',
-  },
-  {
-    label: 'Nueva orden',
-    path: '/produccion/ordenes-trabajo/nueva',
-    order: 1,
-    parentLabel: 'Órdenes de trabajo',
-  },
-  {
-    label: 'En proceso',
-    path: '/produccion/ordenes-trabajo/en-proceso',
-    order: 2,
-    parentLabel: 'Órdenes de trabajo',
-  },
   // Productos
   {
     label: 'Catálogo',
@@ -82,7 +67,26 @@ export const PRODUCCION_CHILD_MENUS = [
     order: 2,
     parentLabel: 'Proveedores',
   },
-  // Producción (etapas)
+  // Órdenes de trabajo
+  {
+    label: 'Listado de órdenes',
+    path: '/produccion/ordenes-trabajo',
+    order: 0,
+    parentLabel: 'Órdenes de trabajo',
+  },
+  {
+    label: 'Nueva orden',
+    path: '/produccion/ordenes-trabajo/nueva',
+    order: 1,
+    parentLabel: 'Órdenes de trabajo',
+  },
+  {
+    label: 'En proceso',
+    path: '/produccion/ordenes-trabajo/en-proceso',
+    order: 2,
+    parentLabel: 'Órdenes de trabajo',
+  },
+  // Producción (etapas de taller)
   {
     label: 'Planificación',
     path: '/produccion/etapas/planificacion',
