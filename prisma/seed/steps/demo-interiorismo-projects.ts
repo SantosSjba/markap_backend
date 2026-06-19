@@ -5,7 +5,7 @@ import {
   seedPrueba,
 } from '../data';
 import type { SeedDb } from '../types';
-import { seedInteriorismoDemoBudgets } from './demo-interiorismo-budget-seed';
+import { seedInteriorismoDemoProjectBudgets } from './demo-interiorismo-project-budget-seed';
 
 type AdminUser = { id: string; email: string; firstName: string; lastName: string };
 
@@ -370,5 +370,5 @@ export async function seedInteriorismoProjects(
     console.log('   ✓ Proyecto corporativo demo ya existe');
   }
 
-  await seedInteriorismoDemoBudgets(prisma, projRemodel!.id, projCorp!.id);
+  await seedInteriorismoDemoProjectBudgets(prisma, projRemodel!.id, projCorp!.id);
 }

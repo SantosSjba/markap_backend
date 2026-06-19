@@ -16,6 +16,7 @@ import type {
   UpdateInteriorFinanceSchedulePayload,
 } from '@domain/repositories/interior-finance.repository';
 import { PrismaService } from '../prisma.service';
+import { getProjectBudgetPriceTotal } from '../helpers/project-budget-query.helper';
 
 function num(v: unknown): number {
   if (v == null) return 0;
@@ -103,7 +104,7 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     });
     if (!project || project.application.slug !== slug) return null;
 
-    const [schedules, payments, costs, approvedBudget, fallbackBudget] = await Promise.all([
+    const [schedules, payments, costs, budgetPriceTotal, sectionCount] = await Promise.all([
       this.prisma.interiorFinanceIncomeSchedule.findMany({
         where: { projectId },
         orderBy: [{ sortOrder: 'asc' }, { dueDate: 'asc' }],
@@ -116,32 +117,8 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
         where: { projectId },
         orderBy: { occurredAt: 'desc' },
       }),
-      this.prisma.interiorBudget.findFirst({
-        where: { projectId, status: 'APPROVED' },
-        orderBy: [{ version: 'desc' }],
-        select: {
-          id: true,
-          code: true,
-          version: true,
-          grandTotal: true,
-          taxableTotal: true,
-          igvTotal: true,
-          status: true,
-        },
-      }),
-      this.prisma.interiorBudget.findFirst({
-        where: { projectId, status: { not: 'DRAFT' } },
-        orderBy: [{ version: 'desc' }],
-        select: {
-          id: true,
-          code: true,
-          version: true,
-          grandTotal: true,
-          taxableTotal: true,
-          igvTotal: true,
-          status: true,
-        },
-      }),
+      getProjectBudgetPriceTotal(this.prisma, projectId),
+      this.prisma.interiorProjectSection.count({ where: { projectId } }),
     ]);
 
     const schedulePaidMap = new Map<string, number>();
@@ -174,6 +151,7 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       paidAt: p.paidAt.toISOString(),
       amount: num(p.amount),
       concept: p.concept,
+      paymentType: p.paymentType ?? 'OTHER',
       status: p.status,
       scheduleItemId: p.scheduleItemId,
     }));
@@ -212,18 +190,18 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       pendingFromClient,
     };
 
-    const refBudget = approvedBudget ?? fallbackBudget;
-    const budgetReference = refBudget
-      ? {
-          id: refBudget.id,
-          code: refBudget.code,
-          version: refBudget.version,
-          grandTotal: num(refBudget.grandTotal),
-          taxableTotal: num(refBudget.taxableTotal),
-          igvTotal: num(refBudget.igvTotal),
-          status: refBudget.status,
-        }
-      : null;
+    const budgetReference =
+      sectionCount > 0
+        ? {
+            id: projectId,
+            code: project.code,
+            version: 1,
+            grandTotal: budgetPriceTotal,
+            taxableTotal: budgetPriceTotal,
+            igvTotal: 0,
+            status: project.status,
+          }
+        : null;
 
     const contractValue = budgetReference?.grandTotal ?? 0;
     const totalActualCosts = expenseSummary.totalOut;
@@ -403,6 +381,7 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
         paidAt: payload.paidAt,
         amount: new Prisma.Decimal(payload.amount),
         concept: payload.concept.trim(),
+        paymentType: payload.paymentType?.trim() || 'OTHER',
         status: payload.status.trim(),
         scheduleItemId,
       },
@@ -415,6 +394,7 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       paidAt: row.paidAt.toISOString(),
       amount: num(row.amount),
       concept: row.concept,
+      paymentType: row.paymentType ?? 'OTHER',
       status: row.status,
       scheduleItemId: row.scheduleItemId,
     };
@@ -452,6 +432,7 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     if (payload.paidAt !== undefined) patch.paidAt = payload.paidAt;
     if (payload.amount !== undefined) patch.amount = new Prisma.Decimal(payload.amount);
     if (payload.concept !== undefined) patch.concept = payload.concept.trim();
+    if (payload.paymentType !== undefined) patch.paymentType = payload.paymentType.trim();
     if (payload.status !== undefined) patch.status = payload.status.trim();
     if (payload.scheduleItemId !== undefined) {
       patch.scheduleItem = scheduleItemId
@@ -476,6 +457,7 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       paidAt: updated.paidAt.toISOString(),
       amount: num(updated.amount),
       concept: updated.concept,
+      paymentType: updated.paymentType ?? 'OTHER',
       status: updated.status,
       scheduleItemId: updated.scheduleItemId,
     };

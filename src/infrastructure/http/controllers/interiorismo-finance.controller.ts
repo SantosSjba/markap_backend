@@ -122,6 +122,7 @@ export class InteriorismoFinanceController {
       paidAt: parseIsoDate(dto.paidAt),
       amount: dto.amount,
       concept: dto.concept,
+      paymentType: dto.paymentType ?? 'OTHER',
       status: dto.status,
       scheduleItemId: dto.scheduleItemId ?? null,
     });
@@ -139,6 +140,7 @@ export class InteriorismoFinanceController {
       paidAt: dto.paidAt !== undefined ? parseIsoDate(dto.paidAt) : undefined,
       amount: dto.amount,
       concept: dto.concept,
+      paymentType: dto.paymentType,
       status: dto.status,
       scheduleItemId: dto.scheduleItemId,
     });

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import {
@@ -336,6 +336,20 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     });
     if (!existing) throw new NotFoundException('Partida no encontrada');
 
+    let resolvedSupplierName: string | null | undefined;
+    if (payload.supplierId !== undefined) {
+      if (payload.supplierId === null) {
+        resolvedSupplierName =
+          payload.supplierName !== undefined ? payload.supplierName?.trim() || null : undefined;
+      } else {
+        const supplier = await this.prisma.interiorMaterialSupplier.findUnique({
+          where: { id: payload.supplierId },
+        });
+        if (!supplier) throw new NotFoundException('Proveedor no encontrado');
+        resolvedSupplierName = supplier.companyName;
+      }
+    }
+
     const row = await this.prisma.interiorProjectLineItem.update({
       where: { id: lineItemId },
       data: {
@@ -353,9 +367,11 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
                   : new Prisma.Decimal(payload.actualPurchaseCost),
             }
           : {}),
-        ...(payload.supplierName !== undefined
-          ? { supplierName: payload.supplierName?.trim() || null }
-          : {}),
+        ...(resolvedSupplierName !== undefined
+          ? { supplierName: resolvedSupplierName }
+          : payload.supplierName !== undefined
+            ? { supplierName: payload.supplierName?.trim() || null }
+            : {}),
         ...(payload.supplierId !== undefined ? { supplierId: payload.supplierId } : {}),
       },
       include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
@@ -425,5 +441,183 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     });
     if (!payment) throw new NotFoundException('Abono no encontrado');
     await this.prisma.interiorLineItemSupplierPayment.delete({ where: { id: paymentId } });
+  }
+
+  async duplicateBudgetSnapshot(projectId: string, applicationSlug?: string) {
+    await this.assertProject(projectId, applicationSlug);
+
+    const sections = await this.prisma.interiorProjectSection.findMany({
+      where: { projectId },
+      orderBy: { sortOrder: 'asc' },
+      include: { lineItems: { orderBy: { sortOrder: 'asc' } } },
+    });
+    if (sections.length === 0) {
+      throw new BadRequestException('No hay secciones para duplicar');
+    }
+
+    const maxOrder = await this.prisma.interiorProjectSection.aggregate({
+      where: { projectId },
+      _max: { sortOrder: true },
+    });
+    const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    let nextOrder = (maxOrder._max.sortOrder ?? -1) + 1;
+    let lineItemsCreated = 0;
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const section of sections) {
+        const created = await tx.interiorProjectSection.create({
+          data: {
+            projectId,
+            name: `${section.name} — copia ${stamp}`,
+            sortOrder: nextOrder++,
+          },
+        });
+
+        for (const item of section.lineItems) {
+          await tx.interiorProjectLineItem.create({
+            data: {
+              sectionId: created.id,
+              sortOrder: item.sortOrder,
+              description: item.description,
+              budgetedCost: item.budgetedCost,
+              hasIgv: item.hasIgv,
+            },
+          });
+          lineItemsCreated++;
+        }
+      }
+    });
+
+    const budget = await this.loadBudget(projectId, applicationSlug);
+    if (!budget) throw new NotFoundException('Presupuesto no encontrado');
+
+    return {
+      sectionsCreated: sections.length,
+      lineItemsCreated,
+      budget,
+    };
+  }
+
+  async syncActualCostsFromExecution(projectId: string, applicationSlug?: string) {
+    await this.assertProject(projectId, applicationSlug);
+
+    const costs = await this.prisma.interiorExecutionActualCost.findMany({
+      where: {
+        projectId,
+        costCategory: { in: ['MATERIAL', 'EXPENSE', 'TRANSPORT'] },
+      },
+    });
+
+    const amountByConcept = new Map<string, number>();
+    const displayByConcept = new Map<string, string>();
+    for (const cost of costs) {
+      const key = cost.concept.trim().toLowerCase();
+      if (!key) continue;
+      amountByConcept.set(key, (amountByConcept.get(key) ?? 0) + num(cost.amount));
+      if (!displayByConcept.has(key)) displayByConcept.set(key, cost.concept.trim());
+    }
+
+    const lineItems = await this.prisma.interiorProjectLineItem.findMany({
+      where: { section: { projectId } },
+    });
+
+    const matchedKeys = new Set<string>();
+    let updatedLineItems = 0;
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const item of lineItems) {
+        const key = item.description.trim().toLowerCase();
+        const amount = amountByConcept.get(key);
+        if (amount == null) continue;
+
+        await tx.interiorProjectLineItem.update({
+          where: { id: item.id },
+          data: { actualPurchaseCost: new Prisma.Decimal(amount) },
+        });
+        matchedKeys.add(key);
+        updatedLineItems++;
+      }
+    });
+
+    const unmatchedConcepts = [...amountByConcept.keys()]
+      .filter((key) => !matchedKeys.has(key))
+      .map((key) => displayByConcept.get(key) ?? key);
+
+    const budget = await this.loadBudget(projectId, applicationSlug);
+    if (!budget) throw new NotFoundException('Presupuesto no encontrado');
+
+    return { updatedLineItems, unmatchedConcepts, budget };
+  }
+
+  async assertProjectExists(projectId: string, applicationSlug?: string): Promise<void> {
+    await this.assertProject(projectId, applicationSlug);
+  }
+
+  async assertLineItemBelongsToProject(
+    projectId: string,
+    lineItemId: string,
+    applicationSlug?: string,
+  ): Promise<void> {
+    await this.assertProject(projectId, applicationSlug);
+    const lineItem = await this.prisma.interiorProjectLineItem.findFirst({
+      where: { id: lineItemId, section: { projectId } },
+    });
+    if (!lineItem) throw new NotFoundException('Partida no encontrada');
+  }
+
+  async importBudgetSections(
+    projectId: string,
+    sections: Array<{
+      name: string;
+      lineItems: Array<{ description: string; budgetedCost: number; hasIgv?: boolean }>;
+    }>,
+    replace: boolean,
+    applicationSlug?: string,
+  ) {
+    await this.assertProject(projectId, applicationSlug);
+
+    if (replace) {
+      await this.prisma.interiorProjectSection.deleteMany({ where: { projectId } });
+    }
+
+    const maxOrder = await this.prisma.interiorProjectSection.aggregate({
+      where: { projectId },
+      _max: { sortOrder: true },
+    });
+    let nextOrder = (maxOrder._max.sortOrder ?? -1) + 1;
+    let sectionsCreated = 0;
+    let lineItemsCreated = 0;
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const section of sections) {
+        const created = await tx.interiorProjectSection.create({
+          data: {
+            projectId,
+            name: section.name.trim(),
+            sortOrder: nextOrder++,
+          },
+        });
+        sectionsCreated++;
+
+        let itemOrder = 0;
+        for (const item of section.lineItems) {
+          await tx.interiorProjectLineItem.create({
+            data: {
+              sectionId: created.id,
+              sortOrder: itemOrder++,
+              description: item.description.trim(),
+              budgetedCost: new Prisma.Decimal(item.budgetedCost),
+              hasIgv: item.hasIgv ?? false,
+            },
+          });
+          lineItemsCreated++;
+        }
+      }
+    });
+
+    const budget = await this.loadBudget(projectId, applicationSlug);
+    if (!budget) throw new NotFoundException('Presupuesto no encontrado');
+
+    return { sectionsCreated, lineItemsCreated, budget };
   }
 }

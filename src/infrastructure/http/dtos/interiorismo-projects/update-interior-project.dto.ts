@@ -50,6 +50,42 @@ export class UpdateInteriorProjectDto {
   @IsString()
   addressLine?: string | null;
 
+  @ApiPropertyOptional({ example: 'TRUJILLO' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  city?: string | null;
+
+  @ApiPropertyOptional({ enum: ['I', 'II', 'III'] })
+  @IsOptional()
+  @IsString()
+  @IsIn(['I', 'II', 'III'])
+  interventionLevel?: string | null;
+
+  @ApiPropertyOptional({ example: '30 DÍAS HÁBILES' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  executionTimeNote?: string | null;
+
+  @ApiPropertyOptional({ enum: ['PEN', 'USD'] })
+  @IsOptional()
+  @IsString()
+  @IsIn(['PEN', 'USD'])
+  currency?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  defaultUtilityPct?: number | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  defaultIgvPct?: number | null;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()

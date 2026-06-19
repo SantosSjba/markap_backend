@@ -24,6 +24,7 @@ export interface InteriorFinancePaymentDto {
   paidAt: string;
   amount: number;
   concept: string;
+  paymentType: string;
   status: string;
   scheduleItemId: string | null;
 }
@@ -113,6 +114,7 @@ export interface CreateInteriorFinancePaymentPayload {
   paidAt: Date;
   amount: number;
   concept: string;
+  paymentType?: string;
   status: string;
   scheduleItemId?: string | null;
 }
@@ -121,6 +123,7 @@ export interface UpdateInteriorFinancePaymentPayload {
   paidAt?: Date;
   amount?: number;
   concept?: string;
+  paymentType?: string;
   status?: string;
   scheduleItemId?: string | null;
 }

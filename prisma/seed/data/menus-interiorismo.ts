@@ -5,14 +5,12 @@ export const INTERIORISMO_PARENT_MENUS = [
   { label: 'Dashboard', icon: 'layout-dashboard', path: '/interiorismo', order: 0 },
   { label: 'Proyectos', icon: 'folder-kanban', path: null, order: 1 },
   { label: 'Clientes', icon: 'users', path: null, order: 2 },
-  { label: 'Presupuestos', icon: 'file-text', path: null, order: 3 },
-  { label: 'Materiales', icon: 'layers', path: null, order: 4 },
-  { label: 'Ejecución', icon: 'flame', path: '/interiorismo/ejecucion', order: 5 },
-  { label: 'Finanzas', icon: 'wallet', path: '/interiorismo/finanzas', order: 6 },
-  { label: 'Calendario', icon: 'calendar', path: '/interiorismo/calendario', order: 7 },
-  { label: 'Documentos', icon: 'files', path: null, order: 8 },
-  { label: 'Configuración', icon: 'settings', path: '/interiorismo/configuracion', order: 9 },
-  { label: 'Reportes', icon: 'bar-chart', path: '/interiorismo/reportes', order: 10 },
+  { label: 'Materiales', icon: 'layers', path: null, order: 3 },
+  { label: 'Ejecución', icon: 'flame', path: '/interiorismo/ejecucion', order: 4 },
+  { label: 'Calendario', icon: 'calendar', path: '/interiorismo/calendario', order: 5 },
+  { label: 'Documentos', icon: 'files', path: null, order: 6 },
+  { label: 'Configuración', icon: 'settings', path: '/interiorismo/configuracion', order: 7 },
+  { label: 'Reportes', icon: 'bar-chart', path: '/interiorismo/reportes', order: 8 },
 ];
 
 export const INTERIORISMO_CHILD_MENUS = [
@@ -50,19 +48,7 @@ export const INTERIORISMO_CHILD_MENUS = [
     parentLabel: 'Clientes',
   },
 
-  // Presupuestos
-  {
-    label: 'Listado',
-    path: '/interiorismo/presupuestos',
-    order: 0,
-    parentLabel: 'Presupuestos',
-  },
-  {
-    label: 'Nuevo presupuesto',
-    path: '/interiorismo/presupuestos/nuevo',
-    order: 1,
-    parentLabel: 'Presupuestos',
-  },
+  // Presupuestos — gestionados dentro de Proyectos (tab Presupuesto)
 
   // Materiales
   {

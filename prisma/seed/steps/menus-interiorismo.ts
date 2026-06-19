@@ -79,4 +79,21 @@ export async function seedInteriorismoMenus(prisma: SeedDb): Promise<void> {
       console.log(`   ✅ Interiorismo submenu "${m.label}" updated`);
     }
   }
+
+  const deactivated = await prisma.menu.updateMany({
+    where: {
+      applicationId: app.id,
+      isActive: true,
+      OR: [
+        { path: '/interiorismo/finanzas' },
+        { path: { startsWith: '/interiorismo/finanzas/' } },
+        { path: '/interiorismo/presupuestos' },
+        { path: { startsWith: '/interiorismo/presupuestos/' } },
+      ],
+    },
+    data: { isActive: false },
+  });
+  if (deactivated.count > 0) {
+    console.log(`   ✅ ${deactivated.count} menú(es) obsoleto(s) desactivado(s)`);
+  }
 }

@@ -28,6 +28,12 @@ export class CreateInteriorProjectUseCase {
     projectType: InteriorProjectType;
     status: InteriorProjectStatus;
     addressLine?: string | null;
+    city?: string | null;
+    interventionLevel?: string | null;
+    executionTimeNote?: string | null;
+    currency?: string;
+    defaultUtilityPct?: number | null;
+    defaultIgvPct?: number | null;
     areaSqm?: number | null;
     levelsCount?: number | null;
     environmentsNote?: string | null;
@@ -97,6 +103,12 @@ export class CreateInteriorProjectUseCase {
       projectType: input.projectType,
       status: input.status,
       addressLine: input.addressLine,
+      city: input.city,
+      interventionLevel: input.interventionLevel,
+      executionTimeNote: input.executionTimeNote,
+      currency: input.currency,
+      defaultUtilityPct: input.defaultUtilityPct,
+      defaultIgvPct: input.defaultIgvPct,
       areaSqm: input.areaSqm,
       levelsCount: input.levelsCount,
       environmentsNote: input.environmentsNote,

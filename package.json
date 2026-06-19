@@ -26,6 +26,7 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "prisma db seed",
     "prisma:seed:prod": "ts-node prisma/seed-prod.ts",
+    "prisma:migrate:interior-budgets": "ts-node -r tsconfig-paths/register prisma/scripts/migrate-interior-budgets-to-project-budget.ts",
     "prisma:seed:ubigeo-other": "ts-node prisma/scripts/seed-ubigeo-other.ts",
     "postinstall": "prisma generate"
   },
@@ -52,7 +53,8 @@
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

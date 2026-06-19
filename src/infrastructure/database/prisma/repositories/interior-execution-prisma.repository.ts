@@ -16,6 +16,7 @@ import type {
   UpdateInteriorExecutionTaskPayload,
 } from '@domain/repositories/interior-execution.repository';
 import { PrismaService } from '../prisma.service';
+import { getProjectBudgetPriceTotal } from '../helpers/project-budget-query.helper';
 
 function num(v: unknown): number {
   if (v == null) return 0;
@@ -104,7 +105,7 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
     });
     if (!project || project.application.slug !== slug) return null;
 
-    const [tasks, evidences, incidents, costs, approvedBudget, fallbackBudget] = await Promise.all([
+    const [tasks, evidences, incidents, costs, budgetPriceTotal, sectionCount] = await Promise.all([
       this.prisma.interiorExecutionTask.findMany({ where: { projectId } }),
       this.prisma.interiorExecutionEvidence.findMany({
         where: { projectId },
@@ -119,20 +120,14 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
         orderBy: { occurredAt: 'desc' },
         include: { catalogMaterial: { select: { code: true, name: true } } },
       }),
-      this.prisma.interiorBudget.findFirst({
-        where: { projectId, status: 'APPROVED' },
-        orderBy: [{ version: 'desc' }],
-        select: { id: true, code: true, version: true, grandTotal: true },
-      }),
-      this.prisma.interiorBudget.findFirst({
-        where: { projectId, status: { not: 'DRAFT' } },
-        orderBy: [{ version: 'desc' }],
-        select: { id: true, code: true, version: true, grandTotal: true },
-      }),
+      getProjectBudgetPriceTotal(this.prisma, projectId),
+      this.prisma.interiorProjectSection.count({ where: { projectId } }),
     ]);
 
-    const ref = approvedBudget ?? fallbackBudget;
-    const budgetGrand = ref ? num(ref.grandTotal) : null;
+    const budgetGrand = sectionCount > 0 ? budgetPriceTotal : null;
+    const ref = sectionCount > 0
+      ? { id: projectId, code: project.code, version: 1, grandTotal: budgetPriceTotal }
+      : null;
 
     tasks.sort(
       (a, b) =>

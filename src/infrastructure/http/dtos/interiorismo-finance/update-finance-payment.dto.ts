@@ -12,6 +12,7 @@ import {
 } from 'class-validator';
 
 const STATUSES = ['PENDING', 'PAID', 'CANCELLED'] as const;
+const PAYMENT_TYPES = ['ABONO', 'PAGO_FINAL', 'SALDO', 'OTHER'] as const;
 
 export class UpdateInteriorFinancePaymentDto {
   @ApiPropertyOptional()
@@ -37,6 +38,12 @@ export class UpdateInteriorFinancePaymentDto {
   @IsString()
   @IsIn(STATUSES)
   status?: string;
+
+  @ApiPropertyOptional({ enum: PAYMENT_TYPES })
+  @IsOptional()
+  @IsString()
+  @IsIn(PAYMENT_TYPES)
+  paymentType?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

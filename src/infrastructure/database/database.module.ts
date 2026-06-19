@@ -29,7 +29,6 @@ import { InteriorismoConfigPrismaRepository } from './prisma/repositories/interi
 import { VentasCompliancePrismaRepository } from './prisma/repositories/ventas-compliance-prisma.repository';
 import { InteriorProjectPrismaRepository } from './prisma/repositories/interior-project-prisma.repository';
 import { InteriorProjectBudgetPrismaRepository } from './prisma/repositories/interior-project-budget-prisma.repository';
-import { InteriorBudgetPrismaRepository } from './prisma/repositories/interior-budget-prisma.repository';
 import { InteriorCatalogMaterialPrismaRepository } from './prisma/repositories/interior-catalog-material-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
@@ -57,7 +56,6 @@ import {
   VENTAS_COMPLIANCE_REPOSITORY,
   INTERIOR_PROJECT_REPOSITORY,
   INTERIOR_PROJECT_BUDGET_REPOSITORY,
-  INTERIOR_BUDGET_REPOSITORY,
   INTERIOR_CATALOG_MATERIAL_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
@@ -159,10 +157,6 @@ import {
       useClass: InteriorProjectBudgetPrismaRepository,
     },
     {
-      provide: INTERIOR_BUDGET_REPOSITORY,
-      useClass: InteriorBudgetPrismaRepository,
-    },
-    {
       provide: INTERIOR_CATALOG_MATERIAL_REPOSITORY,
       useClass: InteriorCatalogMaterialPrismaRepository,
     },
@@ -215,7 +209,6 @@ import {
     VENTAS_COMPLIANCE_REPOSITORY,
     INTERIOR_PROJECT_REPOSITORY,
     INTERIOR_PROJECT_BUDGET_REPOSITORY,
-    INTERIOR_BUDGET_REPOSITORY,
     INTERIOR_CATALOG_MATERIAL_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,

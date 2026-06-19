@@ -26,6 +26,12 @@ export class UpdateInteriorProjectUseCase {
       projectType?: InteriorProjectType;
       status?: InteriorProjectStatus;
       addressLine?: string | null;
+      city?: string | null;
+      interventionLevel?: string | null;
+      executionTimeNote?: string | null;
+      currency?: string;
+      defaultUtilityPct?: number | null;
+      defaultIgvPct?: number | null;
       areaSqm?: number | null;
       levelsCount?: number | null;
       environmentsNote?: string | null;

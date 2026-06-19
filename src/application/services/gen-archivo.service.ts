@@ -108,6 +108,30 @@ export class GenArchivoService {
     };
   }
 
+  async findByIdWithMeta(id: string) {
+    return this.prisma.genArchivo.findFirst({
+      where: { id, deletedAt: null },
+    });
+  }
+
+  async listByEntity(
+    module: string,
+    entityType: string,
+    entityId: string,
+    filters?: { category?: string },
+  ) {
+    return this.prisma.genArchivo.findMany({
+      where: {
+        module,
+        entityType,
+        entityId,
+        deletedAt: null,
+        ...(filters?.category ? { category: filters.category } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async getPresignedDownloadUrl(
     archivoId: string,
     expiresInSeconds = 3600,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module';
+import { StorageModule } from '../storage/storage.module';
 
 // Services
 import { HashService } from '@domain/services/hash.service';
@@ -143,21 +144,16 @@ import {
   DeleteInteriorProjectBudgetSectionUseCase,
   GetInteriorProjectBudgetUseCase,
   GetInteriorProjectSettlementUseCase,
+  RenderInteriorProjectBudgetHtmlUseCase,
   UpdateInteriorProjectBudgetLineItemUseCase,
   UpdateInteriorProjectBudgetSectionUseCase,
+  DuplicateInteriorProjectBudgetSnapshotUseCase,
+  SyncInteriorProjectBudgetFromExecutionUseCase,
+  ImportInteriorProjectBudgetFromExcelUseCase,
+  ListInteriorProjectBudgetAttachmentsUseCase,
+  UploadInteriorProjectBudgetAttachmentUseCase,
+  DeleteInteriorProjectBudgetAttachmentUseCase,
 } from '../../application/use-cases/interior-project-budget';
-
-import {
-  ListInteriorBudgetsUseCase,
-  GetInteriorBudgetByIdUseCase,
-  CreateInteriorBudgetUseCase,
-  UpdateInteriorBudgetUseCase,
-  DuplicateInteriorBudgetUseCase,
-  DeleteInteriorBudgetUseCase,
-  AddInteriorBudgetCommentUseCase,
-  AddInteriorBudgetAttachmentUseCase,
-  RenderInteriorBudgetHtmlUseCase,
-} from '../../application/use-cases/interior-budgets';
 
 import {
   CreateInteriorCatalogMaterialUseCase,
@@ -241,7 +237,6 @@ import { InteriorismoConfigController } from './controllers/interiorismo-config.
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoProjectBudgetController } from './controllers/interiorismo-project-budget.controller';
-import { InteriorismoBudgetsController } from './controllers/interiorismo-budgets.controller';
 import { InteriorismoCatalogMaterialsController } from './controllers/interiorismo-catalog-materials.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
@@ -280,7 +275,7 @@ import {
 } from '../../application/ports';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, StorageModule],
   controllers: [
     AuthController,
     ApplicationsController,
@@ -304,7 +299,6 @@ import {
     VentasComplianceController,
     InteriorismoProjectsController,
     InteriorismoProjectBudgetController,
-    InteriorismoBudgetsController,
     InteriorismoCatalogMaterialsController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
@@ -453,16 +447,14 @@ import {
     DeleteInteriorProjectBudgetLineItemUseCase,
     CreateInteriorLineItemSupplierPaymentUseCase,
     DeleteInteriorLineItemSupplierPaymentUseCase,
+    RenderInteriorProjectBudgetHtmlUseCase,
+    DuplicateInteriorProjectBudgetSnapshotUseCase,
+    SyncInteriorProjectBudgetFromExecutionUseCase,
+    ImportInteriorProjectBudgetFromExcelUseCase,
+    ListInteriorProjectBudgetAttachmentsUseCase,
+    UploadInteriorProjectBudgetAttachmentUseCase,
+    DeleteInteriorProjectBudgetAttachmentUseCase,
 
-    ListInteriorBudgetsUseCase,
-    GetInteriorBudgetByIdUseCase,
-    CreateInteriorBudgetUseCase,
-    UpdateInteriorBudgetUseCase,
-    DuplicateInteriorBudgetUseCase,
-    DeleteInteriorBudgetUseCase,
-    AddInteriorBudgetCommentUseCase,
-    AddInteriorBudgetAttachmentUseCase,
-    RenderInteriorBudgetHtmlUseCase,
 
     ListInteriorCatalogMaterialsUseCase,
     GetInteriorCatalogMaterialByIdUseCase,

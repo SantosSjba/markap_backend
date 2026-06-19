@@ -139,4 +139,39 @@ export interface InteriorProjectBudgetRepository {
     paymentId: string,
     applicationSlug?: string,
   ): Promise<void>;
+  duplicateBudgetSnapshot(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<{
+    sectionsCreated: number;
+    lineItemsCreated: number;
+    budget: ProjectBudgetDetailDto;
+  }>;
+  syncActualCostsFromExecution(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<{
+    updatedLineItems: number;
+    unmatchedConcepts: string[];
+    budget: ProjectBudgetDetailDto;
+  }>;
+  assertProjectExists(projectId: string, applicationSlug?: string): Promise<void>;
+  assertLineItemBelongsToProject(
+    projectId: string,
+    lineItemId: string,
+    applicationSlug?: string,
+  ): Promise<void>;
+  importBudgetSections(
+    projectId: string,
+    sections: Array<{
+      name: string;
+      lineItems: Array<{ description: string; budgetedCost: number; hasIgv?: boolean }>;
+    }>,
+    replace: boolean,
+    applicationSlug?: string,
+  ): Promise<{
+    sectionsCreated: number;
+    lineItemsCreated: number;
+    budget: ProjectBudgetDetailDto;
+  }>;
 }

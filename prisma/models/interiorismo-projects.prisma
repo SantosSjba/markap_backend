@@ -53,7 +53,6 @@ model InteriorProject {
   supervisorAgent  Agent?      @relation("InteriorProjectSupervisor", fields: [supervisorAgentId], references: [id], onDelete: SetNull)
   commercialAgent  Agent?      @relation("InteriorProjectCommercial", fields: [commercialAgentId], references: [id], onDelete: SetNull)
 
-  budgets        InteriorBudget[]
   budgetSections InteriorProjectSection[]
   materials   InteriorProjectMaterial[]
   documents   InteriorProjectDocument[]

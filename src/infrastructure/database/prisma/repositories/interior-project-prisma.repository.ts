@@ -114,7 +114,6 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         architectSrAgent: { select: { id: true, fullName: true } },
         supervisorAgent: { select: { id: true, fullName: true } },
         commercialAgent: { select: { id: true, fullName: true } },
-        budgets: { orderBy: [{ code: 'asc' }, { version: 'desc' }] },
         materials: { orderBy: { createdAt: 'desc' } },
         documents: { orderBy: { createdAt: 'desc' } },
         payments: { orderBy: { paidAt: 'desc' } },
@@ -138,6 +137,14 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         projectType: data.projectType,
         status: data.status,
         addressLine: data.addressLine?.trim() || null,
+        city: data.city?.trim() || null,
+        interventionLevel: data.interventionLevel?.trim() || null,
+        executionTimeNote: data.executionTimeNote?.trim() || null,
+        currency: data.currency?.trim() || 'PEN',
+        defaultUtilityPct:
+          data.defaultUtilityPct != null ? new Prisma.Decimal(data.defaultUtilityPct) : undefined,
+        defaultIgvPct:
+          data.defaultIgvPct != null ? new Prisma.Decimal(data.defaultIgvPct) : undefined,
         areaSqm: data.areaSqm ?? null,
         levelsCount: data.levelsCount ?? null,
         environmentsNote: data.environmentsNote?.trim() || null,
@@ -166,6 +173,26 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
     if (data.projectType !== undefined) patch.projectType = data.projectType;
     if (data.status !== undefined) patch.status = data.status;
     if (data.addressLine !== undefined) patch.addressLine = data.addressLine?.trim() || null;
+    if (data.city !== undefined) patch.city = data.city?.trim() || null;
+    if (data.interventionLevel !== undefined) {
+      patch.interventionLevel = data.interventionLevel?.trim() || null;
+    }
+    if (data.executionTimeNote !== undefined) {
+      patch.executionTimeNote = data.executionTimeNote?.trim() || null;
+    }
+    if (data.currency !== undefined) patch.currency = data.currency?.trim() || 'PEN';
+    if (data.defaultUtilityPct !== undefined) {
+      patch.defaultUtilityPct =
+        data.defaultUtilityPct === null
+          ? new Prisma.Decimal(20)
+          : new Prisma.Decimal(data.defaultUtilityPct);
+    }
+    if (data.defaultIgvPct !== undefined) {
+      patch.defaultIgvPct =
+        data.defaultIgvPct === null
+          ? new Prisma.Decimal(18)
+          : new Prisma.Decimal(data.defaultIgvPct);
+    }
     if (data.areaSqm !== undefined) {
       patch.areaSqm =
         data.areaSqm === null ? null : new Prisma.Decimal(data.areaSqm);
@@ -226,6 +253,12 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         documentNumber: row.client.documentNumber,
       },
       addressLine: row.addressLine ?? null,
+      city: row.city ?? null,
+      interventionLevel: row.interventionLevel ?? null,
+      executionTimeNote: row.executionTimeNote ?? null,
+      currency: row.currency ?? 'PEN',
+      defaultUtilityPct: num(row.defaultUtilityPct) ?? 20,
+      defaultIgvPct: num(row.defaultIgvPct) ?? 18,
       areaSqm: num(row.areaSqm),
       levelsCount: row.levelsCount ?? null,
       environmentsNote: row.environmentsNote ?? null,
@@ -248,14 +281,6 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       estimatedBudget: num(row.estimatedBudget),
       projectedCost: num(row.projectedCost),
       expectedMargin: num(row.expectedMargin),
-      budgets: (row.budgets ?? []).map((b: any) => ({
-        id: b.id,
-        code: b.code,
-        title: b.title ?? null,
-        version: b.version ?? 1,
-        totalAmount: num(b.grandTotal) ?? 0,
-        status: b.status,
-      })),
       materials: (row.materials ?? []).map((m: any) => ({
         id: m.id,
         name: m.name,
@@ -274,6 +299,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         paidAt: p.paidAt.toISOString(),
         amount: num(p.amount) ?? 0,
         concept: p.concept,
+        paymentType: p.paymentType ?? 'OTHER',
         status: p.status,
         scheduleItemId: p.scheduleItemId ?? null,
       })),

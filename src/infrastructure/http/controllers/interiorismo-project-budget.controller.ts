@@ -7,11 +7,18 @@ import {
   Patch,
   Post,
   Query,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiProduces,
   ApiQuery,
   ApiResponse,
   ApiTags,
@@ -26,9 +33,17 @@ import {
   DeleteInteriorProjectBudgetSectionUseCase,
   GetInteriorProjectBudgetUseCase,
   GetInteriorProjectSettlementUseCase,
+  RenderInteriorProjectBudgetHtmlUseCase,
   UpdateInteriorProjectBudgetLineItemUseCase,
   UpdateInteriorProjectBudgetSectionUseCase,
+  DuplicateInteriorProjectBudgetSnapshotUseCase,
+  SyncInteriorProjectBudgetFromExecutionUseCase,
+  ImportInteriorProjectBudgetFromExcelUseCase,
+  ListInteriorProjectBudgetAttachmentsUseCase,
+  UploadInteriorProjectBudgetAttachmentUseCase,
+  DeleteInteriorProjectBudgetAttachmentUseCase,
 } from '../../../application/use-cases/interior-project-budget';
+import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
 import {
   CreateLineItemSupplierPaymentDto,
   CreateProjectBudgetLineItemDto,
@@ -53,11 +68,32 @@ export class InteriorismoProjectBudgetController {
     private readonly deleteLineItemUc: DeleteInteriorProjectBudgetLineItemUseCase,
     private readonly createSupplierPaymentUc: CreateInteriorLineItemSupplierPaymentUseCase,
     private readonly deleteSupplierPaymentUc: DeleteInteriorLineItemSupplierPaymentUseCase,
+    private readonly renderPdfHtmlUc: RenderInteriorProjectBudgetHtmlUseCase,
+    private readonly duplicateSnapshotUc: DuplicateInteriorProjectBudgetSnapshotUseCase,
+    private readonly syncFromExecutionUc: SyncInteriorProjectBudgetFromExecutionUseCase,
+    private readonly importExcelUc: ImportInteriorProjectBudgetFromExcelUseCase,
+    private readonly listAttachmentsUc: ListInteriorProjectBudgetAttachmentsUseCase,
+    private readonly uploadAttachmentUc: UploadInteriorProjectBudgetAttachmentUseCase,
+    private readonly deleteAttachmentUc: DeleteInteriorProjectBudgetAttachmentUseCase,
   ) {}
 
   private parseDate(s: string): Date {
     const d = new Date(s.trim());
     return Number.isNaN(d.getTime()) ? new Date() : d;
+  }
+
+  @Get(':projectId/budget/pdf')
+  @ApiOperation({ summary: 'Vista imprimible HTML del presupuesto cliente (exportar a PDF)' })
+  @ApiProduces('text/html')
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 200 })
+  async budgetPdfHtml(
+    @Param('projectId') projectId: string,
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Res() res: Response,
+  ) {
+    const html = await this.renderPdfHtmlUc.execute(projectId, applicationSlug ?? 'interiorismo');
+    res.type('html').send(html);
   }
 
   @Get(':projectId/budget')
@@ -80,6 +116,102 @@ export class InteriorismoProjectBudgetController {
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     return this.getSettlementUc.execute(projectId, applicationSlug ?? 'interiorismo');
+  }
+
+  @Post(':projectId/budget/duplicate-snapshot')
+  @ApiOperation({ summary: 'Duplicar presupuesto como snapshot (solo partidas cliente, sin compras)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 201 })
+  duplicateSnapshot(
+    @Param('projectId') projectId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.duplicateSnapshotUc.execute(projectId, applicationSlug ?? 'interiorismo');
+  }
+
+  @Post(':projectId/budget/sync-from-execution')
+  @ApiOperation({ summary: 'Sincronizar costo real de partidas desde costos de ejecución (por concepto)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 200 })
+  syncFromExecution(
+    @Param('projectId') projectId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.syncFromExecutionUc.execute(projectId, applicationSlug ?? 'interiorismo');
+  }
+
+  @Post(':projectId/budget/import-excel')
+  @ApiOperation({ summary: 'Importar presupuesto desde Excel (.xlsx)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'replace', required: false, description: 'true = reemplaza secciones existentes' })
+  @UseInterceptors(FileInterceptor('file'))
+  importExcel(
+    @Param('projectId') projectId: string,
+    @UploadedFile() file: MulterUploadedFile | undefined,
+    @Query('replace') replace?: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Archivo Excel requerido');
+    }
+    return this.importExcelUc.execute(
+      projectId,
+      file,
+      { replace: replace === 'true' },
+      applicationSlug ?? 'interiorismo',
+    );
+  }
+
+  @Get(':projectId/budget/attachments')
+  @ApiOperation({ summary: 'Listar adjuntos del presupuesto / partida' })
+  @ApiQuery({ name: 'lineItemId', required: false })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  listAttachments(
+    @Param('projectId') projectId: string,
+    @Query('lineItemId') lineItemId?: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.listAttachmentsUc.execute(
+      projectId,
+      lineItemId?.trim() || null,
+      applicationSlug ?? 'interiorismo',
+    );
+  }
+
+  @Post(':projectId/budget/attachments')
+  @ApiOperation({ summary: 'Subir adjunto al presupuesto o partida' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @UseInterceptors(FileInterceptor('file'))
+  uploadAttachment(
+    @Param('projectId') projectId: string,
+    @UploadedFile() file: MulterUploadedFile | undefined,
+    @Body() body: { lineItemId?: string | null; title?: string },
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Archivo requerido');
+    }
+    return this.uploadAttachmentUc.execute(
+      projectId,
+      file,
+      { lineItemId: body.lineItemId ?? null, title: body.title },
+      applicationSlug ?? 'interiorismo',
+    );
+  }
+
+  @Delete(':projectId/budget/attachments/:attachmentId')
+  @ApiOperation({ summary: 'Eliminar adjunto del presupuesto' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  deleteAttachment(
+    @Param('projectId') projectId: string,
+    @Param('attachmentId') attachmentId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.deleteAttachmentUc.execute(
+      projectId,
+      attachmentId,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Post(':projectId/budget/sections')

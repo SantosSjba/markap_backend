@@ -9,6 +9,7 @@ export { seedDemoAlquileres } from './demo-alquileres';
 export { seedInteriorismoClients } from './demo-interiorismo-clients';
 export { seedInteriorismoProjects } from './demo-interiorismo-projects';
 export { seedInteriorismoHortensiasProject } from './demo-interiorismo-hortensias';
+export { seedHortensiasSupplierPayments } from './demo-interiorismo-supplier-payments';
 export { seedInteriorismoMaterials } from './demo-interiorismo-materials';
 export { seedInteriorismoExecution } from './demo-interiorismo-execution';
 export { seedInteriorismoFinance } from './demo-interiorismo-finance';

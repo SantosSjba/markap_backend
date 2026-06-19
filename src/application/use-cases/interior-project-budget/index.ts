@@ -166,3 +166,13 @@ export class DeleteInteriorLineItemSupplierPaymentUseCase {
     return this.repo.deleteSupplierPayment(projectId, paymentId, applicationSlug);
   }
 }
+
+export { RenderInteriorProjectBudgetHtmlUseCase } from './render-interior-project-budget-html.use-case';
+export { DuplicateInteriorProjectBudgetSnapshotUseCase } from './duplicate-budget-snapshot.use-case';
+export { SyncInteriorProjectBudgetFromExecutionUseCase } from './sync-budget-from-execution.use-case';
+export { ImportInteriorProjectBudgetFromExcelUseCase } from './import-budget-from-excel.use-case';
+export {
+  ListInteriorProjectBudgetAttachmentsUseCase,
+  UploadInteriorProjectBudgetAttachmentUseCase,
+  DeleteInteriorProjectBudgetAttachmentUseCase,
+} from './budget-attachments.use-case';

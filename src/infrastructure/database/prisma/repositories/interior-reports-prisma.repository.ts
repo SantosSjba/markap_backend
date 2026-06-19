@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { sumProjectBudgetPriceTotals } from '../helpers/project-budget-query.helper';
 import type { InteriorReportsRepository } from '@domain/repositories/interior-reports.repository';
 import type {
   InteriorReportsConversionDto,
@@ -67,7 +68,7 @@ export class InteriorReportsPrismaRepository implements InteriorReportsRepositor
       budgetsApproved,
       budgetsRejected,
       budgetsSentSnapshot,
-      approvedGrandAgg,
+      approvedProjectsInPeriod,
       execCostsAgg,
       purchasesAgg,
       costByCat,
@@ -124,33 +125,33 @@ export class InteriorReportsPrismaRepository implements InteriorReportsRepositor
           updatedAt: { gte: start, lte: end },
         },
       }),
-      this.prisma.interiorBudget.count({
+      this.prisma.interiorProject.count({
         where: {
+          ...projectBase,
           status: 'APPROVED',
           updatedAt: { gte: start, lte: end },
-          project: projectBase,
         },
       }),
-      this.prisma.interiorBudget.count({
+      this.prisma.interiorProject.count({
         where: {
-          status: 'REJECTED',
+          ...projectBase,
+          status: 'CANCELLED',
           updatedAt: { gte: start, lte: end },
-          project: projectBase,
         },
       }),
-      this.prisma.interiorBudget.count({
+      this.prisma.interiorProject.count({
         where: {
-          status: 'SENT',
-          project: projectBase,
+          ...projectBase,
+          status: 'QUOTE',
         },
       }),
-      this.prisma.interiorBudget.aggregate({
+      this.prisma.interiorProject.findMany({
         where: {
+          ...projectBase,
           status: 'APPROVED',
           updatedAt: { gte: start, lte: end },
-          project: projectBase,
         },
-        _sum: { grandTotal: true },
+        select: { id: true },
       }),
       this.prisma.interiorExecutionActualCost.aggregate({
         where: {
@@ -200,10 +201,10 @@ export class InteriorReportsPrismaRepository implements InteriorReportsRepositor
         where: projectBase,
         _avg: { progressPct: true },
       }),
-      this.prisma.interiorBudget.count({
+      this.prisma.interiorProject.count({
         where: {
-          status: 'DRAFT',
-          project: projectBase,
+          ...projectBase,
+          status: { in: ['PROSPECT', 'DESIGN', 'QUOTE'] },
         },
       }),
       this.prisma.client.count({
@@ -234,7 +235,10 @@ export class InteriorReportsPrismaRepository implements InteriorReportsRepositor
     const cobranzas = num(paymentsAgg._sum.amount);
     const compras = num(purchasesAgg._sum.totalAmount);
     const costosEjec = num(execCostsAgg._sum.amount);
-    const volumenAprob = num(approvedGrandAgg._sum.grandTotal);
+    const volumenAprob = await sumProjectBudgetPriceTotals(
+      this.prisma,
+      approvedProjectsInPeriod.map((p) => p.id),
+    );
     const margenBruto = volumenAprob - costosEjec - compras;
     const denomVentas = volumenAprob > 0 ? volumenAprob : null;
     const margenBrutoPct = denomVentas !== null ? (margenBruto / denomVentas) * 100 : null;
