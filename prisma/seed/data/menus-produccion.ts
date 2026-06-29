@@ -1,33 +1,73 @@
 export const PRODUCCION_APPLICATION_SLUG = 'produccion';
 
 /**
- * Orden = flujo operativo:
- * Productos → Inventario → Proveedores → Órdenes de trabajo → Producción (taller) → Reportes → Config
+ * Flujo operativo del negocio (no tablas de BD):
+ * Clientes → Catálogo → Producción → Inventario → Compras → Ventas → Costos → Reportes
  */
 export const PRODUCCION_PARENT_MENUS = [
   { label: 'Dashboard', icon: 'layout-dashboard', path: '/produccion', order: 0 },
-  { label: 'Productos', icon: 'boxes', path: null, order: 1 },
-  { label: 'Inventario', icon: 'warehouse', path: null, order: 2 },
-  { label: 'Proveedores', icon: 'truck', path: null, order: 3 },
-  { label: 'Órdenes de trabajo', icon: 'clipboard-list', path: null, order: 4 },
-  { label: 'Producción', icon: 'kanban', path: null, order: 5 },
-  { label: 'Reportes', icon: 'bar-chart', path: '/produccion/reportes', order: 6 },
-  { label: 'Configuración', icon: 'settings', path: '/produccion/configuracion', order: 7 },
+  { label: 'Clientes', icon: 'users', path: null, order: 1 },
+  { label: 'Catálogo de muebles', icon: 'boxes', path: null, order: 2 },
+  { label: 'Producción', icon: 'kanban', path: null, order: 3 },
+  { label: 'Inventario', icon: 'warehouse', path: null, order: 4 },
+  { label: 'Compras', icon: 'shopping-cart', path: null, order: 5 },
+  { label: 'Ventas', icon: 'receipt', path: null, order: 6 },
+  { label: 'Costos', icon: 'calculator', path: null, order: 7 },
+  { label: 'Reportes', icon: 'bar-chart', path: '/produccion/reportes', order: 8 },
+  { label: 'Configuración', icon: 'settings', path: '/produccion/configuracion', order: 9 },
 ];
 
 export const PRODUCCION_CHILD_MENUS = [
-  // Productos
+  // Clientes (primero: cotización y pedido requieren cliente)
   {
-    label: 'Catálogo',
-    path: '/produccion/productos',
+    label: 'Listado de clientes',
+    path: '/produccion/clientes',
     order: 0,
-    parentLabel: 'Productos',
+    parentLabel: 'Clientes',
   },
   {
-    label: 'Nuevo producto',
-    path: '/produccion/productos/nuevo',
+    label: 'Nuevo cliente',
+    path: '/produccion/clientes/nuevo',
     order: 1,
-    parentLabel: 'Productos',
+    parentLabel: 'Clientes',
+  },
+  // Catálogo de muebles
+  {
+    label: 'Catálogo',
+    path: '/produccion/catalogo',
+    order: 0,
+    parentLabel: 'Catálogo de muebles',
+  },
+  {
+    label: 'Nuevo mueble',
+    path: '/produccion/catalogo/nuevo',
+    order: 1,
+    parentLabel: 'Catálogo de muebles',
+  },
+  // Producción
+  {
+    label: 'Órdenes de trabajo',
+    path: '/produccion/ordenes-trabajo',
+    order: 0,
+    parentLabel: 'Producción',
+  },
+  {
+    label: 'Producción en proceso',
+    path: '/produccion/produccion/en-proceso',
+    order: 1,
+    parentLabel: 'Producción',
+  },
+  {
+    label: 'Etapas de producción',
+    path: '/produccion/produccion/etapas',
+    order: 2,
+    parentLabel: 'Producción',
+  },
+  {
+    label: 'Productos terminados',
+    path: '/produccion/produccion/terminados',
+    order: 3,
+    parentLabel: 'Producción',
   },
   // Inventario
   {
@@ -37,8 +77,8 @@ export const PRODUCCION_CHILD_MENUS = [
     parentLabel: 'Inventario',
   },
   {
-    label: 'Insumos',
-    path: '/produccion/inventario/insumos',
+    label: 'Stock',
+    path: '/produccion/inventario/stock',
     order: 1,
     parentLabel: 'Inventario',
   },
@@ -48,67 +88,80 @@ export const PRODUCCION_CHILD_MENUS = [
     order: 2,
     parentLabel: 'Inventario',
   },
-  // Proveedores
+  // Compras
   {
-    label: 'Listado',
-    path: '/produccion/proveedores',
+    label: 'Proveedores',
+    path: '/produccion/compras/proveedores',
     order: 0,
-    parentLabel: 'Proveedores',
-  },
-  {
-    label: 'Nuevo proveedor',
-    path: '/produccion/proveedores/nuevo',
-    order: 1,
-    parentLabel: 'Proveedores',
+    parentLabel: 'Compras',
   },
   {
     label: 'Órdenes de compra',
-    path: '/produccion/proveedores/ordenes-compra',
-    order: 2,
-    parentLabel: 'Proveedores',
-  },
-  // Órdenes de trabajo
-  {
-    label: 'Listado de órdenes',
-    path: '/produccion/ordenes-trabajo',
-    order: 0,
-    parentLabel: 'Órdenes de trabajo',
-  },
-  {
-    label: 'Nueva orden',
-    path: '/produccion/ordenes-trabajo/nueva',
+    path: '/produccion/compras/ordenes-compra',
     order: 1,
-    parentLabel: 'Órdenes de trabajo',
+    parentLabel: 'Compras',
   },
+  // Ventas
   {
-    label: 'En proceso',
-    path: '/produccion/ordenes-trabajo/en-proceso',
-    order: 2,
-    parentLabel: 'Órdenes de trabajo',
-  },
-  // Producción (etapas de taller)
-  {
-    label: 'Planificación',
-    path: '/produccion/etapas/planificacion',
+    label: 'Cotizaciones',
+    path: '/produccion/ventas/cotizaciones',
     order: 0,
-    parentLabel: 'Producción',
+    parentLabel: 'Ventas',
   },
   {
-    label: 'Corte',
-    path: '/produccion/etapas/corte',
+    label: 'Pedidos',
+    path: '/produccion/ventas/pedidos',
     order: 1,
-    parentLabel: 'Producción',
+    parentLabel: 'Ventas',
   },
   {
-    label: 'Ensamble',
-    path: '/produccion/etapas/ensamble',
+    label: 'Entregas',
+    path: '/produccion/ventas/entregas',
     order: 2,
-    parentLabel: 'Producción',
+    parentLabel: 'Ventas',
+  },
+  // Costos
+  {
+    label: 'Costeo de muebles',
+    path: '/produccion/costos/costeo',
+    order: 0,
+    parentLabel: 'Costos',
   },
   {
-    label: 'Acabados',
-    path: '/produccion/etapas/acabados',
-    order: 3,
-    parentLabel: 'Producción',
+    label: 'Mano de obra',
+    path: '/produccion/costos/mano-obra',
+    order: 1,
+    parentLabel: 'Costos',
   },
+  {
+    label: 'Gastos adicionales',
+    path: '/produccion/costos/gastos',
+    order: 2,
+    parentLabel: 'Costos',
+  },
+];
+
+/** Menús padre reemplazados por la nueva estructura */
+export const PRODUCCION_DEPRECATED_PARENT_LABELS = [
+  'Productos',
+  'Proveedores',
+  'Órdenes de trabajo',
+];
+
+/** Rutas hijas obsoletas (se desactivan tras el seed) */
+export const PRODUCCION_DEPRECATED_PATHS = [
+  '/produccion/productos',
+  '/produccion/productos/nuevo',
+  '/produccion/inventario/insumos',
+  '/produccion/proveedores',
+  '/produccion/proveedores/nuevo',
+  '/produccion/proveedores/ordenes-compra',
+  '/produccion/ordenes-trabajo/nueva',
+  '/produccion/ordenes-trabajo/en-proceso',
+  '/produccion/etapas/planificacion',
+  '/produccion/etapas/corte',
+  '/produccion/etapas/ensamble',
+  '/produccion/etapas/acabados',
+  '/produccion/ventas/clientes',
+  '/produccion/ventas/clientes/nuevo',
 ];
