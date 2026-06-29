@@ -62,6 +62,8 @@ model Application {
   contabilidadAppSettings      ContabilidadAppSettings?
   contabilidadDocumentSeries   ContabilidadDocumentSeries[]
   contabilidadAccounts         ContabilidadAccount[]
+  contabilidadPeriods          ContabilidadPeriod[]
+  contabilidadCostCenters      ContabilidadCostCenter[]
 
   @@index([slug])
   @@index([isActive])

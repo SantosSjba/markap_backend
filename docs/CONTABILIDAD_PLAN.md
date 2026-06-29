@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-06-29  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 2 (plan de cuentas PCGE) completada — Fase 3 pendiente
+> **Estado general:** Fase 3 (periodos y centros de costo) completada — Fase 4 pendiente
 
 ---
 
@@ -97,7 +97,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 0 | Infraestructura y menú | ✅ Completa |
 | 1 | Configuración contable | ✅ Completa |
 | 2 | Plan de cuentas (PCGE) | ✅ Completa |
-| 3 | Periodos y centros de costo | ⬜ Pendiente |
+| 3 | Periodos y centros de costo | ✅ Completa |
 | 4 | Asientos y libro diario | ⬜ Pendiente |
 | 5 | Tesorería | ⬜ Pendiente |
 | 6 | Compras contables | ⬜ Pendiente |
@@ -166,16 +166,17 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Modelo `AccountingPeriod`: año-mes, estado `OPEN` | `CLOSED`
-- [ ] Modelo `CostCenter`: código, nombre, activo (opcional jerarquía)
-- [ ] Apertura automática de periodos del año fiscal
-- [ ] API periodos + centros de costo
+- [x] Modelo `ContabilidadPeriod`: año-mes, estado `OPEN` | `CLOSED`
+- [x] Modelo `ContabilidadCostCenter`: código, nombre, activo, jerarquía opcional (`parentId`)
+- [x] Apertura automática de los 12 meses al listar un año
+- [x] API `GET/PATCH contabilidad-periods`, CRUD `contabilidad-cost-centers`
+- [x] Seed demo centros: ADM, VTA, PRD
 
 ### Frontend
 
-- [ ] Listado periodos con acción abrir/cerrar (cierre suave: solo flag hasta Fase 10)
-- [ ] CRUD centros de costo
-- [ ] Selector de periodo activo en layout o header del módulo
+- [x] Listado periodos con abrir/cerrar (cierre suave por flag)
+- [x] CRUD centros de costo
+- [x] Selector de periodo activo en layout (`ContabilidadPeriodBar` + localStorage)
 
 ---
 
