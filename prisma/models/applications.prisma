@@ -40,6 +40,8 @@ model Application {
   interiorProjects             InteriorProject[]
   interiorCatalogMaterials     InteriorCatalogMaterial[]
   produccionFurniture          ProduccionFurniture[]
+  produccionLaborRates       ProduccionLaborRate[]
+  produccionExtraCostCatalog ProduccionExtraCostCatalog[]
   interiorMaterialSuppliers    InteriorMaterialSupplier[]
   interiorCalendarEvents       InteriorCalendarEvent[]
   genArchivos                  GenArchivo[]

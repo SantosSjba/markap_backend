@@ -104,6 +104,7 @@ export class ProduccionFurnitureController {
         materialName: l.materialName,
         unit: l.unit,
         quantity: l.quantity,
+        unitCost: l.unitCost ?? null,
         notes: l.notes ?? null,
       })),
     });

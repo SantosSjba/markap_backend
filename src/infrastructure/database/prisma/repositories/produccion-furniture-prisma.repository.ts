@@ -30,6 +30,7 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
         materialName: l.materialName.trim(),
         unit: l.unit.trim(),
         quantity: new Prisma.Decimal(l.quantity),
+        unitCost: l.unitCost != null ? new Prisma.Decimal(l.unitCost) : null,
         notes: l.notes?.trim() || null,
       }));
   }
@@ -55,6 +56,7 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
       materialName: string;
       unit: string;
       quantity: Prisma.Decimal;
+      unitCost: Prisma.Decimal | null;
       notes: string | null;
     }[];
   }): ProduccionFurnitureDetail {
@@ -82,6 +84,7 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
         materialName: bl.materialName,
         unit: bl.unit,
         quantity: num(bl.quantity) ?? 0,
+        unitCost: num(bl.unitCost),
         notes: bl.notes,
       })),
       updatedAt: row.updatedAt.toISOString(),

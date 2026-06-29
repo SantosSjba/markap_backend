@@ -28,6 +28,12 @@ export class ProduccionFurnitureBomLineDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  unitCost?: number | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   notes?: string | null;
 }

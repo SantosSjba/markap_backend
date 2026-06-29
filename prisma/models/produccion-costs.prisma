@@ -1,0 +1,90 @@
+/// Costos de producción — tarifas MO, catálogo de gastos y costeo por mueble.
+
+model ProduccionLaborRate {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  name          String  @map("name")
+  stage         String  @map("stage")
+  hourlyRate    Decimal @map("hourly_rate") @db.Decimal(14, 2)
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  laborEntries ProduccionFurnitureLaborEntry[]
+
+  @@index([applicationId])
+  @@index([isActive])
+  @@map("produccion_labor_rates")
+}
+
+/// Catálogo de tipos de gasto adicional (transporte, embalaje, etc.).
+model ProduccionExtraCostCatalog {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  name          String  @map("name")
+  defaultAmount Decimal @default(0) @map("default_amount") @db.Decimal(14, 2)
+  description   String? @db.Text
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  expenses    ProduccionFurnitureExtraExpense[]
+
+  @@index([applicationId])
+  @@map("produccion_extra_cost_catalog")
+}
+
+model ProduccionFurnitureLaborEntry {
+  id           String  @id @default(uuid())
+  furnitureId  String  @map("furniture_id")
+  laborRateId  String? @map("labor_rate_id")
+  description  String  @map("description")
+  hours        Decimal @map("hours") @db.Decimal(10, 2)
+  hourlyRate   Decimal @map("hourly_rate") @db.Decimal(14, 2)
+  sortOrder    Int     @default(0) @map("sort_order")
+
+  furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
+  laborRate ProduccionLaborRate? @relation(fields: [laborRateId], references: [id], onDelete: SetNull)
+
+  @@index([furnitureId])
+  @@map("produccion_furniture_labor_entries")
+}
+
+model ProduccionFurnitureExtraExpense {
+  id           String  @id @default(uuid())
+  furnitureId  String  @map("furniture_id")
+  catalogItemId String? @map("catalog_item_id")
+  description  String  @map("description")
+  amount       Decimal @map("amount") @db.Decimal(14, 2)
+  sortOrder    Int     @default(0) @map("sort_order")
+
+  furniture   ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
+  catalogItem ProduccionExtraCostCatalog? @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
+
+  @@index([furnitureId])
+  @@map("produccion_furniture_extra_expenses")
+}
+
+/// Historial de costeos guardados por mueble.
+model ProduccionFurnitureCostSnapshot {
+  id              String   @id @default(uuid())
+  furnitureId     String   @map("furniture_id")
+  label           String?  @map("label")
+  materialsTotal  Decimal  @map("materials_total") @db.Decimal(14, 2)
+  laborTotal      Decimal  @map("labor_total") @db.Decimal(14, 2)
+  extrasTotal     Decimal  @map("extras_total") @db.Decimal(14, 2)
+  totalCost       Decimal  @map("total_cost") @db.Decimal(14, 2)
+  referencePrice  Decimal  @map("reference_price") @db.Decimal(14, 2)
+  marginPercent   Decimal? @map("margin_percent") @db.Decimal(8, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
+
+  @@index([furnitureId])
+  @@map("produccion_furniture_cost_snapshots")
+}

@@ -21,6 +21,9 @@ model ProduccionFurniture {
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   images      ProduccionFurnitureImage[]
   bomLines    ProduccionFurnitureBomLine[]
+  laborEntries ProduccionFurnitureLaborEntry[]
+  extraExpenses ProduccionFurnitureExtraExpense[]
+  costSnapshots ProduccionFurnitureCostSnapshot[]
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -48,8 +51,9 @@ model ProduccionFurnitureBomLine {
   sortOrder    Int     @default(0) @map("sort_order")
   materialName String  @map("material_name")
   unit         String  @map("unit")
-  quantity     Decimal @map("quantity") @db.Decimal(14, 4)
-  notes        String? @db.Text
+  quantity     Decimal  @map("quantity") @db.Decimal(14, 4)
+  unitCost     Decimal? @map("unit_cost") @db.Decimal(14, 4)
+  notes        String?  @db.Text
 
   furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
 

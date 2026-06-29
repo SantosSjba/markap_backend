@@ -31,6 +31,9 @@ import { InteriorProjectPrismaRepository } from './prisma/repositories/interior-
 import { InteriorProjectBudgetPrismaRepository } from './prisma/repositories/interior-project-budget-prisma.repository';
 import { InteriorCatalogMaterialPrismaRepository } from './prisma/repositories/interior-catalog-material-prisma.repository';
 import { ProduccionFurniturePrismaRepository } from './prisma/repositories/produccion-furniture-prisma.repository';
+import { ProduccionLaborRatePrismaRepository } from './prisma/repositories/produccion-labor-rate-prisma.repository';
+import { ProduccionExtraCostCatalogPrismaRepository } from './prisma/repositories/produccion-extra-cost-catalog-prisma.repository';
+import { ProduccionFurnitureCostingPrismaRepository } from './prisma/repositories/produccion-furniture-costing-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
@@ -59,6 +62,9 @@ import {
   INTERIOR_PROJECT_BUDGET_REPOSITORY,
   INTERIOR_CATALOG_MATERIAL_REPOSITORY,
   PRODUCCION_FURNITURE_REPOSITORY,
+  PRODUCCION_LABOR_RATE_REPOSITORY,
+  PRODUCCION_EXTRA_COST_CATALOG_REPOSITORY,
+  PRODUCCION_FURNITURE_COSTING_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
@@ -165,6 +171,18 @@ import {
     {
       provide: PRODUCCION_FURNITURE_REPOSITORY,
       useClass: ProduccionFurniturePrismaRepository,
+    },
+    {
+      provide: PRODUCCION_LABOR_RATE_REPOSITORY,
+      useClass: ProduccionLaborRatePrismaRepository,
+    },
+    {
+      provide: PRODUCCION_EXTRA_COST_CATALOG_REPOSITORY,
+      useClass: ProduccionExtraCostCatalogPrismaRepository,
+    },
+    {
+      provide: PRODUCCION_FURNITURE_COSTING_REPOSITORY,
+      useClass: ProduccionFurnitureCostingPrismaRepository,
     },
     {
       provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,

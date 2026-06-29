@@ -32,6 +32,9 @@ export { INTERIOR_PROJECT_REPOSITORY } from '@domain/repositories/interior-proje
 export { INTERIOR_PROJECT_BUDGET_REPOSITORY } from '@domain/repositories/interior-project-budget.repository';
 export { INTERIOR_CATALOG_MATERIAL_REPOSITORY } from '@domain/repositories/interior-catalog-material.repository';
 export { PRODUCCION_FURNITURE_REPOSITORY } from '@domain/repositories/produccion-furniture.repository';
+export { PRODUCCION_LABOR_RATE_REPOSITORY } from '@domain/repositories/produccion-labor-rate.repository';
+export { PRODUCCION_EXTRA_COST_CATALOG_REPOSITORY } from '@domain/repositories/produccion-extra-cost-catalog.repository';
+export { PRODUCCION_FURNITURE_COSTING_REPOSITORY } from '@domain/repositories/produccion-furniture-costing.repository';
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';
 export { INTERIOR_EXECUTION_REPOSITORY } from '@domain/repositories/interior-execution.repository';
 export { INTERIOR_FINANCE_REPOSITORY } from '@domain/repositories/interior-finance.repository';

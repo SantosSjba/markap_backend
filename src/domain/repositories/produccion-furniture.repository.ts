@@ -12,6 +12,7 @@ export interface ProduccionFurnitureBomLineDto {
   materialName: string;
   unit: string;
   quantity: number;
+  unitCost: number | null;
   notes: string | null;
 }
 
@@ -19,6 +20,7 @@ export interface ProduccionFurnitureBomLineInput {
   materialName: string;
   unit: string;
   quantity: number;
+  unitCost?: number | null;
   notes?: string | null;
 }
 

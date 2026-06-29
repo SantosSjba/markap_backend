@@ -72,7 +72,7 @@ Reportes · Configuración
 | 0 | Infraestructura y menú | ✅ Hecho |
 | 1 | Clientes | ✅ Hecho |
 | 2 | Catálogo de muebles | ✅ Hecho |
-| 3 | Costos | ⬜ Pendiente |
+| 3 | Costos | ✅ Hecho |
 | 4 | Inventario | ⬜ Pendiente |
 | 5 | Compras | ⬜ Pendiente |
 | 6 | Producción (taller) | ⬜ Pendiente |
@@ -149,17 +149,17 @@ Reportes · Configuración
 
 ### Backend
 
-- [ ] Modelo / servicio de **costeo** por mueble (BOM × precio material + MO + gastos)
-- [ ] Endpoints: calcular costeo, guardar snapshot de costeo (opcional para historial)
-- [ ] Tarifas de mano de obra (tabla o config)
-- [ ] Gastos adicionales por mueble o por lote
+- [x] Modelo / servicio de **costeo** por mueble (BOM × precio material + MO + gastos)
+- [x] Endpoints: calcular costeo, guardar snapshot de costeo (opcional para historial)
+- [x] Tarifas de mano de obra (tabla o config)
+- [x] Gastos adicionales por mueble o por lote
 
 ### Frontend (`features/costos`)
 
-- [ ] **Costeo de muebles**: selector de mueble del catálogo → desglose H/MO/gastos
-- [ ] **Mano de obra**: tarifas por etapa o por hora
-- [ ] **Gastos adicionales**: listado y registro
-- [ ] Enlace desde detalle de mueble → “Ver costeo”
+- [x] **Costeo de muebles**: selector de mueble del catálogo → desglose H/MO/gastos
+- [x] **Mano de obra**: tarifas por etapa o por hora
+- [x] **Gastos adicionales**: listado y registro
+- [x] Enlace desde detalle de mueble → “Ver costeo”
 
 ---
 
@@ -283,7 +283,7 @@ Reportes · Configuración
        →  7 Ventas  →  8 Reportes  →  9 Config  →  10 Dashboard
 ```
 
-**Siguiente paso:** Fase 3 — Costos.
+**Siguiente paso:** Fase 4 — Inventario.
 
 ---
 
