@@ -232,6 +232,34 @@ import {
 } from '../../application/use-cases/produccion-work-orders';
 
 import {
+  AcceptProduccionQuotationUseCase,
+  CancelProduccionDeliveryUseCase,
+  CancelProduccionOrderUseCase,
+  CompleteProduccionDeliveryUseCase,
+  ConfirmProduccionOrderUseCase,
+  ConvertProduccionQuotationToOrderUseCase,
+  CreateProduccionDeliveryUseCase,
+  CreateProduccionOrderUseCase,
+  CreateProduccionQuotationUseCase,
+  CreateWorkOrderFromProduccionOrderUseCase,
+  DeleteProduccionDeliveryUseCase,
+  DeleteProduccionOrderUseCase,
+  DeleteProduccionQuotationUseCase,
+  GetProduccionDeliveryByIdUseCase,
+  GetProduccionOrderByIdUseCase,
+  GetProduccionQuotationByIdUseCase,
+  ListProduccionDeliveriesUseCase,
+  ListProduccionOrdersUseCase,
+  ListProduccionQuotationsUseCase,
+  MarkProduccionOrderReadyUseCase,
+  RejectProduccionQuotationUseCase,
+  SendProduccionQuotationUseCase,
+  UpdateProduccionDeliveryUseCase,
+  UpdateProduccionOrderUseCase,
+  UpdateProduccionQuotationUseCase,
+} from '../../application/use-cases/produccion-sales';
+
+import {
   CreateProduccionSupplierUseCase,
   DeleteProduccionSupplierUseCase,
   GetProduccionSupplierByIdUseCase,
@@ -325,6 +353,9 @@ import { ProduccionStockMovementsController } from './controllers/produccion-sto
 import { ProduccionSuppliersController } from './controllers/produccion-suppliers.controller';
 import { ProduccionPurchaseOrdersController } from './controllers/produccion-purchase-orders.controller';
 import { ProduccionWorkOrdersController } from './controllers/produccion-work-orders.controller';
+import { ProduccionQuotationsController } from './controllers/produccion-quotations.controller';
+import { ProduccionOrdersController } from './controllers/produccion-orders.controller';
+import { ProduccionDeliveriesController } from './controllers/produccion-deliveries.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
@@ -396,6 +427,9 @@ import {
     ProduccionSuppliersController,
     ProduccionPurchaseOrdersController,
     ProduccionWorkOrdersController,
+    ProduccionQuotationsController,
+    ProduccionOrdersController,
+    ProduccionDeliveriesController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
     InteriorismoFinanceController,
@@ -619,6 +653,32 @@ import {
     CancelProduccionWorkOrderUseCase,
     ConsumeProduccionWorkOrderMaterialsUseCase,
     DeleteProduccionWorkOrderUseCase,
+
+    ListProduccionQuotationsUseCase,
+    GetProduccionQuotationByIdUseCase,
+    CreateProduccionQuotationUseCase,
+    UpdateProduccionQuotationUseCase,
+    SendProduccionQuotationUseCase,
+    AcceptProduccionQuotationUseCase,
+    RejectProduccionQuotationUseCase,
+    ConvertProduccionQuotationToOrderUseCase,
+    DeleteProduccionQuotationUseCase,
+    ListProduccionOrdersUseCase,
+    GetProduccionOrderByIdUseCase,
+    CreateProduccionOrderUseCase,
+    UpdateProduccionOrderUseCase,
+    ConfirmProduccionOrderUseCase,
+    CreateWorkOrderFromProduccionOrderUseCase,
+    MarkProduccionOrderReadyUseCase,
+    CancelProduccionOrderUseCase,
+    DeleteProduccionOrderUseCase,
+    ListProduccionDeliveriesUseCase,
+    GetProduccionDeliveryByIdUseCase,
+    CreateProduccionDeliveryUseCase,
+    UpdateProduccionDeliveryUseCase,
+    CompleteProduccionDeliveryUseCase,
+    CancelProduccionDeliveryUseCase,
+    DeleteProduccionDeliveryUseCase,
 
     ListInteriorMaterialSuppliersUseCase,
     GetInteriorMaterialSupplierByIdUseCase,

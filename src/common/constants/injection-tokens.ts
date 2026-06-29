@@ -39,6 +39,11 @@ export { PRODUCCION_MATERIAL_REPOSITORY } from '@domain/repositories/produccion-
 export { PRODUCCION_SUPPLIER_REPOSITORY } from '@domain/repositories/produccion-supplier.repository';
 export { PRODUCCION_PURCHASE_ORDER_REPOSITORY } from '@domain/repositories/produccion-purchase-order.repository';
 export { PRODUCCION_WORK_ORDER_REPOSITORY } from '@domain/repositories/produccion-work-order.repository';
+export {
+  PRODUCCION_QUOTATION_REPOSITORY,
+  PRODUCCION_ORDER_REPOSITORY,
+  PRODUCCION_DELIVERY_REPOSITORY,
+} from '@domain/repositories/produccion-sales.repository';
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';
 export { INTERIOR_EXECUTION_REPOSITORY } from '@domain/repositories/interior-execution.repository';
 export { INTERIOR_FINANCE_REPOSITORY } from '@domain/repositories/interior-finance.repository';

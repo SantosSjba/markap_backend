@@ -1,0 +1,111 @@
+/// Ventas de producción — cotizaciones, pedidos y entregas.
+
+model ProduccionQuotation {
+  id            String    @id @default(uuid())
+  applicationId String    @map("application_id")
+  clientId      String    @map("client_id")
+  code          String    @map("code")
+  status        String    @map("status")
+  validUntil    DateTime? @map("valid_until")
+  sentAt        DateTime? @map("sent_at")
+  notes         String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  lines       ProduccionQuotationLine[]
+  order       ProduccionOrder?
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@index([clientId])
+  @@index([status])
+  @@map("produccion_quotations")
+}
+
+model ProduccionQuotationLine {
+  id           String  @id @default(uuid())
+  quotationId  String  @map("quotation_id")
+  furnitureId  String  @map("furniture_id")
+  quantity     Decimal @map("quantity") @db.Decimal(14, 4)
+  unitPrice    Decimal @map("unit_price") @db.Decimal(14, 2)
+  notes        String? @db.Text
+
+  quotation ProduccionQuotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Restrict)
+
+  @@index([quotationId])
+  @@index([furnitureId])
+  @@map("produccion_quotation_lines")
+}
+
+model ProduccionOrder {
+  id            String    @id @default(uuid())
+  applicationId String    @map("application_id")
+  clientId      String    @map("client_id")
+  quotationId   String?   @unique @map("quotation_id")
+  workOrderId   String?   @unique @map("work_order_id")
+  code          String    @map("code")
+  status        String    @map("status")
+  orderedAt     DateTime  @map("ordered_at")
+  notes         String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  quotation   ProduccionQuotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  workOrder   ProduccionWorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
+  lines       ProduccionOrderLine[]
+  deliveries  ProduccionDelivery[]
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@index([clientId])
+  @@index([status])
+  @@map("produccion_orders")
+}
+
+model ProduccionOrderLine {
+  id          String  @id @default(uuid())
+  orderId     String  @map("order_id")
+  furnitureId String  @map("furniture_id")
+  quantity    Decimal @map("quantity") @db.Decimal(14, 4)
+  unitPrice   Decimal @map("unit_price") @db.Decimal(14, 2)
+  notes       String? @db.Text
+
+  order     ProduccionOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([furnitureId])
+  @@map("produccion_order_lines")
+}
+
+model ProduccionDelivery {
+  id            String    @id @default(uuid())
+  applicationId String    @map("application_id")
+  orderId       String    @map("order_id")
+  code          String    @map("code")
+  status        String    @map("status")
+  scheduledAt   DateTime? @map("scheduled_at")
+  deliveredAt   DateTime? @map("delivered_at")
+  address       String?   @db.Text
+  recipientName String?   @map("recipient_name")
+  notes         String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  order       ProduccionOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@index([orderId])
+  @@index([status])
+  @@map("produccion_deliveries")
+}

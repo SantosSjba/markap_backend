@@ -38,6 +38,11 @@ import { ProduccionMaterialPrismaRepository } from './prisma/repositories/produc
 import { ProduccionSupplierPrismaRepository } from './prisma/repositories/produccion-supplier-prisma.repository';
 import { ProduccionPurchaseOrderPrismaRepository } from './prisma/repositories/produccion-purchase-order-prisma.repository';
 import { ProduccionWorkOrderPrismaRepository } from './prisma/repositories/produccion-work-order-prisma.repository';
+import {
+  ProduccionDeliveryPrismaRepository,
+  ProduccionOrderPrismaRepository,
+  ProduccionQuotationPrismaRepository,
+} from './prisma/repositories/produccion-sales-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
@@ -73,6 +78,9 @@ import {
   PRODUCCION_SUPPLIER_REPOSITORY,
   PRODUCCION_PURCHASE_ORDER_REPOSITORY,
   PRODUCCION_WORK_ORDER_REPOSITORY,
+  PRODUCCION_QUOTATION_REPOSITORY,
+  PRODUCCION_ORDER_REPOSITORY,
+  PRODUCCION_DELIVERY_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
@@ -209,6 +217,18 @@ import {
       useClass: ProduccionWorkOrderPrismaRepository,
     },
     {
+      provide: PRODUCCION_ORDER_REPOSITORY,
+      useClass: ProduccionOrderPrismaRepository,
+    },
+    {
+      provide: PRODUCCION_QUOTATION_REPOSITORY,
+      useClass: ProduccionQuotationPrismaRepository,
+    },
+    {
+      provide: PRODUCCION_DELIVERY_REPOSITORY,
+      useClass: ProduccionDeliveryPrismaRepository,
+    },
+    {
       provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
       useClass: InteriorMaterialSupplierPrismaRepository,
     },
@@ -266,6 +286,9 @@ import {
     PRODUCCION_SUPPLIER_REPOSITORY,
     PRODUCCION_PURCHASE_ORDER_REPOSITORY,
     PRODUCCION_WORK_ORDER_REPOSITORY,
+    PRODUCCION_QUOTATION_REPOSITORY,
+    PRODUCCION_ORDER_REPOSITORY,
+    PRODUCCION_DELIVERY_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,
     INTERIOR_FINANCE_REPOSITORY,

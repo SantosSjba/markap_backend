@@ -29,6 +29,7 @@ import {
   seedProduccionInventory,
   seedProduccionPurchases,
   seedProduccionWorkOrders,
+  seedProduccionSales,
   seedContabilidadMenus,
   seedVentasSales,
   seedVentasFinanzas,
@@ -70,6 +71,7 @@ async function main() {
   await seedProduccionInventory(prisma, appIdBySlug);
   await seedProduccionPurchases(prisma, appIdBySlug);
   await seedProduccionWorkOrders(prisma, appIdBySlug);
+  await seedProduccionSales(prisma, appIdBySlug);
   await seedDemoVentas(prisma, appIdBySlug, adminUser);
   await seedVentasSales(prisma, appIdBySlug);
   await seedVentasFinanzas(prisma, appIdBySlug);

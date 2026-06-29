@@ -234,18 +234,19 @@ Reportes · Configuración
 
 ### Backend
 
-- [ ] `ProduccionQuotation` + líneas (cliente, muebles del catálogo, precios, vigencia)
-- [ ] `ProduccionOrder` (pedido) desde cotización aceptada
-- [ ] `ProduccionDelivery` (entregas / guías)
-- [ ] Estados cotización: borrador → enviada → aceptada / rechazada
-- [ ] Pedido aceptado → puede generar OT (Fase 6)
+- [x] `ProduccionQuotation` + líneas (cliente, muebles del catálogo, precios, vigencia)
+- [x] `ProduccionOrder` (pedido) desde cotización aceptada
+- [x] `ProduccionDelivery` (entregas / guías)
+- [x] Estados cotización: borrador → enviada → aceptada / rechazada
+- [x] Pedido aceptado → puede generar OT (Fase 6) — `POST /produccion-orders/:id/create-work-order`
 
 ### Frontend (`features/ventas`)
 
-- [ ] **Cotizaciones**: listado, nueva (cliente + muebles), PDF, envío
-- [ ] **Pedidos**: listado, detalle, conversión desde cotización
-- [ ] **Entregas**: programación y confirmación
-- [ ] Enlaces desde ficha de cliente (pestañas ya preparadas)
+- [x] **Cotizaciones**: listado, nueva, detalle, envío y aceptación
+- [x] **Pedidos**: listado, detalle, confirmación, conversión desde cotización, generar OT
+- [x] **Entregas**: programación y confirmación
+- [x] Enlaces desde ficha de cliente (pestañas con filtro `clientId`)
+- [ ] PDF cotización (futuro)
 
 ---
 

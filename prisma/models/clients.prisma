@@ -49,6 +49,8 @@ model Client {
   saleClosingsAsBuyer    SaleClosing[] @relation("SaleClosingBuyer")
   interiorProjects       InteriorProject[]
   produccionWorkOrders   ProduccionWorkOrder[]
+  produccionQuotations   ProduccionQuotation[]
+  produccionOrders       ProduccionOrder[]
 
   @@index([applicationId])
   @@index([documentTypeId])

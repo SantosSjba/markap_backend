@@ -25,6 +25,8 @@ model ProduccionFurniture {
   extraExpenses ProduccionFurnitureExtraExpense[]
   costSnapshots ProduccionFurnitureCostSnapshot[]
   workOrderLines ProduccionWorkOrderLine[]
+  quotationLines ProduccionQuotationLine[]
+  orderLines     ProduccionOrderLine[]
 
   @@unique([applicationId, code])
   @@index([applicationId])
