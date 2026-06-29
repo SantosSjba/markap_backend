@@ -22,6 +22,8 @@ model ContabilidadLegalEntity {
   periods        ContabilidadPeriod[]
   journalEntries ContabilidadJournalEntry[]
   auditLogs      ContabilidadAuditLog[]
+  cpeProviderConfig ContabilidadCpeProviderConfig?
+  electronicDocLogs ContabilidadElectronicDocumentLog[]
 
   @@unique([applicationId, code])
   @@unique([applicationId, ruc])

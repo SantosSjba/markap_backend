@@ -44,6 +44,8 @@ model ContabilidadSalesInvoice {
   totalAmount     Decimal  @map("total_amount") @db.Decimal(14, 2)
   collectedAmount Decimal  @default(0) @map("collected_amount") @db.Decimal(14, 2)
   status          String   @default("PENDING")
+  electronicStatus String  @default("NONE") @map("electronic_status")
+  electronicLogId String?  @unique @map("electronic_log_id")
   notes           String?
   journalEntryId  String?  @map("journal_entry_id")
   cancelledAt     DateTime? @map("cancelled_at")
@@ -57,6 +59,7 @@ model ContabilidadSalesInvoice {
   period         ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
   incomeAccount  ContabilidadAccount @relation("SalesIncomeAccount", fields: [incomeAccountId], references: [id], onDelete: Restrict)
   journalEntry   ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  electronicLog  ContabilidadElectronicDocumentLog? @relation("SalesInvoiceElectronicLog", fields: [electronicLogId], references: [id], onDelete: SetNull)
   collections    ContabilidadSalesCollection[]
   creditNotes    ContabilidadSalesCreditNote[]
   debitNotes     ContabilidadSalesDebitNote[]
@@ -68,6 +71,7 @@ model ContabilidadSalesInvoice {
   @@index([periodId])
   @@index([documentType])
   @@index([status])
+  @@index([electronicStatus])
   @@map("contabilidad_sales_invoices")
 }
 

@@ -60,6 +60,7 @@ import { ContabilidadExtensionsPrismaRepository } from './prisma/repositories/co
 import { ContabilidadInventoryPrismaRepository } from './prisma/repositories/contabilidad-inventory-prisma.repository';
 import { ContabilidadLegalEntityPrismaRepository } from './prisma/repositories/contabilidad-legal-entity-prisma.repository';
 import { ContabilidadAuditPrismaRepository } from './prisma/repositories/contabilidad-audit-prisma.repository';
+import { ContabilidadCpePrismaRepository } from './prisma/repositories/contabilidad-cpe-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
@@ -115,6 +116,7 @@ import {
   CONTABILIDAD_INVENTORY_REPOSITORY,
   CONTABILIDAD_LEGAL_ENTITY_REPOSITORY,
   CONTABILIDAD_AUDIT_REPOSITORY,
+  CONTABILIDAD_CPE_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
@@ -336,6 +338,10 @@ import {
       useClass: ContabilidadAuditPrismaRepository,
     },
     {
+      provide: CONTABILIDAD_CPE_REPOSITORY,
+      useClass: ContabilidadCpePrismaRepository,
+    },
+    {
       provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
       useClass: InteriorMaterialSupplierPrismaRepository,
     },
@@ -413,6 +419,7 @@ import {
     CONTABILIDAD_INVENTORY_REPOSITORY,
     CONTABILIDAD_LEGAL_ENTITY_REPOSITORY,
     CONTABILIDAD_AUDIT_REPOSITORY,
+    CONTABILIDAD_CPE_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,
     INTERIOR_FINANCE_REPOSITORY,

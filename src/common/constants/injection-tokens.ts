@@ -61,6 +61,7 @@ export { CONTABILIDAD_EXTENSIONS_REPOSITORY } from '@domain/repositories/contabi
 export { CONTABILIDAD_INVENTORY_REPOSITORY } from '@domain/repositories/contabilidad-inventory.repository';
 export { CONTABILIDAD_LEGAL_ENTITY_REPOSITORY } from '@domain/repositories/contabilidad-legal-entity.repository';
 export { CONTABILIDAD_AUDIT_REPOSITORY } from '@domain/repositories/contabilidad-audit.repository';
+export { CONTABILIDAD_CPE_REPOSITORY } from '@domain/repositories/contabilidad-cpe.repository';
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';
 export { INTERIOR_EXECUTION_REPOSITORY } from '@domain/repositories/interior-execution.repository';
 export { INTERIOR_FINANCE_REPOSITORY } from '@domain/repositories/interior-finance.repository';

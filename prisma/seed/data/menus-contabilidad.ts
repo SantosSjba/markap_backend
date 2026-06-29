@@ -293,6 +293,12 @@ export const CONTABILIDAD_CHILD_MENUS = [
   {
     label: 'Auditoría',
     path: '/contabilidad/configuracion/auditoria',
+    order: 4,
+    parentLabel: 'Configuración',
+  },
+  {
+    label: 'Facturación electrónica',
+    path: '/contabilidad/configuracion/facturacion-electronica',
     order: 3,
     parentLabel: 'Configuración',
   },

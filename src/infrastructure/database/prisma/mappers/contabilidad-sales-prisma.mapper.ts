@@ -66,6 +66,8 @@ export const ContabilidadSalesPrismaMapper = {
     totalAmount: { toString(): string } | number;
     collectedAmount: { toString(): string } | number;
     status: string;
+    electronicStatus?: string;
+    electronicLogId?: string | null;
     notes: string | null;
     journalEntryId: string | null;
     cancelledAt: Date | null;
@@ -101,6 +103,8 @@ export const ContabilidadSalesPrismaMapper = {
       collectedAmount: formatPenAmount(collected),
       balanceAmount: formatPenAmount(Math.max(0, total - collected)),
       status: row.status,
+      electronicStatus: row.electronicStatus ?? 'NONE',
+      electronicLogId: row.electronicLogId ?? null,
       notes: row.notes,
       journalEntryId: row.journalEntryId,
       cancelledAt: row.cancelledAt?.toISOString() ?? null,

@@ -1,0 +1,24 @@
+/// Facturación electrónica CPE — configuración OSE/PSE por entidad legal.
+
+model ContabilidadCpeProviderConfig {
+  id              String  @id @default(uuid())
+  applicationId   String  @map("application_id")
+  legalEntityId   String  @map("legal_entity_id")
+  providerCode    String  @default("MOCK") @map("provider_code")
+  apiBaseUrl      String? @map("api_base_url")
+  apiTokenHint    String? @map("api_token_hint")
+  apiTokenEnc     String? @map("api_token_enc") @db.Text
+  certificateHint String? @map("certificate_hint")
+  useSandbox      Boolean @default(true) @map("use_sandbox")
+  isActive        Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application             @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  legalEntity ContabilidadLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
+
+  @@unique([legalEntityId])
+  @@index([applicationId])
+  @@map("contabilidad_cpe_provider_configs")
+}

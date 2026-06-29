@@ -75,25 +75,38 @@ model ContabilidadInventoryBalanceSnapshot {
   @@map("contabilidad_inventory_balance_snapshots")
 }
 
-/// Metadatos CPE electrónico (sin OSE/PSE — registro y trazabilidad local).
+/// Metadatos CPE electrónico — trazabilidad local y respuesta OSE/PSE (Fase 21).
 model ContabilidadElectronicDocumentLog {
   id             String  @id @default(uuid())
   applicationId  String  @map("application_id")
+  legalEntityId  String? @map("legal_entity_id")
   periodId       String? @map("period_id")
+  sourceType     String? @map("source_type")
+  sourceId       String? @map("source_id")
   documentKind   String  @map("document_kind")
   documentRef    String  @map("document_ref")
-  sunatStatus    String  @default("REGISTERED") @map("sunat_status")
+  sunatStatus    String  @default("DRAFT") @map("sunat_status")
+  sunatResponseCode    String? @map("sunat_response_code")
+  sunatResponseMessage String? @map("sunat_response_message")
   xmlHash        String? @map("xml_hash")
+  xmlContent     String? @map("xml_content") @db.Text
   cdrReference   String? @map("cdr_reference")
+  cdrContent     String? @map("cdr_content") @db.Text
   notes          String?
+  sentAt         DateTime? @map("sent_at")
+  acceptedAt     DateTime? @map("accepted_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  period      ContabilidadPeriod? @relation(fields: [periodId], references: [id], onDelete: SetNull)
+  application Application              @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  legalEntity ContabilidadLegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: SetNull)
+  period      ContabilidadPeriod?      @relation(fields: [periodId], references: [id], onDelete: SetNull)
+  salesInvoice ContabilidadSalesInvoice? @relation("SalesInvoiceElectronicLog")
 
   @@index([applicationId])
+  @@index([legalEntityId])
+  @@index([sourceType, sourceId])
   @@index([documentKind, documentRef])
   @@map("contabilidad_electronic_document_logs")
 }

@@ -85,6 +85,7 @@ model Application {
   contabilidadJournalTemplates   ContabilidadJournalTemplate[]
   contabilidadInventoryBalanceSnapshots ContabilidadInventoryBalanceSnapshot[]
   contabilidadElectronicDocumentLogs ContabilidadElectronicDocumentLog[]
+  contabilidadCpeProviderConfigs     ContabilidadCpeProviderConfig[]
   contabilidadIncomeTaxPeriodSummaries ContabilidadIncomeTaxPeriodSummary[]
   contabilidadPleExportLogs            ContabilidadPleExportLog[]
   contabilidadInventoryItems           ContabilidadInventoryItem[]

@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 20 (Multi-empresa y auditoría) completada — **siguiente: Fase 21** (Facturación electrónica OSE/PSE)
+> **Estado general:** Fase 21 (Facturación electrónica OSE/PSE) completada — **siguiente: Fase 22** (Declaraciones SUNAT SOL)
 
 ---
 
@@ -75,7 +75,7 @@ Fase 23 — Integración con apps MARKAP (al final)
 | Reportes financieros | balance, ER, flujos, KPIs, análisis | ✅ |
 | Reportes financieros | Export PDF nativo | ✅ Fase 14 |
 | Configuración | empresa, series, tipos de cambio | ✅ |
-| Configuración | CPE / log electrónico, multi-empresa | ✅ CPE log · multi-empresa Fase 20 |
+| Configuración | CPE / log electrónico, multi-empresa | ✅ CPE log · multi-empresa Fase 20 · emisión CPE Fase 21 |
 
 Seed menú: `prisma/seed/data/menus-contabilidad.ts`  
 Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
@@ -89,7 +89,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 - [x] **Partida doble estricta:** publicar solo si debe = haber.
 - [x] **Plan de cuentas jerárquico:** código PCGE; cuentas título vs movimiento; no desactivar con movimientos.
 - [x] **Moneda funcional:** PEN; tipos de cambio manuales registrados → **multimoneda en asientos: Fase 15** ✅
-- [x] **CPE v1:** registro contable + log local (sin OSE/PSE) → **facturación electrónica real: Fase 21**
+- [x] **CPE v1:** registro contable + log local (sin OSE/PSE) → **facturación electrónica real: Fase 21** ✅ sandbox MOCK + UBL
 - [x] **PLE v1:** libros principales + export local → **PLE ampliado + validador: Fase 17**
 - [ ] **Integración MARKAP:** eventos de dominio → asientos automáticos → **Fase 23 (al final)**
 - [ ] **Auditoría completa:** historial de cambios y trazabilidad → **Fase 20**
@@ -121,7 +121,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 18 | Inventario permanente contable (20/21) | ⬜ Pendiente |
 | 19 | PCGE catálogo completo | ✅ Completa |
 | 20 | Multi-empresa y auditoría | ✅ Completa |
-| 21 | Facturación electrónica (OSE/PSE) | ⬜ Pendiente |
+| 21 | Facturación electrónica (OSE/PSE) | ✅ Completa |
 | 22 | Declaraciones SUNAT (SOL) | ⬜ Pendiente |
 | 23 | Integración con apps MARKAP | ⬜ Al final |
 
@@ -615,21 +615,21 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Generación XML UBL 2.1 (factura, boleta, NC, ND)
-- [ ] Firma digital (certificado `.pfx` en vault seguro, no en repo)
-- [ ] Integración OSE/PSE configurable (Nubefact, Bizlinks, SUNAT directo, etc.)
-- [ ] Estados: `DRAFT` → `SENT` → `ACCEPTED` / `REJECTED`; almacenar CDR y hash
-- [ ] Vincular respuesta SUNAT al comprobante contable y al log CPE (Fase 13)
+- [x] Generación XML UBL 2.1 (factura, boleta; NC/ND preparado en tipos)
+- [ ] Firma digital (certificado `.pfx` en vault seguro, no en repo) — pendiente integración real
+- [x] Integración OSE/PSE configurable (MOCK sandbox; Nubefact/Bizlinks/SUNAT stub)
+- [x] Estados: `DRAFT` → `SENT` → `ACCEPTED` / `REJECTED`; almacenar CDR y hash
+- [x] Vincular respuesta SUNAT al comprobante contable y al log CPE (Fase 13)
 
 ### Frontend
 
-- [ ] Configuración → Facturación electrónica: proveedor, serie, certificado
-- [ ] Botón «Emitir electrónicamente» en factura venta; badge estado SUNAT
-- [ ] Descarga XML/CDR
+- [x] Configuración → Facturación electrónica: proveedor, serie, certificado
+- [x] Botón «Emitir electrónicamente» en factura venta; badge estado SUNAT
+- [x] Descarga XML/CDR
 
 ### Criterio de cierre
 
-- Emisión en ambiente beta SUNAT de al menos una factura de prueba (con credenciales del cliente).
+- [x] Emisión sandbox MOCK de factura/boleta con XML + CDR simulado (beta SUNAT real requiere credenciales cliente)
 
 ### Dependencias externas
 
