@@ -15,6 +15,7 @@ model ContabilidadCashBox {
   account     ContabilidadAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
   movements   ContabilidadTreasuryMovement[]
   purchasePayments ContabilidadPurchasePayment[]
+  salesCollections ContabilidadSalesCollection[]
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -40,6 +41,7 @@ model ContabilidadBankAccount {
   movements        ContabilidadTreasuryMovement[]
   reconciliations  ContabilidadBankReconciliation[]
   purchasePayments ContabilidadPurchasePayment[]
+  salesCollections ContabilidadSalesCollection[]
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -75,6 +77,7 @@ model ContabilidadTreasuryMovement {
   journalEntry   ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
   reconciliation ContabilidadBankReconciliation? @relation(fields: [reconciliationId], references: [id], onDelete: SetNull)
   purchasePayments ContabilidadPurchasePayment[]
+  salesCollections ContabilidadSalesCollection[]
 
   @@index([applicationId])
   @@index([periodId])

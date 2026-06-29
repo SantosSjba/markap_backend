@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-06-29  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 6 (compras contables) completada — Fase 7 pendiente
+> **Estado general:** Fase 7 (ventas contables) completada — Fase 8 pendiente
 
 ---
 
@@ -101,7 +101,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 4 | Asientos y libro diario | ✅ Completa |
 | 5 | Tesorería | ✅ Completa |
 | 6 | Compras contables | ✅ Completa |
-| 7 | Ventas contables | ⬜ Pendiente |
+| 7 | Ventas contables | ✅ Completa |
 | 8 | Tributos (IGV, detracciones, retenciones) | ⬜ Pendiente |
 | 9 | Libros electrónicos y PLE | ⬜ Pendiente |
 | 10 | Cierre mensual y EEFF | ⬜ Pendiente |
@@ -253,18 +253,17 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Modelo `SalesInvoice` / `SalesReceipt` (CPE venta)
-- [ ] `SalesCreditNote`
-- [ ] Cobro cliente → tesorería + asiento (12/10 vs 70/40)
-- [ ] Asiento automático por tipo operación (gravada, exportación futura, etc.)
-- [ ] API `/contabilidad-sales`
+- [x] Modelo `ContabilidadCustomer`, `ContabilidadSalesInvoice` (FACTURA/BOLETA), `ContabilidadSalesCreditNote`, `ContabilidadSalesCollection`
+- [x] Cobro cliente → tesorería IN + asiento (Dr 10xx / Cr 1041)
+- [x] Asiento automático venta gravada (Dr 1041 / Cr 70x / Cr 4011); NC inversa
+- [x] API `/contabilidad-sales` (customers, invoices, credit-notes, collections)
 
-### Frontend (`features/ventas`)
+### Frontend (`features/ventas-contables`)
 
-- [ ] Facturas y boletas
-- [ ] NC venta
-- [ ] Cobros
-- [ ] Clientes con saldo CxC (puede enlazar `/clients` si aplica)
+- [x] Facturas y boletas (vista compartida con filtro por `documentType`)
+- [x] NC venta
+- [x] Cobros
+- [x] Clientes con saldo CxC (1041)
 
 ---
 

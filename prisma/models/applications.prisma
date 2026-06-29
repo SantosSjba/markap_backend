@@ -73,6 +73,10 @@ model Application {
   contabilidadPurchaseInvoices   ContabilidadPurchaseInvoice[]
   contabilidadPurchaseCreditNotes ContabilidadPurchaseCreditNote[]
   contabilidadPurchasePayments   ContabilidadPurchasePayment[]
+  contabilidadCustomers          ContabilidadCustomer[]
+  contabilidadSalesInvoices      ContabilidadSalesInvoice[]
+  contabilidadSalesCreditNotes   ContabilidadSalesCreditNote[]
+  contabilidadSalesCollections   ContabilidadSalesCollection[]
 
   @@index([slug])
   @@index([isActive])

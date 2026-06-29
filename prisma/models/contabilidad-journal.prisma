@@ -27,6 +27,8 @@ model ContabilidadJournalEntry {
   treasuryMovements ContabilidadTreasuryMovement[]
   purchaseInvoices  ContabilidadPurchaseInvoice[]
   purchaseCreditNotes ContabilidadPurchaseCreditNote[]
+  salesInvoices       ContabilidadSalesInvoice[]
+  salesCreditNotes    ContabilidadSalesCreditNote[]
 
   @@unique([applicationId, periodId, entryNumber])
   @@index([applicationId])

@@ -17,6 +17,9 @@ model ContabilidadPeriod {
   purchaseInvoices     ContabilidadPurchaseInvoice[]
   purchaseCreditNotes  ContabilidadPurchaseCreditNote[]
   purchasePayments     ContabilidadPurchasePayment[]
+  salesInvoices        ContabilidadSalesInvoice[]
+  salesCreditNotes     ContabilidadSalesCreditNote[]
+  salesCollections     ContabilidadSalesCollection[]
 
   @@unique([applicationId, year, month])
   @@index([applicationId])

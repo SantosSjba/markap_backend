@@ -367,6 +367,7 @@ import { ContabilidadPeriodsController } from './controllers/contabilidad-period
 import { ContabilidadJournalEntriesController } from './controllers/contabilidad-journal-entries.controller';
 import { ContabilidadTreasuryController } from './controllers/contabilidad-treasury.controller';
 import { ContabilidadPurchasesController } from './controllers/contabilidad-purchases.controller';
+import { ContabilidadSalesController } from './controllers/contabilidad-sales.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
@@ -387,6 +388,7 @@ import {
   ContabilidadJournalOperationsService,
   ContabilidadTreasuryOperationsService,
   ContabilidadPurchasesOperationsService,
+  ContabilidadSalesOperationsService,
 } from '../../application/services';
 
 // Gateways
@@ -456,6 +458,7 @@ import {
     ContabilidadJournalEntriesController,
     ContabilidadTreasuryController,
     ContabilidadPurchasesController,
+    ContabilidadSalesController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
     InteriorismoFinanceController,
@@ -594,6 +597,7 @@ import {
     ContabilidadJournalOperationsService,
     ContabilidadTreasuryOperationsService,
     ContabilidadPurchasesOperationsService,
+    ContabilidadSalesOperationsService,
 
     ListInteriorProjectsUseCase,
     GetInteriorProjectByIdUseCase,
