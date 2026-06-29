@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 16 (IR completo) completada — **siguiente: Fase 17** (PLE ampliado y validación SUNAT)
+> **Estado general:** Fase 17 (PLE ampliado y validación SUNAT) completada — **siguiente: Fase 18** (Inventario permanente contable)
 
 ---
 
@@ -521,21 +521,21 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Registrar libros PLE adicionales según necesidad del cliente (validar en SUNAT vigente):
-  - [ ] 5.3 Libro diario simplificado (`050300`) — si aplica RMT/MYPE
-  - [ ] 5.4 Detalle del libro diario (`050400`)
-  - [ ] 8.3 / 8.4 Registros de compras complementarios (si aplica)
-  - [ ] Otros códigos que exija el régimen de la empresa demo
-- [ ] Modelo `ContabilidadPleExportLog`: periodo, libros, usuario, hash archivo, issues
-- [ ] Validador local ampliado: longitudes de campo, RUC, fechas, correlativo según estructura oficial
-- [ ] Generación ZIP de todos los libros del periodo en un solo archivo
-- [ ] Incluir NC/ND en registros 8.1 y 14.1 si aún no están explícitos
+- [x] Registrar libros PLE adicionales según necesidad del cliente (validar en SUNAT vigente):
+  - [x] 5.3 Libro diario simplificado (`050300`) — si aplica RMT/MYPE
+  - [x] 5.4 Detalle del libro diario (`050400`)
+  - [x] 8.3 / 8.4 Registros de compras complementarios (`080300`, `080400`)
+  - [x] 14.2 Registro ventas NC/ND complementario (`140200`)
+- [x] Modelo `ContabilidadPleExportLog`: periodo, libros, usuario, hash archivo, issues
+- [x] Validador local ampliado: longitudes de campo, RUC, fechas, correlativo según estructura oficial
+- [x] Generación ZIP de todos los libros del periodo en un solo archivo
+- [x] Incluir NC/ND en registros 8.1 y 14.1
 
 ### Frontend
 
-- [ ] PLE: checklist de libros obligatorios según perfil tributario de la empresa
-- [ ] Historial de exportaciones PLE
-- [ ] Vista previa de líneas con error antes de descargar
+- [x] PLE: checklist de libros obligatorios según perfil tributario de la empresa
+- [x] Historial de exportaciones PLE
+- [x] Vista previa de líneas con error antes de descargar
 
 ### Criterio de cierre
 

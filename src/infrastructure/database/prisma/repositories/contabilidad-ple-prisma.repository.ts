@@ -2,18 +2,33 @@ import { Injectable } from '@nestjs/common';
 import {
   CONTABILIDAD_PLE_BOOKS,
   CONTABILIDAD_PLE_BOOK_CODE,
+  CONTABILIDAD_PLE_MANDATORY_BY_TAX_REGIME,
+  CONTABILIDAD_SUNAT_DOC_TYPE,
   isValidPleBookCode,
 } from '@domain/constants/contabilidad-ple.defaults';
+import { CONTABILIDAD_TAX_REGIMES } from '@domain/constants/contabilidad-config.defaults';
 import { CONTABILIDAD_JOURNAL_STATUS } from '@domain/constants/contabilidad-journal.defaults';
 import { CONTABILIDAD_ACCOUNT_TYPES } from '@domain/constants/contabilidad-pcge.defaults';
 import { accountBalanceFromTotals } from '@domain/constants/contabilidad-financial.defaults';
-import { CONTABILIDAD_PURCHASE_STATUS } from '@domain/constants/contabilidad-purchases.defaults';
-import { CONTABILIDAD_SALES_STATUS } from '@domain/constants/contabilidad-sales.defaults';
+import {
+  CONTABILIDAD_PURCHASE_CREDIT_NOTE_STATUS,
+  CONTABILIDAD_PURCHASE_DEBIT_NOTE_STATUS,
+  CONTABILIDAD_PURCHASE_STATUS,
+  CONTABILIDAD_PURCHASE_TAX_AFFECTATION,
+} from '@domain/constants/contabilidad-purchases.defaults';
+import {
+  CONTABILIDAD_SALES_CREDIT_NOTE_STATUS,
+  CONTABILIDAD_SALES_DEBIT_NOTE_STATUS,
+  CONTABILIDAD_SALES_STATUS,
+  CONTABILIDAD_SALES_TAX_AFFECTATION,
+} from '@domain/constants/contabilidad-sales.defaults';
 import { CONTABILIDAD_TREASURY_MOVEMENT_TYPE } from '@domain/constants/contabilidad-treasury.defaults';
 import type {
   ContabilidadLibroMayorAccountSummaryDto,
+  ContabilidadPleExportLogDto,
   ContabilidadPleGeneratedFile,
   ContabilidadPleGenerateResult,
+  ContabilidadPleMandatoryProfileDto,
   ContabilidadPleRepository,
   ContabilidadPleValidationIssue,
 } from '@domain/repositories/contabilidad-ple.repository';
@@ -24,6 +39,15 @@ import {
   pleHeaderLine,
   pleJoin,
 } from '@domain/utils/contabilidad-ple-format.util';
+import {
+  pleValidateCorrelativo,
+  pleValidateFieldLength,
+  pleValidateIsoDate,
+  pleValidateRuc,
+  pushIssue,
+  PLE_FIELD_LIMITS,
+} from '@domain/utils/contabilidad-ple-validator.util';
+import { buildPleZipBuffer } from '@domain/utils/contabilidad-ple-zip.util';
 import { roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
 import { PrismaService } from '../prisma.service';
 
@@ -44,6 +68,64 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     return { books: CONTABILIDAD_PLE_BOOKS };
   }
 
+  getMandatoryProfile(applicationId: string, taxRegime: string): ContabilidadPleMandatoryProfileDto {
+    void applicationId;
+    const regime = taxRegime?.trim() || 'GENERAL';
+    const mandatoryBookCodes =
+      CONTABILIDAD_PLE_MANDATORY_BY_TAX_REGIME[regime] ??
+      CONTABILIDAD_PLE_MANDATORY_BY_TAX_REGIME.GENERAL;
+    const mandatorySet = new Set(mandatoryBookCodes);
+    const regimeLabel =
+      CONTABILIDAD_TAX_REGIMES.find((r) => r.code === regime)?.label ?? 'Régimen general';
+
+    return {
+      taxRegime: regime,
+      taxRegimeLabel: regimeLabel,
+      mandatoryBookCodes: [...mandatoryBookCodes],
+      optionalBookCodes: CONTABILIDAD_PLE_BOOKS.map((b) => b.code).filter((c) => !mandatorySet.has(c)),
+      books: CONTABILIDAD_PLE_BOOKS.map((b) => ({
+        code: b.code,
+        name: b.name,
+        mandatory: mandatorySet.has(b.code),
+      })),
+    };
+  }
+
+  async buildZipBuffer(files: ContabilidadPleGeneratedFile[]) {
+    return buildPleZipBuffer(files);
+  }
+
+  async listExportLogs(
+    applicationId: string,
+    periodId?: string,
+    limit = 20,
+  ): Promise<ContabilidadPleExportLogDto[]> {
+    const rows = await this.prisma.contabilidadPleExportLog.findMany({
+      where: {
+        applicationId,
+        ...(periodId ? { periodId } : {}),
+      },
+      include: { period: { select: { year: true, month: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(Math.max(limit, 1), 100),
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      periodId: row.periodId,
+      year: row.period.year,
+      month: row.period.month,
+      userId: row.userId,
+      bookCodes: row.bookCodes,
+      fileCount: row.fileCount,
+      zipHash: row.zipHash,
+      errorCount: row.errorCount,
+      warningCount: row.warningCount,
+      status: row.status,
+      createdAt: row.createdAt.toISOString(),
+    }));
+  }
+
   async generateBook(
     applicationId: string,
     periodId: string,
@@ -62,11 +144,14 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     periodId: string,
     bookCodes: string[],
     company: { ruc: string; legalName: string },
+    options?: { userId?: string | null; persistLog?: boolean },
   ): Promise<ContabilidadPleGenerateResult> {
     const ctx = await this.resolvePeriodCtx(applicationId, periodId, company);
     const files: ContabilidadPleGeneratedFile[] = [];
     const errors: ContabilidadPleValidationIssue[] = [];
     const warnings: ContabilidadPleValidationIssue[] = [];
+
+    pushIssue(errors, pleValidateRuc(ctx.ruc, '*', 'RUC empresa'));
 
     const periodIssues = await this.validatePeriod(ctx);
     errors.push(...periodIssues.filter((i) => i.severity === 'error'));
@@ -98,6 +183,30 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       }
     }
 
+    const blocked = errors.length > 0;
+    const generatedAt = new Date().toISOString();
+    let exportLogId: string | undefined;
+
+    if (options?.persistLog !== false) {
+      const { hash } = files.length ? await buildPleZipBuffer(files) : await buildPleZipBuffer([]);
+
+      const log = await this.prisma.contabilidadPleExportLog.create({
+        data: {
+          applicationId,
+          periodId,
+          userId: options?.userId ?? null,
+          bookCodes: uniqueCodes,
+          fileCount: files.length,
+          zipHash: hash,
+          errorCount: errors.length,
+          warningCount: warnings.length,
+          issuesJson: JSON.stringify({ errors, warnings }),
+          status: blocked ? 'BLOCKED' : warnings.length ? 'WITH_WARNINGS' : 'SUCCESS',
+        },
+      });
+      exportLogId = log.id;
+    }
+
     return {
       periodId,
       year: ctx.year,
@@ -107,7 +216,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       files,
       errors,
       warnings,
-      generatedAt: new Date().toISOString(),
+      generatedAt,
+      blocked,
+      exportLogId,
     };
   }
 
@@ -248,6 +359,12 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       case CONTABILIDAD_PLE_BOOK_CODE.LIBRO_DIARIO:
         dataLines = await this.buildLibroDiario(ctx, issues);
         break;
+      case CONTABILIDAD_PLE_BOOK_CODE.LIBRO_DIARIO_SIMPLIFICADO:
+        dataLines = await this.buildLibroDiarioSimplificado(ctx, issues);
+        break;
+      case CONTABILIDAD_PLE_BOOK_CODE.DETALLE_LIBRO_DIARIO:
+        dataLines = await this.buildDetalleLibroDiario(ctx, issues);
+        break;
       case CONTABILIDAD_PLE_BOOK_CODE.PLAN_CUENTAS:
         dataLines = await this.buildPlanCuentas(ctx);
         break;
@@ -260,11 +377,20 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       case CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_NO_DOMIC:
         dataLines = await this.buildRegistroComprasNoDomic(ctx, issues);
         break;
+      case CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_COMPLEMENTARIO:
+        dataLines = await this.buildRegistroComprasNcNd(ctx, issues);
+        break;
+      case CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_NO_GRAVADAS:
+        dataLines = await this.buildRegistroComprasNoGravadas(ctx, issues);
+        break;
       case CONTABILIDAD_PLE_BOOK_CODE.INVENTARIOS_BALANCES:
         dataLines = await this.buildInventariosBalances(ctx, issues);
         break;
       case CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS:
         dataLines = await this.buildRegistroVentas(ctx, issues);
+        break;
+      case CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS_COMPLEMENTARIO:
+        dataLines = await this.buildRegistroVentasNcNd(ctx, issues);
         break;
       case CONTABILIDAD_PLE_BOOK_CODE.CAJA_BANCOS:
         dataLines = await this.buildCajaBancos(ctx);
@@ -373,41 +499,75 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
   }
 
   private async buildRegistroCompras(ctx: PeriodCtx, issues: ContabilidadPleValidationIssue[]): Promise<string[]> {
-    const invoices = await this.prisma.contabilidadPurchaseInvoice.findMany({
-      where: {
-        applicationId: ctx.applicationId,
-        periodId: ctx.periodId,
-        status: { not: CONTABILIDAD_PURCHASE_STATUS.CANCELLED },
-      },
-      include: { supplier: { select: { ruc: true, businessName: true } } },
-      orderBy: [{ issueDate: 'asc' }, { series: 'asc' }, { number: 'asc' }],
-    });
+    const rows = await this.collectPurchaseRegistroRows(ctx);
+    const lines: string[] = [];
+    let lineNumber = 2;
 
-    return invoices.map((inv) => {
-      if (!inv.supplier.ruc) {
-        issues.push({
-          severity: 'error',
-          bookCode: CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS,
-          code: 'MISSING_RUC',
-          message: `Factura ${inv.series}-${inv.number} sin RUC proveedor`,
-        });
-      }
-      return pleJoin([
+    for (const row of rows) {
+      const linePreview = pleJoin([
         'M',
-        pleFormatDate(inv.issueDate.toISOString().slice(0, 10)),
-        inv.documentType,
-        inv.series,
-        inv.number,
-        inv.supplier.ruc,
-        inv.supplier.businessName,
-        inv.taxAffectation,
-        pleFormatAmount(inv.taxableBase),
-        pleFormatAmount(inv.igvAmount),
-        pleFormatAmount(inv.totalAmount),
-        pleFormatAmount(inv.detraccionAmount),
-        inv.status,
+        pleFormatDate(row.issueDate),
+        row.documentType,
+        row.series,
+        row.number,
+        row.counterpartyRuc,
       ]);
-    });
+      const ctxLabel = `${row.documentType} ${row.series}-${row.number}`;
+      pushIssue(issues, pleValidateIsoDate(row.issueDate, CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS, ctxLabel, lineNumber, linePreview));
+      issues.push(
+        ...pleValidateCorrelativo(
+          row.series,
+          row.number,
+          CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS,
+          ctxLabel,
+          lineNumber,
+          linePreview,
+        ),
+      );
+      pushIssue(
+        issues,
+        pleValidateRuc(
+          row.counterpartyRuc,
+          CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS,
+          ctxLabel,
+          lineNumber,
+          linePreview,
+        ),
+      );
+      pushIssue(
+        issues,
+        pleValidateFieldLength(
+          row.counterpartyName,
+          PLE_FIELD_LIMITS.BUSINESS_NAME,
+          'Razón social proveedor',
+          CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS,
+          ctxLabel,
+          lineNumber,
+          linePreview,
+        ),
+      );
+
+      lines.push(
+        pleJoin([
+          'M',
+          pleFormatDate(row.issueDate),
+          row.documentType,
+          row.series,
+          row.number,
+          row.counterpartyRuc,
+          row.counterpartyName,
+          row.taxAffectation,
+          pleFormatAmount(row.taxableBase),
+          pleFormatAmount(row.igvAmount),
+          pleFormatAmount(row.totalAmount),
+          pleFormatAmount(row.detraccionAmount),
+          row.modifiedDocRef ?? '',
+          row.status,
+        ]),
+      );
+      lineNumber += 1;
+    }
+    return lines;
   }
 
   private async buildRegistroComprasNoDomic(
@@ -567,40 +727,74 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
   }
 
   private async buildRegistroVentas(ctx: PeriodCtx, issues: ContabilidadPleValidationIssue[]): Promise<string[]> {
-    const invoices = await this.prisma.contabilidadSalesInvoice.findMany({
-      where: {
-        applicationId: ctx.applicationId,
-        periodId: ctx.periodId,
-        status: { not: CONTABILIDAD_SALES_STATUS.CANCELLED },
-      },
-      include: { customer: { select: { ruc: true, businessName: true } } },
-      orderBy: [{ issueDate: 'asc' }, { series: 'asc' }, { number: 'asc' }],
-    });
+    const rows = await this.collectSalesRegistroRows(ctx);
+    const lines: string[] = [];
+    let lineNumber = 2;
 
-    return invoices.map((inv) => {
-      if (!inv.customer.ruc) {
-        issues.push({
-          severity: 'error',
-          bookCode: CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS,
-          code: 'MISSING_RUC',
-          message: `Comprobante ${inv.series}-${inv.number} sin RUC cliente`,
-        });
-      }
-      return pleJoin([
+    for (const row of rows) {
+      const linePreview = pleJoin([
         'M',
-        pleFormatDate(inv.issueDate.toISOString().slice(0, 10)),
-        inv.documentType,
-        inv.series,
-        inv.number,
-        inv.customer.ruc,
-        inv.customer.businessName,
-        inv.taxAffectation,
-        pleFormatAmount(inv.taxableBase),
-        pleFormatAmount(inv.igvAmount),
-        pleFormatAmount(inv.totalAmount),
-        inv.status,
+        pleFormatDate(row.issueDate),
+        row.documentType,
+        row.series,
+        row.number,
+        row.counterpartyRuc,
       ]);
-    });
+      const ctxLabel = `${row.documentType} ${row.series}-${row.number}`;
+      pushIssue(issues, pleValidateIsoDate(row.issueDate, CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS, ctxLabel, lineNumber, linePreview));
+      issues.push(
+        ...pleValidateCorrelativo(
+          row.series,
+          row.number,
+          CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS,
+          ctxLabel,
+          lineNumber,
+          linePreview,
+        ),
+      );
+      pushIssue(
+        issues,
+        pleValidateRuc(
+          row.counterpartyRuc,
+          CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS,
+          ctxLabel,
+          lineNumber,
+          linePreview,
+        ),
+      );
+      pushIssue(
+        issues,
+        pleValidateFieldLength(
+          row.counterpartyName,
+          PLE_FIELD_LIMITS.BUSINESS_NAME,
+          'Razón social cliente',
+          CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS,
+          ctxLabel,
+          lineNumber,
+          linePreview,
+        ),
+      );
+
+      lines.push(
+        pleJoin([
+          'M',
+          pleFormatDate(row.issueDate),
+          row.documentType,
+          row.series,
+          row.number,
+          row.counterpartyRuc,
+          row.counterpartyName,
+          row.taxAffectation,
+          pleFormatAmount(row.taxableBase),
+          pleFormatAmount(row.igvAmount),
+          pleFormatAmount(row.totalAmount),
+          row.modifiedDocRef ?? '',
+          row.status,
+        ]),
+      );
+      lineNumber += 1;
+    }
+    return lines;
   }
 
   private async buildCajaBancos(ctx: PeriodCtx): Promise<string[]> {
@@ -629,4 +823,422 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       ]),
     );
   }
+
+  private async buildLibroDiarioSimplificado(
+    ctx: PeriodCtx,
+    issues: ContabilidadPleValidationIssue[],
+  ): Promise<string[]> {
+    const entries = await this.prisma.contabilidadJournalEntry.findMany({
+      where: {
+        applicationId: ctx.applicationId,
+        periodId: ctx.periodId,
+        status: CONTABILIDAD_JOURNAL_STATUS.POSTED,
+      },
+      orderBy: [{ entryDate: 'asc' }, { entryNumber: 'asc' }],
+    });
+
+    return entries.map((entry, idx) => {
+      const lineNumber = idx + 2;
+      const linePreview = pleJoin(['M', entry.entryNumber, pleFormatDate(entry.entryDate.toISOString().slice(0, 10))]);
+      if (roundPenAmount(Number(entry.totalDebit)) !== roundPenAmount(Number(entry.totalCredit))) {
+        issues.push({
+          severity: 'error',
+          bookCode: CONTABILIDAD_PLE_BOOK_CODE.LIBRO_DIARIO_SIMPLIFICADO,
+          code: 'UNBALANCED_ENTRY',
+          message: `Asiento ${entry.entryNumber} no cuadra`,
+          lineNumber,
+          linePreview,
+        });
+      }
+      return pleJoin([
+        'M',
+        entry.entryNumber,
+        pleFormatDate(entry.entryDate.toISOString().slice(0, 10)),
+        pleFormatAmount(entry.totalDebit),
+        pleFormatAmount(entry.totalCredit),
+        entry.description,
+      ]);
+    });
+  }
+
+  private async buildDetalleLibroDiario(
+    ctx: PeriodCtx,
+    issues: ContabilidadPleValidationIssue[],
+  ): Promise<string[]> {
+    const entries = await this.prisma.contabilidadJournalEntry.findMany({
+      where: {
+        applicationId: ctx.applicationId,
+        periodId: ctx.periodId,
+        status: CONTABILIDAD_JOURNAL_STATUS.POSTED,
+      },
+      include: {
+        lines: {
+          orderBy: { lineNumber: 'asc' },
+          include: { account: { select: { code: true } } },
+        },
+      },
+      orderBy: [{ entryDate: 'asc' }, { entryNumber: 'asc' }],
+    });
+
+    const lines: string[] = [];
+    let lineNumber = 2;
+    for (const entry of entries) {
+      for (const line of entry.lines) {
+        const linePreview = pleJoin([
+          'M',
+          entry.entryNumber,
+          line.lineNumber,
+          line.account.code,
+        ]);
+        if (!line.account.code) {
+          issues.push({
+            severity: 'error',
+            bookCode: CONTABILIDAD_PLE_BOOK_CODE.DETALLE_LIBRO_DIARIO,
+            code: 'MISSING_ACCOUNT',
+            message: `Línea sin cuenta en asiento ${entry.entryNumber}`,
+            lineNumber,
+            linePreview,
+          });
+        }
+        lines.push(
+          pleJoin([
+            'M',
+            entry.entryNumber,
+            pleFormatDate(entry.entryDate.toISOString().slice(0, 10)),
+            line.lineNumber,
+            line.account.code,
+            line.auxiliaryRuc ?? '',
+            pleFormatAmount(line.debit),
+            pleFormatAmount(line.credit),
+            line.description ?? entry.description,
+          ]),
+        );
+        lineNumber += 1;
+      }
+    }
+    return lines;
+  }
+
+  private async buildRegistroComprasNcNd(
+    ctx: PeriodCtx,
+    issues: ContabilidadPleValidationIssue[],
+  ): Promise<string[]> {
+    const rows = (await this.collectPurchaseRegistroRows(ctx)).filter(
+      (r) =>
+        r.documentType === CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE ||
+        r.documentType === CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE,
+    );
+    return this.mapPurchaseRegistroLines(rows, CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_COMPLEMENTARIO, issues);
+  }
+
+  private async buildRegistroComprasNoGravadas(
+    ctx: PeriodCtx,
+    issues: ContabilidadPleValidationIssue[],
+  ): Promise<string[]> {
+    const rows = (await this.collectPurchaseRegistroRows(ctx)).filter(
+      (r) =>
+        r.taxAffectation === CONTABILIDAD_PURCHASE_TAX_AFFECTATION.EXEMPT ||
+        r.taxAffectation === CONTABILIDAD_PURCHASE_TAX_AFFECTATION.NON_TAXABLE,
+    );
+    return this.mapPurchaseRegistroLines(rows, CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_NO_GRAVADAS, issues);
+  }
+
+  private async buildRegistroVentasNcNd(
+    ctx: PeriodCtx,
+    issues: ContabilidadPleValidationIssue[],
+  ): Promise<string[]> {
+    const rows = (await this.collectSalesRegistroRows(ctx)).filter(
+      (r) =>
+        r.documentType === CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE ||
+        r.documentType === CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE,
+    );
+    return this.mapSalesRegistroLines(rows, CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS_COMPLEMENTARIO, issues);
+  }
+
+  private mapPurchaseRegistroLines(
+    rows: PurchaseRegistroRow[],
+    bookCode: string,
+    issues: ContabilidadPleValidationIssue[],
+  ): string[] {
+    const lines: string[] = [];
+    let lineNumber = 2;
+    for (const row of rows) {
+      const ctxLabel = `${row.documentType} ${row.series}-${row.number}`;
+      const linePreview = pleJoin(['M', pleFormatDate(row.issueDate), row.series, row.number]);
+      pushIssue(issues, pleValidateRuc(row.counterpartyRuc, bookCode, ctxLabel, lineNumber, linePreview));
+      lines.push(
+        pleJoin([
+          'M',
+          pleFormatDate(row.issueDate),
+          row.documentType,
+          row.series,
+          row.number,
+          row.counterpartyRuc,
+          row.counterpartyName,
+          row.taxAffectation,
+          pleFormatAmount(row.taxableBase),
+          pleFormatAmount(row.igvAmount),
+          pleFormatAmount(row.totalAmount),
+          row.modifiedDocRef ?? '',
+          row.status,
+        ]),
+      );
+      lineNumber += 1;
+    }
+    return lines;
+  }
+
+  private mapSalesRegistroLines(
+    rows: SalesRegistroRow[],
+    bookCode: string,
+    issues: ContabilidadPleValidationIssue[],
+  ): string[] {
+    const lines: string[] = [];
+    let lineNumber = 2;
+    for (const row of rows) {
+      const ctxLabel = `${row.documentType} ${row.series}-${row.number}`;
+      const linePreview = pleJoin(['M', pleFormatDate(row.issueDate), row.series, row.number]);
+      pushIssue(issues, pleValidateRuc(row.counterpartyRuc, bookCode, ctxLabel, lineNumber, linePreview));
+      lines.push(
+        pleJoin([
+          'M',
+          pleFormatDate(row.issueDate),
+          row.documentType,
+          row.series,
+          row.number,
+          row.counterpartyRuc,
+          row.counterpartyName,
+          row.taxAffectation,
+          pleFormatAmount(row.taxableBase),
+          pleFormatAmount(row.igvAmount),
+          pleFormatAmount(row.totalAmount),
+          row.modifiedDocRef ?? '',
+          row.status,
+        ]),
+      );
+      lineNumber += 1;
+    }
+    return lines;
+  }
+
+  private async collectPurchaseRegistroRows(ctx: PeriodCtx): Promise<PurchaseRegistroRow[]> {
+    const [invoices, creditNotes, debitNotes] = await Promise.all([
+      this.prisma.contabilidadPurchaseInvoice.findMany({
+        where: {
+          applicationId: ctx.applicationId,
+          periodId: ctx.periodId,
+          status: { not: CONTABILIDAD_PURCHASE_STATUS.CANCELLED },
+        },
+        include: { supplier: { select: { ruc: true, businessName: true } } },
+      }),
+      this.prisma.contabilidadPurchaseCreditNote.findMany({
+        where: {
+          applicationId: ctx.applicationId,
+          periodId: ctx.periodId,
+          status: { not: CONTABILIDAD_PURCHASE_CREDIT_NOTE_STATUS.CANCELLED },
+        },
+        include: {
+          supplier: { select: { ruc: true, businessName: true } },
+          invoice: { select: { documentType: true, series: true, number: true } },
+        },
+      }),
+      this.prisma.contabilidadPurchaseDebitNote.findMany({
+        where: {
+          applicationId: ctx.applicationId,
+          periodId: ctx.periodId,
+          status: { not: CONTABILIDAD_PURCHASE_DEBIT_NOTE_STATUS.CANCELLED },
+        },
+        include: {
+          supplier: { select: { ruc: true, businessName: true } },
+          invoice: { select: { documentType: true, series: true, number: true } },
+        },
+      }),
+    ]);
+
+    const rows: PurchaseRegistroRow[] = [
+      ...invoices.map((inv) => ({
+        issueDate: inv.issueDate.toISOString().slice(0, 10),
+        documentType: this.mapPurchaseDocumentType(inv.documentType),
+        series: inv.series,
+        number: inv.number,
+        counterpartyRuc: inv.supplier.ruc,
+        counterpartyName: inv.supplier.businessName,
+        taxAffectation: inv.taxAffectation,
+        taxableBase: Number(inv.taxableBase),
+        igvAmount: Number(inv.igvAmount),
+        totalAmount: Number(inv.totalAmount),
+        detraccionAmount: Number(inv.detraccionAmount),
+        modifiedDocRef: '',
+        status: inv.status,
+        sortKey: `${inv.issueDate.toISOString().slice(0, 10)}|${inv.series}|${inv.number}`,
+      })),
+      ...creditNotes.map((nc) => ({
+        issueDate: nc.issueDate.toISOString().slice(0, 10),
+        documentType: CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE,
+        series: nc.series,
+        number: nc.number,
+        counterpartyRuc: nc.supplier.ruc,
+        counterpartyName: nc.supplier.businessName,
+        taxAffectation: CONTABILIDAD_PURCHASE_TAX_AFFECTATION.TAXABLE,
+        taxableBase: Number(nc.taxableBase),
+        igvAmount: Number(nc.igvAmount),
+        totalAmount: Number(nc.totalAmount),
+        detraccionAmount: 0,
+        modifiedDocRef: nc.invoice ? `${nc.invoice.series}-${nc.invoice.number}` : '',
+        status: nc.status,
+        sortKey: `${nc.issueDate.toISOString().slice(0, 10)}|${nc.series}|${nc.number}`,
+      })),
+      ...debitNotes.map((nd) => ({
+        issueDate: nd.issueDate.toISOString().slice(0, 10),
+        documentType: CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE,
+        series: nd.series,
+        number: nd.number,
+        counterpartyRuc: nd.supplier.ruc,
+        counterpartyName: nd.supplier.businessName,
+        taxAffectation: CONTABILIDAD_PURCHASE_TAX_AFFECTATION.TAXABLE,
+        taxableBase: Number(nd.taxableBase),
+        igvAmount: Number(nd.igvAmount),
+        totalAmount: Number(nd.totalAmount),
+        detraccionAmount: 0,
+        modifiedDocRef: nd.invoice ? `${nd.invoice.series}-${nd.invoice.number}` : '',
+        status: nd.status,
+        sortKey: `${nd.issueDate.toISOString().slice(0, 10)}|${nd.series}|${nd.number}`,
+      })),
+    ];
+
+    return rows.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  }
+
+  private async collectSalesRegistroRows(ctx: PeriodCtx): Promise<SalesRegistroRow[]> {
+    const [invoices, creditNotes, debitNotes] = await Promise.all([
+      this.prisma.contabilidadSalesInvoice.findMany({
+        where: {
+          applicationId: ctx.applicationId,
+          periodId: ctx.periodId,
+          status: { not: CONTABILIDAD_SALES_STATUS.CANCELLED },
+        },
+        include: { customer: { select: { ruc: true, businessName: true } } },
+      }),
+      this.prisma.contabilidadSalesCreditNote.findMany({
+        where: {
+          applicationId: ctx.applicationId,
+          periodId: ctx.periodId,
+          status: { not: CONTABILIDAD_SALES_CREDIT_NOTE_STATUS.CANCELLED },
+        },
+        include: {
+          customer: { select: { ruc: true, businessName: true } },
+          invoice: { select: { documentType: true, series: true, number: true } },
+        },
+      }),
+      this.prisma.contabilidadSalesDebitNote.findMany({
+        where: {
+          applicationId: ctx.applicationId,
+          periodId: ctx.periodId,
+          status: { not: CONTABILIDAD_SALES_DEBIT_NOTE_STATUS.CANCELLED },
+        },
+        include: {
+          customer: { select: { ruc: true, businessName: true } },
+          invoice: { select: { documentType: true, series: true, number: true } },
+        },
+      }),
+    ]);
+
+    const rows: SalesRegistroRow[] = [
+      ...invoices.map((inv) => ({
+        issueDate: inv.issueDate.toISOString().slice(0, 10),
+        documentType: this.mapSalesDocumentType(inv.documentType),
+        series: inv.series,
+        number: inv.number,
+        counterpartyRuc: inv.customer.ruc,
+        counterpartyName: inv.customer.businessName,
+        taxAffectation: inv.taxAffectation,
+        taxableBase: Number(inv.taxableBase),
+        igvAmount: Number(inv.igvAmount),
+        totalAmount: Number(inv.totalAmount),
+        modifiedDocRef: '',
+        status: inv.status,
+        sortKey: `${inv.issueDate.toISOString().slice(0, 10)}|${inv.series}|${inv.number}`,
+      })),
+      ...creditNotes.map((nc) => ({
+        issueDate: nc.issueDate.toISOString().slice(0, 10),
+        documentType: CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE,
+        series: nc.series,
+        number: nc.number,
+        counterpartyRuc: nc.customer.ruc,
+        counterpartyName: nc.customer.businessName,
+        taxAffectation: CONTABILIDAD_SALES_TAX_AFFECTATION.TAXABLE,
+        taxableBase: Number(nc.taxableBase),
+        igvAmount: Number(nc.igvAmount),
+        totalAmount: Number(nc.totalAmount),
+        modifiedDocRef: nc.invoice ? `${nc.invoice.series}-${nc.invoice.number}` : '',
+        status: nc.status,
+        sortKey: `${nc.issueDate.toISOString().slice(0, 10)}|${nc.series}|${nc.number}`,
+      })),
+      ...debitNotes.map((nd) => ({
+        issueDate: nd.issueDate.toISOString().slice(0, 10),
+        documentType: CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE,
+        series: nd.series,
+        number: nd.number,
+        counterpartyRuc: nd.customer.ruc,
+        counterpartyName: nd.customer.businessName,
+        taxAffectation: CONTABILIDAD_SALES_TAX_AFFECTATION.TAXABLE,
+        taxableBase: Number(nd.taxableBase),
+        igvAmount: Number(nd.igvAmount),
+        totalAmount: Number(nd.totalAmount),
+        modifiedDocRef: nd.invoice ? `${nd.invoice.series}-${nd.invoice.number}` : '',
+        status: nd.status,
+        sortKey: `${nd.issueDate.toISOString().slice(0, 10)}|${nd.series}|${nd.number}`,
+      })),
+    ];
+
+    return rows.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  }
+
+  private mapPurchaseDocumentType(documentType: string): string {
+    const upper = documentType.toUpperCase();
+    if (upper.includes('CREDIT') || upper === 'NC') return CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE;
+    if (upper.includes('DEBIT') || upper === 'ND') return CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE;
+    return CONTABILIDAD_SUNAT_DOC_TYPE.FACTURA;
+  }
+
+  private mapSalesDocumentType(documentType: string): string {
+    const upper = documentType.toUpperCase();
+    if (upper.includes('CREDIT') || upper === 'NC') return CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE;
+    if (upper.includes('DEBIT') || upper === 'ND') return CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE;
+    if (upper.includes('BOLETA') || upper === '03') return '03';
+    return CONTABILIDAD_SUNAT_DOC_TYPE.FACTURA;
+  }
+}
+
+interface PurchaseRegistroRow {
+  issueDate: string;
+  documentType: string;
+  series: string;
+  number: string;
+  counterpartyRuc: string;
+  counterpartyName: string;
+  taxAffectation: string;
+  taxableBase: number;
+  igvAmount: number;
+  totalAmount: number;
+  detraccionAmount: number;
+  modifiedDocRef: string;
+  status: string;
+  sortKey: string;
+}
+
+interface SalesRegistroRow {
+  issueDate: string;
+  documentType: string;
+  series: string;
+  number: string;
+  counterpartyRuc: string;
+  counterpartyName: string;
+  taxAffectation: string;
+  taxableBase: number;
+  igvAmount: number;
+  totalAmount: number;
+  modifiedDocRef: string;
+  status: string;
+  sortKey: string;
 }

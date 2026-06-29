@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Param, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiProduces, ApiQuery, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { JwtAuthGuard, type AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadPleOperationsService } from '../../../application/services/contabilidad-ple-operations.service';
 
 @ApiTags('Contabilidad — PLE / Libros electrónicos')
@@ -16,6 +16,27 @@ export class ContabilidadPleController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   listBooks(@Query('applicationSlug') applicationSlug?: string) {
     return this.ple.listBooks(applicationSlug);
+  }
+
+  @Get('mandatory-profile')
+  @ApiOperation({ summary: 'Libros obligatorios según régimen tributario de la empresa' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  getMandatoryProfile(@Query('applicationSlug') applicationSlug?: string) {
+    return this.ple.getMandatoryProfile(applicationSlug);
+  }
+
+  @Get('export-logs')
+  @ApiOperation({ summary: 'Historial de exportaciones PLE' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'periodId', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  listExportLogs(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('periodId') periodId?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const parsedLimit = limit ? Number(limit) : undefined;
+    return this.ple.listExportLogs(applicationSlug, periodId, parsedLimit);
   }
 
   @Get('consulta/libro-mayor')
@@ -36,8 +57,32 @@ export class ContabilidadPleController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('periodId') periodId: string,
     @Body() body: { bookCodes: string[] },
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.ple.generateBooks(applicationSlug, periodId, body.bookCodes ?? []);
+    return this.ple.generateBooks(applicationSlug, periodId, body.bookCodes ?? [], req.user?.sub);
+  }
+
+  @Post(':periodId/download-zip')
+  @ApiOperation({ summary: 'Generar y descargar ZIP con todos los libros del periodo' })
+  @ApiProduces('application/zip')
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async downloadZip(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('periodId') periodId: string,
+    @Body() body: { bookCodes: string[] },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response,
+  ) {
+    const { buffer, fileName } = await this.ple.downloadZip(
+      applicationSlug,
+      periodId,
+      body.bookCodes ?? [],
+      req.user?.sub,
+    );
+    res
+      .setHeader('Content-Type', 'application/zip')
+      .setHeader('Content-Disposition', `attachment; filename="${fileName}"`)
+      .send(buffer);
   }
 
   @Get(':periodId/:bookCode/download')

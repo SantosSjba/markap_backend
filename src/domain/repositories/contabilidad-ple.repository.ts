@@ -6,6 +6,8 @@ export interface ContabilidadPleValidationIssue {
   code: string;
   message: string;
   context?: string;
+  lineNumber?: number;
+  linePreview?: string;
 }
 
 export interface ContabilidadPleGeneratedFile {
@@ -27,6 +29,31 @@ export interface ContabilidadPleGenerateResult {
   errors: ContabilidadPleValidationIssue[];
   warnings: ContabilidadPleValidationIssue[];
   generatedAt: string;
+  blocked: boolean;
+  exportLogId?: string;
+}
+
+export interface ContabilidadPleMandatoryProfileDto {
+  taxRegime: string;
+  taxRegimeLabel: string;
+  mandatoryBookCodes: string[];
+  optionalBookCodes: string[];
+  books: { code: string; name: string; mandatory: boolean }[];
+}
+
+export interface ContabilidadPleExportLogDto {
+  id: string;
+  periodId: string;
+  year: number;
+  month: number;
+  userId: string | null;
+  bookCodes: string[];
+  fileCount: number;
+  zipHash: string;
+  errorCount: number;
+  warningCount: number;
+  status: string;
+  createdAt: string;
 }
 
 export interface ContabilidadLibroMayorLineDto {
@@ -54,6 +81,11 @@ export interface ContabilidadLibroMayorAccountSummaryDto {
 export interface ContabilidadPleRepository {
   listBooks(): { books: { code: string; name: string; description: string; sunatStructure: string }[] };
 
+  getMandatoryProfile(
+    applicationId: string,
+    taxRegime: string,
+  ): ContabilidadPleMandatoryProfileDto;
+
   generateBook(
     applicationId: string,
     periodId: string,
@@ -66,7 +98,16 @@ export interface ContabilidadPleRepository {
     periodId: string,
     bookCodes: string[],
     company: { ruc: string; legalName: string },
+    options?: { userId?: string | null; persistLog?: boolean },
   ): Promise<ContabilidadPleGenerateResult>;
+
+  buildZipBuffer(files: ContabilidadPleGeneratedFile[]): Promise<{ buffer: Buffer; hash: string }>;
+
+  listExportLogs(
+    applicationId: string,
+    periodId?: string,
+    limit?: number,
+  ): Promise<ContabilidadPleExportLogDto[]>;
 
   getLibroMayor(
     applicationId: string,

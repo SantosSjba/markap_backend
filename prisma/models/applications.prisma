@@ -84,6 +84,7 @@ model Application {
   contabilidadInventoryBalanceSnapshots ContabilidadInventoryBalanceSnapshot[]
   contabilidadElectronicDocumentLogs ContabilidadElectronicDocumentLog[]
   contabilidadIncomeTaxPeriodSummaries ContabilidadIncomeTaxPeriodSummary[]
+  contabilidadPleExportLogs            ContabilidadPleExportLog[]
   contabilidadDetraccionRates    ContabilidadDetraccionRate[]
   contabilidadDetracciones       ContabilidadDetraccion[]
   contabilidadRetentions         ContabilidadRetention[]

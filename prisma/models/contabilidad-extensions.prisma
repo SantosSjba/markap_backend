@@ -121,3 +121,28 @@ model ContabilidadIncomeTaxPeriodSummary {
   @@index([applicationId])
   @@map("contabilidad_income_tax_period_summaries")
 }
+
+/// Historial de exportaciones PLE por periodo.
+model ContabilidadPleExportLog {
+  id            String   @id @default(uuid())
+  applicationId String   @map("application_id")
+  periodId      String   @map("period_id")
+  userId        String?  @map("user_id")
+  bookCodes     String[] @map("book_codes")
+  fileCount     Int      @map("file_count")
+  zipHash       String   @map("zip_hash")
+  errorCount    Int      @default(0) @map("error_count")
+  warningCount  Int      @default(0) @map("warning_count")
+  issuesJson    String   @map("issues_json") @db.Text
+  status        String   @default("SUCCESS")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  application Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period      ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([periodId])
+  @@index([applicationId, periodId])
+  @@map("contabilidad_ple_export_logs")
+}
