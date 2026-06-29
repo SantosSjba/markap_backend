@@ -226,7 +226,7 @@ export class ClientPrismaRepository implements ClientRepository {
       } else {
         andParts.push({ clientType: { in: ['BUYER', 'OWNER'] } });
       }
-    } else if (app.slug === 'interiorismo') {
+    } else if (app.slug === 'interiorismo' || app.slug === 'produccion') {
       andParts.push({
         clientType: filters.clientType
           ? filters.clientType
@@ -346,7 +346,7 @@ export class ClientPrismaRepository implements ClientRepository {
     });
     if (!app) return { total: 0, owners: 0, tenants: 0, active: 0 };
 
-    if (app.slug === 'interiorismo') {
+    if (app.slug === 'interiorismo' || app.slug === 'produccion') {
       const interiorTypes = { in: ['RESIDENTIAL', 'CORPORATE'] };
       const [total, residential, corporate, active] = await Promise.all([
         this.prisma.client.count({

@@ -113,9 +113,9 @@ export class CreateClientUseCase {
       input.clientType === 'RESIDENTIAL' ||
       input.clientType === 'CORPORATE'
     ) {
-      if (slug !== 'interiorismo') {
+      if (slug !== 'interiorismo' && slug !== 'produccion') {
         throw new BadRequestException(
-          'Los clientes residencial/corporativo se crean con applicationSlug interiorismo',
+          'Los clientes residencial/corporativo se crean con applicationSlug interiorismo o produccion',
         );
       }
     } else {
