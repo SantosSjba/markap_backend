@@ -45,9 +45,9 @@ Reportes · Configuración
 | Producción | OT, en proceso, etapas, terminados | **Funcional** |
 | Inventario | materiales, stock, movimientos | **Funcional** |
 | Compras | proveedores, órdenes de compra | **Funcional** |
-| Ventas | cotizaciones, pedidos, entregas | Placeholder |
+| Ventas | cotizaciones, pedidos, entregas | **Funcional** |
 | Costos | costeo, mano de obra, gastos | **Funcional** |
-| Reportes | `/produccion/reportes` | Placeholder |
+| Reportes | `/produccion/reportes` | **Funcional** |
 | Configuración | `/produccion/configuracion` | Placeholder |
 
 ---
@@ -254,13 +254,13 @@ Reportes · Configuración
 
 ### Backend
 
-- [ ] Endpoints agregados: producción por período, ventas, inventario valorizado, rentabilidad por mueble
+- [x] Endpoints agregados: producción por período, ventas, inventario valorizado, rentabilidad por mueble (`GET /produccion-reports/dashboard`)
 
 ### Frontend
 
-- [ ] Pantalla reportes con filtros (fecha, categoría, cliente)
-- [ ] Export Excel / PDF según reporte
-- [ ] Gráficos básicos (opcional)
+- [x] Pantalla reportes con filtros (fecha, categoría, cliente)
+- [x] Export Excel según reporte
+- [ ] Gráficos básicos (opcional / futuro)
 
 ---
 
@@ -290,7 +290,7 @@ Reportes · Configuración
        →  7 Ventas  →  8 Reportes  →  9 Config  →  10 Dashboard
 ```
 
-**Siguiente paso:** Fase 7 — Ventas.
+**Siguiente paso:** Fase 9 — Configuración.
 
 ---
 

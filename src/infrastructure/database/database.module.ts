@@ -43,6 +43,7 @@ import {
   ProduccionOrderPrismaRepository,
   ProduccionQuotationPrismaRepository,
 } from './prisma/repositories/produccion-sales-prisma.repository';
+import { ProduccionReportsPrismaRepository } from './prisma/repositories/produccion-reports-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
@@ -81,6 +82,7 @@ import {
   PRODUCCION_QUOTATION_REPOSITORY,
   PRODUCCION_ORDER_REPOSITORY,
   PRODUCCION_DELIVERY_REPOSITORY,
+  PRODUCCION_REPORTS_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
@@ -229,6 +231,10 @@ import {
       useClass: ProduccionDeliveryPrismaRepository,
     },
     {
+      provide: PRODUCCION_REPORTS_REPOSITORY,
+      useClass: ProduccionReportsPrismaRepository,
+    },
+    {
       provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
       useClass: InteriorMaterialSupplierPrismaRepository,
     },
@@ -289,6 +295,7 @@ import {
     PRODUCCION_QUOTATION_REPOSITORY,
     PRODUCCION_ORDER_REPOSITORY,
     PRODUCCION_DELIVERY_REPOSITORY,
+    PRODUCCION_REPORTS_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,
     INTERIOR_FINANCE_REPOSITORY,

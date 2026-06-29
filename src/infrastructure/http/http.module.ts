@@ -259,6 +259,8 @@ import {
   UpdateProduccionQuotationUseCase,
 } from '../../application/use-cases/produccion-sales';
 
+import { GetProduccionReportsDashboardUseCase } from '../../application/use-cases/produccion-reports';
+
 import {
   CreateProduccionSupplierUseCase,
   DeleteProduccionSupplierUseCase,
@@ -356,6 +358,7 @@ import { ProduccionWorkOrdersController } from './controllers/produccion-work-or
 import { ProduccionQuotationsController } from './controllers/produccion-quotations.controller';
 import { ProduccionOrdersController } from './controllers/produccion-orders.controller';
 import { ProduccionDeliveriesController } from './controllers/produccion-deliveries.controller';
+import { ProduccionReportsController } from './controllers/produccion-reports.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
@@ -430,6 +433,7 @@ import {
     ProduccionQuotationsController,
     ProduccionOrdersController,
     ProduccionDeliveriesController,
+    ProduccionReportsController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
     InteriorismoFinanceController,
@@ -679,6 +683,8 @@ import {
     CompleteProduccionDeliveryUseCase,
     CancelProduccionDeliveryUseCase,
     DeleteProduccionDeliveryUseCase,
+
+    GetProduccionReportsDashboardUseCase,
 
     ListInteriorMaterialSuppliersUseCase,
     GetInteriorMaterialSupplierByIdUseCase,
