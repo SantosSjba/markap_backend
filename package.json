@@ -28,6 +28,7 @@
     "prisma:seed:prod": "ts-node prisma/seed-prod.ts",
     "prisma:migrate:interior-budgets": "ts-node -r tsconfig-paths/register prisma/scripts/migrate-interior-budgets-to-project-budget.ts",
     "prisma:seed:ubigeo-other": "ts-node prisma/scripts/seed-ubigeo-other.ts",
+    "seed:produccion": "ts-node prisma/scripts/seed-produccion-demo.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

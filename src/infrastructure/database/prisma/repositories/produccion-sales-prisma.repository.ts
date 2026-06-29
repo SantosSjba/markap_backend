@@ -1,6 +1,9 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PRODUCCION_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  PRODUCCION_CONFIG_REPOSITORY,
+  PRODUCCION_ORDER_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import { PRODUCCION_NUMBERING_SERIES_KEYS } from '@domain/constants/produccion-config.defaults';
 import type { ProduccionConfigRepository } from '@domain/repositories/produccion-config.repository';
 import { PrismaService } from '../prisma.service';
@@ -41,7 +44,8 @@ type LineInput = { furnitureId: string; quantity: number; unitPrice: number; not
 export class ProduccionQuotationPrismaRepository implements ProduccionQuotationRepository {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly orderRepo: ProduccionOrderPrismaRepository,
+    @Inject(PRODUCCION_ORDER_REPOSITORY)
+    private readonly orderRepo: ProduccionOrderRepository,
     @Inject(PRODUCCION_CONFIG_REPOSITORY)
     private readonly configRepo: ProduccionConfigRepository,
   ) {}
@@ -325,7 +329,18 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
     }
     if (q.order) throw new BadRequestException('Ya existe un pedido para esta cotización');
 
-    return this.orderRepo.createFromQuotation(q);
+    return this.orderRepo.createFromQuotation({
+      id: q.id,
+      applicationId: q.applicationId,
+      clientId: q.clientId,
+      notes: q.notes,
+      lines: q.lines.map((l) => ({
+        furnitureId: l.furnitureId,
+        quantity: num(l.quantity),
+        unitPrice: num(l.unitPrice),
+        notes: l.notes,
+      })),
+    });
   }
 
   async delete(id: string) {
@@ -426,8 +441,8 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
     notes: string | null;
     lines: {
       furnitureId: string;
-      quantity: Prisma.Decimal;
-      unitPrice: Prisma.Decimal;
+      quantity: number;
+      unitPrice: number;
       notes: string | null;
     }[];
   }) {
@@ -448,8 +463,8 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
         lines: {
           create: q.lines.map((l) => ({
             furnitureId: l.furnitureId,
-            quantity: l.quantity,
-            unitPrice: l.unitPrice,
+            quantity: new Prisma.Decimal(l.quantity),
+            unitPrice: new Prisma.Decimal(l.unitPrice),
             notes: l.notes,
           })),
         },

@@ -1,17 +1,19 @@
 export const SAMPLE_PRODUCCION_RESIDENTIAL_CLIENT = {
   fullName: 'Familia Ríos Mendoza',
   documentNumber: '45892136',
-  email: 'rios.muebles@example.com',
-  phone: '+51 987 654 321',
-  address: 'Av. Primavera 245, Surco, Lima',
+  primaryEmail: 'rios.muebles@example.com',
+  primaryPhone: '+51 987 654 321',
+  notes: 'Cliente residencial demo — muebles a medida para comedor y dormitorio.',
 } as const;
 
 export const SAMPLE_PRODUCCION_CORPORATE_CLIENT = {
   fullName: 'Oficinas Nova SAC',
   documentNumber: '20604588721',
-  email: 'compras@oficinasnova.pe',
-  phone: '+51 1 445 7788',
-  address: 'Calle Los Negocios 118, San Isidro, Lima',
+  legalRepresentativeName: 'María López Vega',
+  legalRepresentativePosition: 'Gerente de Compras',
+  primaryEmail: 'compras@oficinasnova.pe',
+  primaryPhone: '+51 1 445 7788',
+  notes: 'Cliente corporativo demo — mobiliario de oficina.',
 } as const;
 
 export const PRODUCCION_CONFIG_DEFAULTS = {

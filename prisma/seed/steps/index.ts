@@ -31,6 +31,7 @@ export { seedProduccionInventory } from './demo-produccion-inventory';
 export { seedProduccionPurchases } from './demo-produccion-purchases';
 export { seedProduccionWorkOrders } from './demo-produccion-work-orders';
 export { seedProduccionSales } from './demo-produccion-sales';
+export { seedDemoProduccion } from './demo-produccion';
 export { seedContabilidadMenus } from './menus-contabilidad';
 export { seedRolesAndApplications } from './roles-applications';
 export type { RolesApplicationsResult } from './roles-applications';

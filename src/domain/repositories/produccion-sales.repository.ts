@@ -232,10 +232,24 @@ export interface ProduccionQuotationRepository {
   delete(id: string): Promise<void>;
 }
 
+export interface ProduccionOrderFromQuotationInput {
+  id: string;
+  applicationId: string;
+  clientId: string;
+  notes: string | null;
+  lines: {
+    furnitureId: string;
+    quantity: number;
+    unitPrice: number;
+    notes: string | null;
+  }[];
+}
+
 export interface ProduccionOrderRepository {
   list(filters: ListProduccionOrdersFilters): Promise<ListProduccionOrdersResult>;
   findById(id: string, applicationSlug?: string): Promise<ProduccionOrderDetail | null>;
   create(applicationId: string, payload: CreateProduccionOrderPayload): Promise<ProduccionOrderDetail>;
+  createFromQuotation(quotation: ProduccionOrderFromQuotationInput): Promise<ProduccionOrderDetail>;
   update(id: string, payload: UpdateProduccionOrderPayload): Promise<ProduccionOrderDetail>;
   confirm(id: string): Promise<ProduccionOrderDetail>;
   linkWorkOrder(id: string, workOrderId: string): Promise<ProduccionOrderDetail>;
