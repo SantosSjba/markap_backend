@@ -2,9 +2,9 @@
 
 > **Objetivo:** Construir el módulo contable-financiero de MARKAP como **procesos de negocio** (no tablas sueltas), cumpliendo la normativa contable y tributaria peruana aplicable a empresas del grupo, con salida a **libros electrónicos (PLE)** y estados financieros.
 >
-> **Última actualización:** 2026-06-29  
+> **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 9 (libros electrónicos y PLE) completada — Fase 10 pendiente
+> **Estado general:** Fase 10 (cierre mensual y estados financieros) completada — Fase 11 pendiente
 
 ---
 
@@ -317,17 +317,18 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Proceso cierre: bloquea asientos en periodo; asientos de regularización (opcional wizard)
-- [ ] Cálculo saldos por cuenta → **Balance General** (activo = pasivo + patrimonio)
-- [ ] **Estado de resultados** por naturaleza de cuenta (70, 69, 91…)
-- [ ] **Estado de flujo de efectivo** (método indirecto v1)
-- [ ] API `/contabilidad-closing`, `/contabilidad-financial-statements`
+- [x] Proceso cierre: bloquea asientos en periodo (checklist + `POST close`)
+- [ ] Asientos de regularización automáticos en cierre (wizard avanzado — pendiente)
+- [x] Cálculo saldos por cuenta → **Balance General** (activo = pasivo + patrimonio)
+- [x] **Estado de resultados** por naturaleza de cuenta (ingresos/gastos PCGE)
+- [x] **Estado de flujo de efectivo** (método indirecto v1)
+- [x] API `/contabilidad-closing`, `/contabilidad-financial-statements`
 
 ### Frontend
 
-- [ ] Wizard cierre mensual (checklist: tributos cuadrados, conciliación bancaria, etc.)
-- [ ] Pantalla cierre con resumen
-- [ ] Reportes BG y ER con comparativo periodo anterior
+- [x] Wizard cierre mensual (checklist: borradores, balance, conciliación bancaria, etc.)
+- [x] Pantalla cierre con resumen BG/ER previo al cierre
+- [x] Reportes BG, ER y flujo de efectivo con comparativo periodo anterior
 
 ---
 

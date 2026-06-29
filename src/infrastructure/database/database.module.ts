@@ -54,6 +54,7 @@ import { ContabilidadPurchasesPrismaRepository } from './prisma/repositories/con
 import { ContabilidadSalesPrismaRepository } from './prisma/repositories/contabilidad-sales-prisma.repository';
 import { ContabilidadTaxesPrismaRepository } from './prisma/repositories/contabilidad-taxes-prisma.repository';
 import { ContabilidadPlePrismaRepository } from './prisma/repositories/contabilidad-ple-prisma.repository';
+import { ContabilidadFinancialPrismaRepository } from './prisma/repositories/contabilidad-financial-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
@@ -103,6 +104,7 @@ import {
   CONTABILIDAD_SALES_REPOSITORY,
   CONTABILIDAD_TAXES_REPOSITORY,
   CONTABILIDAD_PLE_REPOSITORY,
+  CONTABILIDAD_FINANCIAL_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
@@ -295,6 +297,10 @@ import {
       useClass: ContabilidadPlePrismaRepository,
     },
     {
+      provide: CONTABILIDAD_FINANCIAL_REPOSITORY,
+      useClass: ContabilidadFinancialPrismaRepository,
+    },
+    {
       provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
       useClass: InteriorMaterialSupplierPrismaRepository,
     },
@@ -366,6 +372,7 @@ import {
     CONTABILIDAD_SALES_REPOSITORY,
     CONTABILIDAD_TAXES_REPOSITORY,
     CONTABILIDAD_PLE_REPOSITORY,
+    CONTABILIDAD_FINANCIAL_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,
     INTERIOR_FINANCE_REPOSITORY,
