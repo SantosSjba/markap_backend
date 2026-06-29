@@ -27,6 +27,7 @@ export interface UpdateContabilidadJournalEntryInput {
 }
 
 export interface ListContabilidadJournalEntriesFilters {
+  legalEntityId?: string;
   periodId?: string;
   status?: string;
   dateFrom?: string;

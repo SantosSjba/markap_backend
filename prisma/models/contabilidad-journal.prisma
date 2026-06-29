@@ -3,6 +3,7 @@
 model ContabilidadJournalEntry {
   id            String   @id @default(uuid())
   applicationId String   @map("application_id")
+  legalEntityId String   @map("legal_entity_id")
   periodId      String   @map("period_id")
   entryNumber   Int      @map("entry_number")
   entryDate     DateTime @map("entry_date") @db.Date
@@ -19,8 +20,9 @@ model ContabilidadJournalEntry {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  period      ContabilidadPeriod   @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  application Application             @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  legalEntity ContabilidadLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
+  period      ContabilidadPeriod      @relation(fields: [periodId], references: [id], onDelete: Restrict)
   reversalOf  ContabilidadJournalEntry?  @relation("ContabilidadJournalReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
   reversals   ContabilidadJournalEntry[] @relation("ContabilidadJournalReversal")
   lines             ContabilidadJournalEntryLine[]
@@ -36,8 +38,9 @@ model ContabilidadJournalEntry {
   perceptions         ContabilidadPerception[]
   inventoryMovements  ContabilidadInventoryMovement[]
 
-  @@unique([applicationId, periodId, entryNumber])
+  @@unique([legalEntityId, periodId, entryNumber])
   @@index([applicationId])
+  @@index([legalEntityId])
   @@index([periodId])
   @@index([applicationId, status])
   @@index([entryDate])

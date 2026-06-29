@@ -2,6 +2,7 @@ export const CONTABILIDAD_PERIOD_REPOSITORY = Symbol('ContabilidadPeriodReposito
 
 export interface ContabilidadPeriodDto {
   id: string;
+  legalEntityId: string;
   year: number;
   month: number;
   status: string;
@@ -30,8 +31,8 @@ export interface UpdateContabilidadCostCenterInput {
 }
 
 export interface ContabilidadPeriodRepository {
-  ensureYearPeriods(applicationId: string, year: number): Promise<ContabilidadPeriodDto[]>;
-  listPeriods(applicationId: string, year: number): Promise<ContabilidadPeriodDto[]>;
+  ensureYearPeriods(applicationId: string, legalEntityId: string, year: number): Promise<ContabilidadPeriodDto[]>;
+  listPeriods(applicationId: string, legalEntityId: string, year: number): Promise<ContabilidadPeriodDto[]>;
   findPeriodById(applicationId: string, id: string): Promise<ContabilidadPeriodDto | null>;
   setPeriodStatus(applicationId: string, id: string, status: string): Promise<ContabilidadPeriodDto>;
   ensureDefaultCostCenters(applicationId: string): Promise<void>;

@@ -290,6 +290,12 @@ export const CONTABILIDAD_CHILD_MENUS = [
     order: 5,
     parentLabel: 'Reportes financieros',
   },
+  {
+    label: 'Auditoría',
+    path: '/contabilidad/configuracion/auditoria',
+    order: 3,
+    parentLabel: 'Configuración',
+  },
 ];
 
 /** Menús padre reemplazados por la nueva estructura */

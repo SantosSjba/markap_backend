@@ -2,10 +2,11 @@ import { CONTABILIDAD_MONTH_LABELS } from '@domain/constants/contabilidad-period
 import type { ContabilidadCostCenterDto, ContabilidadPeriodDto } from '@domain/repositories/contabilidad-period.repository';
 
 export const ContabilidadPeriodPrismaMapper = {
-  toPeriod(row: { id: string; year: number; month: number; status: string }): ContabilidadPeriodDto {
+  toPeriod(row: { id: string; legalEntityId: string; year: number; month: number; status: string }): ContabilidadPeriodDto {
     const monthLabel = CONTABILIDAD_MONTH_LABELS[row.month] ?? String(row.month);
     return {
       id: row.id,
+      legalEntityId: row.legalEntityId,
       year: row.year,
       month: row.month,
       status: row.status,

@@ -26,9 +26,11 @@ export class ContabilidadJournalEntriesController {
   @ApiQuery({ name: 'accountId', required: false })
   @ApiQuery({ name: 'costCenterId', required: false })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'legalEntityId', required: false })
   list(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('periodId') periodId?: string,
+    @Query('legalEntityId') legalEntityId?: string,
     @Query('status') status?: string,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
@@ -37,6 +39,7 @@ export class ContabilidadJournalEntriesController {
     @Query('search') search?: string,
   ) {
     const filters: ListContabilidadJournalEntriesFilters = {
+      legalEntityId,
       periodId,
       status,
       dateFrom,

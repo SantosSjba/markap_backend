@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 19 (PCGE catálogo completo) completada — **siguiente: Fase 20** (Multi-empresa y auditoría)
+> **Estado general:** Fase 20 (Multi-empresa y auditoría) completada — **siguiente: Fase 21** (Facturación electrónica OSE/PSE)
 
 ---
 
@@ -120,7 +120,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 17 | PLE ampliado y validación SUNAT | ⬜ Pendiente |
 | 18 | Inventario permanente contable (20/21) | ⬜ Pendiente |
 | 19 | PCGE catálogo completo | ✅ Completa |
-| 20 | Multi-empresa y auditoría | ⬜ Pendiente |
+| 20 | Multi-empresa y auditoría | ✅ Completa |
 | 21 | Facturación electrónica (OSE/PSE) | ⬜ Pendiente |
 | 22 | Declaraciones SUNAT (SOL) | ⬜ Pendiente |
 | 23 | Integración con apps MARKAP | ⬜ Al final |
@@ -593,15 +593,15 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Modelo `ContabilidadLegalEntity` (o `AccountingCompany`): RUC, razón social, vinculado a `applicationId` + selector activo por usuario/sesión
-- [ ] Migrar `ContabilidadCompanyProfile` a entidad multi-RUC o `companyId` en tablas operativas
-- [ ] Modelo `ContabilidadAuditLog`: entidad, acción, userId, payload diff, timestamp
-- [ ] Registrar en audit: publicar/reversar asiento, cierre periodo, cambios maestros
+- [x] Modelo `ContabilidadLegalEntity` (o `AccountingCompany`): RUC, razón social, vinculado a `applicationId` + selector activo por usuario/sesión
+- [x] Migrar `ContabilidadCompanyProfile` a entidad multi-RUC o `companyId` en tablas operativas
+- [x] Modelo `ContabilidadAuditLog`: entidad, acción, userId, payload diff, timestamp
+- [x] Registrar en audit: publicar/reversar asiento, cierre periodo, cambios maestros
 
 ### Frontend
 
-- [ ] Selector de empresa/RUC en `ContabilidadLayout` (si el usuario tiene acceso a varias)
-- [ ] Pantalla consulta auditoría (filtros por fecha, usuario, tipo)
+- [x] Selector de empresa/RUC en `ContabilidadLayout` (si el usuario tiene acceso a varias)
+- [x] Pantalla consulta auditoría (filtros por fecha, usuario, tipo)
 
 ### Criterio de cierre
 

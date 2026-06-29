@@ -58,6 +58,8 @@ import { ContabilidadFinancialPrismaRepository } from './prisma/repositories/con
 import { ContabilidadReportsPrismaRepository } from './prisma/repositories/contabilidad-reports-prisma.repository';
 import { ContabilidadExtensionsPrismaRepository } from './prisma/repositories/contabilidad-extensions-prisma.repository';
 import { ContabilidadInventoryPrismaRepository } from './prisma/repositories/contabilidad-inventory-prisma.repository';
+import { ContabilidadLegalEntityPrismaRepository } from './prisma/repositories/contabilidad-legal-entity-prisma.repository';
+import { ContabilidadAuditPrismaRepository } from './prisma/repositories/contabilidad-audit-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
@@ -111,6 +113,8 @@ import {
   CONTABILIDAD_REPORTS_REPOSITORY,
   CONTABILIDAD_EXTENSIONS_REPOSITORY,
   CONTABILIDAD_INVENTORY_REPOSITORY,
+  CONTABILIDAD_LEGAL_ENTITY_REPOSITORY,
+  CONTABILIDAD_AUDIT_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
@@ -324,6 +328,14 @@ import {
       useClass: ContabilidadInventoryPrismaRepository,
     },
     {
+      provide: CONTABILIDAD_LEGAL_ENTITY_REPOSITORY,
+      useClass: ContabilidadLegalEntityPrismaRepository,
+    },
+    {
+      provide: CONTABILIDAD_AUDIT_REPOSITORY,
+      useClass: ContabilidadAuditPrismaRepository,
+    },
+    {
       provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
       useClass: InteriorMaterialSupplierPrismaRepository,
     },
@@ -399,6 +411,8 @@ import {
     CONTABILIDAD_REPORTS_REPOSITORY,
     CONTABILIDAD_EXTENSIONS_REPOSITORY,
     CONTABILIDAD_INVENTORY_REPOSITORY,
+    CONTABILIDAD_LEGAL_ENTITY_REPOSITORY,
+    CONTABILIDAD_AUDIT_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,
     INTERIOR_FINANCE_REPOSITORY,

@@ -1,76 +1,87 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { CONTABILIDAD_PERIOD_REPOSITORY } from '@common/constants/injection-tokens';
 import {
-  APPLICATION_REPOSITORY,
-  CONTABILIDAD_PERIOD_REPOSITORY,
-} from '@common/constants/injection-tokens';
+  CONTABILIDAD_AUDIT_ACTION,
+  CONTABILIDAD_AUDIT_ENTITY_TYPE,
+} from '@domain/constants/contabilidad-audit.defaults';
 import {
   CONTABILIDAD_MONTH_LABELS,
   CONTABILIDAD_PERIOD_STATUS,
 } from '@domain/constants/contabilidad-period.defaults';
-import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import type {
   ContabilidadPeriodRepository,
   CreateContabilidadCostCenterInput,
   UpdateContabilidadCostCenterInput,
 } from '@domain/repositories/contabilidad-period.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
-
-const CONTABILIDAD_SLUG = 'contabilidad';
-
-function assertContabilidadSlug(slug: string | undefined | null) {
-  if (slug?.trim() !== CONTABILIDAD_SLUG) {
-    throw new BadRequestException('Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).');
-  }
-}
+import { ContabilidadAuditOperationsService } from './contabilidad-audit-operations.service';
+import { ContabilidadContextService } from './contabilidad-context.service';
 
 @Injectable()
 export class ContabilidadPeriodOperationsService {
   constructor(
     @Inject(CONTABILIDAD_PERIOD_REPOSITORY)
     private readonly periods: ContabilidadPeriodRepository,
-    @Inject(APPLICATION_REPOSITORY)
-    private readonly applications: ApplicationRepository,
+    private readonly context: ContabilidadContextService,
+    private readonly audit: ContabilidadAuditOperationsService,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
-    assertContabilidadSlug(applicationSlug ?? CONTABILIDAD_SLUG);
-    const app = await this.applications.findBySlug(CONTABILIDAD_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
-    return app.id;
-  }
-
-  async listPeriods(applicationSlug: string | undefined, year?: number) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+  async listPeriods(applicationSlug: string | undefined, year?: number, legalEntityId?: string) {
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
+    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
     const targetYear = year ?? new Date().getFullYear();
     if (targetYear < 2000 || targetYear > 2100) {
       throw new BadRequestException('Año no válido.');
     }
-    const rows = await this.periods.ensureYearPeriods(applicationId, targetYear);
+    const rows = await this.periods.ensureYearPeriods(applicationId, entityId, targetYear);
     return {
       year: targetYear,
+      legalEntityId: entityId,
       periods: rows,
       monthLabels: CONTABILIDAD_MONTH_LABELS,
     };
   }
 
-  async setPeriodStatus(applicationSlug: string | undefined, id: string, status: string) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+  async setPeriodStatus(
+    applicationSlug: string | undefined,
+    id: string,
+    status: string,
+    userId?: string | null,
+  ) {
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     if (status !== CONTABILIDAD_PERIOD_STATUS.OPEN && status !== CONTABILIDAD_PERIOD_STATUS.CLOSED) {
       throw new BadRequestException('Estado debe ser OPEN o CLOSED.');
     }
     const existing = await this.periods.findPeriodById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadPeriod', id);
-    return this.periods.setPeriodStatus(applicationId, id, status);
+
+    const updated = await this.periods.setPeriodStatus(applicationId, id, status);
+
+    await this.audit.log({
+      applicationId,
+      legalEntityId: existing.legalEntityId,
+      entityType: CONTABILIDAD_AUDIT_ENTITY_TYPE.PERIOD,
+      entityId: id,
+      action:
+        status === CONTABILIDAD_PERIOD_STATUS.CLOSED
+          ? CONTABILIDAD_AUDIT_ACTION.PERIOD_CLOSE
+          : CONTABILIDAD_AUDIT_ACTION.PERIOD_OPEN,
+      userId: userId ?? null,
+      summary: `${updated.label} → ${status}`,
+      payload: { year: updated.year, month: updated.month, status },
+    });
+
+    return updated;
   }
 
   async listCostCenters(applicationSlug: string | undefined, search?: string) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     await this.periods.ensureDefaultCostCenters(applicationId);
     return this.periods.listCostCenters(applicationId, search);
   }
 
   async createCostCenter(applicationSlug: string | undefined, body: CreateContabilidadCostCenterInput) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     await this.periods.ensureDefaultCostCenters(applicationId);
 
     if (!body.code?.trim() || !body.name?.trim()) {
@@ -102,7 +113,7 @@ export class ContabilidadPeriodOperationsService {
     id: string,
     body: UpdateContabilidadCostCenterInput,
   ) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     const existing = await this.periods.findCostCenterById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadCostCenter', id);
 
@@ -135,7 +146,7 @@ export class ContabilidadPeriodOperationsService {
   }
 
   async deactivateCostCenter(applicationSlug: string | undefined, id: string) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     const existing = await this.periods.findCostCenterById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadCostCenter', id);
 

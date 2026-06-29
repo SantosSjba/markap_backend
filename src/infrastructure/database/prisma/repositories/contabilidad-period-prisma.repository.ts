@@ -18,20 +18,24 @@ import { ContabilidadPeriodPrismaMapper } from '../mappers/contabilidad-period-p
 export class ContabilidadPeriodPrismaRepository implements ContabilidadPeriodRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async ensureYearPeriods(applicationId: string, year: number): Promise<ContabilidadPeriodDto[]> {
+  async ensureYearPeriods(
+    applicationId: string,
+    legalEntityId: string,
+    year: number,
+  ): Promise<ContabilidadPeriodDto[]> {
     for (let month = 1; month <= 12; month++) {
       await this.prisma.contabilidadPeriod.upsert({
-        where: { applicationId_year_month: { applicationId, year, month } },
-        create: { applicationId, year, month, status: CONTABILIDAD_PERIOD_STATUS.OPEN },
+        where: { legalEntityId_year_month: { legalEntityId, year, month } },
+        create: { applicationId, legalEntityId, year, month, status: CONTABILIDAD_PERIOD_STATUS.OPEN },
         update: {},
       });
     }
-    return this.listPeriods(applicationId, year);
+    return this.listPeriods(applicationId, legalEntityId, year);
   }
 
-  async listPeriods(applicationId: string, year: number): Promise<ContabilidadPeriodDto[]> {
+  async listPeriods(applicationId: string, legalEntityId: string, year: number): Promise<ContabilidadPeriodDto[]> {
     const rows = await this.prisma.contabilidadPeriod.findMany({
-      where: { applicationId, year },
+      where: { applicationId, legalEntityId, year },
       orderBy: { month: 'asc' },
     });
     return rows.map((r) => ContabilidadPeriodPrismaMapper.toPeriod(r));

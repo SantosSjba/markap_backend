@@ -1,0 +1,52 @@
+/// Entidades legales (multi-RUC) y auditoría contable.
+
+model ContabilidadLegalEntity {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  code          String
+  ruc           String
+  legalName     String  @map("legal_name")
+  tradeName     String? @map("trade_name")
+  fiscalAddress String  @default("") @map("fiscal_address")
+  district      String  @default("")
+  province      String  @default("")
+  department    String  @default("")
+  ubigeoCode    String  @default("") @map("ubigeo_code")
+  isDefault     Boolean @default(false) @map("is_default")
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application    Application                @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  periods        ContabilidadPeriod[]
+  journalEntries ContabilidadJournalEntry[]
+  auditLogs      ContabilidadAuditLog[]
+
+  @@unique([applicationId, code])
+  @@unique([applicationId, ruc])
+  @@index([applicationId])
+  @@map("contabilidad_legal_entities")
+}
+
+model ContabilidadAuditLog {
+  id              String   @id @default(uuid())
+  applicationId   String   @map("application_id")
+  legalEntityId   String?  @map("legal_entity_id")
+  entityType      String   @map("entity_type")
+  entityId        String?  @map("entity_id")
+  action          String
+  userId          String?  @map("user_id")
+  summary         String?
+  payload         Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  application Application              @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  legalEntity ContabilidadLegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([legalEntityId])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("contabilidad_audit_logs")
+}

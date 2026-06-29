@@ -57,6 +57,7 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
   ): Promise<ContabilidadJournalEntryListItemDto[]> {
     const where: Prisma.ContabilidadJournalEntryWhereInput = { applicationId };
 
+    if (filters.legalEntityId) where.legalEntityId = filters.legalEntityId;
     if (filters.periodId) where.periodId = filters.periodId;
     if (filters.status) where.status = filters.status;
 
@@ -110,12 +111,14 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
   ): Promise<ContabilidadJournalEntryDetailDto> {
     const normalized = await this.normalizeLines(applicationId, input.lines, input.entryDate);
     const totals = this.computeTotals(normalized);
-    const entryNumber = await this.nextEntryNumber(applicationId, input.periodId);
+    const legalEntityId = await this.resolvePeriodLegalEntityId(applicationId, input.periodId);
+    const entryNumber = await this.nextEntryNumber(legalEntityId, input.periodId);
     const entryDate = this.parseEntryDate(input.entryDate);
 
     const row = await this.prisma.contabilidadJournalEntry.create({
       data: {
         applicationId,
+        legalEntityId,
         periodId: input.periodId,
         entryNumber,
         entryDate,
@@ -280,7 +283,7 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       throw new Error('Period is closed');
     }
 
-    const entryNumber = await this.nextEntryNumber(applicationId, original.periodId);
+    const entryNumber = await this.nextEntryNumber(original.legalEntityId, original.periodId);
 
     const row = await this.prisma.$transaction(async (tx) => {
       await tx.contabilidadJournalEntry.update({
@@ -291,6 +294,7 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       const reversal = await tx.contabilidadJournalEntry.create({
         data: {
           applicationId,
+          legalEntityId: original.legalEntityId,
           periodId: original.periodId,
           entryNumber,
           entryDate: original.entryDate,
@@ -351,13 +355,14 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     if (!period) throw new Error('Period not found');
     if (period.status !== 'OPEN') throw new Error('Period is closed');
 
-    const entryNumber = await this.nextEntryNumber(applicationId, input.periodId);
+    const entryNumber = await this.nextEntryNumber(period.legalEntityId, input.periodId);
     const entryDate = this.parseEntryDate(input.entryDate);
 
     const row = await this.prisma.$transaction(async (tx) => {
       const created = await tx.contabilidadJournalEntry.create({
         data: {
           applicationId,
+          legalEntityId: period.legalEntityId,
           periodId: input.periodId,
           entryNumber,
           entryDate,
@@ -402,9 +407,18 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return ContabilidadJournalPrismaMapper.toDetail(row);
   }
 
-  private async nextEntryNumber(applicationId: string, periodId: string): Promise<number> {
+  private async resolvePeriodLegalEntityId(applicationId: string, periodId: string): Promise<string> {
+    const period = await this.prisma.contabilidadPeriod.findFirst({
+      where: { applicationId, id: periodId },
+      select: { legalEntityId: true },
+    });
+    if (!period) throw new Error('Period not found');
+    return period.legalEntityId;
+  }
+
+  private async nextEntryNumber(legalEntityId: string, periodId: string): Promise<number> {
     const last = await this.prisma.contabilidadJournalEntry.findFirst({
-      where: { applicationId, periodId },
+      where: { legalEntityId, periodId },
       orderBy: { entryNumber: 'desc' },
       select: { entryNumber: true },
     });

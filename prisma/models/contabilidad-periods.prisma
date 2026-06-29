@@ -3,6 +3,7 @@
 model ContabilidadPeriod {
   id            String @id @default(uuid())
   applicationId String @map("application_id")
+  legalEntityId String @map("legal_entity_id")
   year          Int
   month         Int
   status        String @default("OPEN")
@@ -10,7 +11,8 @@ model ContabilidadPeriod {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application Application             @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  legalEntity ContabilidadLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
   journalEntries       ContabilidadJournalEntry[]
   treasuryMovements    ContabilidadTreasuryMovement[]
   bankReconciliations  ContabilidadBankReconciliation[]
@@ -31,8 +33,9 @@ model ContabilidadPeriod {
   pleExportLogs        ContabilidadPleExportLog[]
   inventoryMovements   ContabilidadInventoryMovement[]
 
-  @@unique([applicationId, year, month])
+  @@unique([legalEntityId, year, month])
   @@index([applicationId])
+  @@index([legalEntityId])
   @@index([applicationId, year])
   @@map("contabilidad_periods")
 }

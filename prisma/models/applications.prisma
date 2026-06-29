@@ -59,6 +59,8 @@ model Application {
   interiorCalendarEvents       InteriorCalendarEvent[]
   genArchivos                  GenArchivo[]
   contabilidadCompanyProfile   ContabilidadCompanyProfile?
+  contabilidadLegalEntities    ContabilidadLegalEntity[]
+  contabilidadAuditLogs        ContabilidadAuditLog[]
   contabilidadAppSettings      ContabilidadAppSettings?
   contabilidadDocumentSeries   ContabilidadDocumentSeries[]
   contabilidadAccounts         ContabilidadAccount[]

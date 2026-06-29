@@ -1,15 +1,14 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { CONTABILIDAD_JOURNAL_REPOSITORY, CONTABILIDAD_PERIOD_REPOSITORY } from '@common/constants/injection-tokens';
 import {
-  APPLICATION_REPOSITORY,
-  CONTABILIDAD_JOURNAL_REPOSITORY,
-  CONTABILIDAD_PERIOD_REPOSITORY,
-} from '@common/constants/injection-tokens';
+  CONTABILIDAD_AUDIT_ACTION,
+  CONTABILIDAD_AUDIT_ENTITY_TYPE,
+} from '@domain/constants/contabilidad-audit.defaults';
 import {
   CONTABILIDAD_JOURNAL_STATUS,
   CONTABILIDAD_JOURNAL_STATUS_LABELS,
 } from '@domain/constants/contabilidad-journal.defaults';
 import { CONTABILIDAD_PERIOD_STATUS } from '@domain/constants/contabilidad-period.defaults';
-import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import type {
   ContabilidadJournalRepository,
   CreateContabilidadJournalEntryInput,
@@ -19,14 +18,8 @@ import type {
 import type { ContabilidadPeriodRepository } from '@domain/repositories/contabilidad-period.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { parsePenAmount } from '@domain/utils/contabilidad-journal-amounts';
-
-const CONTABILIDAD_SLUG = 'contabilidad';
-
-function assertContabilidadSlug(slug: string | undefined | null) {
-  if (slug?.trim() !== CONTABILIDAD_SLUG) {
-    throw new BadRequestException('Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).');
-  }
-}
+import { ContabilidadAuditOperationsService } from './contabilidad-audit-operations.service';
+import { ContabilidadContextService } from './contabilidad-context.service';
 
 function mapRepoError(error: unknown): never {
   const message = error instanceof Error ? error.message : 'Operación no válida.';
@@ -40,16 +33,9 @@ export class ContabilidadJournalOperationsService {
     private readonly journal: ContabilidadJournalRepository,
     @Inject(CONTABILIDAD_PERIOD_REPOSITORY)
     private readonly periods: ContabilidadPeriodRepository,
-    @Inject(APPLICATION_REPOSITORY)
-    private readonly applications: ApplicationRepository,
+    private readonly context: ContabilidadContextService,
+    private readonly audit: ContabilidadAuditOperationsService,
   ) {}
-
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
-    assertContabilidadSlug(applicationSlug ?? CONTABILIDAD_SLUG);
-    const app = await this.applications.findBySlug(CONTABILIDAD_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
-    return app.id;
-  }
 
   private async assertOpenPeriod(applicationId: string, periodId: string) {
     const period = await this.periods.findPeriodById(applicationId, periodId);
@@ -88,8 +74,9 @@ export class ContabilidadJournalOperationsService {
   }
 
   async list(applicationSlug: string | undefined, filters: ListContabilidadJournalEntriesFilters) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
-    const entries = await this.journal.list(applicationId, filters);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
+    const legalEntityId = await this.context.resolveLegalEntityId(applicationId, filters.legalEntityId);
+    const entries = await this.journal.list(applicationId, { ...filters, legalEntityId });
     return {
       entries,
       statusLabels: CONTABILIDAD_JOURNAL_STATUS_LABELS,
@@ -97,7 +84,7 @@ export class ContabilidadJournalOperationsService {
   }
 
   async getById(applicationSlug: string | undefined, id: string) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     const entry = await this.journal.findById(applicationId, id);
     if (!entry) throw new EntityNotFoundException('ContabilidadJournalEntry', id);
     return {
@@ -111,7 +98,7 @@ export class ContabilidadJournalOperationsService {
     body: CreateContabilidadJournalEntryInput,
     userId?: string | null,
   ) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     if (!body.periodId) throw new BadRequestException('Periodo obligatorio.');
     if (!body.entryDate) throw new BadRequestException('Fecha obligatoria.');
     if (!body.description?.trim()) throw new BadRequestException('La glosa es obligatoria.');
@@ -137,7 +124,7 @@ export class ContabilidadJournalOperationsService {
     id: string,
     body: UpdateContabilidadJournalEntryInput,
   ) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     const existing = await this.journal.findById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadJournalEntry', id);
     if (existing.status !== CONTABILIDAD_JOURNAL_STATUS.DRAFT) {
@@ -172,7 +159,7 @@ export class ContabilidadJournalOperationsService {
   }
 
   async deleteDraft(applicationSlug: string | undefined, id: string) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     const existing = await this.journal.findById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadJournalEntry', id);
     if (existing.status !== CONTABILIDAD_JOURNAL_STATUS.DRAFT) {
@@ -188,7 +175,7 @@ export class ContabilidadJournalOperationsService {
   }
 
   async post(applicationSlug: string | undefined, id: string, userId?: string | null) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     const existing = await this.journal.findById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadJournalEntry', id);
 
@@ -199,14 +186,30 @@ export class ContabilidadJournalOperationsService {
     }
 
     try {
-      return await this.journal.post(applicationId, id, userId);
+      const posted = await this.journal.post(applicationId, id, userId);
+      await this.audit.log({
+        applicationId,
+        legalEntityId: period.legalEntityId,
+        entityType: CONTABILIDAD_AUDIT_ENTITY_TYPE.JOURNAL_ENTRY,
+        entityId: id,
+        action: CONTABILIDAD_AUDIT_ACTION.JOURNAL_POST,
+        userId: userId ?? null,
+        summary: `Asiento N° ${posted.entryNumber} publicado`,
+        payload: {
+          entryNumber: posted.entryNumber,
+          entryDate: posted.entryDate,
+          totalDebit: posted.totalDebit,
+          totalCredit: posted.totalCredit,
+        },
+      });
+      return posted;
     } catch (error) {
       mapRepoError(error);
     }
   }
 
   async reverse(applicationSlug: string | undefined, id: string, userId?: string | null) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const applicationId = await this.context.resolveApplicationId(applicationSlug);
     const existing = await this.journal.findById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadJournalEntry', id);
 
@@ -217,7 +220,22 @@ export class ContabilidadJournalOperationsService {
     }
 
     try {
-      return await this.journal.reverse(applicationId, id, userId);
+      const reversed = await this.journal.reverse(applicationId, id, userId);
+      await this.audit.log({
+        applicationId,
+        legalEntityId: period.legalEntityId,
+        entityType: CONTABILIDAD_AUDIT_ENTITY_TYPE.JOURNAL_ENTRY,
+        entityId: id,
+        action: CONTABILIDAD_AUDIT_ACTION.JOURNAL_REVERSE,
+        userId: userId ?? null,
+        summary: `Reversa del asiento N° ${existing.entryNumber}`,
+        payload: {
+          originalEntryId: id,
+          reversalEntryId: reversed.id,
+          reversalEntryNumber: reversed.entryNumber,
+        },
+      });
+      return reversed;
     } catch (error) {
       mapRepoError(error);
     }

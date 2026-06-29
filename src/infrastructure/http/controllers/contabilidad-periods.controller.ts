@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadPeriodOperationsService } from '../../../application/services/contabilidad-period-operations.service';
@@ -18,12 +19,14 @@ export class ContabilidadPeriodsController {
   @ApiOperation({ summary: 'Listar periodos del año (crea los 12 meses si faltan)' })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'year', required: false })
+  @ApiQuery({ name: 'legalEntityId', required: false })
   listPeriods(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('year') year?: string,
+    @Query('legalEntityId') legalEntityId?: string,
   ) {
     const y = year ? Number(year) : undefined;
-    return this.operations.listPeriods(applicationSlug, y);
+    return this.operations.listPeriods(applicationSlug, y, legalEntityId);
   }
 
   @Patch('contabilidad-periods/:id/status')
@@ -33,8 +36,9 @@ export class ContabilidadPeriodsController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
     @Body() body: { status: 'OPEN' | 'CLOSED' },
+    @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.operations.setPeriodStatus(applicationSlug, id, body.status);
+    return this.operations.setPeriodStatus(applicationSlug, id, body.status, req.user?.sub ?? null);
   }
 
   @Get('contabilidad-cost-centers')
