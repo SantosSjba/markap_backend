@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-06-29  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 1 (configuración contable) completada — Fase 2 pendiente
+> **Estado general:** Fase 2 (plan de cuentas PCGE) completada — Fase 3 pendiente
 
 ---
 
@@ -96,7 +96,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 |------|--------|--------|
 | 0 | Infraestructura y menú | ✅ Completa |
 | 1 | Configuración contable | ✅ Completa |
-| 2 | Plan de cuentas (PCGE) | ⬜ Pendiente |
+| 2 | Plan de cuentas (PCGE) | ✅ Completa |
 | 3 | Periodos y centros de costo | ⬜ Pendiente |
 | 4 | Asientos y libro diario | ⬜ Pendiente |
 | 5 | Tesorería | ⬜ Pendiente |
@@ -149,16 +149,16 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Modelo `AccountingAccount`: `code`, `name`, `level`, `parentId`, `accountType` (activo, pasivo, patrimonio, ingreso, gasto), `isMovement`, `isActive`
-- [ ] Seed PCGE estándar (estructura Res. 194-2013 — cuentas título + movimiento mínimas)
-- [ ] CRUD con restricciones: no eliminar con saldo; no cambiar código con movimiento
-- [ ] API `/contabilidad-accounts` (tree list, create, update, deactivate)
+- [x] Modelo `ContabilidadAccount`: `code`, `name`, `level`, `parentId`, `accountType`, `isMovement`, `isActive`
+- [x] Seed PCGE estándar (Res. 194-2013-EF — ~45 cuentas título + movimiento)
+- [x] CRUD con restricciones: no desactivar con movimientos; no cambiar código con movimientos
+- [x] API `/contabilidad-accounts` (tree, create, update, deactivate)
 
 ### Frontend (`features/plan-cuentas`)
 
-- [ ] Vista árbol expandible + búsqueda por código/nombre
-- [ ] Alta/edición cuenta (solo bajo cuentas título permitidas)
-- [ ] Export Excel del plan
+- [x] Vista árbol expandible + búsqueda por código/nombre
+- [x] Alta/edición cuenta (solo bajo cuentas título)
+- [x] Export Excel del plan
 
 ---
 

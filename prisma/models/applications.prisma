@@ -61,6 +61,7 @@ model Application {
   contabilidadCompanyProfile   ContabilidadCompanyProfile?
   contabilidadAppSettings      ContabilidadAppSettings?
   contabilidadDocumentSeries   ContabilidadDocumentSeries[]
+  contabilidadAccounts         ContabilidadAccount[]
 
   @@index([slug])
   @@index([isActive])
