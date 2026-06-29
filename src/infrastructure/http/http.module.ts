@@ -207,6 +207,27 @@ import {
 } from '../../application/use-cases/produccion-materials';
 
 import {
+  CancelProduccionPurchaseOrderUseCase,
+  CreateProduccionPurchaseOrderUseCase,
+  DeleteProduccionPurchaseOrderUseCase,
+  GetProduccionPurchaseOrderByIdUseCase,
+  ListProduccionPurchaseOrdersUseCase,
+  ReceiveProduccionPurchaseOrderUseCase,
+  SendProduccionPurchaseOrderUseCase,
+  UpdateProduccionPurchaseOrderUseCase,
+} from '../../application/use-cases/produccion-purchase-orders';
+
+import {
+  CreateProduccionSupplierUseCase,
+  DeleteProduccionSupplierUseCase,
+  GetProduccionSupplierByIdUseCase,
+  LinkProduccionSupplierMaterialUseCase,
+  ListProduccionSuppliersUseCase,
+  UnlinkProduccionSupplierMaterialUseCase,
+  UpdateProduccionSupplierUseCase,
+} from '../../application/use-cases/produccion-suppliers';
+
+import {
   CreateInteriorMaterialSupplierUseCase,
   DeleteInteriorMaterialSupplierUseCase,
   GetInteriorMaterialSupplierByIdUseCase,
@@ -287,6 +308,8 @@ import { ProduccionExtraCostsController } from './controllers/produccion-extra-c
 import { ProduccionFurnitureCostingController } from './controllers/produccion-furniture-costing.controller';
 import { ProduccionMaterialsController } from './controllers/produccion-materials.controller';
 import { ProduccionStockMovementsController } from './controllers/produccion-stock-movements.controller';
+import { ProduccionSuppliersController } from './controllers/produccion-suppliers.controller';
+import { ProduccionPurchaseOrdersController } from './controllers/produccion-purchase-orders.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
@@ -355,6 +378,8 @@ import {
     ProduccionFurnitureCostingController,
     ProduccionMaterialsController,
     ProduccionStockMovementsController,
+    ProduccionSuppliersController,
+    ProduccionPurchaseOrdersController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
     InteriorismoFinanceController,
@@ -549,6 +574,23 @@ import {
     DeleteProduccionMaterialUseCase,
     ListProduccionStockMovementsUseCase,
     CreateProduccionStockMovementUseCase,
+
+    ListProduccionSuppliersUseCase,
+    GetProduccionSupplierByIdUseCase,
+    CreateProduccionSupplierUseCase,
+    UpdateProduccionSupplierUseCase,
+    DeleteProduccionSupplierUseCase,
+    LinkProduccionSupplierMaterialUseCase,
+    UnlinkProduccionSupplierMaterialUseCase,
+
+    ListProduccionPurchaseOrdersUseCase,
+    GetProduccionPurchaseOrderByIdUseCase,
+    CreateProduccionPurchaseOrderUseCase,
+    UpdateProduccionPurchaseOrderUseCase,
+    SendProduccionPurchaseOrderUseCase,
+    ReceiveProduccionPurchaseOrderUseCase,
+    CancelProduccionPurchaseOrderUseCase,
+    DeleteProduccionPurchaseOrderUseCase,
 
     ListInteriorMaterialSuppliersUseCase,
     GetInteriorMaterialSupplierByIdUseCase,

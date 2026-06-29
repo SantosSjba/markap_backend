@@ -1,0 +1,84 @@
+/// Compras de producción — proveedores y órdenes de compra hacia inventario.
+
+model ProduccionSupplier {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  companyName   String  @map("company_name")
+  ruc           String  @map("ruc")
+  contactName   String? @map("contact_name")
+  phone         String? @map("phone")
+  email         String? @map("email")
+  isActive      Boolean @default(true) @map("is_active")
+  notes         String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  materialLinks  ProduccionSupplierMaterialLink[]
+  purchaseOrders ProduccionPurchaseOrder[]
+
+  @@unique([applicationId, ruc])
+  @@index([applicationId])
+  @@index([isActive])
+  @@map("produccion_suppliers")
+}
+
+/// Materiales que surte cada proveedor (opcional).
+model ProduccionSupplierMaterialLink {
+  id          String  @id @default(uuid())
+  supplierId  String  @map("supplier_id")
+  materialId  String  @map("material_id")
+  supplierSku String? @map("supplier_sku")
+  notes       String? @db.Text
+
+  supplier ProduccionSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  material ProduccionMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, materialId])
+  @@index([supplierId])
+  @@index([materialId])
+  @@map("produccion_supplier_material_links")
+}
+
+/// Estados: DRAFT → SENT → PARTIAL | RECEIVED (o CANCELLED).
+model ProduccionPurchaseOrder {
+  id            String    @id @default(uuid())
+  applicationId String    @map("application_id")
+  supplierId    String    @map("supplier_id")
+  code          String    @map("code")
+  status        String    @map("status")
+  orderedAt     DateTime  @map("ordered_at")
+  expectedAt    DateTime? @map("expected_at")
+  notes         String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  supplier    ProduccionSupplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  lines       ProduccionPurchaseOrderLine[]
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@index([supplierId])
+  @@index([status])
+  @@index([orderedAt])
+  @@map("produccion_purchase_orders")
+}
+
+model ProduccionPurchaseOrderLine {
+  id               String  @id @default(uuid())
+  purchaseOrderId  String  @map("purchase_order_id")
+  materialId       String  @map("material_id")
+  quantityOrdered  Decimal @map("quantity_ordered") @db.Decimal(14, 4)
+  quantityReceived Decimal @default(0) @map("quantity_received") @db.Decimal(14, 4)
+  unitPrice        Decimal @map("unit_price") @db.Decimal(14, 4)
+
+  purchaseOrder ProduccionPurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  material      ProduccionMaterial @relation(fields: [materialId], references: [id], onDelete: Restrict)
+
+  @@index([purchaseOrderId])
+  @@index([materialId])
+  @@map("produccion_purchase_order_lines")
+}

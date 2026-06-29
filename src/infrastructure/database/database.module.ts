@@ -35,6 +35,8 @@ import { ProduccionLaborRatePrismaRepository } from './prisma/repositories/produ
 import { ProduccionExtraCostCatalogPrismaRepository } from './prisma/repositories/produccion-extra-cost-catalog-prisma.repository';
 import { ProduccionFurnitureCostingPrismaRepository } from './prisma/repositories/produccion-furniture-costing-prisma.repository';
 import { ProduccionMaterialPrismaRepository } from './prisma/repositories/produccion-material-prisma.repository';
+import { ProduccionSupplierPrismaRepository } from './prisma/repositories/produccion-supplier-prisma.repository';
+import { ProduccionPurchaseOrderPrismaRepository } from './prisma/repositories/produccion-purchase-order-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
@@ -67,6 +69,8 @@ import {
   PRODUCCION_EXTRA_COST_CATALOG_REPOSITORY,
   PRODUCCION_FURNITURE_COSTING_REPOSITORY,
   PRODUCCION_MATERIAL_REPOSITORY,
+  PRODUCCION_SUPPLIER_REPOSITORY,
+  PRODUCCION_PURCHASE_ORDER_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
@@ -191,6 +195,14 @@ import {
       useClass: ProduccionMaterialPrismaRepository,
     },
     {
+      provide: PRODUCCION_SUPPLIER_REPOSITORY,
+      useClass: ProduccionSupplierPrismaRepository,
+    },
+    {
+      provide: PRODUCCION_PURCHASE_ORDER_REPOSITORY,
+      useClass: ProduccionPurchaseOrderPrismaRepository,
+    },
+    {
       provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
       useClass: InteriorMaterialSupplierPrismaRepository,
     },
@@ -245,6 +257,8 @@ import {
     PRODUCCION_EXTRA_COST_CATALOG_REPOSITORY,
     PRODUCCION_FURNITURE_COSTING_REPOSITORY,
     PRODUCCION_MATERIAL_REPOSITORY,
+    PRODUCCION_SUPPLIER_REPOSITORY,
+    PRODUCCION_PURCHASE_ORDER_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,
     INTERIOR_FINANCE_REPOSITORY,

@@ -18,6 +18,8 @@ model ProduccionMaterial {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   movements   ProduccionStockMovement[]
+  supplierLinks ProduccionSupplierMaterialLink[]
+  purchaseOrderLines ProduccionPurchaseOrderLine[]
 
   @@unique([applicationId, code])
   @@index([applicationId])

@@ -43,6 +43,8 @@ model Application {
   produccionLaborRates       ProduccionLaborRate[]
   produccionExtraCostCatalog ProduccionExtraCostCatalog[]
   produccionMaterials        ProduccionMaterial[]
+  produccionSuppliers        ProduccionSupplier[]
+  produccionPurchaseOrders   ProduccionPurchaseOrder[]
   interiorMaterialSuppliers    InteriorMaterialSupplier[]
   interiorCalendarEvents       InteriorCalendarEvent[]
   genArchivos                  GenArchivo[]

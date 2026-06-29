@@ -44,7 +44,7 @@ Reportes · Configuración
 | Catálogo de muebles | `/produccion/catalogo`, `/nuevo` | Placeholder |
 | Producción | OT, en proceso, etapas, terminados | Placeholder |
 | Inventario | materiales, stock, movimientos | **Funcional** |
-| Compras | proveedores, órdenes de compra | Placeholder |
+| Compras | proveedores, órdenes de compra | **Funcional** |
 | Ventas | cotizaciones, pedidos, entregas | Placeholder |
 | Costos | costeo, mano de obra, gastos | **Funcional** |
 | Reportes | `/produccion/reportes` | Placeholder |
@@ -189,16 +189,18 @@ Reportes · Configuración
 
 ### Backend
 
-- [ ] Modelo `ProduccionSupplier` (proveedores)
-- [ ] Modelo `ProduccionPurchaseOrder` + líneas
-- [ ] Estados: borrador → enviada → recibida parcial/total
-- [ ] Al recibir OC → movimiento de inventario (Fase 4)
+- [x] Modelo `ProduccionSupplier` (proveedores)
+- [x] Modelo `ProduccionPurchaseOrder` + líneas
+- [x] Estados: borrador → enviada → recibida parcial/total
+- [x] Al recibir OC → movimiento de inventario (Fase 4)
+- [x] API: `/produccion-suppliers`, `/produccion-purchase-orders` (+ send/receive/cancel)
+- [x] Seed demo: `demo-produccion-purchases.ts`
 
 ### Frontend (`features/compras`)
 
-- [ ] Proveedores: CRUD
-- [ ] Órdenes de compra: listado, nueva, detalle, recepción
-- [ ] Enlace proveedor ↔ materiales que suministra (opcional v1)
+- [x] Proveedores: CRUD + detalle con vínculos a materiales
+- [x] Órdenes de compra: listado, nueva, detalle, recepción
+- [x] Enlace proveedor ↔ materiales que suministra
 
 ---
 
@@ -284,7 +286,7 @@ Reportes · Configuración
        →  7 Ventas  →  8 Reportes  →  9 Config  →  10 Dashboard
 ```
 
-**Siguiente paso:** Fase 5 — Compras.
+**Siguiente paso:** Fase 6 — Producción (taller).
 
 ---
 

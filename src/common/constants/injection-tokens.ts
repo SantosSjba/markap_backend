@@ -36,6 +36,8 @@ export { PRODUCCION_LABOR_RATE_REPOSITORY } from '@domain/repositories/produccio
 export { PRODUCCION_EXTRA_COST_CATALOG_REPOSITORY } from '@domain/repositories/produccion-extra-cost-catalog.repository';
 export { PRODUCCION_FURNITURE_COSTING_REPOSITORY } from '@domain/repositories/produccion-furniture-costing.repository';
 export { PRODUCCION_MATERIAL_REPOSITORY } from '@domain/repositories/produccion-material.repository';
+export { PRODUCCION_SUPPLIER_REPOSITORY } from '@domain/repositories/produccion-supplier.repository';
+export { PRODUCCION_PURCHASE_ORDER_REPOSITORY } from '@domain/repositories/produccion-purchase-order.repository';
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';
 export { INTERIOR_EXECUTION_REPOSITORY } from '@domain/repositories/interior-execution.repository';
 export { INTERIOR_FINANCE_REPOSITORY } from '@domain/repositories/interior-finance.repository';
