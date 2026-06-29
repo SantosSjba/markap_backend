@@ -23,7 +23,8 @@ model ContabilidadJournalEntry {
   period      ContabilidadPeriod   @relation(fields: [periodId], references: [id], onDelete: Restrict)
   reversalOf  ContabilidadJournalEntry?  @relation("ContabilidadJournalReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
   reversals   ContabilidadJournalEntry[] @relation("ContabilidadJournalReversal")
-  lines       ContabilidadJournalEntryLine[]
+  lines             ContabilidadJournalEntryLine[]
+  treasuryMovements ContabilidadTreasuryMovement[]
 
   @@unique([applicationId, periodId, entryNumber])
   @@index([applicationId])

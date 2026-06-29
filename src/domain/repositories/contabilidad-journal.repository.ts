@@ -92,4 +92,9 @@ export interface ContabilidadJournalRepository {
     id: string,
     postedBy?: string | null,
   ): Promise<ContabilidadJournalEntryDetailDto>;
+  createAndPost(
+    applicationId: string,
+    input: CreateContabilidadJournalEntryInput,
+    postedBy?: string | null,
+  ): Promise<ContabilidadJournalEntryDetailDto>;
 }

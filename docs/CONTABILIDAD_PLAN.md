@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-06-29  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 4 (asientos y libro diario) completada — Fase 5 pendiente
+> **Estado general:** Fase 5 (tesorería) completada — Fase 6 pendiente
 
 ---
 
@@ -99,7 +99,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 2 | Plan de cuentas (PCGE) | ✅ Completa |
 | 3 | Periodos y centros de costo | ✅ Completa |
 | 4 | Asientos y libro diario | ✅ Completa |
-| 5 | Tesorería | ⬜ Pendiente |
+| 5 | Tesorería | ✅ Completa |
 | 6 | Compras contables | ⬜ Pendiente |
 | 7 | Ventas contables | ⬜ Pendiente |
 | 8 | Tributos (IGV, detracciones, retenciones) | ⬜ Pendiente |
@@ -208,18 +208,20 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Modelo `CashBox`, `BankAccount` (CCI, banco, moneda)
-- [ ] Modelo `TreasuryMovement`: ingreso/egreso, medio, vínculo a asiento
-- [ ] Transferencias entre caja/bancos (asiento puente)
-- [ ] Conciliación bancaria: saldo libro vs extracto; partidas conciliadas/pendientes
-- [ ] API tesorería
+- [x] Modelo `ContabilidadCashBox`, `ContabilidadBankAccount` (CCI, banco, moneda, cuenta PCGE)
+- [x] Modelo `ContabilidadTreasuryMovement`: ingreso/egreso/transferencia, vínculo a asiento
+- [x] Transferencias entre caja/bancos (asiento puente automático)
+- [x] Conciliación bancaria: saldo libro vs extracto; partidas conciliadas/pendientes
+- [x] API `/contabilidad-treasury` (cajas, bancos, movimientos, transferencias, conciliaciones)
+- [x] Seed demo: `CAJA-01` (1011) y `BCP-01` (1071)
 
 ### Frontend (`features/tesoreria`)
 
-- [ ] Caja: saldo, movimientos, arqueo simple
-- [ ] Bancos: cuentas, movimientos
-- [ ] Conciliación (UI tipo checklist período)
-- [ ] Transferencias
+- [x] Caja: saldo, movimientos, ingreso/egreso con modal
+- [x] Bancos: cuentas con saldo, alta de cuenta
+- [x] Movimientos: `DataTable` con filtros y enlace al asiento
+- [x] Conciliación (checklist por periodo + saldo extracto)
+- [x] Transferencias entre caja/bancos
 
 ---
 

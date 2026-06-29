@@ -65,6 +65,10 @@ model Application {
   contabilidadPeriods          ContabilidadPeriod[]
   contabilidadCostCenters      ContabilidadCostCenter[]
   contabilidadJournalEntries   ContabilidadJournalEntry[]
+  contabilidadCashBoxes        ContabilidadCashBox[]
+  contabilidadBankAccounts     ContabilidadBankAccount[]
+  contabilidadTreasuryMovements ContabilidadTreasuryMovement[]
+  contabilidadBankReconciliations ContabilidadBankReconciliation[]
 
   @@index([slug])
   @@index([isActive])

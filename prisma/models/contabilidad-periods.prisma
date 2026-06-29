@@ -11,7 +11,9 @@ model ContabilidadPeriod {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  journalEntries ContabilidadJournalEntry[]
+  journalEntries       ContabilidadJournalEntry[]
+  treasuryMovements    ContabilidadTreasuryMovement[]
+  bankReconciliations  ContabilidadBankReconciliation[]
 
   @@unique([applicationId, year, month])
   @@index([applicationId])

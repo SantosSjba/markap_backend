@@ -8,6 +8,7 @@ export * from './contabilidad-config-operations.service';
 export * from './contabilidad-account-operations.service';
 export * from './contabilidad-period-operations.service';
 export * from './contabilidad-journal-operations.service';
+export * from './contabilidad-treasury-operations.service';
 export * from './ventas-compliance-operations.service';
 export * from './notifications.service';
 export * from './rental-alerts.scheduler';

@@ -311,6 +311,72 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return ContabilidadJournalPrismaMapper.toDetail(row);
   }
 
+  async createAndPost(
+    applicationId: string,
+    input: CreateContabilidadJournalEntryInput,
+    postedBy?: string | null,
+  ): Promise<ContabilidadJournalEntryDetailDto> {
+    const normalized = await this.normalizeLines(applicationId, input.lines);
+    if (normalized.length < 2) throw new Error('At least two lines are required');
+    const totals = this.computeTotals(normalized);
+    if (!amountsBalanced(totals.debit, totals.credit) || totals.debit <= 0) {
+      throw new Error('Entry is not balanced');
+    }
+
+    const period = await this.prisma.contabilidadPeriod.findFirst({
+      where: { applicationId, id: input.periodId },
+    });
+    if (!period) throw new Error('Period not found');
+    if (period.status !== 'OPEN') throw new Error('Period is closed');
+
+    const entryNumber = await this.nextEntryNumber(applicationId, input.periodId);
+    const entryDate = this.parseEntryDate(input.entryDate);
+
+    const row = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.contabilidadJournalEntry.create({
+        data: {
+          applicationId,
+          periodId: input.periodId,
+          entryNumber,
+          entryDate,
+          description: input.description.trim(),
+          status: CONTABILIDAD_JOURNAL_STATUS.POSTED,
+          totalDebit: totals.debit,
+          totalCredit: totals.credit,
+          createdBy: postedBy ?? null,
+          postedBy: postedBy ?? null,
+          postedAt: new Date(),
+          lines: {
+            create: normalized.map((line, index) => ({
+              lineNumber: index + 1,
+              accountId: line.accountId,
+              debit: line.debit,
+              credit: line.credit,
+              costCenterId: line.costCenterId,
+              auxiliaryRuc: line.auxiliaryRuc,
+              auxiliaryDoc: line.auxiliaryDoc,
+              description: line.description,
+            })),
+          },
+        },
+        include: {
+          lines: { orderBy: { lineNumber: 'asc' }, include: lineInclude },
+          _count: { select: { lines: true } },
+        },
+      });
+
+      const accountIds = normalized.map((line) => line.accountId);
+      await tx.contabilidadAccount.updateMany({
+        where: { applicationId, id: { in: accountIds } },
+        data: { hasMovements: true },
+      });
+
+      return created;
+    });
+
+    return ContabilidadJournalPrismaMapper.toDetail(row);
+  }
+
   private async nextEntryNumber(applicationId: string, periodId: string): Promise<number> {
     const last = await this.prisma.contabilidadJournalEntry.findFirst({
       where: { applicationId, periodId },
