@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma.service';
 import { ProduccionConfigPrismaMapper, formatProduccionNumberingCode } from '../mappers/produccion-config-prisma.mapper';
 import {
   PRODUCCION_DEFAULT_FURNITURE_CATEGORIES,
+  PRODUCCION_DEFAULT_MATERIAL_CATEGORIES,
   PRODUCCION_DEFAULT_NUMBERING,
   PRODUCCION_DEFAULT_PRODUCTION_STAGES,
   PRODUCCION_DEFAULT_UNITS,
@@ -13,6 +14,7 @@ import type {
   ProduccionAppSettingsDto,
   ProduccionConfigRepository,
   ProduccionFurnitureCategoryInput,
+  ProduccionMaterialCategoryInput,
   ProduccionProductionStageInput,
   ProduccionUnitInput,
 } from '@domain/repositories/produccion-config.repository';
@@ -38,6 +40,19 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
     if (catCount === 0) {
       await this.prisma.produccionFurnitureCategoryConfig.createMany({
         data: PRODUCCION_DEFAULT_FURNITURE_CATEGORIES.map((c) => ({
+          applicationId,
+          code: c.code,
+          label: c.label,
+          sortOrder: c.sortOrder,
+          isActive: true,
+        })),
+      });
+    }
+
+    const matCatCount = await this.prisma.produccionMaterialCategoryConfig.count({ where: { applicationId } });
+    if (matCatCount === 0) {
+      await this.prisma.produccionMaterialCategoryConfig.createMany({
+        data: PRODUCCION_DEFAULT_MATERIAL_CATEGORIES.map((c) => ({
           applicationId,
           code: c.code,
           label: c.label,
@@ -164,6 +179,31 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
       await tx.produccionFurnitureCategoryConfig.deleteMany({ where: { applicationId } });
       if (rows.length) {
         await tx.produccionFurnitureCategoryConfig.createMany({
+          data: rows.map((r, i) => ({
+            applicationId,
+            code: r.code.trim(),
+            label: r.label.trim(),
+            sortOrder: typeof r.sortOrder === 'number' ? r.sortOrder : i,
+            isActive: r.isActive !== false,
+          })),
+        });
+      }
+    });
+  }
+
+  async listMaterialCategories(applicationId: string) {
+    const rows = await this.prisma.produccionMaterialCategoryConfig.findMany({
+      where: { applicationId },
+      orderBy: { sortOrder: 'asc' },
+    });
+    return rows.map((r) => ProduccionConfigPrismaMapper.toMaterialCategory(r));
+  }
+
+  async replaceMaterialCategories(applicationId: string, rows: ProduccionMaterialCategoryInput[]) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.produccionMaterialCategoryConfig.deleteMany({ where: { applicationId } });
+      if (rows.length) {
+        await tx.produccionMaterialCategoryConfig.createMany({
           data: rows.map((r, i) => ({
             applicationId,
             code: r.code.trim(),

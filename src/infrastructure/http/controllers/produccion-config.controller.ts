@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ProduccionConfigOperationsService } from '../../../application/services/produccion-config-operations.service';
 import type {
   ProduccionFurnitureCategoryInput,
+  ProduccionMaterialCategoryInput,
   ProduccionProductionStageInput,
   ProduccionUnitInput,
 } from '@domain/repositories/produccion-config.repository';
@@ -37,6 +38,14 @@ export class ProduccionConfigController {
     @Body() body: { categories: ProduccionFurnitureCategoryInput[] },
   ) {
     return this.produccionConfig.replaceFurnitureCategories(applicationSlug, body);
+  }
+
+  @Put('material-categories')
+  replaceMaterialCategories(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body() body: { categories: ProduccionMaterialCategoryInput[] },
+  ) {
+    return this.produccionConfig.replaceMaterialCategories(applicationSlug, body);
   }
 
   @Put('production-stages')

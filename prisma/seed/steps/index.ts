@@ -23,6 +23,8 @@ export { seedVentasMenus } from './menus-ventas';
 export { seedInteriorismoMenus } from './menus-interiorismo';
 export { seedArquitecturaMenus } from './menus-arquitectura';
 export { seedProduccionMenus } from './menus-produccion';
+export { seedProduccionConfig } from './demo-produccion-config';
+export { seedProduccionClients } from './demo-produccion-clients';
 export { seedProduccionFurniture } from './demo-produccion-furniture';
 export { seedProduccionCosts } from './demo-produccion-costs';
 export { seedProduccionInventory } from './demo-produccion-inventory';

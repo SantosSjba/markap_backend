@@ -51,6 +51,7 @@ model Application {
   produccionDeliveries       ProduccionDelivery[]
   produccionAppSettings      ProduccionAppSettings?
   produccionFurnitureCategories ProduccionFurnitureCategoryConfig[]
+  produccionMaterialCategories  ProduccionMaterialCategoryConfig[]
   produccionProductionStages ProduccionProductionStageConfig[]
   produccionUnitConfigs      ProduccionUnitConfig[]
   produccionNumberingSeries  ProduccionNumberingSeries[]

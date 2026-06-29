@@ -9,9 +9,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiProduces, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
   AcceptProduccionQuotationUseCase,
@@ -23,6 +25,7 @@ import {
   RejectProduccionQuotationUseCase,
   SendProduccionQuotationUseCase,
   UpdateProduccionQuotationUseCase,
+  RenderProduccionQuotationHtmlUseCase,
 } from '../../../application/use-cases/produccion-sales';
 import type { ProduccionQuotationStatus } from '@domain/repositories/produccion-sales.repository';
 import {
@@ -45,6 +48,7 @@ export class ProduccionQuotationsController {
     private readonly rejectUc: RejectProduccionQuotationUseCase,
     private readonly convertUc: ConvertProduccionQuotationToOrderUseCase,
     private readonly deleteUc: DeleteProduccionQuotationUseCase,
+    private readonly renderPdfUc: RenderProduccionQuotationHtmlUseCase,
   ) {}
 
   @Get()
@@ -76,6 +80,19 @@ export class ProduccionQuotationsController {
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     return this.createUc.execute(applicationSlug ?? 'produccion', dto);
+  }
+
+  @Get(':id/pdf')
+  @ApiOperation({ summary: 'Vista imprimible HTML de cotización (exportar a PDF)' })
+  @ApiProduces('text/html')
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async quotationPdfHtml(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Res() res: Response,
+  ) {
+    const html = await this.renderPdfUc.execute(id, applicationSlug ?? 'produccion');
+    res.type('html').send(html);
   }
 
   @Get(':id')

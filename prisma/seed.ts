@@ -24,6 +24,8 @@ import {
   seedInteriorismoMenus,
   seedArquitecturaMenus,
   seedProduccionMenus,
+  seedProduccionConfig,
+  seedProduccionClients,
   seedProduccionFurniture,
   seedProduccionCosts,
   seedProduccionInventory,
@@ -66,6 +68,8 @@ async function main() {
   await seedInteriorismoExecution(prisma, appIdBySlug);
   await seedInteriorismoFinance(prisma, appIdBySlug);
   await seedInteriorismoCalendar(prisma, appIdBySlug);
+  await seedProduccionConfig(prisma, appIdBySlug);
+  await seedProduccionClients(prisma, appIdBySlug, adminUser);
   await seedProduccionFurniture(prisma, appIdBySlug);
   await seedProduccionCosts(prisma, appIdBySlug);
   await seedProduccionInventory(prisma, appIdBySlug);

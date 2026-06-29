@@ -55,6 +55,11 @@ export {
   SAMPLE_INTERIOR_RESIDENTIAL_CLIENT,
 } from './sample-interiorismo';
 export {
+  SAMPLE_PRODUCCION_CORPORATE_CLIENT,
+  SAMPLE_PRODUCCION_RESIDENTIAL_CLIENT,
+  PRODUCCION_CONFIG_DEFAULTS,
+} from './sample-produccion';
+export {
   VENTAS_SAMPLE_BUYER_CLIENTS,
   VENTAS_SAMPLE_EXTERNAL_AGENT,
 } from './sample-ventas';

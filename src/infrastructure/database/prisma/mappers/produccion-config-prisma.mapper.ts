@@ -1,5 +1,6 @@
 import type {
   ProduccionFurnitureCategoryDto,
+  ProduccionMaterialCategoryDto,
   ProduccionNumberingSeriesDto,
   ProduccionProductionStageDto,
   ProduccionUnitDto,
@@ -27,6 +28,22 @@ export const ProduccionConfigPrismaMapper = {
     sortOrder: number;
     isActive: boolean;
   }): ProduccionFurnitureCategoryDto {
+    return {
+      id: row.id,
+      code: row.code,
+      label: row.label,
+      sortOrder: row.sortOrder,
+      isActive: row.isActive,
+    };
+  },
+
+  toMaterialCategory(row: {
+    id: string;
+    code: string;
+    label: string;
+    sortOrder: number;
+    isActive: boolean;
+  }): ProduccionMaterialCategoryDto {
     return {
       id: row.id,
       code: row.code,

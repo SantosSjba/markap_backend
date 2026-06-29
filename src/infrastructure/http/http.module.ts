@@ -257,6 +257,7 @@ import {
   UpdateProduccionDeliveryUseCase,
   UpdateProduccionOrderUseCase,
   UpdateProduccionQuotationUseCase,
+  RenderProduccionQuotationHtmlUseCase,
 } from '../../application/use-cases/produccion-sales';
 
 import { GetProduccionReportsDashboardUseCase } from '../../application/use-cases/produccion-reports';
@@ -671,6 +672,7 @@ import {
     RejectProduccionQuotationUseCase,
     ConvertProduccionQuotationToOrderUseCase,
     DeleteProduccionQuotationUseCase,
+    RenderProduccionQuotationHtmlUseCase,
     ListProduccionOrdersUseCase,
     GetProduccionOrderByIdUseCase,
     CreateProduccionOrderUseCase,

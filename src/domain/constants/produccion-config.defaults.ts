@@ -30,6 +30,14 @@ export const PRODUCCION_DEFAULT_FURNITURE_CATEGORIES = [
   { code: 'otro', label: 'Otro', sortOrder: 5 },
 ] as const;
 
+export const PRODUCCION_DEFAULT_MATERIAL_CATEGORIES = [
+  { code: 'tableros', label: 'Tableros', sortOrder: 0 },
+  { code: 'herrajes', label: 'Herrajes', sortOrder: 1 },
+  { code: 'adhesivos', label: 'Adhesivos', sortOrder: 2 },
+  { code: 'acabados', label: 'Acabados', sortOrder: 3 },
+  { code: 'otros', label: 'Otros', sortOrder: 4 },
+] as const;
+
 export const PRODUCCION_DEFAULT_UNITS = [
   { code: 'und', label: 'Unidad (und)', sortOrder: 0 },
   { code: 'plancha', label: 'Plancha', sortOrder: 1 },

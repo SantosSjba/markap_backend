@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import type {
+  ProduccionReportsActivityItem,
   ProduccionReportsDashboardDto,
   ProduccionReportsFilters,
   ProduccionReportsRepository,
@@ -37,6 +38,45 @@ function dayEndUtc(isoDate: string): Date {
 
 function isLowStock(stock: number, min: number): boolean {
   return min > 0 && stock <= min;
+}
+
+const WO_ACTIVITY_TITLES: Record<string, string> = {
+  PENDING: 'OT pendiente',
+  IN_PROGRESS: 'Orden en producción',
+  COMPLETED: 'OT completada',
+  CANCELLED: 'OT cancelada',
+};
+
+const DELIVERY_ACTIVITY_TITLES: Record<string, string> = {
+  SCHEDULED: 'Entrega programada',
+  IN_TRANSIT: 'Entrega en tránsito',
+  DELIVERED: 'Entrega realizada',
+  CANCELLED: 'Entrega cancelada',
+};
+
+const MOVEMENT_ACTIVITY_TITLES: Record<string, string> = {
+  IN: 'Ingreso de insumos',
+  OUT: 'Salida de inventario',
+  ADJUST: 'Ajuste de stock',
+};
+
+function formatStageLabel(stageKey: string | null | undefined): string | null {
+  if (!stageKey?.trim()) return null;
+  const labels: Record<string, string> = {
+    planificacion: 'planificación',
+    corte: 'corte',
+    ensamble: 'ensamble',
+    acabados: 'acabados',
+  };
+  return labels[stageKey] ?? stageKey;
+}
+
+function buildWorkOrderActivityTitle(status: string, currentStageKey: string | null): string {
+  if (status === 'IN_PROGRESS') {
+    const stage = formatStageLabel(currentStageKey);
+    return stage ? `Orden en ${stage}` : 'Orden en producción';
+  }
+  return WO_ACTIVITY_TITLES[status] ?? 'Orden de trabajo';
 }
 
 function estimateFurnitureCost(row: {
@@ -121,6 +161,9 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
       pendingOrders,
       activeWorkOrders,
       pendingPurchaseOrders,
+      recentWorkOrders,
+      recentDeliveries,
+      recentMovements,
     ] = await Promise.all([
       this.prisma.produccionWorkOrder.count({
         where: { ...woBase, createdAt: { gte: start, lte: end } },
@@ -237,6 +280,38 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
           status: { in: ['DRAFT', 'SENT', 'PARTIAL'] },
         },
       }),
+      this.prisma.produccionWorkOrder.findMany({
+        where: { applicationId: app.id },
+        orderBy: { updatedAt: 'desc' },
+        take: 6,
+        include: {
+          client: { select: { fullName: true } },
+          lines: {
+            take: 1,
+            orderBy: { id: 'asc' },
+            include: { furniture: { select: { name: true } } },
+          },
+        },
+      }),
+      this.prisma.produccionDelivery.findMany({
+        where: { applicationId: app.id },
+        orderBy: { updatedAt: 'desc' },
+        take: 6,
+        include: {
+          order: {
+            select: {
+              code: true,
+              client: { select: { fullName: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.produccionStockMovement.findMany({
+        where: { material: { applicationId: app.id } },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+        include: { material: { select: { id: true, code: true, name: true } } },
+      }),
     ]);
 
     let lowStockCount = 0;
@@ -318,6 +393,44 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
         ? round2(marginsWithValue.reduce((s, m) => s + m, 0) / marginsWithValue.length)
         : null;
 
+    const recentActivity: ProduccionReportsActivityItem[] = [
+      ...recentWorkOrders.map((wo) => {
+        const furnitureName = wo.lines[0]?.furniture?.name;
+        const clientName = wo.client?.fullName;
+        const suffix = furnitureName ?? clientName ?? '';
+        return {
+          type: 'WORK_ORDER' as const,
+          entityId: wo.id,
+          title: buildWorkOrderActivityTitle(wo.status, wo.currentStageKey),
+          detail: suffix ? `${wo.code} — ${suffix}` : wo.code,
+          occurredAt: wo.updatedAt.toISOString(),
+        };
+      }),
+      ...recentDeliveries.map((d) => {
+        const clientName = d.order.client?.fullName;
+        const suffix = clientName ? ` — ${clientName}` : '';
+        return {
+          type: 'DELIVERY' as const,
+          entityId: d.id,
+          title: DELIVERY_ACTIVITY_TITLES[d.status] ?? 'Entrega',
+          detail: `${d.code} · Pedido ${d.order.code}${suffix}`,
+          occurredAt: (d.deliveredAt ?? d.updatedAt).toISOString(),
+        };
+      }),
+      ...recentMovements.map((m) => ({
+        type: 'STOCK_MOVEMENT' as const,
+        entityId: m.id,
+        materialId: m.material.id,
+        title: MOVEMENT_ACTIVITY_TITLES[m.movementType] ?? 'Movimiento de stock',
+        detail: m.reference?.trim()
+          ? `${m.material.name} — ${m.reference.trim()}`
+          : `${m.material.name} (${m.material.code})`,
+        occurredAt: m.createdAt.toISOString(),
+      })),
+    ]
+      .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+      .slice(0, 8);
+
     return {
       applicationSlug: slug,
       range,
@@ -365,6 +478,7 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
         activeWorkOrders,
         pendingPurchaseOrders,
       },
+      recentActivity,
     };
   }
 }

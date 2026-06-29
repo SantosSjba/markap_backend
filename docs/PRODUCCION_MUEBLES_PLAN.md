@@ -1,4 +1,4 @@
-# Plan de desarrollo — Producción de Muebles (`produccion`)
+|# Plan de desarrollo — Producción de Muebles (`produccion`)
 
 > **Objetivo:** Construir el módulo de fabricación de muebles como **procesos de trabajo** (no tablas sueltas), alineado al flujo real del negocio y al menú ya definido en MARKAP.
 >
@@ -39,16 +39,16 @@ Reportes · Configuración
 
 | Sección | Rutas | Estado UI |
 |---------|-------|-----------|
-| Dashboard | `/produccion` | Shell con KPIs estáticos |
+| Dashboard | `/produccion` | **Funcional** (KPIs + actividad API) |
 | Clientes | `/produccion/clientes`, `/nuevo`, `/:id`, `/:id/editar` | **Funcional** |
-| Catálogo de muebles | `/produccion/catalogo`, `/nuevo` | Placeholder |
+| Catálogo de muebles | `/produccion/catalogo`, `/nuevo` | **Funcional** |
 | Producción | OT, en proceso, etapas, terminados | **Funcional** |
 | Inventario | materiales, stock, movimientos | **Funcional** |
 | Compras | proveedores, órdenes de compra | **Funcional** |
 | Ventas | cotizaciones, pedidos, entregas | **Funcional** |
 | Costos | costeo, mano de obra, gastos | **Funcional** |
 | Reportes | `/produccion/reportes` | **Funcional** |
-| Configuración | `/produccion/configuracion` | Placeholder |
+| Configuración | `/produccion/configuracion` | **Funcional** |
 
 ---
 
@@ -73,13 +73,13 @@ Reportes · Configuración
 | 1 | Clientes | ✅ Hecho |
 | 2 | Catálogo de muebles | ✅ Hecho |
 | 3 | Costos | ✅ Hecho |
-| 4 | Inventario | ⬜ Pendiente |
-| 5 | Compras | ⬜ Pendiente |
-| 6 | Producción (taller) | ⬜ Pendiente |
-| 7 | Ventas | ⬜ Pendiente |
-| 8 | Reportes | ⬜ Pendiente |
-| 9 | Configuración | ⬜ Pendiente |
-| 10 | Dashboard integrado | ⬜ Pendiente |
+| 4 | Inventario | ✅ Hecho |
+| 5 | Compras | ✅ Hecho |
+| 6 | Producción (taller) | ✅ Hecho |
+| 7 | Ventas | ✅ Hecho |
+| 8 | Reportes | ✅ Hecho |
+| 9 | Configuración | ✅ Hecho |
+| 10 | Dashboard integrado | ✅ Hecho |
 
 ---
 
@@ -99,7 +99,7 @@ Reportes · Configuración
 ### Backend
 
 - [x] `applicationSlug=produccion` en listado / stats / create (`RESIDENTIAL` | `CORPORATE`)
-- [ ] Seed demo: 2–3 clientes de muebles (opcional)
+- [x] Seed demo: 2–3 clientes de muebles (opcional)
 
 ### Frontend (`features/clientes`)
 
@@ -111,8 +111,8 @@ Reportes · Configuración
 
 ### Integración futura
 
-- [ ] Enlace desde ficha cliente → cotizaciones (cuando exista Fase 7)
-- [ ] Enlace desde ficha cliente → pedidos (cuando exista Fase 7)
+- [x] Enlace desde ficha cliente → cotizaciones (cuando exista Fase 7)
+- [x] Enlace desde ficha cliente → pedidos (cuando exista Fase 7)
 
 ---
 
@@ -179,7 +179,7 @@ Reportes · Configuración
 - [x] Materiales: listado + alta/edición
 - [x] Stock: vista por material, alertas bajo mínimo
 - [x] Movimientos: kardex con filtros
-- [ ] Integración: salida de stock al consumir en OT (Fase 6)
+- [x] Integración: salida de stock al consumir en OT (Fase 6)
 
 ---
 
@@ -246,7 +246,7 @@ Reportes · Configuración
 - [x] **Pedidos**: listado, detalle, confirmación, conversión desde cotización, generar OT
 - [x] **Entregas**: programación y confirmación
 - [x] Enlaces desde ficha de cliente (pestañas con filtro `clientId`)
-- [ ] PDF cotización (futuro)
+- [x] PDF cotización (`GET /produccion-quotations/:id/pdf` + botón Exportar PDF)
 
 ---
 
@@ -260,13 +260,14 @@ Reportes · Configuración
 
 - [x] Pantalla reportes con filtros (fecha, categoría, cliente)
 - [x] Export Excel según reporte
-- [ ] Gráficos básicos (opcional / futuro)
+- [x] Gráficos básicos (OT por estado, stock por categoría, actividad comercial)
 
 ---
 
 ## Fase 9 — Configuración
 
 - [x] Categorías de muebles
+- [x] Categorías de materiales (inventario)
 - [x] Etapas de producción (nombres, orden)
 - [x] Unidades de medida
 - [x] Parámetros por defecto (IGV costeo, % desperdicio madera, etc.)
@@ -276,9 +277,9 @@ Reportes · Configuración
 
 ## Fase 10 — Dashboard integrado
 
-- [ ] KPIs reales desde API (OT activas, en planta, stock alerta, OC pendientes, cotizaciones abiertas)
-- [ ] Actividad reciente (últimas OT, entregas, movimientos)
-- [ ] Accesos rápidos alineados al flujo (ya parcialmente hecho)
+- [x] KPIs reales desde API (OT activas, en planta, stock alerta, OC pendientes, cotizaciones abiertas)
+- [x] Actividad reciente (últimas OT, entregas, movimientos)
+- [x] Accesos rápidos alineados al flujo (ya parcialmente hecho)
 
 ---
 
@@ -290,7 +291,7 @@ Reportes · Configuración
        →  7 Ventas  →  8 Reportes  →  9 Config  →  10 Dashboard
 ```
 
-**Siguiente paso:** Fase 10 — Dashboard integrado.
+**Módulo Producción:** fases 0–10 completadas. Integración config→catálogo/inventario y seed demo (config + clientes).
 
 ---
 

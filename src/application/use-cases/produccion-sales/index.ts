@@ -25,3 +25,4 @@ export {
   CancelProduccionDeliveryUseCase,
   DeleteProduccionDeliveryUseCase,
 } from './produccion-sales.use-cases';
+export { RenderProduccionQuotationHtmlUseCase } from './render-produccion-quotation-html.use-case';

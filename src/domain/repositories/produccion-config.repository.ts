@@ -14,6 +14,14 @@ export interface ProduccionFurnitureCategoryDto {
   isActive: boolean;
 }
 
+export interface ProduccionMaterialCategoryDto {
+  id: string;
+  code: string;
+  label: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 export interface ProduccionProductionStageDto {
   id: string;
   stageKey: string;
@@ -46,6 +54,13 @@ export interface ProduccionFurnitureCategoryInput {
   isActive: boolean;
 }
 
+export interface ProduccionMaterialCategoryInput {
+  code: string;
+  label: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 export interface ProduccionProductionStageInput {
   stageKey: string;
   label: string;
@@ -66,6 +81,8 @@ export interface ProduccionConfigRepository {
   updateSettings(applicationId: string, data: Partial<ProduccionAppSettingsDto>): Promise<ProduccionAppSettingsDto>;
   listFurnitureCategories(applicationId: string): Promise<ProduccionFurnitureCategoryDto[]>;
   replaceFurnitureCategories(applicationId: string, rows: ProduccionFurnitureCategoryInput[]): Promise<void>;
+  listMaterialCategories(applicationId: string): Promise<ProduccionMaterialCategoryDto[]>;
+  replaceMaterialCategories(applicationId: string, rows: ProduccionMaterialCategoryInput[]): Promise<void>;
   listProductionStages(applicationId: string): Promise<ProduccionProductionStageDto[]>;
   replaceProductionStages(applicationId: string, rows: ProduccionProductionStageInput[]): Promise<void>;
   listUnits(applicationId: string): Promise<ProduccionUnitDto[]>;

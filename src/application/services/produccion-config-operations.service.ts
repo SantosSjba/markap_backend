@@ -9,6 +9,7 @@ import {
 import type {
   ProduccionConfigRepository,
   ProduccionFurnitureCategoryInput,
+  ProduccionMaterialCategoryInput,
   ProduccionProductionStageInput,
   ProduccionUnitInput,
 } from '@domain/repositories/produccion-config.repository';
@@ -42,15 +43,17 @@ export class ProduccionConfigOperationsService {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.config.ensureDefaults(applicationId);
 
-    const [settings, furnitureCategories, productionStages, units, numbering] = await Promise.all([
+    const [settings, furnitureCategories, materialCategories, productionStages, units, numbering] =
+      await Promise.all([
       this.config.getSettings(applicationId),
       this.config.listFurnitureCategories(applicationId),
+      this.config.listMaterialCategories(applicationId),
       this.config.listProductionStages(applicationId),
       this.config.listUnits(applicationId),
       this.config.listNumberingSeries(applicationId),
     ]);
 
-    return { settings, furnitureCategories, productionStages, units, numbering };
+    return { settings, furnitureCategories, materialCategories, productionStages, units, numbering };
   }
 
   async updateSettings(
@@ -90,6 +93,28 @@ export class ProduccionConfigOperationsService {
       })),
     );
     return this.config.listFurnitureCategories(applicationId);
+  }
+
+  async replaceMaterialCategories(
+    applicationSlug: string | undefined,
+    body: { categories: ProduccionMaterialCategoryInput[] },
+  ) {
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const categories = body.categories ?? [];
+    if (!categories.length) throw new BadRequestException('Debe incluir al menos una categoría.');
+    if (!categories.every((c) => c.code?.trim() && c.label?.trim())) {
+      throw new BadRequestException('Cada categoría requiere código y etiqueta.');
+    }
+    await this.config.replaceMaterialCategories(
+      applicationId,
+      categories.map((c, i) => ({
+        code: c.code.trim(),
+        label: c.label.trim(),
+        sortOrder: typeof c.sortOrder === 'number' ? c.sortOrder : i,
+        isActive: c.isActive !== false,
+      })),
+    );
+    return this.config.listMaterialCategories(applicationId);
   }
 
   async replaceProductionStages(

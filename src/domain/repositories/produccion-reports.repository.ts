@@ -74,6 +74,17 @@ export interface ProduccionReportsKpisDto {
   pendingPurchaseOrders: number;
 }
 
+export type ProduccionReportsActivityType = 'WORK_ORDER' | 'DELIVERY' | 'STOCK_MOVEMENT';
+
+export interface ProduccionReportsActivityItem {
+  type: ProduccionReportsActivityType;
+  entityId: string;
+  title: string;
+  detail: string;
+  occurredAt: string;
+  materialId?: string;
+}
+
 export interface ProduccionReportsDashboardDto {
   applicationSlug: string;
   range: ProduccionReportsDateRange;
@@ -83,6 +94,7 @@ export interface ProduccionReportsDashboardDto {
   inventario: ProduccionReportsInventarioDto;
   rentabilidad: ProduccionReportsRentabilidadDto;
   kpis: ProduccionReportsKpisDto;
+  recentActivity: ProduccionReportsActivityItem[];
 }
 
 export interface ProduccionReportsRepository {
