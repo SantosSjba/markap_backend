@@ -12,6 +12,7 @@ export * from './contabilidad-treasury-operations.service';
 export * from './contabilidad-purchases-operations.service';
 export * from './contabilidad-sales-operations.service';
 export * from './contabilidad-taxes-operations.service';
+export * from './contabilidad-ple-operations.service';
 export * from './ventas-compliance-operations.service';
 export * from './notifications.service';
 export * from './rental-alerts.scheduler';

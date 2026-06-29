@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-06-29  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 8 (tributos) completada — Fase 9 pendiente
+> **Estado general:** Fase 9 (libros electrónicos y PLE) completada — Fase 10 pendiente
 
 ---
 
@@ -67,7 +67,7 @@ Integración con apps MARKAP (alquileres, ventas, producción, interiorismo…)
 | Compras | facturas, NC, proveedores, pagos | **Implementado** |
 | Ventas | facturas, boletas, NC, clientes, cobros | **Placeholder** |
 | Tributos | IGV, detracciones, retenciones, percepciones | ✅ |
-| Libros electrónicos | registro compras/ventas, diario, mayor, caja, bancos, PLE | **Placeholder** |
+| Libros electrónicos | registro compras/ventas, diario, mayor, caja, bancos, PLE | ✅ |
 | Reportes financieros | balance, ER, flujos, KPIs | **Placeholder** |
 | Configuración | `/contabilidad/configuracion` | **Placeholder** |
 
@@ -103,7 +103,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 6 | Compras contables | ✅ Completa |
 | 7 | Ventas contables | ✅ Completa |
 | 8 | Tributos (IGV, detracciones, retenciones) | ✅ Completa |
-| 9 | Libros electrónicos y PLE | ⬜ Pendiente |
+| 9 | Libros electrónicos y PLE | ✅ Completa |
 | 10 | Cierre mensual y EEFF | ⬜ Pendiente |
 | 11 | Reportes y dashboard | ⬜ Pendiente |
 | 12 | Integración con apps MARKAP | ⬜ Pendiente |
@@ -294,22 +294,22 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Servicio generación PLE por periodo:
-  - [ ] 5.1 / 5.2 Libro Diario y Plan de Cuentas
-  - [ ] 6.1 Mayor
-  - [ ] 8.1 Registro de Compras
-  - [ ] 8.2 Registro de Compras (no domiciliados) — si aplica
-  - [ ] 14.1 Registro de Ventas
-  - [ ] 1.1 Caja y Bancos (libro caja / bancos según diseño)
-- [ ] Validador: cuadre, campos obligatorios, formato pipe/columnas
-- [ ] API `GET /contabilidad-ple/:period/:bookCode`
+- [x] Servicio generación PLE por periodo:
+  - [x] 5.1 / 5.2 Libro Diario (`050100`) y Plan de Cuentas (`050200`)
+  - [x] 6.1 Mayor (`060100`)
+  - [x] 8.1 Registro de Compras (`080100`)
+  - [ ] 8.2 Registro de Compras (no domiciliados) — pendiente si aplica
+  - [x] 14.1 Registro de Ventas (`140100`)
+  - [x] 1.1 Caja y Bancos (`010100`)
+- [x] Validador: cuadre asientos, campos obligatorios, formato pipe
+- [x] API `/contabilidad-ple` (books, generate, download, consulta mayor)
 
 ### Frontend (`features/libros-e`)
 
-- [ ] Selector periodo + libros a generar
-- [ ] Descarga ZIP PLE
-- [ ] Log de errores de validación pre-export
-- [ ] Vistas consulta: libro diario, mayor, registros (read-only desde datos contables)
+- [x] Selector periodo + libros a generar (PLE)
+- [x] Descarga múltiple archivos `.txt` PLE
+- [x] Log de errores/advertencias pre-export
+- [x] Vistas consulta: mayor, registros compras/ventas, caja, bancos; diario → asientos
 
 ---
 
