@@ -2,6 +2,7 @@ import type {
   ContabilidadCustomerDto,
   ContabilidadSalesCollectionDto,
   ContabilidadSalesCreditNoteDto,
+  ContabilidadSalesDebitNoteDto,
   ContabilidadSalesInvoiceDto,
 } from '@domain/repositories/contabilidad-sales.repository';
 import { formatPenAmount } from '@domain/utils/contabilidad-journal-amounts';
@@ -117,6 +118,46 @@ export const ContabilidadSalesPrismaMapper = {
     customer: { ruc: string; businessName: string };
     invoice?: { series: string; number: string } | null;
   }): ContabilidadSalesCreditNoteDto {
+    return {
+      id: row.id,
+      customerId: row.customerId,
+      customerRuc: row.customer.ruc,
+      customerName: row.customer.businessName,
+      invoiceId: row.invoiceId,
+      invoiceFullNumber: row.invoice ? fullDocNumber(row.invoice.series, row.invoice.number) : null,
+      periodId: row.periodId,
+      series: row.series,
+      number: row.number,
+      fullNumber: fullDocNumber(row.series, row.number),
+      issueDate: toIsoDate(row.issueDate),
+      taxableBase: formatPenAmount(Number(row.taxableBase)),
+      igvAmount: formatPenAmount(Number(row.igvAmount)),
+      totalAmount: formatPenAmount(Number(row.totalAmount)),
+      reason: row.reason,
+      status: row.status,
+      journalEntryId: row.journalEntryId,
+      createdAt: row.createdAt.toISOString(),
+    };
+  },
+
+  toDebitNote(row: {
+    id: string;
+    customerId: string;
+    invoiceId: string | null;
+    periodId: string;
+    series: string;
+    number: string;
+    issueDate: Date;
+    taxableBase: { toString(): string } | number;
+    igvAmount: { toString(): string } | number;
+    totalAmount: { toString(): string } | number;
+    reason: string | null;
+    status: string;
+    journalEntryId: string | null;
+    createdAt: Date;
+    customer: { ruc: string; businessName: string };
+    invoice?: { series: string; number: string } | null;
+  }): ContabilidadSalesDebitNoteDto {
     return {
       id: row.id,
       customerId: row.customerId,

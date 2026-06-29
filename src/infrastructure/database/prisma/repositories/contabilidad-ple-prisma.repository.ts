@@ -5,6 +5,8 @@ import {
   isValidPleBookCode,
 } from '@domain/constants/contabilidad-ple.defaults';
 import { CONTABILIDAD_JOURNAL_STATUS } from '@domain/constants/contabilidad-journal.defaults';
+import { CONTABILIDAD_ACCOUNT_TYPES } from '@domain/constants/contabilidad-pcge.defaults';
+import { accountBalanceFromTotals } from '@domain/constants/contabilidad-financial.defaults';
 import { CONTABILIDAD_PURCHASE_STATUS } from '@domain/constants/contabilidad-purchases.defaults';
 import { CONTABILIDAD_SALES_STATUS } from '@domain/constants/contabilidad-sales.defaults';
 import { CONTABILIDAD_TREASURY_MOVEMENT_TYPE } from '@domain/constants/contabilidad-treasury.defaults';
@@ -255,6 +257,12 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       case CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS:
         dataLines = await this.buildRegistroCompras(ctx, issues);
         break;
+      case CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_NO_DOMIC:
+        dataLines = await this.buildRegistroComprasNoDomic(ctx, issues);
+        break;
+      case CONTABILIDAD_PLE_BOOK_CODE.INVENTARIOS_BALANCES:
+        dataLines = await this.buildInventariosBalances(ctx, issues);
+        break;
       case CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS:
         dataLines = await this.buildRegistroVentas(ctx, issues);
         break;
@@ -400,6 +408,162 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         inv.status,
       ]);
     });
+  }
+
+  private async buildRegistroComprasNoDomic(
+    ctx: PeriodCtx,
+    issues: ContabilidadPleValidationIssue[],
+  ): Promise<string[]> {
+    const invoices = await this.prisma.contabilidadPurchaseInvoice.findMany({
+      where: {
+        applicationId: ctx.applicationId,
+        periodId: ctx.periodId,
+        status: { not: CONTABILIDAD_PURCHASE_STATUS.CANCELLED },
+        supplier: {
+          OR: [{ isNonDomiciled: true }, { countryCode: { not: 'PE' } }],
+        },
+      },
+      include: { supplier: { select: { ruc: true, businessName: true, countryCode: true } } },
+      orderBy: [{ issueDate: 'asc' }, { series: 'asc' }, { number: 'asc' }],
+    });
+
+    return invoices.map((inv) => {
+      if (!inv.supplier.ruc) {
+        issues.push({
+          severity: 'error',
+          bookCode: CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_NO_DOMIC,
+          code: 'MISSING_RUC',
+          message: `Factura ${inv.series}-${inv.number} sin RUC proveedor`,
+        });
+      }
+      return pleJoin([
+        'M',
+        pleFormatDate(inv.issueDate.toISOString().slice(0, 10)),
+        inv.documentType,
+        inv.series,
+        inv.number,
+        inv.supplier.ruc,
+        inv.supplier.businessName,
+        inv.supplier.countryCode,
+        inv.taxAffectation,
+        pleFormatAmount(inv.taxableBase),
+        pleFormatAmount(inv.igvAmount),
+        pleFormatAmount(inv.totalAmount),
+        inv.status,
+      ]);
+    });
+  }
+
+  private async buildInventariosBalances(
+    ctx: PeriodCtx,
+    issues: ContabilidadPleValidationIssue[],
+  ): Promise<string[]> {
+    const periodIds = await this.prisma.contabilidadPeriod.findMany({
+      where: {
+        applicationId: ctx.applicationId,
+        OR: [{ year: { lt: ctx.year } }, { year: ctx.year, month: { lte: ctx.month } }],
+      },
+      select: { id: true },
+    });
+
+    const grouped = await this.prisma.contabilidadJournalEntryLine.groupBy({
+      by: ['accountId'],
+      where: {
+        journalEntry: {
+          applicationId: ctx.applicationId,
+          periodId: { in: periodIds.map((p) => p.id) },
+          status: CONTABILIDAD_JOURNAL_STATUS.POSTED,
+        },
+      },
+      _sum: { debit: true, credit: true },
+    });
+
+    if (!grouped.length) return [];
+
+    const accountIds = grouped.map((g) => g.accountId);
+    const accounts = await this.prisma.contabilidadAccount.findMany({
+      where: {
+        applicationId: ctx.applicationId,
+        id: { in: accountIds },
+        accountType: {
+          in: [
+            CONTABILIDAD_ACCOUNT_TYPES.ASSET,
+            CONTABILIDAD_ACCOUNT_TYPES.LIABILITY,
+            CONTABILIDAD_ACCOUNT_TYPES.EQUITY,
+          ],
+        },
+        isMovement: true,
+      },
+      select: { id: true, code: true, name: true, accountType: true },
+    });
+    const accountMap = new Map(accounts.map((a) => [a.id, a]));
+
+    const snapshotRows: {
+      applicationId: string;
+      periodId: string;
+      accountId: string;
+      accountCode: string;
+      accountName: string;
+      balance: number;
+    }[] = [];
+
+    const lines: string[] = [];
+    for (const g of grouped) {
+      const acc = accountMap.get(g.accountId);
+      if (!acc) continue;
+      const balance = accountBalanceFromTotals(
+        acc.accountType,
+        Number(g._sum.debit ?? 0),
+        Number(g._sum.credit ?? 0),
+      );
+      if (Math.abs(balance) < 0.005) continue;
+
+      snapshotRows.push({
+        applicationId: ctx.applicationId,
+        periodId: ctx.periodId,
+        accountId: acc.id,
+        accountCode: acc.code,
+        accountName: acc.name,
+        balance: roundPenAmount(balance),
+      });
+
+      lines.push(
+        pleJoin([
+          'M',
+          acc.code,
+          acc.name,
+          acc.accountType,
+          pleFormatAmount(balance),
+        ]),
+      );
+    }
+
+    lines.sort((a, b) => a.localeCompare(b));
+
+    if (snapshotRows.length > 0) {
+      await this.prisma.contabilidadInventoryBalanceSnapshot.deleteMany({
+        where: { applicationId: ctx.applicationId, periodId: ctx.periodId },
+      });
+      await this.prisma.contabilidadInventoryBalanceSnapshot.createMany({
+        data: snapshotRows.map((row) => ({
+          applicationId: row.applicationId,
+          periodId: row.periodId,
+          accountId: row.accountId,
+          accountCode: row.accountCode,
+          accountName: row.accountName,
+          balance: row.balance,
+        })),
+      });
+    } else {
+      issues.push({
+        severity: 'warning',
+        bookCode: CONTABILIDAD_PLE_BOOK_CODE.INVENTARIOS_BALANCES,
+        code: 'NO_BALANCES',
+        message: 'No hay saldos de activo, pasivo o patrimonio para el periodo',
+      });
+    }
+
+    return lines;
   }
 
   private async buildRegistroVentas(ctx: PeriodCtx, issues: ContabilidadPleValidationIssue[]): Promise<string[]> {

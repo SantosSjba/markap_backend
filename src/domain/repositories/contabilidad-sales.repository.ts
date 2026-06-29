@@ -63,6 +63,27 @@ export interface ContabilidadSalesCreditNoteDto {
   createdAt: string;
 }
 
+export interface ContabilidadSalesDebitNoteDto {
+  id: string;
+  customerId: string;
+  customerRuc: string;
+  customerName: string;
+  invoiceId: string | null;
+  invoiceFullNumber: string | null;
+  periodId: string;
+  series: string;
+  number: string;
+  fullNumber: string;
+  issueDate: string;
+  taxableBase: string;
+  igvAmount: string;
+  totalAmount: string;
+  reason: string | null;
+  status: string;
+  journalEntryId: string | null;
+  createdAt: string;
+}
+
 export interface ContabilidadSalesCollectionDto {
   id: string;
   invoiceId: string;
@@ -97,6 +118,12 @@ export interface ListSalesInvoicesFilters {
 }
 
 export interface ListSalesCreditNotesFilters {
+  periodId?: string;
+  customerId?: string;
+  search?: string;
+}
+
+export interface ListSalesDebitNotesFilters {
   periodId?: string;
   customerId?: string;
   search?: string;
@@ -153,6 +180,18 @@ export interface CreateSalesCreditNoteInput {
   reason?: string | null;
 }
 
+export interface CreateSalesDebitNoteInput {
+  customerId: string;
+  invoiceId?: string | null;
+  periodId: string;
+  series: string;
+  number: string;
+  issueDate: string;
+  taxableBase: number | string;
+  igvAmount?: number | string;
+  reason?: string | null;
+}
+
 export interface CreateSalesCollectionInput {
   invoiceId: string;
   periodId: string;
@@ -190,6 +229,17 @@ export interface ContabilidadSalesRepository {
     igvPercent: number,
     createdBy?: string | null,
   ): Promise<ContabilidadSalesCreditNoteDto>;
+
+  listDebitNotes(
+    applicationId: string,
+    filters: ListSalesDebitNotesFilters,
+  ): Promise<ContabilidadSalesDebitNoteDto[]>;
+  createDebitNoteWithJournal(
+    applicationId: string,
+    input: CreateSalesDebitNoteInput,
+    igvPercent: number,
+    createdBy?: string | null,
+  ): Promise<ContabilidadSalesDebitNoteDto>;
 
   listCollections(
     applicationId: string,

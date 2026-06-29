@@ -21,6 +21,8 @@ model ContabilidadAccount {
   parent      ContabilidadAccount? @relation("ContabilidadAccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children    ContabilidadAccount[] @relation("ContabilidadAccountHierarchy")
   journalLines ContabilidadJournalEntryLine[]
+  templateLines ContabilidadJournalTemplateLine[]
+  inventorySnapshots ContabilidadInventoryBalanceSnapshot[]
   cashBoxes              ContabilidadCashBox[]
   bankAccounts           ContabilidadBankAccount[]
   treasuryOffsetMovements ContabilidadTreasuryMovement[] @relation("TreasuryOffsetAccount")

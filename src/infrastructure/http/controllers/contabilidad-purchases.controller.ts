@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadPurchasesOperationsService } from '../../../application/services/contabilidad-purchases-operations.service';
 import type {
   CreatePurchaseCreditNoteInput,
+  CreatePurchaseDebitNoteInput,
   CreatePurchaseInvoiceInput,
   CreatePurchasePaymentInput,
   CreateSupplierInput,
@@ -112,6 +113,29 @@ export class ContabilidadPurchasesController {
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.purchases.createCreditNote(applicationSlug, body, req.user?.sub ?? null);
+  }
+
+  @Get('debit-notes')
+  @ApiOperation({ summary: 'Listar notas de débito de compra' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  listDebitNotes(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('periodId') periodId?: string,
+    @Query('supplierId') supplierId?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.purchases.listDebitNotes(applicationSlug, { periodId, supplierId, search });
+  }
+
+  @Post('debit-notes')
+  @ApiOperation({ summary: 'Registrar nota de débito con asiento automático' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  createDebitNote(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body() body: CreatePurchaseDebitNoteInput,
+    @Req() req: Request & { user?: { sub?: string } },
+  ) {
+    return this.purchases.createDebitNote(applicationSlug, body, req.user?.sub ?? null);
   }
 
   @Get('payments')

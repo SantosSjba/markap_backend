@@ -87,6 +87,14 @@ export interface ClosingPreviewDto {
   };
 }
 
+export interface ClosingRegularizationResultDto {
+  journalEntryId: string;
+  entryNumber: number;
+  netIncome: string;
+  profitAccountCode: string;
+  description: string;
+}
+
 export interface ContabilidadFinancialRepository {
   getBalanceSheet(
     applicationId: string,
@@ -107,6 +115,12 @@ export interface ContabilidadFinancialRepository {
   ): Promise<CashFlowStatementDto>;
 
   getClosingPreview(applicationId: string, periodId: string): Promise<ClosingPreviewDto>;
+
+  createClosingRegularizationEntry(
+    applicationId: string,
+    periodId: string,
+    createdBy?: string | null,
+  ): Promise<ClosingRegularizationResultDto>;
 
   findPriorPeriodId(applicationId: string, year: number, month: number): Promise<string | null>;
 }

@@ -17,6 +17,7 @@ model ContabilidadCustomer {
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   invoices    ContabilidadSalesInvoice[]
   creditNotes ContabilidadSalesCreditNote[]
+  debitNotes  ContabilidadSalesDebitNote[]
 
   @@unique([applicationId, ruc])
   @@index([applicationId])
@@ -55,6 +56,7 @@ model ContabilidadSalesInvoice {
   journalEntry   ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
   collections    ContabilidadSalesCollection[]
   creditNotes    ContabilidadSalesCreditNote[]
+  debitNotes     ContabilidadSalesDebitNote[]
   perceptions    ContabilidadPerception[]
 
   @@unique([applicationId, documentType, series, number])
@@ -96,6 +98,38 @@ model ContabilidadSalesCreditNote {
   @@index([applicationId])
   @@index([customerId])
   @@map("contabilidad_sales_credit_notes")
+}
+
+model ContabilidadSalesDebitNote {
+  id             String   @id @default(uuid())
+  applicationId  String   @map("application_id")
+  customerId     String   @map("customer_id")
+  invoiceId      String?  @map("invoice_id")
+  periodId       String   @map("period_id")
+  series         String
+  number         String
+  issueDate      DateTime @map("issue_date") @db.Date
+  taxableBase    Decimal  @map("taxable_base") @db.Decimal(14, 2)
+  igvAmount      Decimal  @map("igv_amount") @db.Decimal(14, 2)
+  totalAmount    Decimal  @map("total_amount") @db.Decimal(14, 2)
+  reason         String?
+  status         String   @default("ACTIVE")
+  journalEntryId String?  @map("journal_entry_id")
+  createdBy      String?  @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  customer     ContabilidadCustomer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  invoice      ContabilidadSalesInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  period       ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  journalEntry ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  @@unique([applicationId, series, number])
+  @@index([applicationId])
+  @@index([customerId])
+  @@map("contabilidad_sales_debit_notes")
 }
 
 model ContabilidadSalesCollection {

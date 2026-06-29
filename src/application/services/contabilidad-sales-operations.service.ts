@@ -24,10 +24,12 @@ import type {
   CreateCustomerInput,
   CreateSalesCollectionInput,
   CreateSalesCreditNoteInput,
+  CreateSalesDebitNoteInput,
   CreateSalesInvoiceInput,
   ListCustomersFilters,
   ListSalesCollectionsFilters,
   ListSalesCreditNotesFilters,
+  ListSalesDebitNotesFilters,
   ListSalesInvoicesFilters,
   UpdateCustomerInput,
 } from '@domain/repositories/contabilidad-sales.repository';
@@ -220,6 +222,39 @@ export class ContabilidadSalesOperationsService {
 
     try {
       return await this.sales.createCreditNoteWithJournal(applicationId, body, igvPercent, userId);
+    } catch (error) {
+      mapRepoError(error);
+    }
+  }
+
+  async listDebitNotes(applicationSlug: string | undefined, filters: ListSalesDebitNotesFilters) {
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const debitNotes = await this.sales.listDebitNotes(applicationId, filters);
+    return { debitNotes };
+  }
+
+  async createDebitNote(
+    applicationSlug: string | undefined,
+    body: CreateSalesDebitNoteInput,
+    userId?: string | null,
+  ) {
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    await this.accounts.ensurePcgeSeed(applicationId);
+    const period = await this.assertOpenPeriod(applicationId, body.periodId);
+    this.assertEntryDateInPeriod(body.issueDate, period.year, period.month);
+
+    if (!body.series?.trim() || !body.number?.trim()) {
+      throw new BadRequestException('Serie y número son obligatorios.');
+    }
+    const base = parsePenAmount(body.taxableBase);
+    if (Number.isNaN(base) || base <= 0) {
+      throw new BadRequestException('Base imponible debe ser mayor a cero.');
+    }
+
+    const igvPercent = await this.getIgvPercent(applicationId);
+
+    try {
+      return await this.sales.createDebitNoteWithJournal(applicationId, body, igvPercent, userId);
     } catch (error) {
       mapRepoError(error);
     }

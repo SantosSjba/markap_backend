@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { CONTABILIDAD_JOURNAL_REPOSITORY } from '@common/constants/injection-tokens';
 import { CONTABILIDAD_JOURNAL_STATUS } from '@domain/constants/contabilidad-journal.defaults';
 import { CONTABILIDAD_MONTH_LABELS } from '@domain/constants/contabilidad-period.defaults';
 import { CONTABILIDAD_PERIOD_STATUS } from '@domain/constants/contabilidad-period.defaults';
@@ -9,12 +10,14 @@ import {
 } from '@domain/constants/contabilidad-financial.defaults';
 import { CONTABILIDAD_RECONCILIATION_STATUS } from '@domain/constants/contabilidad-treasury.defaults';
 import { CONTABILIDAD_TREASURY_MOVEMENT_TYPE } from '@domain/constants/contabilidad-treasury.defaults';
+import type { ContabilidadJournalRepository } from '@domain/repositories/contabilidad-journal.repository';
 import type {
   BalanceSheetDto,
   BalanceSheetSectionDto,
   CashFlowStatementDto,
   ClosingChecklistItemDto,
   ClosingPreviewDto,
+  ClosingRegularizationResultDto,
   ContabilidadFinancialRepository,
   FinancialStatementLineDto,
   IncomeStatementDto,
@@ -42,7 +45,11 @@ interface AccountBalanceRow {
 
 @Injectable()
 export class ContabilidadFinancialPrismaRepository implements ContabilidadFinancialRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CONTABILIDAD_JOURNAL_REPOSITORY)
+    private readonly journal: ContabilidadJournalRepository,
+  ) {}
 
   async findPriorPeriodId(applicationId: string, year: number, month: number): Promise<string | null> {
     if (month <= 1) {
@@ -435,6 +442,97 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
       incomeStatementPreview: {
         netIncome: incomeStatement.netIncome,
       },
+    };
+  }
+
+  async createClosingRegularizationEntry(
+    applicationId: string,
+    periodId: string,
+    createdBy?: string | null,
+  ): Promise<ClosingRegularizationResultDto> {
+    const period = await this.requirePeriod(applicationId, periodId);
+    if (period.status !== CONTABILIDAD_PERIOD_STATUS.OPEN) {
+      throw new Error('El periodo debe estar abierto para regularizar.');
+    }
+
+    const balances = await this.aggregateBalancesForPeriod(applicationId, periodId);
+    const lines: {
+      accountId: string;
+      debit?: number;
+      credit?: number;
+      description?: string;
+    }[] = [];
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+
+    for (const row of balances.values()) {
+      const bal = accountBalanceFromTotals(row.accountType, row.totalDebit, row.totalCredit);
+      if (Math.abs(bal) < 0.005) continue;
+
+      if (row.accountType === CONTABILIDAD_ACCOUNT_TYPES.INCOME) {
+        totalIncome += bal;
+        lines.push({
+          accountId: row.accountId,
+          debit: roundPenAmount(bal),
+          description: `Cierre ${row.accountCode}`,
+        });
+      } else if (row.accountType === CONTABILIDAD_ACCOUNT_TYPES.EXPENSE) {
+        totalExpense += bal;
+        lines.push({
+          accountId: row.accountId,
+          credit: roundPenAmount(bal),
+          description: `Cierre ${row.accountCode}`,
+        });
+      }
+    }
+
+    const netIncome = roundPenAmount(totalIncome - totalExpense);
+    if (lines.length === 0 && Math.abs(netIncome) < 0.005) {
+      throw new Error('No hay cuentas de ingreso o gasto con saldo para regularizar.');
+    }
+
+    const profitCode = netIncome >= 0 ? '591' : '592';
+    const profitAccount = await this.prisma.contabilidadAccount.findFirst({
+      where: { applicationId, code: profitCode, isActive: true, isMovement: true },
+    });
+    if (!profitAccount) {
+      throw new Error(`Cuenta ${profitCode} no disponible para el asiento de cierre.`);
+    }
+
+    const offsetAmount = roundPenAmount(Math.abs(netIncome));
+    if (offsetAmount >= 0.005) {
+      if (netIncome >= 0) {
+        lines.push({
+          accountId: profitAccount.id,
+          credit: offsetAmount,
+          description: 'Utilidad del ejercicio',
+        });
+      } else {
+        lines.push({
+          accountId: profitAccount.id,
+          debit: offsetAmount,
+          description: 'Pérdida del ejercicio',
+        });
+      }
+    }
+
+    const lastDay = new Date(Date.UTC(period.year, period.month, 0)).getUTCDate();
+    const entryDate = `${period.year}-${String(period.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const description = `Regularización de cierre ${CONTABILIDAD_MONTH_LABELS[period.month]} ${period.year}`;
+
+    const journal = await this.journal.createAndPost(
+      applicationId,
+      { periodId, entryDate, description, lines },
+      createdBy,
+    );
+
+    return {
+      journalEntryId: journal.id,
+      entryNumber: journal.entryNumber,
+      netIncome: formatPenAmount(netIncome),
+      profitAccountCode: profitCode,
+      description,
     };
   }
 

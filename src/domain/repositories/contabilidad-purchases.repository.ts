@@ -4,6 +4,8 @@ export interface ContabilidadSupplierDto {
   id: string;
   ruc: string;
   businessName: string;
+  countryCode: string;
+  isNonDomiciled: boolean;
   tradeName: string | null;
   address: string | null;
   email: string | null;
@@ -64,6 +66,27 @@ export interface ContabilidadPurchaseCreditNoteDto {
   createdAt: string;
 }
 
+export interface ContabilidadPurchaseDebitNoteDto {
+  id: string;
+  supplierId: string;
+  supplierRuc: string;
+  supplierName: string;
+  invoiceId: string | null;
+  invoiceFullNumber: string | null;
+  periodId: string;
+  series: string;
+  number: string;
+  fullNumber: string;
+  issueDate: string;
+  taxableBase: string;
+  igvAmount: string;
+  totalAmount: string;
+  reason: string | null;
+  status: string;
+  journalEntryId: string | null;
+  createdAt: string;
+}
+
 export interface ContabilidadPurchasePaymentDto {
   id: string;
   invoiceId: string;
@@ -102,6 +125,12 @@ export interface ListPurchaseCreditNotesFilters {
   search?: string;
 }
 
+export interface ListPurchaseDebitNotesFilters {
+  periodId?: string;
+  supplierId?: string;
+  search?: string;
+}
+
 export interface ListPurchasePaymentsFilters {
   periodId?: string;
   supplierId?: string;
@@ -111,6 +140,8 @@ export interface ListPurchasePaymentsFilters {
 export interface CreateSupplierInput {
   ruc: string;
   businessName: string;
+  countryCode?: string;
+  isNonDomiciled?: boolean;
   tradeName?: string | null;
   address?: string | null;
   email?: string | null;
@@ -119,6 +150,8 @@ export interface CreateSupplierInput {
 
 export interface UpdateSupplierInput {
   businessName?: string;
+  countryCode?: string;
+  isNonDomiciled?: boolean;
   tradeName?: string | null;
   address?: string | null;
   email?: string | null;
@@ -143,6 +176,18 @@ export interface CreatePurchaseInvoiceInput {
 }
 
 export interface CreatePurchaseCreditNoteInput {
+  supplierId: string;
+  invoiceId?: string | null;
+  periodId: string;
+  series: string;
+  number: string;
+  issueDate: string;
+  taxableBase: number | string;
+  igvAmount?: number | string;
+  reason?: string | null;
+}
+
+export interface CreatePurchaseDebitNoteInput {
   supplierId: string;
   invoiceId?: string | null;
   periodId: string;
@@ -194,6 +239,17 @@ export interface ContabilidadPurchasesRepository {
     igvPercent: number,
     createdBy?: string | null,
   ): Promise<ContabilidadPurchaseCreditNoteDto>;
+
+  listDebitNotes(
+    applicationId: string,
+    filters: ListPurchaseDebitNotesFilters,
+  ): Promise<ContabilidadPurchaseDebitNoteDto[]>;
+  createDebitNoteWithJournal(
+    applicationId: string,
+    input: CreatePurchaseDebitNoteInput,
+    igvPercent: number,
+    createdBy?: string | null,
+  ): Promise<ContabilidadPurchaseDebitNoteDto>;
 
   listPayments(
     applicationId: string,

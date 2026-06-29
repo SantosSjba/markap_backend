@@ -9,6 +9,7 @@ export const CONTABILIDAD_PLE_BOOK_CODE = {
   REGISTRO_COMPRAS: '080100',
   REGISTRO_COMPRAS_NO_DOMIC: '080200',
   REGISTRO_VENTAS: '140100',
+  INVENTARIOS_BALANCES: '030100',
 } as const;
 
 export type ContabilidadPleBookCode =
@@ -45,6 +46,18 @@ export const CONTABILIDAD_PLE_BOOKS: ContabilidadPleBookDefinition[] = [
     name: 'Registro de Compras',
     description: 'Comprobantes de compra del periodo (8.1)',
     sunatStructure: '8.1',
+  },
+  {
+    code: CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_NO_DOMIC,
+    name: 'Registro de Compras — No domiciliados',
+    description: 'Compras a proveedores no domiciliados (8.2)',
+    sunatStructure: '8.2',
+  },
+  {
+    code: CONTABILIDAD_PLE_BOOK_CODE.INVENTARIOS_BALANCES,
+    name: 'Libro de Inventarios y Balances',
+    description: 'Saldos de cuentas al cierre del periodo (3.1)',
+    sunatStructure: '3.1',
   },
   {
     code: CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS,

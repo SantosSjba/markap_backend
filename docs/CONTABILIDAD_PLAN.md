@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 11 (reportes financieros y dashboard) completada — Fase 12 pendiente
+> **Estado general:** Fase 12 (completitud normativa Perú) completada — Fase 13 (integración MARKAP) diferida
 
 ---
 
@@ -61,15 +61,15 @@ Integración con apps MARKAP (alquileres, ventas, producción, interiorismo…)
 
 | Sección | Rutas base | Estado UI |
 |---------|------------|-----------|
-| Dashboard | `/contabilidad` | Shell (KPIs placeholder) |
-| Contabilidad | plan-cuentas, asientos, periodos, centros-costo, cierre | **Placeholder** |
-| Tesorería | caja, bancos, conciliaciones, movimientos, transferencias | **Placeholder** |
-| Compras | facturas, NC, proveedores, pagos | **Implementado** |
-| Ventas | facturas, boletas, NC, clientes, cobros | **Placeholder** |
-| Tributos | IGV, detracciones, retenciones, percepciones | ✅ |
+| Dashboard | `/contabilidad` | ✅ KPIs reales |
+| Contabilidad | plan-cuentas, asientos, periodos, centros-costo, cierre, plantillas | ✅ |
+| Tesorería | caja, bancos, conciliaciones, movimientos, transferencias | ✅ |
+| Compras | facturas, NC, ND, proveedores, pagos | ✅ |
+| Ventas | facturas, boletas, NC, ND, clientes, cobros | ✅ |
+| Tributos | IGV, detracciones, retenciones, percepciones, renta | ✅ |
 | Libros electrónicos | registro compras/ventas, diario, mayor, caja, bancos, PLE | ✅ |
-| Reportes financieros | balance, ER, flujos, KPIs | **Placeholder** |
-| Configuración | `/contabilidad/configuracion` | **Placeholder** |
+| Reportes financieros | balance, ER, flujos, KPIs, análisis | ✅ |
+| Configuración | empresa, series, tipos de cambio | ✅ |
 
 Seed menú: `prisma/seed/data/menus-contabilidad.ts`  
 Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
@@ -82,10 +82,10 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 - [x] **Estados del asiento:** `DRAFT` → `POSTED` → `REVERSED`; periodo cerrado bloquea edición/publicación.
 - [x] **Partida doble estricta:** publicar solo si debe = haber.
 - [ ] **Plan de cuentas jerárquico:** código PCGE (ej. `1011`, `40111`); cuentas de movimiento vs título; no borrar cuentas con movimiento.
-- [ ] **Moneda:** PEN en v1; diseño preparado para multimoneda (tipo de cambio) en fase posterior.
-- [ ] **CPE / facturación electrónica:** v1 registro contable manual + import; integración OSE/PSE en fase futura explícita.
-- [ ] **PLE:** generación de archivos según estructura SUNAT; no reemplaza el envío por SOL (export + validación local).
-- [ ] **Integración MARKAP:** eventos de dominio (`RentalPaymentPosted`, `SaleInvoiceIssued`, etc.) → plantillas de asiento configurables.
+- [x] **Moneda:** PEN en v1; tipos de cambio manuales (USD) en configuración; asientos en PEN.
+- [x] **CPE / facturación electrónica:** registro contable + log local de trazabilidad CPE (sin OSE/PSE en v1).
+- [x] **PLE:** generación de archivos según estructura SUNAT; no reemplaza el envío por SOL (export + validación local).
+- [ ] **Integración MARKAP:** eventos de dominio → plantillas de asiento configurables (**Fase 13 — diferida**).
 - [ ] **Auditoría:** `createdBy`, `postedBy`, `postedAt`; trazabilidad de cambios en asientos publicados = solo reversa.
 
 ---
@@ -104,9 +104,10 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 7 | Ventas contables | ✅ Completa |
 | 8 | Tributos (IGV, detracciones, retenciones) | ✅ Completa |
 | 9 | Libros electrónicos y PLE | ✅ Completa |
-| 10 | Cierre mensual y EEFF | ⬜ Pendiente |
-| 11 | Reportes y dashboard | ⬜ Pendiente |
-| 12 | Integración con apps MARKAP | ⬜ Pendiente |
+| 10 | Cierre mensual y EEFF | ✅ Completa |
+| 11 | Reportes y dashboard | ✅ Completa |
+| 12 | Completitud normativa Perú | ✅ Completa |
+| 13 | Integración con apps MARKAP | ⬜ Diferida |
 
 ---
 
@@ -298,7 +299,8 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
   - [x] 5.1 / 5.2 Libro Diario (`050100`) y Plan de Cuentas (`050200`)
   - [x] 6.1 Mayor (`060100`)
   - [x] 8.1 Registro de Compras (`080100`)
-  - [ ] 8.2 Registro de Compras (no domiciliados) — pendiente si aplica
+  - [x] 8.2 Registro de Compras no domiciliados (`080200`)
+  - [x] 3.1 Inventarios y Balances (`030100`)
   - [x] 14.1 Registro de Ventas (`140100`)
   - [x] 1.1 Caja y Bancos (`010100`)
 - [x] Validador: cuadre asientos, campos obligatorios, formato pipe
@@ -318,7 +320,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 ### Backend
 
 - [x] Proceso cierre: bloquea asientos en periodo (checklist + `POST close`)
-- [ ] Asientos de regularización automáticos en cierre (wizard avanzado — pendiente)
+- [x] Asientos de regularización automáticos en cierre (ingresos/gastos → 591/592)
 - [x] Cálculo saldos por cuenta → **Balance General** (activo = pasivo + patrimonio)
 - [x] **Estado de resultados** por naturaleza de cuenta (ingresos/gastos PCGE)
 - [x] **Estado de flujo de efectivo** (método indirecto v1)
@@ -339,7 +341,8 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 - [x] `GET /contabilidad-reports/dashboard` — KPIs: liquidez, CxC, CxP, IGV periodo, resultado
 - [x] Balance de comprobación (`trial-balance`) y análisis financiero (ratios)
 - [x] Flujo de caja tesorería (`cash-flow-treasury`)
-- [ ] Export Excel/PDF reportes (pendiente)
+- [x] Export Excel reportes financieros (`/contabilidad-financial-statements/export/excel`)
+- [ ] Export PDF reportes (usar impresión navegador / fase posterior)
 
 ### Frontend
 
@@ -349,7 +352,37 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ---
 
-## Fase 12 — Integración con apps MARKAP
+## Fase 12 — Completitud normativa Perú
+
+> Ítems pendientes de normativa peruana que no requieren integración con otras apps MARKAP.
+
+### Backend
+
+- [x] Notas de débito compra y venta (ND) con asiento contable
+- [x] Proveedor no domiciliado (`countryCode`, `isNonDomiciled`) + PLE 8.2
+- [x] Libro Inventarios y Balances PLE 3.1 + snapshots
+- [x] Plantillas de asiento recurrentes (`/contabilidad-extensions/journal-templates`)
+- [x] Tipos de cambio manuales (`/contabilidad-extensions/exchange-rates`)
+- [x] Resumen impuesto a la renta por periodo (`/contabilidad-extensions/income-tax-summary`)
+- [x] Log trazabilidad CPE local (`/contabilidad-extensions/electronic-documents`)
+- [x] PCGE seed ampliado (~75 cuentas)
+- [x] Serie ND compras `FD02`
+
+### Frontend
+
+- [x] ND compras y ventas (`notas-debito`)
+- [x] Plantillas de asiento (`/contabilidad/asientos/plantillas-asiento`)
+- [x] Tipos de cambio (`/contabilidad/configuracion/tipos-cambio`)
+- [x] Cierre con vista previa de regularización
+- [x] Exportar Excel en BG, ER, flujo de efectivo
+
+### Migración
+
+- SQL manual: `prisma/migrations/manual/contabilidad-phase12-peru-completeness-postgres.sql`
+
+---
+
+## Fase 13 — Integración con apps MARKAP (diferida)
 
 > La contabilidad recibe hechos económicos de otros módulos; no duplica operación comercial.
 
@@ -389,7 +422,8 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
   → 9 Libros electrónicos + PLE
   → 10 Cierre + EEFF
   → 11 Reportes + dashboard
-  → 12 Integración MARKAP
+  → 12 Completitud normativa Perú
+  → 13 Integración MARKAP (cuando el usuario lo solicite)
 ```
 
 ---
@@ -428,11 +462,12 @@ Archivos sugeridos: `prisma/models/contabilidad-*.prisma` (dividir por subdomini
 
 ## Riesgos y fuera de alcance v1
 
-- **Facturación electrónica SUNAT (OSE/PSE)** y envío en línea de CPE → fase posterior explícita.
+- **Facturación electrónica SUNAT (OSE/PSE)** y envío en línea de CPE → requiere proveedor certificado (log local implementado).
 - **Declaraciones SOL automáticas** (PDT 621, PLAME) → solo export de datos en v1.
 - **NIIF completas** para consolidación de grupos → evaluar según cliente.
-- **Inventarios permanentes valorizados** (cuenta 20/21 integrada con stock producción) → integración Fase 12+.
-- **Tipo de cambio** operaciones en USD → multimoneda fase futura.
+- **Inventarios permanentes valorizados** (cuenta 20/21 integrada con stock producción) → integración Fase 13.
+- **Multimoneda en asientos** (líneas en USD con TC) → tipos de cambio registrados; conversión en asiento fase posterior.
+- **Export PDF** nativo → Excel implementado; PDF vía impresión o librería futura.
 
 ---
 

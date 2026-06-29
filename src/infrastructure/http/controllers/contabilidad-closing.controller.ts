@@ -1,7 +1,12 @@
-import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadClosingOperationsService } from '../../../application/services/contabilidad-closing-operations.service';
+
+interface ClosePeriodBody {
+  postRegularization?: boolean;
+}
 
 @ApiTags('Contabilidad — Cierre mensual')
 @Controller('contabilidad-closing')
@@ -26,7 +31,12 @@ export class ContabilidadClosingController {
   closePeriod(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('periodId') periodId: string,
+    @Body() body: ClosePeriodBody,
+    @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.closing.closePeriod(applicationSlug, periodId);
+    return this.closing.closePeriod(applicationSlug, periodId, {
+      postRegularization: body?.postRegularization,
+      userId: req.user?.sub ?? null,
+    });
   }
 }

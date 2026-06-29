@@ -1,5 +1,6 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadFinancialStatementsOperationsService } from '../../../application/services/contabilidad-financial-statements-operations.service';
 
@@ -50,5 +51,25 @@ export class ContabilidadFinancialStatementsController {
   ) {
     const compare = comparePrior !== 'false';
     return this.statements.getCashFlowStatement(applicationSlug, periodId, compare);
+  }
+
+  @Get('export/excel')
+  @ApiOperation({ summary: 'Exportar balance, EE.RR. o balance de comprobación a Excel' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'periodId', required: true })
+  @ApiQuery({ name: 'type', required: true, enum: ['balance-sheet', 'income-statement', 'trial-balance'] })
+  async exportExcel(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('periodId') periodId?: string,
+    @Query('type') type?: string,
+    @Res() res?: Response,
+  ) {
+    const { buffer, fileName } = await this.statements.exportExcel(applicationSlug, periodId, type);
+    res!.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res!.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res!.send(buffer);
   }
 }

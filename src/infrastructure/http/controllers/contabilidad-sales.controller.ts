@@ -7,6 +7,7 @@ import type {
   CreateCustomerInput,
   CreateSalesCollectionInput,
   CreateSalesCreditNoteInput,
+  CreateSalesDebitNoteInput,
   CreateSalesInvoiceInput,
   UpdateCustomerInput,
 } from '@domain/repositories/contabilidad-sales.repository';
@@ -116,6 +117,29 @@ export class ContabilidadSalesController {
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.sales.createCreditNote(applicationSlug, body, req.user?.sub ?? null);
+  }
+
+  @Get('debit-notes')
+  @ApiOperation({ summary: 'Listar notas de débito de venta' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  listDebitNotes(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('periodId') periodId?: string,
+    @Query('customerId') customerId?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.sales.listDebitNotes(applicationSlug, { periodId, customerId, search });
+  }
+
+  @Post('debit-notes')
+  @ApiOperation({ summary: 'Registrar nota de débito con asiento automático' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  createDebitNote(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body() body: CreateSalesDebitNoteInput,
+    @Req() req: Request & { user?: { sub?: string } },
+  ) {
+    return this.sales.createDebitNote(applicationSlug, body, req.user?.sub ?? null);
   }
 
   @Get('collections')

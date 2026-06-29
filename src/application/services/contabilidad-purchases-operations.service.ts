@@ -23,10 +23,12 @@ import type { ContabilidadPeriodRepository } from '@domain/repositories/contabil
 import type {
   ContabilidadPurchasesRepository,
   CreatePurchaseCreditNoteInput,
+  CreatePurchaseDebitNoteInput,
   CreatePurchaseInvoiceInput,
   CreatePurchasePaymentInput,
   CreateSupplierInput,
   ListPurchaseCreditNotesFilters,
+  ListPurchaseDebitNotesFilters,
   ListPurchaseInvoicesFilters,
   ListPurchasePaymentsFilters,
   ListSuppliersFilters,
@@ -229,6 +231,44 @@ export class ContabilidadPurchasesOperationsService {
 
     try {
       return await this.purchases.createCreditNoteWithJournal(
+        applicationId,
+        body,
+        igvPercent,
+        userId,
+      );
+    } catch (error) {
+      mapRepoError(error);
+    }
+  }
+
+  async listDebitNotes(applicationSlug: string | undefined, filters: ListPurchaseDebitNotesFilters) {
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const debitNotes = await this.purchases.listDebitNotes(applicationId, filters);
+    return { debitNotes };
+  }
+
+  async createDebitNote(
+    applicationSlug: string | undefined,
+    body: CreatePurchaseDebitNoteInput,
+    userId?: string | null,
+  ) {
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    await this.accounts.ensurePcgeSeed(applicationId);
+    const period = await this.assertOpenPeriod(applicationId, body.periodId);
+    this.assertEntryDateInPeriod(body.issueDate, period.year, period.month);
+
+    if (!body.series?.trim() || !body.number?.trim()) {
+      throw new BadRequestException('Serie y número son obligatorios.');
+    }
+    const base = parsePenAmount(body.taxableBase);
+    if (Number.isNaN(base) || base <= 0) {
+      throw new BadRequestException('Base imponible debe ser mayor a cero.');
+    }
+
+    const igvPercent = await this.getIgvPercent(applicationId);
+
+    try {
+      return await this.purchases.createDebitNoteWithJournal(
         applicationId,
         body,
         igvPercent,

@@ -1,5 +1,6 @@
 import type {
   ContabilidadPurchaseCreditNoteDto,
+  ContabilidadPurchaseDebitNoteDto,
   ContabilidadPurchaseInvoiceDto,
   ContabilidadPurchasePaymentDto,
   ContabilidadSupplierDto,
@@ -20,6 +21,8 @@ export const ContabilidadPurchasesPrismaMapper = {
       id: string;
       ruc: string;
       businessName: string;
+      countryCode: string;
+      isNonDomiciled: boolean;
       tradeName: string | null;
       address: string | null;
       email: string | null;
@@ -34,6 +37,8 @@ export const ContabilidadPurchasesPrismaMapper = {
       id: row.id,
       ruc: row.ruc,
       businessName: row.businessName,
+      countryCode: row.countryCode,
+      isNonDomiciled: row.isNonDomiciled,
       tradeName: row.tradeName,
       address: row.address,
       email: row.email,
@@ -119,6 +124,46 @@ export const ContabilidadPurchasesPrismaMapper = {
     supplier: { ruc: string; businessName: string };
     invoice?: { series: string; number: string } | null;
   }): ContabilidadPurchaseCreditNoteDto {
+    return {
+      id: row.id,
+      supplierId: row.supplierId,
+      supplierRuc: row.supplier.ruc,
+      supplierName: row.supplier.businessName,
+      invoiceId: row.invoiceId,
+      invoiceFullNumber: row.invoice ? fullDocNumber(row.invoice.series, row.invoice.number) : null,
+      periodId: row.periodId,
+      series: row.series,
+      number: row.number,
+      fullNumber: fullDocNumber(row.series, row.number),
+      issueDate: toIsoDate(row.issueDate),
+      taxableBase: formatPenAmount(Number(row.taxableBase)),
+      igvAmount: formatPenAmount(Number(row.igvAmount)),
+      totalAmount: formatPenAmount(Number(row.totalAmount)),
+      reason: row.reason,
+      status: row.status,
+      journalEntryId: row.journalEntryId,
+      createdAt: row.createdAt.toISOString(),
+    };
+  },
+
+  toDebitNote(row: {
+    id: string;
+    supplierId: string;
+    invoiceId: string | null;
+    periodId: string;
+    series: string;
+    number: string;
+    issueDate: Date;
+    taxableBase: { toString(): string } | number;
+    igvAmount: { toString(): string } | number;
+    totalAmount: { toString(): string } | number;
+    reason: string | null;
+    status: string;
+    journalEntryId: string | null;
+    createdAt: Date;
+    supplier: { ruc: string; businessName: string };
+    invoice?: { series: string; number: string } | null;
+  }): ContabilidadPurchaseDebitNoteDto {
     return {
       id: row.id,
       supplierId: row.supplierId,

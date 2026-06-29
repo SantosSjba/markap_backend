@@ -5,6 +5,8 @@ model ContabilidadSupplier {
   applicationId String  @map("application_id")
   ruc           String
   businessName  String  @map("business_name")
+  countryCode   String  @default("PE") @map("country_code")
+  isNonDomiciled Boolean @default(false) @map("is_non_domiciled")
   tradeName     String? @map("trade_name")
   address       String?
   email         String?
@@ -17,6 +19,7 @@ model ContabilidadSupplier {
   application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   invoices     ContabilidadPurchaseInvoice[]
   creditNotes  ContabilidadPurchaseCreditNote[]
+  debitNotes   ContabilidadPurchaseDebitNote[]
 
   @@unique([applicationId, ruc])
   @@index([applicationId])
@@ -56,6 +59,7 @@ model ContabilidadPurchaseInvoice {
   journalEntry   ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
   payments       ContabilidadPurchasePayment[]
   creditNotes    ContabilidadPurchaseCreditNote[]
+  debitNotes     ContabilidadPurchaseDebitNote[]
   detracciones   ContabilidadDetraccion[]
   retentions     ContabilidadRetention[]
 
@@ -97,6 +101,38 @@ model ContabilidadPurchaseCreditNote {
   @@index([applicationId])
   @@index([supplierId])
   @@map("contabilidad_purchase_credit_notes")
+}
+
+model ContabilidadPurchaseDebitNote {
+  id             String   @id @default(uuid())
+  applicationId  String   @map("application_id")
+  supplierId     String   @map("supplier_id")
+  invoiceId      String?  @map("invoice_id")
+  periodId       String   @map("period_id")
+  series         String
+  number         String
+  issueDate      DateTime @map("issue_date") @db.Date
+  taxableBase    Decimal  @map("taxable_base") @db.Decimal(14, 2)
+  igvAmount      Decimal  @map("igv_amount") @db.Decimal(14, 2)
+  totalAmount    Decimal  @map("total_amount") @db.Decimal(14, 2)
+  reason         String?
+  status         String   @default("ACTIVE")
+  journalEntryId String?  @map("journal_entry_id")
+  createdBy      String?  @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  supplier     ContabilidadSupplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  invoice      ContabilidadPurchaseInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  period       ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  journalEntry ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  @@unique([applicationId, series, number])
+  @@index([applicationId])
+  @@index([supplierId])
+  @@map("contabilidad_purchase_debit_notes")
 }
 
 model ContabilidadPurchasePayment {

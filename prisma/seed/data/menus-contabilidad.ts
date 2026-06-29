@@ -48,6 +48,12 @@ export const CONTABILIDAD_CHILD_MENUS = [
     order: 4,
     parentLabel: 'Contabilidad',
   },
+  {
+    label: 'Plantillas de asiento',
+    path: '/contabilidad/asientos/plantillas-asiento',
+    order: 5,
+    parentLabel: 'Contabilidad',
+  },
   // Tesorería
   {
     label: 'Caja',
@@ -93,15 +99,21 @@ export const CONTABILIDAD_CHILD_MENUS = [
     parentLabel: 'Compras',
   },
   {
+    label: 'Notas de débito',
+    path: '/contabilidad/compras/notas-debito',
+    order: 2,
+    parentLabel: 'Compras',
+  },
+  {
     label: 'Proveedores',
     path: '/contabilidad/compras/proveedores',
-    order: 2,
+    order: 3,
     parentLabel: 'Compras',
   },
   {
     label: 'Pagos',
     path: '/contabilidad/compras/pagos',
-    order: 3,
+    order: 4,
     parentLabel: 'Compras',
   },
   // Ventas
@@ -124,15 +136,21 @@ export const CONTABILIDAD_CHILD_MENUS = [
     parentLabel: 'Ventas',
   },
   {
+    label: 'Notas de débito',
+    path: '/contabilidad/ventas/notas-debito',
+    order: 3,
+    parentLabel: 'Ventas',
+  },
+  {
     label: 'Clientes',
     path: '/contabilidad/ventas/clientes',
-    order: 3,
+    order: 4,
     parentLabel: 'Ventas',
   },
   {
     label: 'Cobros',
     path: '/contabilidad/ventas/cobros',
-    order: 4,
+    order: 5,
     parentLabel: 'Ventas',
   },
   // Tributos

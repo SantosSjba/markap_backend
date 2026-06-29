@@ -7,6 +7,7 @@ import {
 import {
   CONTABILIDAD_RECEIVABLE_ACCOUNT_CODE,
   CONTABILIDAD_SALES_CREDIT_NOTE_STATUS,
+  CONTABILIDAD_SALES_DEBIT_NOTE_STATUS,
   CONTABILIDAD_SALES_IGV_ACCOUNT_CODE,
   CONTABILIDAD_SALES_STATUS,
   CONTABILIDAD_SALES_TAX_AFFECTATION,
@@ -18,15 +19,18 @@ import type {
   ContabilidadCustomerDto,
   ContabilidadSalesCollectionDto,
   ContabilidadSalesCreditNoteDto,
+  ContabilidadSalesDebitNoteDto,
   ContabilidadSalesInvoiceDto,
   ContabilidadSalesRepository,
   CreateCustomerInput,
   CreateSalesCollectionInput,
   CreateSalesCreditNoteInput,
+  CreateSalesDebitNoteInput,
   CreateSalesInvoiceInput,
   ListCustomersFilters,
   ListSalesCollectionsFilters,
   ListSalesCreditNotesFilters,
+  ListSalesDebitNotesFilters,
   ListSalesInvoicesFilters,
   UpdateCustomerInput,
 } from '@domain/repositories/contabilidad-sales.repository';
@@ -44,6 +48,15 @@ const customerInclude = {
     where: { status: CONTABILIDAD_SALES_CREDIT_NOTE_STATUS.ACTIVE },
     select: { totalAmount: true },
   },
+  debitNotes: {
+    where: { status: CONTABILIDAD_SALES_DEBIT_NOTE_STATUS.ACTIVE },
+    select: { totalAmount: true },
+  },
+} as const;
+
+const debitNoteInclude = {
+  customer: { select: { ruc: true, businessName: true } },
+  invoice: { select: { series: true, number: true } },
 } as const;
 
 const invoiceInclude = {
@@ -72,13 +85,15 @@ const collectionInclude = {
 function computeCustomerBalance(
   invoices: { totalAmount: { toString(): string } | number; collectedAmount: { toString(): string } | number }[],
   creditNotes: { totalAmount: { toString(): string } | number }[],
+  debitNotes: { totalAmount: { toString(): string } | number }[],
 ): number {
   const invoiceBalance = invoices.reduce(
     (sum, inv) => sum + Math.max(0, Number(inv.totalAmount) - Number(inv.collectedAmount)),
     0,
   );
   const creditTotal = creditNotes.reduce((sum, nc) => sum + Number(nc.totalAmount), 0);
-  return roundPenAmount(Math.max(0, invoiceBalance - creditTotal));
+  const debitTotal = debitNotes.reduce((sum, nd) => sum + Number(nd.totalAmount), 0);
+  return roundPenAmount(Math.max(0, invoiceBalance - creditTotal + debitTotal));
 }
 
 function computeSalesAmounts(
@@ -140,7 +155,7 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     return rows.map((row) =>
       ContabilidadSalesPrismaMapper.toCustomer(
         row,
-        computeCustomerBalance(row.invoices, row.creditNotes),
+        computeCustomerBalance(row.invoices, row.creditNotes, row.debitNotes),
         row.invoices.length,
       ),
     );
@@ -154,7 +169,7 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     if (!row) return null;
     return ContabilidadSalesPrismaMapper.toCustomer(
       row,
-      computeCustomerBalance(row.invoices, row.creditNotes),
+      computeCustomerBalance(row.invoices, row.creditNotes, row.debitNotes),
       row.invoices.length,
     );
   }
@@ -195,7 +210,7 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     if (row.applicationId !== applicationId) throw new Error('Cliente no encontrado');
     return ContabilidadSalesPrismaMapper.toCustomer(
       row,
-      computeCustomerBalance(row.invoices, row.creditNotes),
+      computeCustomerBalance(row.invoices, row.creditNotes, row.debitNotes),
       row.invoices.length,
     );
   }
@@ -426,6 +441,113 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     });
 
     return ContabilidadSalesPrismaMapper.toCreditNote(row);
+  }
+
+  async listDebitNotes(
+    applicationId: string,
+    filters: ListSalesDebitNotesFilters,
+  ): Promise<ContabilidadSalesDebitNoteDto[]> {
+    const q = filters.search?.trim();
+    const rows = await this.prisma.contabilidadSalesDebitNote.findMany({
+      where: {
+        applicationId,
+        ...(filters.periodId ? { periodId: filters.periodId } : {}),
+        ...(filters.customerId ? { customerId: filters.customerId } : {}),
+        ...(q
+          ? {
+              OR: [
+                { series: { contains: q, mode: 'insensitive' } },
+                { number: { contains: q, mode: 'insensitive' } },
+                { customer: { businessName: { contains: q, mode: 'insensitive' } } },
+              ],
+            }
+          : {}),
+      },
+      include: debitNoteInclude,
+      orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
+    });
+    return rows.map((row) => ContabilidadSalesPrismaMapper.toDebitNote(row));
+  }
+
+  async createDebitNoteWithJournal(
+    applicationId: string,
+    input: CreateSalesDebitNoteInput,
+    igvPercent: number,
+    createdBy?: string | null,
+  ): Promise<ContabilidadSalesDebitNoteDto> {
+    const customer = await this.prisma.contabilidadCustomer.findFirst({
+      where: { applicationId, id: input.customerId, isActive: true },
+    });
+    if (!customer) throw new Error('Cliente no encontrado');
+
+    let incomeAccountId: string | null = null;
+    if (input.invoiceId) {
+      const invoice = await this.prisma.contabilidadSalesInvoice.findFirst({
+        where: { applicationId, id: input.invoiceId, customerId: input.customerId },
+      });
+      if (!invoice) throw new Error('Factura vinculada no encontrada');
+      incomeAccountId = invoice.incomeAccountId;
+    }
+    if (!incomeAccountId) {
+      incomeAccountId = await this.resolveAccountId(applicationId, '701');
+    }
+
+    const amounts = computeSalesAmounts(
+      input.taxableBase,
+      CONTABILIDAD_SALES_TAX_AFFECTATION.TAXABLE,
+      igvPercent,
+      input.igvAmount,
+    );
+    const receivableAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_RECEIVABLE_ACCOUNT_CODE);
+    const auxiliaryDoc = `${input.series.trim()}-${input.number.trim()}`;
+    const description = `ND venta ${auxiliaryDoc} — ${customer.businessName}`;
+
+    const lines: { accountId: string; debit?: number; credit?: number; auxiliaryRuc?: string; auxiliaryDoc?: string }[] = [
+      {
+        accountId: receivableAccountId,
+        debit: amounts.totalAmount,
+        auxiliaryRuc: customer.ruc,
+        auxiliaryDoc,
+      },
+      {
+        accountId: incomeAccountId,
+        credit: amounts.taxableBase,
+        auxiliaryRuc: customer.ruc,
+        auxiliaryDoc,
+      },
+    ];
+    if (amounts.igvAmount > 0) {
+      const igvAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_SALES_IGV_ACCOUNT_CODE);
+      lines.push({ accountId: igvAccountId, credit: amounts.igvAmount });
+    }
+
+    const journal = await this.journal.createAndPost(
+      applicationId,
+      { periodId: input.periodId, entryDate: input.issueDate, description, lines },
+      createdBy,
+    );
+
+    const row = await this.prisma.contabilidadSalesDebitNote.create({
+      data: {
+        applicationId,
+        customerId: input.customerId,
+        invoiceId: input.invoiceId ?? null,
+        periodId: input.periodId,
+        series: input.series.trim().toUpperCase(),
+        number: input.number.trim(),
+        issueDate: new Date(`${input.issueDate}T12:00:00.000Z`),
+        taxableBase: amounts.taxableBase,
+        igvAmount: amounts.igvAmount,
+        totalAmount: amounts.totalAmount,
+        reason: input.reason?.trim() || null,
+        status: CONTABILIDAD_SALES_DEBIT_NOTE_STATUS.ACTIVE,
+        journalEntryId: journal.id,
+        createdBy: createdBy ?? null,
+      },
+      include: debitNoteInclude,
+    });
+
+    return ContabilidadSalesPrismaMapper.toDebitNote(row);
   }
 
   async listCollections(

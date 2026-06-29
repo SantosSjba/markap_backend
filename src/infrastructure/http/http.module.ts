@@ -373,6 +373,7 @@ import { ContabilidadPleController } from './controllers/contabilidad-ple.contro
 import { ContabilidadFinancialStatementsController } from './controllers/contabilidad-financial-statements.controller';
 import { ContabilidadClosingController } from './controllers/contabilidad-closing.controller';
 import { ContabilidadReportsController } from './controllers/contabilidad-reports.controller';
+import { ContabilidadExtensionsController } from './controllers/contabilidad-extensions.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
@@ -399,6 +400,7 @@ import {
   ContabilidadFinancialStatementsOperationsService,
   ContabilidadClosingOperationsService,
   ContabilidadReportsOperationsService,
+  ContabilidadExtensionsOperationsService,
 } from '../../application/services';
 
 // Gateways
@@ -474,6 +476,7 @@ import {
     ContabilidadFinancialStatementsController,
     ContabilidadClosingController,
     ContabilidadReportsController,
+    ContabilidadExtensionsController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
     InteriorismoFinanceController,
@@ -618,6 +621,7 @@ import {
   ContabilidadFinancialStatementsOperationsService,
   ContabilidadClosingOperationsService,
   ContabilidadReportsOperationsService,
+  ContabilidadExtensionsOperationsService,
 
     ListInteriorProjectsUseCase,
     GetInteriorProjectByIdUseCase,

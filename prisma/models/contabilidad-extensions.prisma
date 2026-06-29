@@ -1,0 +1,99 @@
+/// Extensiones normativas Perú: multimoneda, plantillas, inventarios, CPE, renta.
+
+model ContabilidadExchangeRate {
+  id            String   @id @default(uuid())
+  applicationId String   @map("application_id")
+  rateDate      DateTime @map("rate_date") @db.Date
+  currencyCode  String   @map("currency_code")
+  buyRate       Decimal  @map("buy_rate") @db.Decimal(12, 6)
+  sellRate      Decimal  @map("sell_rate") @db.Decimal(12, 6)
+  source        String?  @default("MANUAL")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, rateDate, currencyCode])
+  @@index([applicationId])
+  @@map("contabilidad_exchange_rates")
+}
+
+model ContabilidadJournalTemplate {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  name          String
+  description   String?
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  lines       ContabilidadJournalTemplateLine[]
+
+  @@index([applicationId])
+  @@map("contabilidad_journal_templates")
+}
+
+model ContabilidadJournalTemplateLine {
+  id           String  @id @default(uuid())
+  templateId   String  @map("template_id")
+  lineNumber   Int     @map("line_number")
+  accountId    String  @map("account_id")
+  defaultDebit Decimal @default(0) @map("default_debit") @db.Decimal(14, 2)
+  defaultCredit Decimal @default(0) @map("default_credit") @db.Decimal(14, 2)
+  costCenterId String? @map("cost_center_id")
+  description  String?
+
+  template   ContabilidadJournalTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  account    ContabilidadAccount         @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  costCenter ContabilidadCostCenter?   @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+
+  @@index([templateId])
+  @@map("contabilidad_journal_template_lines")
+}
+
+/// Snapshot mensual de saldos para Libro de Inventarios y Balances (PLE 3.1).
+model ContabilidadInventoryBalanceSnapshot {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  periodId      String  @map("period_id")
+  accountId     String  @map("account_id")
+  accountCode   String  @map("account_code")
+  accountName   String  @map("account_name")
+  balance       Decimal @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  application Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period      ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  account     ContabilidadAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@unique([applicationId, periodId, accountId])
+  @@index([applicationId])
+  @@map("contabilidad_inventory_balance_snapshots")
+}
+
+/// Metadatos CPE electrónico (sin OSE/PSE — registro y trazabilidad local).
+model ContabilidadElectronicDocumentLog {
+  id             String  @id @default(uuid())
+  applicationId  String  @map("application_id")
+  periodId       String? @map("period_id")
+  documentKind   String  @map("document_kind")
+  documentRef    String  @map("document_ref")
+  sunatStatus    String  @default("REGISTERED") @map("sunat_status")
+  xmlHash        String? @map("xml_hash")
+  cdrReference   String? @map("cdr_reference")
+  notes          String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period      ContabilidadPeriod? @relation(fields: [periodId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([documentKind, documentRef])
+  @@map("contabilidad_electronic_document_logs")
+}

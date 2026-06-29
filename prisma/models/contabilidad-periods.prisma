@@ -15,14 +15,18 @@ model ContabilidadPeriod {
   treasuryMovements    ContabilidadTreasuryMovement[]
   bankReconciliations  ContabilidadBankReconciliation[]
   purchaseInvoices     ContabilidadPurchaseInvoice[]
-  purchaseCreditNotes  ContabilidadPurchaseCreditNote[]
+  purchaseCreditNotes ContabilidadPurchaseCreditNote[]
+  purchaseDebitNotes  ContabilidadPurchaseDebitNote[]
   purchasePayments     ContabilidadPurchasePayment[]
   salesInvoices        ContabilidadSalesInvoice[]
   salesCreditNotes     ContabilidadSalesCreditNote[]
+  salesDebitNotes      ContabilidadSalesDebitNote[]
   salesCollections     ContabilidadSalesCollection[]
   detracciones         ContabilidadDetraccion[]
   retentions           ContabilidadRetention[]
   perceptions          ContabilidadPerception[]
+  inventorySnapshots   ContabilidadInventoryBalanceSnapshot[]
+  electronicDocLogs    ContabilidadElectronicDocumentLog[]
 
   @@unique([applicationId, year, month])
   @@index([applicationId])
@@ -45,6 +49,7 @@ model ContabilidadCostCenter {
   parent      ContabilidadCostCenter? @relation("ContabilidadCostCenterHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children    ContabilidadCostCenter[] @relation("ContabilidadCostCenterHierarchy")
   journalLines ContabilidadJournalEntryLine[]
+  templateLines ContabilidadJournalTemplateLine[]
 
   @@unique([applicationId, code])
   @@index([applicationId])

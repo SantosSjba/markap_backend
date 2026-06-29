@@ -47,10 +47,15 @@ export class ContabilidadClosingOperationsService {
     }
   }
 
-  async closePeriod(applicationSlug: string | undefined, periodId: string) {
+  async closePeriod(
+    applicationSlug: string | undefined,
+    periodId: string,
+    options?: { postRegularization?: boolean; userId?: string | null },
+  ) {
     if (!periodId?.trim()) throw new BadRequestException('periodId es obligatorio.');
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const id = periodId.trim();
+    const postRegularization = options?.postRegularization !== false;
 
     const preview = await this.getClosingPreview(applicationSlug, id);
     if (!preview.canClose) {
@@ -62,6 +67,23 @@ export class ContabilidadClosingOperationsService {
     const existing = await this.periods.findPeriodById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadPeriod', id);
 
-    return this.periods.setPeriodStatus(applicationId, id, CONTABILIDAD_PERIOD_STATUS.CLOSED);
+    let regularization: Awaited<
+      ReturnType<ContabilidadFinancialRepository['createClosingRegularizationEntry']>
+    > | null = null;
+    if (postRegularization) {
+      try {
+        regularization = await this.financial.createClosingRegularizationEntry(
+          applicationId,
+          id,
+          options?.userId ?? null,
+        );
+      } catch (e) {
+        const message = e instanceof Error ? e.message : 'No se pudo generar la regularización de cierre.';
+        throw new BadRequestException(message);
+      }
+    }
+
+    const closed = await this.periods.setPeriodStatus(applicationId, id, CONTABILIDAD_PERIOD_STATUS.CLOSED);
+    return { ...closed, regularization };
   }
 }
