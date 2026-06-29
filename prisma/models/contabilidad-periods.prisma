@@ -11,6 +11,7 @@ model ContabilidadPeriod {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  journalEntries ContabilidadJournalEntry[]
 
   @@unique([applicationId, year, month])
   @@index([applicationId])
@@ -32,6 +33,7 @@ model ContabilidadCostCenter {
   application Application           @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   parent      ContabilidadCostCenter? @relation("ContabilidadCostCenterHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children    ContabilidadCostCenter[] @relation("ContabilidadCostCenterHierarchy")
+  journalLines ContabilidadJournalEntryLine[]
 
   @@unique([applicationId, code])
   @@index([applicationId])

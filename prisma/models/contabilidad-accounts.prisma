@@ -20,6 +20,7 @@ model ContabilidadAccount {
   application Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   parent      ContabilidadAccount? @relation("ContabilidadAccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children    ContabilidadAccount[] @relation("ContabilidadAccountHierarchy")
+  journalLines ContabilidadJournalEntryLine[]
 
   @@unique([applicationId, code])
   @@index([applicationId])

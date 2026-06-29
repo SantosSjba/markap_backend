@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-06-29  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 3 (periodos y centros de costo) completada — Fase 4 pendiente
+> **Estado general:** Fase 4 (asientos y libro diario) completada — Fase 5 pendiente
 
 ---
 
@@ -79,8 +79,8 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 ## Decisiones de diseño (cerrar antes de codear)
 
 - [ ] **Multi-empresa / multi-RUC:** ¿Un `applicationSlug=contabilidad` por holding o una empresa contable por `companyId`? (Recomendado: entidad `AccountingCompany` con RUC propio dentro de la app.)
-- [ ] **Partida doble estricta:** todo asiento cuadra débito = crédito; no permitir publicar si no cuadra.
-- [ ] **Estados del asiento:** `DRAFT` → `POSTED` → (opcional) `REVERSED`; periodo cerrado bloquea edición.
+- [x] **Estados del asiento:** `DRAFT` → `POSTED` → `REVERSED`; periodo cerrado bloquea edición/publicación.
+- [x] **Partida doble estricta:** publicar solo si debe = haber.
 - [ ] **Plan de cuentas jerárquico:** código PCGE (ej. `1011`, `40111`); cuentas de movimiento vs título; no borrar cuentas con movimiento.
 - [ ] **Moneda:** PEN en v1; diseño preparado para multimoneda (tipo de cambio) en fase posterior.
 - [ ] **CPE / facturación electrónica:** v1 registro contable manual + import; integración OSE/PSE en fase futura explícita.
@@ -98,7 +98,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 1 | Configuración contable | ✅ Completa |
 | 2 | Plan de cuentas (PCGE) | ✅ Completa |
 | 3 | Periodos y centros de costo | ✅ Completa |
-| 4 | Asientos y libro diario | ⬜ Pendiente |
+| 4 | Asientos y libro diario | ✅ Completa |
 | 5 | Tesorería | ⬜ Pendiente |
 | 6 | Compras contables | ⬜ Pendiente |
 | 7 | Ventas contables | ⬜ Pendiente |
@@ -186,18 +186,18 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Modelo `JournalEntry` + `JournalEntryLine`: fecha, glosa, periodo, estado, líneas (cuenta, debe, haber, CC, auxiliar RUC/doc)
-- [ ] Validación partida doble; redondeo PEN
-- [ ] Numeración correlativa por periodo (libro diario)
-- [ ] Acciones: crear borrador, editar borrador, publicar, reversar
-- [ ] Libro diario consulta con filtros (fecha, cuenta, CC, estado)
-- [ ] API `/contabilidad-journal-entries`
+- [x] Modelo `ContabilidadJournalEntry` + `ContabilidadJournalEntryLine`: fecha, glosa, periodo, estado, líneas (cuenta, debe, haber, CC, auxiliar RUC/doc)
+- [x] Validación partida doble; redondeo PEN
+- [x] Numeración correlativa por periodo (libro diario)
+- [x] Acciones: crear borrador, editar borrador, publicar, reversar, eliminar borrador
+- [x] Libro diario consulta con filtros (periodo, estado, fecha, cuenta, CC, búsqueda)
+- [x] API `/contabilidad-journal-entries`
 
 ### Frontend (`features/asientos`)
 
-- [ ] Listado libro diario (`DataTable`, filtros)
-- [ ] Formulario asiento manual (grilla líneas dinámica, indicador cuadre)
-- [ ] Detalle asiento + imprimir/PDF
+- [x] Listado libro diario (`DataTable`, `PageHeader`, `Badge`, filtros con `SearchInput` + `FormSelect`)
+- [x] Formulario asiento manual (grilla líneas dinámica, indicador cuadre)
+- [x] Detalle asiento + imprimir
 - [ ] Plantillas de asiento recurrentes (opcional v1.1)
 
 ---

@@ -48,6 +48,7 @@ import { ProduccionConfigPrismaRepository } from './prisma/repositories/producci
 import { ContabilidadConfigPrismaRepository } from './prisma/repositories/contabilidad-config-prisma.repository';
 import { ContabilidadAccountPrismaRepository } from './prisma/repositories/contabilidad-account-prisma.repository';
 import { ContabilidadPeriodPrismaRepository } from './prisma/repositories/contabilidad-period-prisma.repository';
+import { ContabilidadJournalPrismaRepository } from './prisma/repositories/contabilidad-journal-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
@@ -91,6 +92,7 @@ import {
   CONTABILIDAD_CONFIG_REPOSITORY,
   CONTABILIDAD_ACCOUNT_REPOSITORY,
   CONTABILIDAD_PERIOD_REPOSITORY,
+  CONTABILIDAD_JOURNAL_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
@@ -259,6 +261,10 @@ import {
       useClass: ContabilidadPeriodPrismaRepository,
     },
     {
+      provide: CONTABILIDAD_JOURNAL_REPOSITORY,
+      useClass: ContabilidadJournalPrismaRepository,
+    },
+    {
       provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
       useClass: InteriorMaterialSupplierPrismaRepository,
     },
@@ -324,6 +330,7 @@ import {
     CONTABILIDAD_CONFIG_REPOSITORY,
     CONTABILIDAD_ACCOUNT_REPOSITORY,
     CONTABILIDAD_PERIOD_REPOSITORY,
+    CONTABILIDAD_JOURNAL_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,
     INTERIOR_FINANCE_REPOSITORY,

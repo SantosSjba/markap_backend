@@ -49,6 +49,7 @@ export { PRODUCCION_CONFIG_REPOSITORY } from '@domain/repositories/produccion-co
 export { CONTABILIDAD_CONFIG_REPOSITORY } from '@domain/repositories/contabilidad-config.repository';
 export { CONTABILIDAD_ACCOUNT_REPOSITORY } from '@domain/repositories/contabilidad-account.repository';
 export { CONTABILIDAD_PERIOD_REPOSITORY } from '@domain/repositories/contabilidad-period.repository';
+export { CONTABILIDAD_JOURNAL_REPOSITORY } from '@domain/repositories/contabilidad-journal.repository';
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';
 export { INTERIOR_EXECUTION_REPOSITORY } from '@domain/repositories/interior-execution.repository';
 export { INTERIOR_FINANCE_REPOSITORY } from '@domain/repositories/interior-finance.repository';

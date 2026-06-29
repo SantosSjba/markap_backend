@@ -126,4 +126,13 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
     if (row.applicationId !== applicationId) throw new Error('Account not found');
     return ContabilidadAccountPrismaMapper.toFlat(row);
   }
+
+  async markHasMovements(applicationId: string, accountIds: string[]): Promise<void> {
+    const unique = [...new Set(accountIds.filter(Boolean))];
+    if (!unique.length) return;
+    await this.prisma.contabilidadAccount.updateMany({
+      where: { applicationId, id: { in: unique } },
+      data: { hasMovements: true },
+    });
+  }
 }

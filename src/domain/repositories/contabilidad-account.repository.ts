@@ -56,4 +56,5 @@ export interface ContabilidadAccountRepository {
   create(applicationId: string, input: CreateContabilidadAccountInput): Promise<ContabilidadAccountFlatDto>;
   update(applicationId: string, id: string, input: UpdateContabilidadAccountInput): Promise<ContabilidadAccountFlatDto>;
   deactivate(applicationId: string, id: string): Promise<ContabilidadAccountFlatDto>;
+  markHasMovements(applicationId: string, accountIds: string[]): Promise<void>;
 }

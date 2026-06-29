@@ -1,0 +1,56 @@
+/// Asientos contables y líneas del libro diario.
+
+model ContabilidadJournalEntry {
+  id            String   @id @default(uuid())
+  applicationId String   @map("application_id")
+  periodId      String   @map("period_id")
+  entryNumber   Int      @map("entry_number")
+  entryDate     DateTime @map("entry_date") @db.Date
+  description   String
+  status        String   @default("DRAFT")
+  totalDebit    Decimal  @default(0) @map("total_debit") @db.Decimal(14, 2)
+  totalCredit   Decimal  @default(0) @map("total_credit") @db.Decimal(14, 2)
+  reversalOfId  String?  @map("reversal_of_id")
+
+  createdBy String?   @map("created_by")
+  postedBy  String?   @map("posted_by")
+  postedAt  DateTime? @map("posted_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period      ContabilidadPeriod   @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  reversalOf  ContabilidadJournalEntry?  @relation("ContabilidadJournalReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversals   ContabilidadJournalEntry[] @relation("ContabilidadJournalReversal")
+  lines       ContabilidadJournalEntryLine[]
+
+  @@unique([applicationId, periodId, entryNumber])
+  @@index([applicationId])
+  @@index([periodId])
+  @@index([applicationId, status])
+  @@index([entryDate])
+  @@map("contabilidad_journal_entries")
+}
+
+model ContabilidadJournalEntryLine {
+  id             String  @id @default(uuid())
+  journalEntryId String  @map("journal_entry_id")
+  lineNumber     Int     @map("line_number")
+  accountId      String  @map("account_id")
+  debit          Decimal @default(0) @db.Decimal(14, 2)
+  credit         Decimal @default(0) @db.Decimal(14, 2)
+  costCenterId   String? @map("cost_center_id")
+  auxiliaryRuc   String? @map("auxiliary_ruc")
+  auxiliaryDoc   String? @map("auxiliary_doc")
+  description    String?
+
+  journalEntry ContabilidadJournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account      ContabilidadAccount      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  costCenter   ContabilidadCostCenter?  @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+
+  @@index([journalEntryId])
+  @@index([accountId])
+  @@index([costCenterId])
+  @@map("contabilidad_journal_entry_lines")
+}
