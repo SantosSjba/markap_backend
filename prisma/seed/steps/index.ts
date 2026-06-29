@@ -23,6 +23,7 @@ export { seedVentasMenus } from './menus-ventas';
 export { seedInteriorismoMenus } from './menus-interiorismo';
 export { seedArquitecturaMenus } from './menus-arquitectura';
 export { seedProduccionMenus } from './menus-produccion';
+export { seedProduccionFurniture } from './demo-produccion-furniture';
 export { seedContabilidadMenus } from './menus-contabilidad';
 export { seedRolesAndApplications } from './roles-applications';
 export type { RolesApplicationsResult } from './roles-applications';

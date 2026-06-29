@@ -164,6 +164,15 @@ import {
 } from '../../application/use-cases/interior-catalog-materials';
 
 import {
+  CreateProduccionFurnitureUseCase,
+  DeleteProduccionFurnitureUseCase,
+  GetProduccionFurnitureByIdUseCase,
+  GetProduccionFurnitureStatsUseCase,
+  ListProduccionFurnitureUseCase,
+  UpdateProduccionFurnitureUseCase,
+} from '../../application/use-cases/produccion-furniture';
+
+import {
   CreateInteriorMaterialSupplierUseCase,
   DeleteInteriorMaterialSupplierUseCase,
   GetInteriorMaterialSupplierByIdUseCase,
@@ -238,6 +247,7 @@ import { VentasComplianceController } from './controllers/ventas-compliance.cont
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoProjectBudgetController } from './controllers/interiorismo-project-budget.controller';
 import { InteriorismoCatalogMaterialsController } from './controllers/interiorismo-catalog-materials.controller';
+import { ProduccionFurnitureController } from './controllers/produccion-furniture.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
@@ -300,6 +310,7 @@ import {
     InteriorismoProjectsController,
     InteriorismoProjectBudgetController,
     InteriorismoCatalogMaterialsController,
+    ProduccionFurnitureController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
     InteriorismoFinanceController,
@@ -461,6 +472,13 @@ import {
     CreateInteriorCatalogMaterialUseCase,
     UpdateInteriorCatalogMaterialUseCase,
     DeleteInteriorCatalogMaterialUseCase,
+
+    ListProduccionFurnitureUseCase,
+    GetProduccionFurnitureStatsUseCase,
+    GetProduccionFurnitureByIdUseCase,
+    CreateProduccionFurnitureUseCase,
+    UpdateProduccionFurnitureUseCase,
+    DeleteProduccionFurnitureUseCase,
 
     ListInteriorMaterialSuppliersUseCase,
     GetInteriorMaterialSupplierByIdUseCase,

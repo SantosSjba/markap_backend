@@ -39,6 +39,7 @@ model Application {
   interiorismoNumberingSeries     InteriorismoNumberingSeries[]
   interiorProjects             InteriorProject[]
   interiorCatalogMaterials     InteriorCatalogMaterial[]
+  produccionFurniture          ProduccionFurniture[]
   interiorMaterialSuppliers    InteriorMaterialSupplier[]
   interiorCalendarEvents       InteriorCalendarEvent[]
   genArchivos                  GenArchivo[]

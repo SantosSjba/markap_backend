@@ -31,6 +31,7 @@ export { VENTAS_SALES_REPOSITORY } from '@domain/repositories/ventas-sales.repos
 export { INTERIOR_PROJECT_REPOSITORY } from '@domain/repositories/interior-project.repository';
 export { INTERIOR_PROJECT_BUDGET_REPOSITORY } from '@domain/repositories/interior-project-budget.repository';
 export { INTERIOR_CATALOG_MATERIAL_REPOSITORY } from '@domain/repositories/interior-catalog-material.repository';
+export { PRODUCCION_FURNITURE_REPOSITORY } from '@domain/repositories/produccion-furniture.repository';
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';
 export { INTERIOR_EXECUTION_REPOSITORY } from '@domain/repositories/interior-execution.repository';
 export { INTERIOR_FINANCE_REPOSITORY } from '@domain/repositories/interior-finance.repository';
