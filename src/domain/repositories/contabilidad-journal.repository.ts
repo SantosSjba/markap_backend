@@ -4,6 +4,9 @@ export interface ContabilidadJournalLineInput {
   accountId: string;
   debit?: number | string;
   credit?: number | string;
+  foreignCurrency?: string | null;
+  foreignAmount?: number | string | null;
+  exchangeRate?: number | string | null;
   costCenterId?: string | null;
   auxiliaryRuc?: string | null;
   auxiliaryDoc?: string | null;
@@ -41,6 +44,9 @@ export interface ContabilidadJournalLineDto {
   accountName: string;
   debit: string;
   credit: string;
+  foreignCurrency: string | null;
+  foreignAmount: string | null;
+  exchangeRate: string | null;
   costCenterId: string | null;
   costCenterCode: string | null;
   costCenterName: string | null;

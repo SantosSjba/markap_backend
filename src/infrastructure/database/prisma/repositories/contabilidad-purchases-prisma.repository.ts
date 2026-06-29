@@ -36,6 +36,7 @@ import type {
 } from '@domain/repositories/contabilidad-purchases.repository';
 import type { ContabilidadTreasuryRepository } from '@domain/repositories/contabilidad-treasury.repository';
 import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { resolveInvoiceTaxableBaseInPen } from '../helpers/contabilidad-invoice-multicurrency.helper';
 import { PrismaService } from '../prisma.service';
 import { ContabilidadPurchasesPrismaMapper } from '../mappers/contabilidad-purchases-prisma.mapper';
 
@@ -274,8 +275,15 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     });
     if (!supplier) throw new Error('Proveedor no encontrado');
 
+    const fx = await resolveInvoiceTaxableBaseInPen(this.prisma, applicationId, {
+      currencyCode: input.currencyCode,
+      exchangeRate: input.exchangeRate,
+      foreignTaxableBase: input.foreignTaxableBase,
+      taxableBase: input.taxableBase,
+      issueDate: input.issueDate,
+    });
     const amounts = computePurchaseAmounts(
-      input.taxableBase,
+      fx.taxableBasePen,
       input.taxAffectation,
       igvPercent,
       input.igvAmount,
@@ -333,6 +341,9 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
         issueDate: new Date(`${input.issueDate}T12:00:00.000Z`),
         dueDate: input.dueDate ? new Date(`${input.dueDate}T12:00:00.000Z`) : null,
         taxAffectation: input.taxAffectation,
+        currencyCode: fx.currencyCode,
+        exchangeRate: fx.exchangeRate,
+        foreignTaxableBase: fx.foreignTaxableBase,
         expenseAccountId: input.expenseAccountId,
         taxableBase: amounts.taxableBase,
         igvAmount: amounts.igvAmount,

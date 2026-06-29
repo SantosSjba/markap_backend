@@ -6,6 +6,7 @@ import type {
   ContabilidadSupplierDto,
 } from '@domain/repositories/contabilidad-purchases.repository';
 import { formatPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { formatExchangeRate, FUNCTIONAL_CURRENCY } from '@domain/utils/contabilidad-multicurrency.util';
 
 function toIsoDate(value: Date): string {
   return value.toISOString().slice(0, 10);
@@ -60,6 +61,9 @@ export const ContabilidadPurchasesPrismaMapper = {
     issueDate: Date;
     dueDate: Date | null;
     taxAffectation: string;
+    currencyCode?: string;
+    exchangeRate?: { toString(): string } | number | null;
+    foreignTaxableBase?: { toString(): string } | number | null;
     expenseAccountId: string;
     taxableBase: { toString(): string } | number;
     igvAmount: { toString(): string } | number;
@@ -89,6 +93,10 @@ export const ContabilidadPurchasesPrismaMapper = {
       issueDate: toIsoDate(row.issueDate),
       dueDate: row.dueDate ? toIsoDate(row.dueDate) : null,
       taxAffectation: row.taxAffectation,
+      currencyCode: row.currencyCode ?? FUNCTIONAL_CURRENCY,
+      exchangeRate: row.exchangeRate != null ? formatExchangeRate(Number(row.exchangeRate)) : null,
+      foreignTaxableBase:
+        row.foreignTaxableBase != null ? formatPenAmount(Number(row.foreignTaxableBase)) : null,
       expenseAccountId: row.expenseAccountId,
       expenseAccountCode: row.expenseAccount.code,
       expenseAccountName: row.expenseAccount.name,

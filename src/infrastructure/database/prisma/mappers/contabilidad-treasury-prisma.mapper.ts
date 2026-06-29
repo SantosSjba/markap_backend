@@ -5,6 +5,7 @@ import type {
   ContabilidadTreasuryMovementDto,
 } from '@domain/repositories/contabilidad-treasury.repository';
 import { formatPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { formatExchangeRate, FUNCTIONAL_CURRENCY } from '@domain/utils/contabilidad-multicurrency.util';
 
 function toIsoDate(value: Date): string {
   return value.toISOString().slice(0, 10);
@@ -72,6 +73,9 @@ export const ContabilidadTreasuryPrismaMapper = {
     bankAccountId: string | null;
     offsetAccountId: string | null;
     transferGroupId: string | null;
+    currencyCode?: string;
+    foreignAmount?: { toString(): string } | number | null;
+    exchangeRate?: { toString(): string } | number | null;
     amount: { toString(): string } | number;
     movementDate: Date;
     description: string;
@@ -98,6 +102,9 @@ export const ContabilidadTreasuryPrismaMapper = {
       offsetAccountCode: row.offsetAccount?.code ?? null,
       offsetAccountName: row.offsetAccount?.name ?? null,
       transferGroupId: row.transferGroupId,
+      currencyCode: row.currencyCode ?? FUNCTIONAL_CURRENCY,
+      foreignAmount: row.foreignAmount != null ? formatPenAmount(Number(row.foreignAmount)) : null,
+      exchangeRate: row.exchangeRate != null ? formatExchangeRate(Number(row.exchangeRate)) : null,
       amount: formatPenAmount(Number(row.amount)),
       movementDate: toIsoDate(row.movementDate),
       description: row.description,

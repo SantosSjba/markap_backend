@@ -25,6 +25,7 @@ import type {
   UpsertReconciliationInput,
 } from '@domain/repositories/contabilidad-treasury.repository';
 import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { resolveTreasuryPenAmount } from '../helpers/contabilidad-invoice-multicurrency.helper';
 import { PrismaService } from '../prisma.service';
 import { ContabilidadTreasuryPrismaMapper } from '../mappers/contabilidad-treasury-prisma.mapper';
 
@@ -272,7 +273,15 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     input: CreateTreasuryMovementInput,
     createdBy?: string | null,
   ): Promise<ContabilidadTreasuryMovementDto> {
-    const amount = parsePenAmount(input.amount);
+    const fx = await resolveTreasuryPenAmount(this.prisma, applicationId, {
+      sourceType: input.sourceType,
+      bankAccountId: input.bankAccountId,
+      amount: input.amount,
+      foreignAmount: input.foreignAmount,
+      exchangeRate: input.exchangeRate,
+      movementDate: input.movementDate,
+    });
+    const amount = fx.penAmount;
     if (Number.isNaN(amount) || amount <= 0) throw new Error('Invalid amount');
 
     const ledgerAccountId = await this.resolveLedgerAccountId(applicationId, input);
@@ -306,6 +315,9 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
         bankAccountId:
           input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK ? input.bankAccountId : null,
         offsetAccountId: input.offsetAccountId,
+        currencyCode: fx.currencyCode,
+        foreignAmount: fx.foreignAmount,
+        exchangeRate: fx.exchangeRate,
         amount,
         movementDate: new Date(`${input.movementDate}T12:00:00.000Z`),
         description: input.description.trim(),

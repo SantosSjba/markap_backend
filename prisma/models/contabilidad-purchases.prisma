@@ -37,6 +37,9 @@ model ContabilidadPurchaseInvoice {
   issueDate        DateTime @map("issue_date") @db.Date
   dueDate          DateTime? @map("due_date") @db.Date
   taxAffectation   String   @map("tax_affectation")
+  currencyCode     String   @default("PEN") @map("currency_code")
+  exchangeRate     Decimal? @map("exchange_rate") @db.Decimal(12, 6)
+  foreignTaxableBase Decimal? @map("foreign_taxable_base") @db.Decimal(14, 2)
   expenseAccountId String   @map("expense_account_id")
   taxableBase      Decimal  @map("taxable_base") @db.Decimal(14, 2)
   igvAmount        Decimal  @map("igv_amount") @db.Decimal(14, 2)

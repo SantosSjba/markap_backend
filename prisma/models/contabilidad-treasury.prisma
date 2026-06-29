@@ -58,6 +58,9 @@ model ContabilidadTreasuryMovement {
   bankAccountId   String?  @map("bank_account_id")
   offsetAccountId String?  @map("offset_account_id")
   transferGroupId String?  @map("transfer_group_id")
+  currencyCode    String   @default("PEN") @map("currency_code")
+  foreignAmount   Decimal? @map("foreign_amount") @db.Decimal(14, 2)
+  exchangeRate    Decimal? @map("exchange_rate") @db.Decimal(12, 6)
   amount          Decimal  @db.Decimal(14, 2)
   movementDate    DateTime @map("movement_date") @db.Date
   description     String

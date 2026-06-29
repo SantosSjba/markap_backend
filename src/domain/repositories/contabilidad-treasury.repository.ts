@@ -40,6 +40,9 @@ export interface ContabilidadTreasuryMovementDto {
   offsetAccountCode: string | null;
   offsetAccountName: string | null;
   transferGroupId: string | null;
+  currencyCode: string;
+  foreignAmount: string | null;
+  exchangeRate: string | null;
   amount: string;
   movementDate: string;
   description: string;
@@ -119,6 +122,8 @@ export interface CreateTreasuryMovementInput {
   bankAccountId?: string | null;
   offsetAccountId: string;
   amount: number | string;
+  foreignAmount?: number | string | null;
+  exchangeRate?: number | string | null;
   movementDate: string;
   description: string;
 }

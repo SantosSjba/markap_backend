@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 14 (export PDF y reportes avanzados) completada — **siguiente: Fase 15** (multimoneda en asientos)
+> **Estado general:** Fase 15 (multimoneda operativa) completada — **siguiente: Fase 16** (IR completo)
 
 ---
 
@@ -88,7 +88,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 - [x] **Estados del asiento:** `DRAFT` → `POSTED` → `REVERSED`; periodo cerrado bloquea edición/publicación.
 - [x] **Partida doble estricta:** publicar solo si debe = haber.
 - [x] **Plan de cuentas jerárquico:** código PCGE; cuentas título vs movimiento; no desactivar con movimientos.
-- [x] **Moneda funcional:** PEN; tipos de cambio manuales registrados → **multimoneda en asientos: Fase 15**
+- [x] **Moneda funcional:** PEN; tipos de cambio manuales registrados → **multimoneda en asientos: Fase 15** ✅
 - [x] **CPE v1:** registro contable + log local (sin OSE/PSE) → **facturación electrónica real: Fase 21**
 - [x] **PLE v1:** libros principales + export local → **PLE ampliado + validador: Fase 17**
 - [ ] **Integración MARKAP:** eventos de dominio → asientos automáticos → **Fase 23 (al final)**
@@ -471,21 +471,23 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Campos opcionales en `ContabilidadJournalEntryLine`: `foreignCurrency`, `foreignAmount`, `exchangeRate`
-- [ ] Al publicar: calcular `debit`/`credit` en PEN desde TC del día (`ContabilidadExchangeRate`) o TC manual en línea
-- [ ] Validación: moneda extranjera solo si hay TC registrado o `exchangeRate` en línea
-- [ ] Compras/ventas: campo opcional moneda y monto extranjero en factura (vincular TC)
-- [ ] Tesorería: movimientos en cuenta bancaria USD con conversión
+- [x] Campos opcionales en `ContabilidadJournalEntryLine`: `foreignCurrency`, `foreignAmount`, `exchangeRate`
+- [x] Al publicar: calcular `debit`/`credit` en PEN desde TC del día (`ContabilidadExchangeRate`) o TC manual en línea
+- [x] Validación: moneda extranjera solo si hay TC registrado o `exchangeRate` en línea
+- [x] Compras/ventas: moneda, TC y base en ME en factura (conversión a PEN en asiento)
+- [x] Tesorería: movimientos en cuenta bancaria USD con conversión
 
 ### Frontend
 
-- [ ] Columnas moneda extranjera en grilla de asiento manual
-- [ ] Selector TC del día al registrar factura en USD
-- [ ] Indicador en listados cuando comprobante es multimoneda
+- [x] Columnas moneda extranjera en grilla de asiento manual
+- [x] Selector moneda + TC del día al registrar factura en USD (ventas/compras)
+- [x] Indicador en listados cuando comprobante es multimoneda
+- [x] Catálogo de monedas reutilizado de Ventas (`/properties/currencies`)
 
 ### Criterio de cierre
 
-- Asiento publicado en PEN cuadra con importe USD × TC; PLE sigue en PEN.
+- [x] Asiento publicado en PEN cuadra con importe USD × TC; PLE sigue en PEN.
+- [x] Migración SQL: `prisma/migrations/manual/contabilidad-phase15-multicurrency-postgres.sql`
 
 ---
 

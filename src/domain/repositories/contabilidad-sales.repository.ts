@@ -27,6 +27,9 @@ export interface ContabilidadSalesInvoiceDto {
   issueDate: string;
   dueDate: string | null;
   taxAffectation: string;
+  currencyCode: string;
+  exchangeRate: string | null;
+  foreignTaxableBase: string | null;
   incomeAccountId: string;
   incomeAccountCode: string;
   incomeAccountName: string;
@@ -162,6 +165,9 @@ export interface CreateSalesInvoiceInput {
   issueDate: string;
   dueDate?: string | null;
   taxAffectation: string;
+  currencyCode?: string;
+  exchangeRate?: number | string | null;
+  foreignTaxableBase?: number | string | null;
   incomeAccountId: string;
   taxableBase: number | string;
   igvAmount?: number | string;

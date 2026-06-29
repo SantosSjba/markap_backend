@@ -5,6 +5,7 @@ import type {
   ContabilidadJournalLineDto,
 } from '@domain/repositories/contabilidad-journal.repository';
 import { formatPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { formatExchangeRate } from '@domain/utils/contabilidad-multicurrency.util';
 
 type JournalLineRow = {
   id: string;
@@ -12,6 +13,9 @@ type JournalLineRow = {
   accountId: string;
   debit: Prisma.Decimal;
   credit: Prisma.Decimal;
+  foreignCurrency: string | null;
+  foreignAmount: Prisma.Decimal | null;
+  exchangeRate: Prisma.Decimal | null;
   costCenterId: string | null;
   auxiliaryRuc: string | null;
   auxiliaryDoc: string | null;
@@ -50,6 +54,9 @@ function toLineDto(row: JournalLineRow): ContabilidadJournalLineDto {
     accountName: row.account.name,
     debit: formatPenAmount(Number(row.debit)),
     credit: formatPenAmount(Number(row.credit)),
+    foreignCurrency: row.foreignCurrency,
+    foreignAmount: row.foreignAmount != null ? formatPenAmount(Number(row.foreignAmount)) : null,
+    exchangeRate: row.exchangeRate != null ? formatExchangeRate(Number(row.exchangeRate)) : null,
     costCenterId: row.costCenterId,
     costCenterCode: row.costCenter?.code ?? null,
     costCenterName: row.costCenter?.name ?? null,

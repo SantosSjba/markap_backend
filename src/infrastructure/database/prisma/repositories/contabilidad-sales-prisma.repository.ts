@@ -36,6 +36,7 @@ import type {
 } from '@domain/repositories/contabilidad-sales.repository';
 import type { ContabilidadTreasuryRepository } from '@domain/repositories/contabilidad-treasury.repository';
 import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { resolveInvoiceTaxableBaseInPen } from '../helpers/contabilidad-invoice-multicurrency.helper';
 import { PrismaService } from '../prisma.service';
 import { ContabilidadSalesPrismaMapper } from '../mappers/contabilidad-sales-prisma.mapper';
 
@@ -263,7 +264,14 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     });
     if (!customer) throw new Error('Cliente no encontrado');
 
-    const amounts = computeSalesAmounts(input.taxableBase, input.taxAffectation, igvPercent, input.igvAmount);
+    const fx = await resolveInvoiceTaxableBaseInPen(this.prisma, applicationId, {
+      currencyCode: input.currencyCode,
+      exchangeRate: input.exchangeRate,
+      foreignTaxableBase: input.foreignTaxableBase,
+      taxableBase: input.taxableBase,
+      issueDate: input.issueDate,
+    });
+    const amounts = computeSalesAmounts(fx.taxableBasePen, input.taxAffectation, igvPercent, input.igvAmount);
     const receivableAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_RECEIVABLE_ACCOUNT_CODE);
     const auxiliaryDoc = `${input.series.trim()}-${input.number.trim()}`;
     const description = `Venta ${auxiliaryDoc} — ${customer.businessName}`;
@@ -311,6 +319,9 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
         issueDate: new Date(`${input.issueDate}T12:00:00.000Z`),
         dueDate: input.dueDate ? new Date(`${input.dueDate}T12:00:00.000Z`) : null,
         taxAffectation: input.taxAffectation,
+        currencyCode: fx.currencyCode,
+        exchangeRate: fx.exchangeRate,
+        foreignTaxableBase: fx.foreignTaxableBase,
         incomeAccountId: input.incomeAccountId,
         taxableBase: amounts.taxableBase,
         igvAmount: amounts.igvAmount,

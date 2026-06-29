@@ -11,6 +11,12 @@ import type {
   UpdateContabilidadJournalEntryInput,
 } from '@domain/repositories/contabilidad-journal.repository';
 import {
+  convertForeignToPen,
+  FUNCTIONAL_CURRENCY,
+  normalizeCurrencyCode,
+  parseExchangeRate,
+} from '@domain/utils/contabilidad-multicurrency.util';
+import {
   amountsBalanced,
   parsePenAmount,
   roundPenAmount,
@@ -32,6 +38,9 @@ interface NormalizedLine {
   accountId: string;
   debit: number;
   credit: number;
+  foreignCurrency: string | null;
+  foreignAmount: number | null;
+  exchangeRate: number | null;
   costCenterId: string | null;
   auxiliaryRuc: string | null;
   auxiliaryDoc: string | null;
@@ -99,7 +108,7 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     input: CreateContabilidadJournalEntryInput,
     createdBy?: string | null,
   ): Promise<ContabilidadJournalEntryDetailDto> {
-    const normalized = await this.normalizeLines(applicationId, input.lines);
+    const normalized = await this.normalizeLines(applicationId, input.lines, input.entryDate);
     const totals = this.computeTotals(normalized);
     const entryNumber = await this.nextEntryNumber(applicationId, input.periodId);
     const entryDate = this.parseEntryDate(input.entryDate);
@@ -121,6 +130,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
             accountId: line.accountId,
             debit: line.debit,
             credit: line.credit,
+            foreignCurrency: line.foreignCurrency,
+            foreignAmount: line.foreignAmount,
+            exchangeRate: line.exchangeRate,
             costCenterId: line.costCenterId,
             auxiliaryRuc: line.auxiliaryRuc,
             auxiliaryDoc: line.auxiliaryDoc,
@@ -148,7 +160,11 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     }
 
     const normalized = input.lines
-      ? await this.normalizeLines(applicationId, input.lines)
+      ? await this.normalizeLines(
+          applicationId,
+          input.lines,
+          input.entryDate ?? existing.entryDate.toISOString().slice(0, 10),
+        )
       : null;
     const totals = normalized ? this.computeTotals(normalized) : null;
 
@@ -171,6 +187,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
                   accountId: line.accountId,
                   debit: line.debit,
                   credit: line.credit,
+                  foreignCurrency: line.foreignCurrency,
+                  foreignAmount: line.foreignAmount,
+                  exchangeRate: line.exchangeRate,
                   costCenterId: line.costCenterId,
                   auxiliaryRuc: line.auxiliaryRuc,
                   auxiliaryDoc: line.auxiliaryDoc,
@@ -289,6 +308,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
               accountId: line.accountId,
               debit: line.credit,
               credit: line.debit,
+              foreignCurrency: line.foreignCurrency,
+              foreignAmount: line.foreignAmount,
+              exchangeRate: line.exchangeRate,
               costCenterId: line.costCenterId,
               auxiliaryRuc: line.auxiliaryRuc,
               auxiliaryDoc: line.auxiliaryDoc,
@@ -316,7 +338,7 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     input: CreateContabilidadJournalEntryInput,
     postedBy?: string | null,
   ): Promise<ContabilidadJournalEntryDetailDto> {
-    const normalized = await this.normalizeLines(applicationId, input.lines);
+    const normalized = await this.normalizeLines(applicationId, input.lines, input.entryDate);
     if (normalized.length < 2) throw new Error('At least two lines are required');
     const totals = this.computeTotals(normalized);
     if (!amountsBalanced(totals.debit, totals.credit) || totals.debit <= 0) {
@@ -352,6 +374,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
               accountId: line.accountId,
               debit: line.debit,
               credit: line.credit,
+              foreignCurrency: line.foreignCurrency,
+              foreignAmount: line.foreignAmount,
+              exchangeRate: line.exchangeRate,
               costCenterId: line.costCenterId,
               auxiliaryRuc: line.auxiliaryRuc,
               auxiliaryDoc: line.auxiliaryDoc,
@@ -398,21 +423,82 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return { debit, credit };
   }
 
+  private async lookupExchangeRate(
+    applicationId: string,
+    currencyCode: string,
+    rateDate: string,
+  ): Promise<number> {
+    const row = await this.prisma.contabilidadExchangeRate.findUnique({
+      where: {
+        applicationId_rateDate_currencyCode: {
+          applicationId,
+          rateDate: new Date(`${rateDate}T12:00:00.000Z`),
+          currencyCode,
+        },
+      },
+    });
+    if (!row) {
+      throw new Error(`No hay tipo de cambio registrado para ${currencyCode} en ${rateDate}`);
+    }
+    return parseExchangeRate(Number(row.sellRate));
+  }
+
   private async normalizeLines(
     applicationId: string,
     lines: ContabilidadJournalLineInput[],
+    entryDate: string,
   ): Promise<NormalizedLine[]> {
     if (!lines?.length) throw new Error('At least one line is required');
 
     const normalized: NormalizedLine[] = [];
 
     for (const line of lines) {
-      const debit = parsePenAmount(line.debit);
-      const credit = parsePenAmount(line.credit);
+      let debit = parsePenAmount(line.debit);
+      let credit = parsePenAmount(line.credit);
       if (Number.isNaN(debit) || Number.isNaN(credit)) {
         throw new Error('Invalid amount');
       }
       if (debit > 0 && credit > 0) throw new Error('Line cannot have both debit and credit');
+
+      const foreignCurrencyInput = line.foreignCurrency?.trim()
+        ? normalizeCurrencyCode(line.foreignCurrency)
+        : null;
+      const foreignAmountRaw =
+        line.foreignAmount != null && line.foreignAmount !== ''
+          ? parsePenAmount(line.foreignAmount)
+          : 0;
+
+      let storedForeignCurrency: string | null = null;
+      let storedForeignAmount: number | null = null;
+      let storedExchangeRate: number | null = null;
+
+      if (
+        foreignCurrencyInput &&
+        foreignCurrencyInput !== FUNCTIONAL_CURRENCY &&
+        foreignAmountRaw > 0
+      ) {
+        let rate = parseExchangeRate(line.exchangeRate);
+        if (!Number.isFinite(rate)) {
+          rate = await this.lookupExchangeRate(applicationId, foreignCurrencyInput, entryDate);
+        }
+        const penFromForeign = convertForeignToPen(foreignAmountRaw, rate);
+        if (debit > 0) {
+          debit = penFromForeign;
+        } else if (credit > 0) {
+          credit = penFromForeign;
+        } else {
+          throw new Error('Indique debe o haber para la línea en moneda extranjera');
+        }
+        storedForeignCurrency = foreignCurrencyInput;
+        storedForeignAmount = foreignAmountRaw;
+        storedExchangeRate = rate;
+      } else if (
+        foreignCurrencyInput &&
+        foreignCurrencyInput !== FUNCTIONAL_CURRENCY &&
+        (line.foreignAmount != null && line.foreignAmount !== '')
+      ) {
+        throw new Error('Importe en moneda extranjera no válido');
+      }
 
       const account = await this.prisma.contabilidadAccount.findFirst({
         where: { applicationId, id: line.accountId },
@@ -431,6 +517,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
         accountId: line.accountId,
         debit,
         credit,
+        foreignCurrency: storedForeignCurrency,
+        foreignAmount: storedForeignAmount,
+        exchangeRate: storedExchangeRate,
         costCenterId: line.costCenterId ?? null,
         auxiliaryRuc: line.auxiliaryRuc?.trim() || null,
         auxiliaryDoc: line.auxiliaryDoc?.trim() || null,
