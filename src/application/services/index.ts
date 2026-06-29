@@ -24,6 +24,7 @@ export * from './contabilidad-audit-operations.service';
 export * from './contabilidad-cpe-operations.service';
 export * from './contabilidad-cpe-ubl.service';
 export * from './contabilidad-cpe-emitter.service';
+export * from './contabilidad-sol-operations.service';
 export * from './ventas-compliance-operations.service';
 export * from './notifications.service';
 export * from './rental-alerts.scheduler';

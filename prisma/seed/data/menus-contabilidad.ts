@@ -185,6 +185,12 @@ export const CONTABILIDAD_CHILD_MENUS = [
     order: 4,
     parentLabel: 'Tributos',
   },
+  {
+    label: 'Declaraciones SOL',
+    path: '/contabilidad/tributos/declaraciones-sol',
+    order: 5,
+    parentLabel: 'Tributos',
+  },
   // Inventario permanente
   {
     label: 'Ítems de inventario',

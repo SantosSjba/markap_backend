@@ -24,6 +24,8 @@ model ContabilidadLegalEntity {
   auditLogs      ContabilidadAuditLog[]
   cpeProviderConfig ContabilidadCpeProviderConfig?
   electronicDocLogs ContabilidadElectronicDocumentLog[]
+  solCredentials    ContabilidadSolCredentials?
+  sunatDeclarations ContabilidadSunatDeclarationLog[]
 
   @@unique([applicationId, code])
   @@unique([applicationId, ruc])

@@ -86,6 +86,8 @@ model Application {
   contabilidadInventoryBalanceSnapshots ContabilidadInventoryBalanceSnapshot[]
   contabilidadElectronicDocumentLogs ContabilidadElectronicDocumentLog[]
   contabilidadCpeProviderConfigs     ContabilidadCpeProviderConfig[]
+  contabilidadSolCredentials         ContabilidadSolCredentials[]
+  contabilidadSunatDeclarationLogs   ContabilidadSunatDeclarationLog[]
   contabilidadIncomeTaxPeriodSummaries ContabilidadIncomeTaxPeriodSummary[]
   contabilidadPleExportLogs            ContabilidadPleExportLog[]
   contabilidadInventoryItems           ContabilidadInventoryItem[]

@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 21 (Facturación electrónica OSE/PSE) completada — **siguiente: Fase 22** (Declaraciones SUNAT SOL)
+> **Estado general:** Fase 22 (Declaraciones SUNAT SOL) completada — **siguiente: Fase 23** (Integración apps MARKAP)
 
 ---
 
@@ -122,7 +122,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 19 | PCGE catálogo completo | ✅ Completa |
 | 20 | Multi-empresa y auditoría | ✅ Completa |
 | 21 | Facturación electrónica (OSE/PSE) | ✅ Completa |
-| 22 | Declaraciones SUNAT (SOL) | ⬜ Pendiente |
+| 22 | Declaraciones SUNAT (SOL) | ✅ Completa |
 | 23 | Integración con apps MARKAP | ⬜ Al final |
 
 ### Roadmap pendiente (resumen ejecutivo)
@@ -643,19 +643,19 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Almacén seguro credenciales SOL (encriptado)
-- [ ] Envío PDT 621 desde datos ya exportados (si API SUNAT disponible; si no, paquete listo para carga manual asistida)
-- [ ] Preparación PLAME (estructura datos; envío según viabilidad API)
-- [ ] Log de declaraciones: periodo, tipo, estado, respuesta
+- [x] Almacén seguro credenciales SOL (encriptado base64 + hint; vault en producción)
+- [x] Envío PDT 621 desde datos exportados (sandbox MOCK; producción → carga manual)
+- [x] Preparación PLAME (estructura borrador JSON)
+- [x] Log de declaraciones: periodo, tipo, estado, respuesta
 
 ### Frontend
 
-- [ ] Tributos → Declaraciones SOL: wizard PDT 621 por periodo
-- [ ] Estado última declaración y errores SUNAT
+- [x] Tributos → Declaraciones SOL: wizard PDT 621 por periodo
+- [x] Estado última declaración y errores SUNAT
 
 ### Criterio de cierre
 
-- Al menos export + flujo guiado de carga; envío automático si hay API y credenciales de prueba.
+- [x] Export JSON + flujo guiado de carga manual; envío sandbox con credenciales SOL
 
 ### Nota
 
