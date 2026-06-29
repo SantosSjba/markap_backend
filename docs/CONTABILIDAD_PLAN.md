@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-06-29  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 7 (ventas contables) completada — Fase 8 pendiente
+> **Estado general:** Fase 8 (tributos) completada — Fase 9 pendiente
 
 ---
 
@@ -66,7 +66,7 @@ Integración con apps MARKAP (alquileres, ventas, producción, interiorismo…)
 | Tesorería | caja, bancos, conciliaciones, movimientos, transferencias | **Placeholder** |
 | Compras | facturas, NC, proveedores, pagos | **Implementado** |
 | Ventas | facturas, boletas, NC, clientes, cobros | **Placeholder** |
-| Tributos | IGV, detracciones, retenciones, percepciones | **Placeholder** |
+| Tributos | IGV, detracciones, retenciones, percepciones | ✅ |
 | Libros electrónicos | registro compras/ventas, diario, mayor, caja, bancos, PLE | **Placeholder** |
 | Reportes financieros | balance, ER, flujos, KPIs | **Placeholder** |
 | Configuración | `/contabilidad/configuracion` | **Placeholder** |
@@ -102,7 +102,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 5 | Tesorería | ✅ Completa |
 | 6 | Compras contables | ✅ Completa |
 | 7 | Ventas contables | ✅ Completa |
-| 8 | Tributos (IGV, detracciones, retenciones) | ⬜ Pendiente |
+| 8 | Tributos (IGV, detracciones, retenciones) | ✅ Completa |
 | 9 | Libros electrónicos y PLE | ⬜ Pendiente |
 | 10 | Cierre mensual y EEFF | ⬜ Pendiente |
 | 11 | Reportes y dashboard | ⬜ Pendiente |
@@ -273,18 +273,18 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] **IGV:** resumen mensual crédito vs débito; saldo a favor / a pagar (cuenta 40.11)
-- [ ] **Detracciones:** registro SPOT, cuenta 40.12, constancia, tasa por bien/servicio (tabla configurable SUNAT)
-- [ ] **Retenciones:** agente retención IGV / renta (según perfil)
-- [ ] **Percepciones:** registro y aplicación
-- [ ] Preparación datos **PDT 621** (export estructurado; sin envío SOL en v1)
-- [ ] API `/contabilidad-taxes`
+- [x] **IGV:** resumen mensual crédito vs débito desde compras/ventas; saldo a pagar / a favor (4011)
+- [x] **Detracciones:** registro SPOT, cuenta 4018, constancia, tasas SUNAT configurables
+- [x] **Retenciones:** IGV y renta (4017)
+- [x] **Percepciones:** cobro tesorería + 4011
+- [x] Preparación datos **PDT 621** (export estructurado JSON/Excel; sin envío SOL)
+- [x] API `/contabilidad-taxes`
 
 ### Frontend (`features/tributos`)
 
-- [ ] Dashboard tributario del periodo
-- [ ] Pantallas IGV, detracciones, retenciones, percepciones
-- [ ] Export para declaración (CSV/Excel)
+- [x] Dashboard IGV del periodo (crédito/débito, saldos)
+- [x] Pantallas IGV, detracciones, retenciones, percepciones
+- [x] Export PDT 621 (Excel)
 
 ---
 

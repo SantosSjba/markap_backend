@@ -1,0 +1,119 @@
+/// Tributos: detracciones SPOT, retenciones, percepciones y tasas SUNAT.
+
+model ContabilidadDetraccionRate {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  sunatCode     String  @map("sunat_code")
+  description   String
+  ratePercent   Decimal @map("rate_percent") @db.Decimal(5, 2)
+  minAmount     Decimal @default(700) @map("min_amount") @db.Decimal(14, 2)
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  detracciones ContabilidadDetraccion[]
+
+  @@unique([applicationId, sunatCode])
+  @@index([applicationId])
+  @@map("contabilidad_detraccion_rates")
+}
+
+model ContabilidadDetraccion {
+  id                 String    @id @default(uuid())
+  applicationId      String    @map("application_id")
+  periodId           String    @map("period_id")
+  purchaseInvoiceId  String?   @map("purchase_invoice_id")
+  rateId             String?   @map("rate_id")
+  supplierRuc        String    @map("supplier_ruc")
+  supplierName       String    @map("supplier_name")
+  certificateNumber  String    @map("certificate_number")
+  operationDate      DateTime  @map("operation_date") @db.Date
+  baseAmount         Decimal   @map("base_amount") @db.Decimal(14, 2)
+  ratePercent        Decimal   @map("rate_percent") @db.Decimal(5, 2)
+  amount             Decimal   @db.Decimal(14, 2)
+  status             String    @default("PENDING")
+  paidAt             DateTime? @map("paid_at")
+  treasuryMovementId String?   @map("treasury_movement_id")
+  journalEntryId     String?   @map("journal_entry_id")
+  createdBy          String?   @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period           ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  purchaseInvoice  ContabilidadPurchaseInvoice? @relation(fields: [purchaseInvoiceId], references: [id], onDelete: SetNull)
+  rate             ContabilidadDetraccionRate? @relation(fields: [rateId], references: [id], onDelete: SetNull)
+  treasuryMovement ContabilidadTreasuryMovement? @relation(fields: [treasuryMovementId], references: [id], onDelete: SetNull)
+  journalEntry     ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([periodId])
+  @@index([status])
+  @@map("contabilidad_detracciones")
+}
+
+model ContabilidadRetention {
+  id                String   @id @default(uuid())
+  applicationId     String   @map("application_id")
+  periodId          String   @map("period_id")
+  retentionType     String   @map("retention_type")
+  counterpartyRuc   String   @map("counterparty_ruc")
+  counterpartyName  String   @map("counterparty_name")
+  documentType      String?  @map("document_type")
+  documentSeries    String?  @map("document_series")
+  documentNumber    String?  @map("document_number")
+  issueDate         DateTime @map("issue_date") @db.Date
+  taxableBase       Decimal  @map("taxable_base") @db.Decimal(14, 2)
+  ratePercent       Decimal  @map("rate_percent") @db.Decimal(5, 2)
+  amount            Decimal  @db.Decimal(14, 2)
+  purchaseInvoiceId String?  @map("purchase_invoice_id")
+  journalEntryId    String?  @map("journal_entry_id")
+  status            String   @default("ACTIVE")
+  createdBy         String?  @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period          ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  purchaseInvoice ContabilidadPurchaseInvoice? @relation(fields: [purchaseInvoiceId], references: [id], onDelete: SetNull)
+  journalEntry    ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([periodId])
+  @@map("contabilidad_retentions")
+}
+
+model ContabilidadPerception {
+  id                 String   @id @default(uuid())
+  applicationId      String   @map("application_id")
+  periodId           String   @map("period_id")
+  perceptionType     String   @map("perception_type")
+  customerRuc        String   @map("customer_ruc")
+  customerName       String   @map("customer_name")
+  salesInvoiceId     String?  @map("sales_invoice_id")
+  issueDate          DateTime @map("issue_date") @db.Date
+  taxableBase        Decimal  @map("taxable_base") @db.Decimal(14, 2)
+  ratePercent        Decimal  @map("rate_percent") @db.Decimal(5, 2)
+  amount             Decimal  @db.Decimal(14, 2)
+  treasuryMovementId String?  @map("treasury_movement_id")
+  journalEntryId     String?  @map("journal_entry_id")
+  status             String   @default("ACTIVE")
+  createdBy          String?  @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period           ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  salesInvoice     ContabilidadSalesInvoice? @relation(fields: [salesInvoiceId], references: [id], onDelete: SetNull)
+  treasuryMovement ContabilidadTreasuryMovement? @relation(fields: [treasuryMovementId], references: [id], onDelete: SetNull)
+  journalEntry     ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([periodId])
+  @@map("contabilidad_perceptions")
+}

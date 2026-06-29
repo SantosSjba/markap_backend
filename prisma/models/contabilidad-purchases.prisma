@@ -56,6 +56,8 @@ model ContabilidadPurchaseInvoice {
   journalEntry   ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
   payments       ContabilidadPurchasePayment[]
   creditNotes    ContabilidadPurchaseCreditNote[]
+  detracciones   ContabilidadDetraccion[]
+  retentions     ContabilidadRetention[]
 
   @@unique([applicationId, documentType, series, number])
   @@index([applicationId])

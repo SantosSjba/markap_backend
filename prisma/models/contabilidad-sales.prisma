@@ -55,6 +55,7 @@ model ContabilidadSalesInvoice {
   journalEntry   ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
   collections    ContabilidadSalesCollection[]
   creditNotes    ContabilidadSalesCreditNote[]
+  perceptions    ContabilidadPerception[]
 
   @@unique([applicationId, documentType, series, number])
   @@index([applicationId])

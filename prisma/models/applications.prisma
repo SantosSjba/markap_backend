@@ -77,6 +77,10 @@ model Application {
   contabilidadSalesInvoices      ContabilidadSalesInvoice[]
   contabilidadSalesCreditNotes   ContabilidadSalesCreditNote[]
   contabilidadSalesCollections   ContabilidadSalesCollection[]
+  contabilidadDetraccionRates    ContabilidadDetraccionRate[]
+  contabilidadDetracciones       ContabilidadDetraccion[]
+  contabilidadRetentions         ContabilidadRetention[]
+  contabilidadPerceptions        ContabilidadPerception[]
 
   @@index([slug])
   @@index([isActive])
