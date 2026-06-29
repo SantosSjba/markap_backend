@@ -55,6 +55,7 @@ import { ContabilidadSalesPrismaRepository } from './prisma/repositories/contabi
 import { ContabilidadTaxesPrismaRepository } from './prisma/repositories/contabilidad-taxes-prisma.repository';
 import { ContabilidadPlePrismaRepository } from './prisma/repositories/contabilidad-ple-prisma.repository';
 import { ContabilidadFinancialPrismaRepository } from './prisma/repositories/contabilidad-financial-prisma.repository';
+import { ContabilidadReportsPrismaRepository } from './prisma/repositories/contabilidad-reports-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
@@ -105,6 +106,7 @@ import {
   CONTABILIDAD_TAXES_REPOSITORY,
   CONTABILIDAD_PLE_REPOSITORY,
   CONTABILIDAD_FINANCIAL_REPOSITORY,
+  CONTABILIDAD_REPORTS_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
@@ -301,6 +303,15 @@ import {
       useClass: ContabilidadFinancialPrismaRepository,
     },
     {
+      provide: CONTABILIDAD_REPORTS_REPOSITORY,
+      useFactory: (
+        prisma: PrismaService,
+        financial: ContabilidadFinancialPrismaRepository,
+        taxes: ContabilidadTaxesPrismaRepository,
+      ) => new ContabilidadReportsPrismaRepository(prisma, financial, taxes),
+      inject: [PrismaService, CONTABILIDAD_FINANCIAL_REPOSITORY, CONTABILIDAD_TAXES_REPOSITORY],
+    },
+    {
       provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
       useClass: InteriorMaterialSupplierPrismaRepository,
     },
@@ -373,6 +384,7 @@ import {
     CONTABILIDAD_TAXES_REPOSITORY,
     CONTABILIDAD_PLE_REPOSITORY,
     CONTABILIDAD_FINANCIAL_REPOSITORY,
+    CONTABILIDAD_REPORTS_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,
     INTERIOR_FINANCE_REPOSITORY,

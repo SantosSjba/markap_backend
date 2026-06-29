@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 10 (cierre mensual y estados financieros) completada — Fase 11 pendiente
+> **Estado general:** Fase 11 (reportes financieros y dashboard) completada — Fase 12 pendiente
 
 ---
 
@@ -336,15 +336,16 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] `GET /contabilidad-reports/dashboard` — KPIs: liquidez, CxC, CxP, IGV periodo, resultado
-- [ ] Libro mayor analítico, balance de comprobación
-- [ ] Export Excel/PDF reportes
+- [x] `GET /contabilidad-reports/dashboard` — KPIs: liquidez, CxC, CxP, IGV periodo, resultado
+- [x] Balance de comprobación (`trial-balance`) y análisis financiero (ratios)
+- [x] Flujo de caja tesorería (`cash-flow-treasury`)
+- [ ] Export Excel/PDF reportes (pendiente)
 
 ### Frontend
 
-- [ ] Reemplazar `ContabilidadHomeView` con KPIs reales
-- [ ] Reportes: balance, ER, flujo caja, flujo efectivo, análisis, KPIs
-- [ ] Filtros periodo / centro de costo
+- [x] `ContabilidadHomeView` con KPIs reales del periodo
+- [x] Reportes: flujo caja, análisis, KPIs + balance de comprobación
+- [x] Filtro centro de costo en balance de comprobación
 
 ---
 

@@ -56,6 +56,7 @@ export { CONTABILIDAD_SALES_REPOSITORY } from '@domain/repositories/contabilidad
 export { CONTABILIDAD_TAXES_REPOSITORY } from '@domain/repositories/contabilidad-taxes.repository';
 export { CONTABILIDAD_PLE_REPOSITORY } from '@domain/repositories/contabilidad-ple.repository';
 export { CONTABILIDAD_FINANCIAL_REPOSITORY } from '@domain/repositories/contabilidad-financial.repository';
+export { CONTABILIDAD_REPORTS_REPOSITORY } from '@domain/repositories/contabilidad-reports.repository';
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';
 export { INTERIOR_EXECUTION_REPOSITORY } from '@domain/repositories/interior-execution.repository';
 export { INTERIOR_FINANCE_REPOSITORY } from '@domain/repositories/interior-finance.repository';

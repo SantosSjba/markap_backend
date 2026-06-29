@@ -26,7 +26,7 @@ export const CONTABILIDAD_CHILD_MENUS = [
   },
   {
     label: 'Asientos contables',
-    path: '/contabilidad/asientos/libro-diario',
+    path: '/contabilidad/asientos',
     order: 1,
     parentLabel: 'Contabilidad',
   },
