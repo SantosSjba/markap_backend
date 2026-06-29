@@ -42,7 +42,7 @@ Reportes · Configuración
 | Dashboard | `/produccion` | Shell con KPIs estáticos |
 | Clientes | `/produccion/clientes`, `/nuevo`, `/:id`, `/:id/editar` | **Funcional** |
 | Catálogo de muebles | `/produccion/catalogo`, `/nuevo` | Placeholder |
-| Producción | OT, en proceso, etapas, terminados | Placeholder |
+| Producción | OT, en proceso, etapas, terminados | **Funcional** |
 | Inventario | materiales, stock, movimientos | **Funcional** |
 | Compras | proveedores, órdenes de compra | **Funcional** |
 | Ventas | cotizaciones, pedidos, entregas | Placeholder |
@@ -210,18 +210,21 @@ Reportes · Configuración
 
 ### Backend
 
-- [ ] Modelo `ProduccionWorkOrder` (OT): cliente, mueble(s), fechas, estado, prioridad
-- [ ] Etapas: planificación, corte, ensamble, acabados (configurables)
-- [ ] Seguimiento en proceso (% avance, responsable)
-- [ ] Productos terminados: OT cerrada → stock PT o entrega directa
+- [x] Modelo `ProduccionWorkOrder` (OT): cliente, mueble(s), fechas, estado, prioridad
+- [x] Etapas: planificación, corte, ensamble, acabados (v1 fijas)
+- [x] Seguimiento en proceso (% avance, responsable por etapa)
+- [x] Productos terminados: OT `COMPLETED`
+- [x] API `/produccion-work-orders` (+ start, stages, complete, consume-materials)
+- [x] Seed demo: `demo-produccion-work-orders.ts`
 
-### Frontend (`features/produccion`)
+### Frontend (`features/taller`)
 
-- [ ] **Órdenes de trabajo**: listado, nueva OT, detalle
-- [ ] **Producción en proceso**: tablero / lista filtrada
-- [ ] **Etapas de producción**: vista por etapa (kanban o lista)
-- [ ] **Productos terminados**: listado de OT completadas
-- [ ] Integración con inventario (consumo materiales) y costos reales
+- [x] **Órdenes de trabajo**: listado, nueva OT, detalle
+- [x] **Producción en proceso**: lista filtrada
+- [x] **Etapas de producción**: vista por etapa (`?etapa=`)
+- [x] **Productos terminados**: OT completadas
+- [x] Integración inventario: consumo materiales (salida kardex)
+- [ ] Costos reales vs estimados (refinar en reportes)
 
 ---
 
@@ -286,7 +289,7 @@ Reportes · Configuración
        →  7 Ventas  →  8 Reportes  →  9 Config  →  10 Dashboard
 ```
 
-**Siguiente paso:** Fase 6 — Producción (taller).
+**Siguiente paso:** Fase 7 — Ventas.
 
 ---
 

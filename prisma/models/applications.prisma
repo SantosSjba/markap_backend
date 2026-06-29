@@ -45,6 +45,7 @@ model Application {
   produccionMaterials        ProduccionMaterial[]
   produccionSuppliers        ProduccionSupplier[]
   produccionPurchaseOrders   ProduccionPurchaseOrder[]
+  produccionWorkOrders       ProduccionWorkOrder[]
   interiorMaterialSuppliers    InteriorMaterialSupplier[]
   interiorCalendarEvents       InteriorCalendarEvent[]
   genArchivos                  GenArchivo[]

@@ -20,6 +20,7 @@ model ProduccionMaterial {
   movements   ProduccionStockMovement[]
   supplierLinks ProduccionSupplierMaterialLink[]
   purchaseOrderLines ProduccionPurchaseOrderLine[]
+  workOrderConsumptions ProduccionWorkOrderMaterialConsumption[]
 
   @@unique([applicationId, code])
   @@index([applicationId])

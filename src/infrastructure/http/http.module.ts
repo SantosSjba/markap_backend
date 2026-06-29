@@ -218,6 +218,20 @@ import {
 } from '../../application/use-cases/produccion-purchase-orders';
 
 import {
+  CancelProduccionWorkOrderUseCase,
+  CompleteProduccionWorkOrderUseCase,
+  ConsumeProduccionWorkOrderMaterialsUseCase,
+  CreateProduccionWorkOrderUseCase,
+  DeleteProduccionWorkOrderUseCase,
+  GetProduccionWorkOrderByIdUseCase,
+  GetProduccionWorkOrderStatsUseCase,
+  ListProduccionWorkOrdersUseCase,
+  StartProduccionWorkOrderUseCase,
+  UpdateProduccionWorkOrderStageUseCase,
+  UpdateProduccionWorkOrderUseCase,
+} from '../../application/use-cases/produccion-work-orders';
+
+import {
   CreateProduccionSupplierUseCase,
   DeleteProduccionSupplierUseCase,
   GetProduccionSupplierByIdUseCase,
@@ -310,6 +324,7 @@ import { ProduccionMaterialsController } from './controllers/produccion-material
 import { ProduccionStockMovementsController } from './controllers/produccion-stock-movements.controller';
 import { ProduccionSuppliersController } from './controllers/produccion-suppliers.controller';
 import { ProduccionPurchaseOrdersController } from './controllers/produccion-purchase-orders.controller';
+import { ProduccionWorkOrdersController } from './controllers/produccion-work-orders.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
@@ -380,6 +395,7 @@ import {
     ProduccionStockMovementsController,
     ProduccionSuppliersController,
     ProduccionPurchaseOrdersController,
+    ProduccionWorkOrdersController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
     InteriorismoFinanceController,
@@ -591,6 +607,18 @@ import {
     ReceiveProduccionPurchaseOrderUseCase,
     CancelProduccionPurchaseOrderUseCase,
     DeleteProduccionPurchaseOrderUseCase,
+
+    ListProduccionWorkOrdersUseCase,
+    GetProduccionWorkOrderStatsUseCase,
+    GetProduccionWorkOrderByIdUseCase,
+    CreateProduccionWorkOrderUseCase,
+    UpdateProduccionWorkOrderUseCase,
+    StartProduccionWorkOrderUseCase,
+    UpdateProduccionWorkOrderStageUseCase,
+    CompleteProduccionWorkOrderUseCase,
+    CancelProduccionWorkOrderUseCase,
+    ConsumeProduccionWorkOrderMaterialsUseCase,
+    DeleteProduccionWorkOrderUseCase,
 
     ListInteriorMaterialSuppliersUseCase,
     GetInteriorMaterialSupplierByIdUseCase,

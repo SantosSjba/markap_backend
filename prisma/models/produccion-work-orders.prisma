@@ -1,0 +1,88 @@
+/// Producción en taller — órdenes de trabajo, etapas y consumo de materiales.
+
+model ProduccionWorkOrder {
+  id              String    @id @default(uuid())
+  applicationId   String    @map("application_id")
+  code            String    @map("code")
+  clientId        String?   @map("client_id")
+  status          String    @map("status")
+  priority        String    @default("NORMAL") @map("priority")
+  currentStageKey String?   @map("current_stage_key")
+  progressPercent Decimal   @default(0) @map("progress_percent") @db.Decimal(5, 2)
+  assignedTo      String?   @map("assigned_to")
+  scheduledStart  DateTime? @map("scheduled_start")
+  scheduledEnd    DateTime? @map("scheduled_end")
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  notes           String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  client      Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  lines       ProduccionWorkOrderLine[]
+  stages      ProduccionWorkOrderStage[]
+  consumptions ProduccionWorkOrderMaterialConsumption[]
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@index([clientId])
+  @@index([status])
+  @@index([currentStageKey])
+  @@index([priority])
+  @@map("produccion_work_orders")
+}
+
+model ProduccionWorkOrderLine {
+  id          String  @id @default(uuid())
+  workOrderId String  @map("work_order_id")
+  furnitureId String  @map("furniture_id")
+  quantity    Decimal @default(1) @map("quantity") @db.Decimal(14, 4)
+  notes       String? @db.Text
+
+  workOrder ProduccionWorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Restrict)
+
+  @@index([workOrderId])
+  @@index([furnitureId])
+  @@map("produccion_work_order_lines")
+}
+
+/// Etapas: planificación → corte → ensamble → acabados (v1 fijas; Fase 9 configurable).
+model ProduccionWorkOrderStage {
+  id          String    @id @default(uuid())
+  workOrderId String    @map("work_order_id")
+  stageKey    String    @map("stage_key")
+  label       String    @map("label")
+  sortOrder   Int       @map("sort_order")
+  status      String    @map("status")
+  assignee    String?   @map("assignee")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  notes       String?   @db.Text
+
+  workOrder ProduccionWorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@unique([workOrderId, stageKey])
+  @@index([workOrderId])
+  @@index([status])
+  @@map("produccion_work_order_stages")
+}
+
+/// Consumo de inventario vinculado a la OT.
+model ProduccionWorkOrderMaterialConsumption {
+  id          String   @id @default(uuid())
+  workOrderId String   @map("work_order_id")
+  materialId  String   @map("material_id")
+  quantity    Decimal  @map("quantity") @db.Decimal(14, 4)
+  notes       String?  @db.Text
+  consumedAt  DateTime @default(now()) @map("consumed_at")
+
+  workOrder ProduccionWorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  material  ProduccionMaterial  @relation(fields: [materialId], references: [id], onDelete: Restrict)
+
+  @@index([workOrderId])
+  @@index([materialId])
+  @@map("produccion_work_order_material_consumptions")
+}

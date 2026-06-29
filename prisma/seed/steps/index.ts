@@ -27,6 +27,7 @@ export { seedProduccionFurniture } from './demo-produccion-furniture';
 export { seedProduccionCosts } from './demo-produccion-costs';
 export { seedProduccionInventory } from './demo-produccion-inventory';
 export { seedProduccionPurchases } from './demo-produccion-purchases';
+export { seedProduccionWorkOrders } from './demo-produccion-work-orders';
 export { seedContabilidadMenus } from './menus-contabilidad';
 export { seedRolesAndApplications } from './roles-applications';
 export type { RolesApplicationsResult } from './roles-applications';
