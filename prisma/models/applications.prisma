@@ -42,6 +42,7 @@ model Application {
   produccionFurniture          ProduccionFurniture[]
   produccionLaborRates       ProduccionLaborRate[]
   produccionExtraCostCatalog ProduccionExtraCostCatalog[]
+  produccionMaterials        ProduccionMaterial[]
   interiorMaterialSuppliers    InteriorMaterialSupplier[]
   interiorCalendarEvents       InteriorCalendarEvent[]
   genArchivos                  GenArchivo[]

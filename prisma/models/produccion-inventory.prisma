@@ -1,0 +1,48 @@
+/// Inventario de producción — catálogo de insumos y kardex de movimientos.
+
+model ProduccionMaterial {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  code          String  @map("code")
+  name          String  @map("name")
+  category      String  @map("category")
+  unit          String  @map("unit")
+  unitCost      Decimal @default(0) @map("unit_cost") @db.Decimal(14, 4)
+  minStockQty   Decimal @default(0) @map("min_stock_qty") @db.Decimal(14, 4)
+  currentStock  Decimal @default(0) @map("current_stock") @db.Decimal(14, 4)
+  isActive      Boolean @default(true) @map("is_active")
+  notes         String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  movements   ProduccionStockMovement[]
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@index([category])
+  @@index([isActive])
+  @@map("produccion_materials")
+}
+
+/// Kardex: IN = ingreso, OUT = salida, ADJUST = ajuste a stock exacto.
+model ProduccionStockMovement {
+  id           String   @id @default(uuid())
+  materialId   String   @map("material_id")
+  movementType String   @map("movement_type")
+  quantity     Decimal  @map("quantity") @db.Decimal(14, 4)
+  balanceAfter Decimal  @map("balance_after") @db.Decimal(14, 4)
+  unitCost     Decimal? @map("unit_cost") @db.Decimal(14, 4)
+  reference    String?  @map("reference")
+  notes        String?  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  material ProduccionMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@index([materialId])
+  @@index([movementType])
+  @@index([createdAt])
+  @@map("produccion_stock_movements")
+}

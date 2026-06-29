@@ -34,6 +34,7 @@ import { ProduccionFurniturePrismaRepository } from './prisma/repositories/produ
 import { ProduccionLaborRatePrismaRepository } from './prisma/repositories/produccion-labor-rate-prisma.repository';
 import { ProduccionExtraCostCatalogPrismaRepository } from './prisma/repositories/produccion-extra-cost-catalog-prisma.repository';
 import { ProduccionFurnitureCostingPrismaRepository } from './prisma/repositories/produccion-furniture-costing-prisma.repository';
+import { ProduccionMaterialPrismaRepository } from './prisma/repositories/produccion-material-prisma.repository';
 import { InteriorMaterialSupplierPrismaRepository } from './prisma/repositories/interior-material-supplier-prisma.repository';
 import { InteriorExecutionPrismaRepository } from './prisma/repositories/interior-execution-prisma.repository';
 import { InteriorFinancePrismaRepository } from './prisma/repositories/interior-finance-prisma.repository';
@@ -65,6 +66,7 @@ import {
   PRODUCCION_LABOR_RATE_REPOSITORY,
   PRODUCCION_EXTRA_COST_CATALOG_REPOSITORY,
   PRODUCCION_FURNITURE_COSTING_REPOSITORY,
+  PRODUCCION_MATERIAL_REPOSITORY,
   INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
   INTERIOR_EXECUTION_REPOSITORY,
   INTERIOR_FINANCE_REPOSITORY,
@@ -185,6 +187,10 @@ import {
       useClass: ProduccionFurnitureCostingPrismaRepository,
     },
     {
+      provide: PRODUCCION_MATERIAL_REPOSITORY,
+      useClass: ProduccionMaterialPrismaRepository,
+    },
+    {
       provide: INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
       useClass: InteriorMaterialSupplierPrismaRepository,
     },
@@ -235,6 +241,10 @@ import {
     INTERIOR_PROJECT_BUDGET_REPOSITORY,
     INTERIOR_CATALOG_MATERIAL_REPOSITORY,
     PRODUCCION_FURNITURE_REPOSITORY,
+    PRODUCCION_LABOR_RATE_REPOSITORY,
+    PRODUCCION_EXTRA_COST_CATALOG_REPOSITORY,
+    PRODUCCION_FURNITURE_COSTING_REPOSITORY,
+    PRODUCCION_MATERIAL_REPOSITORY,
     INTERIOR_MATERIAL_SUPPLIER_REPOSITORY,
     INTERIOR_EXECUTION_REPOSITORY,
     INTERIOR_FINANCE_REPOSITORY,

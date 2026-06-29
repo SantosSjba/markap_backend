@@ -43,10 +43,10 @@ Reportes · Configuración
 | Clientes | `/produccion/clientes`, `/nuevo`, `/:id`, `/:id/editar` | **Funcional** |
 | Catálogo de muebles | `/produccion/catalogo`, `/nuevo` | Placeholder |
 | Producción | OT, en proceso, etapas, terminados | Placeholder |
-| Inventario | materiales, stock, movimientos | Placeholder |
+| Inventario | materiales, stock, movimientos | **Funcional** |
 | Compras | proveedores, órdenes de compra | Placeholder |
 | Ventas | cotizaciones, pedidos, entregas | Placeholder |
-| Costos | costeo, mano de obra, gastos | Placeholder |
+| Costos | costeo, mano de obra, gastos | **Funcional** |
 | Reportes | `/produccion/reportes` | Placeholder |
 | Configuración | `/produccion/configuracion` | Placeholder |
 
@@ -59,7 +59,7 @@ Reportes · Configuración
 - [x] API de clientes compartida (`/clients` + `applicationSlug=produccion`)
 - [ ] **Un mueble del catálogo** = producto terminable con ficha técnica, medidas, categoría, imágenes y BOM base (lista de materiales)
 - [ ] **Costeo** se calcula desde catálogo + BOM + tarifas (no guardar totales redundantes en BD)
-- [ ] **Inventario** de materiales separado del catálogo de muebles (insumos vs producto terminado)
+- [ ] **Inventario** de materiales separado del catálogo de muebles (insumos vs producto terminado) — **v1 listo**
 - [ ] **Cotización** referencia cliente + uno o más ítems del catálogo (o líneas ad hoc)
 - [ ] **OT** vincula pedido / cotización aceptada → etapas de taller
 
@@ -169,15 +169,16 @@ Reportes · Configuración
 
 ### Backend
 
-- [ ] Modelo `ProduccionMaterial` (catálogo de insumos: madera, herrajes, barniz…)
-- [ ] Modelo `ProduccionStock` / movimientos (kardex)
-- [ ] API: materiales CRUD, stock actual, movimientos (ingreso, salida, ajuste)
+- [x] Modelo `ProduccionMaterial` (catálogo de insumos: madera, herrajes, barniz…)
+- [x] Modelo `ProduccionStockMovement` (kardex con `currentStock` en material)
+- [x] API: `/produccion-materials` CRUD + stats; `/produccion-stock-movements` list + create (ingreso, salida, ajuste)
+- [x] Seed demo: `prisma/seed/steps/demo-produccion-inventory.ts`
 
 ### Frontend (`features/inventario`)
 
-- [ ] Materiales: listado + alta/edición
-- [ ] Stock: vista por material, alertas bajo mínimo
-- [ ] Movimientos: kardex con filtros
+- [x] Materiales: listado + alta/edición
+- [x] Stock: vista por material, alertas bajo mínimo
+- [x] Movimientos: kardex con filtros
 - [ ] Integración: salida de stock al consumir en OT (Fase 6)
 
 ---
@@ -283,7 +284,7 @@ Reportes · Configuración
        →  7 Ventas  →  8 Reportes  →  9 Config  →  10 Dashboard
 ```
 
-**Siguiente paso:** Fase 4 — Inventario.
+**Siguiente paso:** Fase 5 — Compras.
 
 ---
 

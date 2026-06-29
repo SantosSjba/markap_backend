@@ -25,6 +25,7 @@ export { seedArquitecturaMenus } from './menus-arquitectura';
 export { seedProduccionMenus } from './menus-produccion';
 export { seedProduccionFurniture } from './demo-produccion-furniture';
 export { seedProduccionCosts } from './demo-produccion-costs';
+export { seedProduccionInventory } from './demo-produccion-inventory';
 export { seedContabilidadMenus } from './menus-contabilidad';
 export { seedRolesAndApplications } from './roles-applications';
 export type { RolesApplicationsResult } from './roles-applications';

@@ -196,6 +196,17 @@ import {
 } from '../../application/use-cases/produccion-furniture-costing';
 
 import {
+  CreateProduccionMaterialUseCase,
+  CreateProduccionStockMovementUseCase,
+  DeleteProduccionMaterialUseCase,
+  GetProduccionInventoryStatsUseCase,
+  GetProduccionMaterialByIdUseCase,
+  ListProduccionMaterialsUseCase,
+  ListProduccionStockMovementsUseCase,
+  UpdateProduccionMaterialUseCase,
+} from '../../application/use-cases/produccion-materials';
+
+import {
   CreateInteriorMaterialSupplierUseCase,
   DeleteInteriorMaterialSupplierUseCase,
   GetInteriorMaterialSupplierByIdUseCase,
@@ -274,6 +285,8 @@ import { ProduccionFurnitureController } from './controllers/produccion-furnitur
 import { ProduccionLaborRatesController } from './controllers/produccion-labor-rates.controller';
 import { ProduccionExtraCostsController } from './controllers/produccion-extra-costs.controller';
 import { ProduccionFurnitureCostingController } from './controllers/produccion-furniture-costing.controller';
+import { ProduccionMaterialsController } from './controllers/produccion-materials.controller';
+import { ProduccionStockMovementsController } from './controllers/produccion-stock-movements.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
@@ -340,6 +353,8 @@ import {
     ProduccionLaborRatesController,
     ProduccionExtraCostsController,
     ProduccionFurnitureCostingController,
+    ProduccionMaterialsController,
+    ProduccionStockMovementsController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
     InteriorismoFinanceController,
@@ -525,6 +540,15 @@ import {
     UpdateProduccionFurnitureCostingUseCase,
     CreateProduccionFurnitureCostingSnapshotUseCase,
     ListProduccionFurnitureCostingSnapshotsUseCase,
+
+    ListProduccionMaterialsUseCase,
+    GetProduccionInventoryStatsUseCase,
+    GetProduccionMaterialByIdUseCase,
+    CreateProduccionMaterialUseCase,
+    UpdateProduccionMaterialUseCase,
+    DeleteProduccionMaterialUseCase,
+    ListProduccionStockMovementsUseCase,
+    CreateProduccionStockMovementUseCase,
 
     ListInteriorMaterialSuppliersUseCase,
     GetInteriorMaterialSupplierByIdUseCase,
