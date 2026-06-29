@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { JwtAuthGuard, type AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadAccountOperationsService } from '../../../application/services/contabilidad-account-operations.service';
 import type {
   CreateContabilidadAccountInput,
@@ -55,8 +55,9 @@ export class ContabilidadAccountsController {
   create(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body() body: CreateContabilidadAccountInput,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.accounts.create(applicationSlug, body);
+    return this.accounts.create(applicationSlug, body, req?.user?.sub ?? null);
   }
 
   @Patch(':id')
@@ -66,14 +67,19 @@ export class ContabilidadAccountsController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
     @Body() body: UpdateContabilidadAccountInput,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.accounts.update(applicationSlug, id, body);
+    return this.accounts.update(applicationSlug, id, body, req?.user?.sub ?? null);
   }
 
   @Patch(':id/deactivate')
   @ApiOperation({ summary: 'Desactivar cuenta (sin eliminar)' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  deactivate(@Query('applicationSlug') applicationSlug: string | undefined, @Param('id') id: string) {
-    return this.accounts.deactivate(applicationSlug, id);
+  deactivate(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('id') id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.accounts.deactivate(applicationSlug, id, req?.user?.sub ?? null);
   }
 }

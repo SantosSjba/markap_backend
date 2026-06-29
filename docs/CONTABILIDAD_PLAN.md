@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 22 (Declaraciones SUNAT SOL) completada — **siguiente: Fase 23** (Integración apps MARKAP)
+> **Estado general:** Fases 0–22 completadas — **contabilidad standalone operativo**. **Siguiente: Fase 23** (integración apps MARKAP, al final). CPE/SOL en producción real depende de credenciales del cliente.
 
 ---
 
@@ -68,14 +68,11 @@ Fase 23 — Integración con apps MARKAP (al final)
 | Tesorería | caja, bancos, conciliaciones, movimientos, transferencias | ✅ |
 | Compras | facturas, NC, ND, proveedores, pagos | ✅ |
 | Ventas | facturas, boletas, NC, ND, clientes, cobros | ✅ |
-| Tributos | IGV, detracciones, retenciones, percepciones | ✅ |
-| Tributos | Renta / IR (vista dedicada) | ✅ |
-| Libros electrónicos | registro compras/ventas, diario, mayor, caja, bancos, PLE | ✅ |
-| Libros electrónicos | PLE libros adicionales SUNAT | ⬜ Fase 17 |
+| Tributos | IGV, detracciones, retenciones, percepciones, Renta/IR, Declaraciones SOL | ✅ |
+| Libros electrónicos | registro compras/ventas, diario, mayor, caja, bancos, PLE (+ libros SUNAT ampliados) | ✅ |
 | Reportes financieros | balance, ER, flujos, KPIs, análisis | ✅ |
 | Reportes financieros | Export PDF nativo | ✅ Fase 14 |
-| Configuración | empresa, series, tipos de cambio | ✅ |
-| Configuración | CPE / log electrónico, multi-empresa | ✅ CPE log · multi-empresa Fase 20 · emisión CPE Fase 21 |
+| Configuración | empresa, series, tipos de cambio, auditoría, facturación electrónica | ✅ |
 
 Seed menú: `prisma/seed/data/menus-contabilidad.ts`  
 Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
@@ -84,15 +81,15 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ## Decisiones de diseño (cerrar antes de codear)
 
-- [ ] **Multi-empresa / multi-RUC:** varias empresas en la app → **Fase 20**
+- [x] **Multi-empresa / multi-RUC:** periodos, asientos, CPE, SOL por entidad; selector en layout → **Fase 20** (maestros compartidos por app: ver nota cierre standalone)
 - [x] **Estados del asiento:** `DRAFT` → `POSTED` → `REVERSED`; periodo cerrado bloquea edición/publicación.
 - [x] **Partida doble estricta:** publicar solo si debe = haber.
 - [x] **Plan de cuentas jerárquico:** código PCGE; cuentas título vs movimiento; no desactivar con movimientos.
 - [x] **Moneda funcional:** PEN; tipos de cambio manuales registrados → **multimoneda en asientos: Fase 15** ✅
 - [x] **CPE v1:** registro contable + log local (sin OSE/PSE) → **facturación electrónica real: Fase 21** ✅ sandbox MOCK + UBL
-- [x] **PLE v1:** libros principales + export local → **PLE ampliado + validador: Fase 17**
+- [x] **PLE v1:** libros principales + export local → **PLE ampliado + validador: Fase 17** ✅
 - [ ] **Integración MARKAP:** eventos de dominio → asientos automáticos → **Fase 23 (al final)**
-- [ ] **Auditoría completa:** historial de cambios y trazabilidad → **Fase 20**
+- [x] **Auditoría:** asientos, periodos, cuentas PCGE → **Fase 20**
 
 ---
 
@@ -114,11 +111,11 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 11 | Reportes y dashboard | ✅ Completa |
 | 12 | Completitud normativa Perú (ND, PLE 8.2/3.1, plantillas API) | ✅ Completa |
 | 13 | UI y cierre de huecos (APIs sin pantalla) | ✅ Completa |
-| 14 | Exportación PDF y reportes avanzados | ⬜ Pendiente |
-| 15 | Multimoneda operativa en asientos | ⬜ Pendiente |
-| 16 | Impuesto a la renta (IR) completo | ⬜ Pendiente |
-| 17 | PLE ampliado y validación SUNAT | ⬜ Pendiente |
-| 18 | Inventario permanente contable (20/21) | ⬜ Pendiente |
+| 14 | Exportación PDF y reportes avanzados | ✅ Completa |
+| 15 | Multimoneda operativa en asientos | ✅ Completa |
+| 16 | Impuesto a la renta (IR) completo | ✅ Completa |
+| 17 | PLE ampliado y validación SUNAT | ✅ Completa |
+| 18 | Inventario permanente contable (20/21) | ✅ Completa |
 | 19 | PCGE catálogo completo | ✅ Completa |
 | 20 | Multi-empresa y auditoría | ✅ Completa |
 | 21 | Facturación electrónica (OSE/PSE) | ✅ Completa |
@@ -129,19 +126,42 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 | Fase | Entregable clave | Esfuerzo relativo |
 |------|------------------|-------------------|
-| **13** | Pantallas que faltan (proveedor ND, plantilla→asiento, renta, log CPE) | Bajo |
-| **14** | PDF reportes financieros | Bajo |
-| **15** | Asientos en USD con TC | Medio |
-| **16** | Módulo renta / IR | Medio |
-| **17** | Más libros PLE + validador + historial | Medio |
-| **18** | Inventario permanente 20/21 | Alto |
-| **19** | Import PCGE completo | Medio |
-| **20** | Multi-RUC + auditoría | Alto |
-| **21** | CPE electrónico OSE/PSE | Alto (externo) |
-| **22** | Envío/preparación SOL | Medio (externo) |
 | **23** | Puentes alquileres, ventas, producción, interiorismo | Muy alto |
+| *(prod.)* | CPE firma digital + OSE/PSE real; SOL envío automático | Externo (credenciales cliente) |
+| *(opc.)* | Multi-RUC en maestros (proveedores, clientes, caja/bancos) | Medio |
 
 ---
+
+## Cierre standalone (antes de Fase 23)
+
+> **Objetivo:** Contabilidad usable de punta a punta **sin depender** de otras apps MARKAP. La integración (Fase 23) solo **automatiza** hechos que hoy se registran manualmente o vía contabilidad directa.
+
+### Definition of Done — standalone ✅
+
+| Área | Estado |
+|------|--------|
+| Configuración, PCGE, periodos, centros de costo | ✅ |
+| Asientos, tesorería, compras, ventas, tributos | ✅ |
+| Libros electrónicos, PLE, cierre, EEFF, reportes | ✅ |
+| Multimoneda, IR, inventario contable 20/21 | ✅ |
+| Multi-RUC (periodos + asientos + CPE + SOL) | ✅ |
+| CPE / SOL | ✅ sandbox (MOCK + export manual) |
+| Auditoría (asientos, periodos, cuentas PCGE) | ✅ |
+
+### No bloquea la integración (Fase 23)
+
+- **CPE producción:** firma `.pfx` + proveedor OSE/PSE contratado.
+- **SOL producción:** envío 100% automático vía APIs SUNAT.
+- **Multi-RUC estricto en maestros:** proveedores, clientes, cajas y bancos comparten `applicationId` (un solo RUC por instalación funciona con entidad default; holding multi-RUC puede refinarse después).
+
+### Orden recomendado
+
+```text
+1. Contabilidad standalone (Fases 0–22)     ← estamos aquí
+2. Fase 23 — Integración apps MARKAP       ← siguiente cuando priorices el puente
+3. CPE/SOL producción                      ← cuando el cliente tenga credenciales
+```
+
 
 ## Fase 0 — Infraestructura y menú
 
@@ -279,7 +299,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 - [x] ND compra (Fase 12)
 - [x] Pagos vinculados
 - [x] Vista proveedores (saldo CxP)
-- [ ] Campos proveedor no domiciliado en UI → **Fase 13**
+- [x] Campos proveedor no domiciliado en UI (Fase 13)
 
 ---
 
@@ -596,7 +616,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 - [x] Modelo `ContabilidadLegalEntity` (o `AccountingCompany`): RUC, razón social, vinculado a `applicationId` + selector activo por usuario/sesión
 - [x] Migrar `ContabilidadCompanyProfile` a entidad multi-RUC o `companyId` en tablas operativas
 - [x] Modelo `ContabilidadAuditLog`: entidad, acción, userId, payload diff, timestamp
-- [x] Registrar en audit: publicar/reversar asiento, cierre periodo, cambios maestros
+- [x] Registrar en audit: publicar/reversar asiento, cierre periodo, altas/cambios/desactivación cuentas PCGE
 
 ### Frontend
 

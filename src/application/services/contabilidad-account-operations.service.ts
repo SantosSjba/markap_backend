@@ -1,6 +1,10 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { APPLICATION_REPOSITORY, CONTABILIDAD_ACCOUNT_REPOSITORY } from '@common/constants/injection-tokens';
 import {
+  CONTABILIDAD_AUDIT_ACTION,
+  CONTABILIDAD_AUDIT_ENTITY_TYPE,
+} from '@domain/constants/contabilidad-audit.defaults';
+import {
   CONTABILIDAD_ACCOUNT_TYPES,
   CONTABILIDAD_ACCOUNT_TYPE_LABELS,
 } from '@domain/constants/contabilidad-pcge.defaults';
@@ -14,6 +18,7 @@ import type {
 } from '@domain/repositories/contabilidad-account.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { buildContabilidadAccountTree } from '@domain/utils/contabilidad-account-tree';
+import { ContabilidadAuditOperationsService } from './contabilidad-audit-operations.service';
 
 const CONTABILIDAD_SLUG = 'contabilidad';
 
@@ -32,6 +37,7 @@ export class ContabilidadAccountOperationsService {
     private readonly accounts: ContabilidadAccountRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applications: ApplicationRepository,
+    private readonly audit: ContabilidadAuditOperationsService,
   ) {}
 
   private async resolveApplicationId(applicationSlug?: string): Promise<string> {
@@ -56,7 +62,11 @@ export class ContabilidadAccountOperationsService {
     return row;
   }
 
-  async create(applicationSlug: string | undefined, body: CreateContabilidadAccountInput) {
+  async create(
+    applicationSlug: string | undefined,
+    body: CreateContabilidadAccountInput,
+    userId?: string | null,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.accounts.ensurePcgeSeed(applicationId);
 
@@ -78,7 +88,7 @@ export class ContabilidadAccountOperationsService {
     const duplicate = await this.accounts.findByCode(applicationId, body.code.trim());
     if (duplicate) throw new BadRequestException(`Ya existe la cuenta con código ${body.code.trim()}.`);
 
-    return this.accounts.create(applicationId, {
+    const created = await this.accounts.create(applicationId, {
       parentId: body.parentId,
       code: body.code.trim(),
       name: body.name.trim(),
@@ -86,9 +96,27 @@ export class ContabilidadAccountOperationsService {
       isMovement: body.isMovement,
       sortOrder: body.sortOrder,
     });
+
+    await this.audit.log({
+      applicationId,
+      legalEntityId: null,
+      entityType: CONTABILIDAD_AUDIT_ENTITY_TYPE.ACCOUNT,
+      entityId: created.id,
+      action: CONTABILIDAD_AUDIT_ACTION.ACCOUNT_CREATE,
+      userId: userId ?? null,
+      summary: `Cuenta ${created.code} — ${created.name}`,
+      payload: { code: created.code, name: created.name, accountType: created.accountType },
+    });
+
+    return created;
   }
 
-  async update(applicationSlug: string | undefined, id: string, body: UpdateContabilidadAccountInput) {
+  async update(
+    applicationSlug: string | undefined,
+    id: string,
+    body: UpdateContabilidadAccountInput,
+    userId?: string | null,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const existing = await this.accounts.findById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadAccount', id);
@@ -121,14 +149,27 @@ export class ContabilidadAccountOperationsService {
       throw new BadRequestException('El nombre no puede estar vacío.');
     }
 
-    return this.accounts.update(applicationId, id, {
+    const updated = await this.accounts.update(applicationId, id, {
       ...body,
       code: body.code?.trim(),
       name: body.name?.trim(),
     });
+
+    await this.audit.log({
+      applicationId,
+      legalEntityId: null,
+      entityType: CONTABILIDAD_AUDIT_ENTITY_TYPE.ACCOUNT,
+      entityId: id,
+      action: CONTABILIDAD_AUDIT_ACTION.ACCOUNT_UPDATE,
+      userId: userId ?? null,
+      summary: `Cuenta ${updated.code} actualizada`,
+      payload: { before: existing, after: updated },
+    });
+
+    return updated;
   }
 
-  async deactivate(applicationSlug: string | undefined, id: string) {
+  async deactivate(applicationSlug: string | undefined, id: string, userId?: string | null) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const existing = await this.accounts.findById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadAccount', id);
@@ -140,7 +181,20 @@ export class ContabilidadAccountOperationsService {
       throw new BadRequestException('Desactive primero las subcuentas o reasígnelas.');
     }
 
-    return this.accounts.deactivate(applicationId, id);
+    const deactivated = await this.accounts.deactivate(applicationId, id);
+
+    await this.audit.log({
+      applicationId,
+      legalEntityId: null,
+      entityType: CONTABILIDAD_AUDIT_ENTITY_TYPE.ACCOUNT,
+      entityId: id,
+      action: CONTABILIDAD_AUDIT_ACTION.ACCOUNT_DEACTIVATE,
+      userId: userId ?? null,
+      summary: `Cuenta ${deactivated.code} desactivada`,
+      payload: { code: deactivated.code, name: deactivated.name },
+    });
+
+    return deactivated;
   }
 
   getPcgeCatalogMeta() {
