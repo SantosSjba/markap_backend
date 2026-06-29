@@ -1,5 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PRODUCCION_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
+import { PRODUCCION_NUMBERING_SERIES_KEYS } from '@domain/constants/produccion-config.defaults';
+import type { ProduccionConfigRepository } from '@domain/repositories/produccion-config.repository';
 import { PrismaService } from '../prisma.service';
 import {
   PRODUCCION_DEFAULT_STAGES,
@@ -32,7 +35,21 @@ function recalcProgress(stages: { status: string }[]): number {
 
 @Injectable()
 export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(PRODUCCION_CONFIG_REPOSITORY)
+    private readonly configRepo: ProduccionConfigRepository,
+  ) {}
+
+  private async resolveStageDefinitions(applicationId: string) {
+    await this.configRepo.ensureDefaults(applicationId);
+    const rows = await this.configRepo.listProductionStages(applicationId);
+    const active = rows.filter((s) => s.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
+    if (active.length) {
+      return active.map((s) => ({ stageKey: s.stageKey, label: s.label, sortOrder: s.sortOrder }));
+    }
+    return [...PRODUCCION_DEFAULT_STAGES];
+  }
 
   private mapStage(row: {
     id: string;
@@ -75,12 +92,6 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
       notes: row.notes,
       consumedAt: row.consumedAt.toISOString(),
     };
-  }
-
-  private async nextCode(applicationId: string): Promise<string> {
-    const count = await this.prisma.produccionWorkOrder.count({ where: { applicationId } });
-    const year = new Date().getFullYear();
-    return `OT-${year}-${String(count + 1).padStart(4, '0')}`;
   }
 
   private async loadDetail(id: string): Promise<ProduccionWorkOrderDetail | null> {
@@ -243,12 +254,14 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
       this.prisma.produccionWorkOrder.count({ where: { applicationId: app.id, status: 'COMPLETED' } }),
     ]);
 
+    const stageDefs = await this.resolveStageDefinitions(app.id);
+
     return {
       total,
       pending,
       inProgress,
       completed,
-      byStage: PRODUCCION_DEFAULT_STAGES.map((s) => ({
+      byStage: stageDefs.map((s) => ({
         stageKey: s.stageKey,
         label: s.label,
         count: byStageMap.get(s.stageKey) ?? 0,
@@ -291,7 +304,12 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
       throw new BadRequestException('Uno o más muebles no son válidos');
     }
 
-    const code = await this.nextCode(applicationId);
+    await this.configRepo.ensureDefaults(applicationId);
+    const stageDefs = await this.resolveStageDefinitions(applicationId);
+    const code = await this.configRepo.allocateNextCode(
+      applicationId,
+      PRODUCCION_NUMBERING_SERIES_KEYS.WORK_ORDER,
+    );
     const row = await this.prisma.produccionWorkOrder.create({
       data: {
         applicationId,
@@ -299,7 +317,7 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
         clientId: payload.clientId?.trim() || null,
         status: 'PENDING',
         priority: payload.priority ?? 'NORMAL',
-        currentStageKey: PRODUCCION_DEFAULT_STAGES[0].stageKey,
+        currentStageKey: stageDefs[0]!.stageKey,
         progressPercent: new Prisma.Decimal(0),
         assignedTo: payload.assignedTo?.trim() || null,
         scheduledStart: payload.scheduledStart ? new Date(payload.scheduledStart) : null,
@@ -313,7 +331,7 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
           })),
         },
         stages: {
-          create: PRODUCCION_DEFAULT_STAGES.map((s) => ({
+          create: stageDefs.map((s) => ({
             stageKey: s.stageKey,
             label: s.label,
             sortOrder: s.sortOrder,

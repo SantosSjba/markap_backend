@@ -1,0 +1,89 @@
+/// Parametrización de Producción de muebles.
+
+model ProduccionAppSettings {
+  id                 String  @id @default(uuid())
+  applicationId      String  @unique @map("application_id")
+  igvPercent         Decimal @default(18) @map("igv_percent") @db.Decimal(5, 2)
+  woodWastePercent   Decimal @default(10) @map("wood_waste_percent") @db.Decimal(5, 2)
+  quotationValidDays Int     @default(30) @map("quotation_valid_days")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("produccion_app_settings")
+}
+
+model ProduccionFurnitureCategoryConfig {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  code          String
+  label         String
+  sortOrder     Int     @map("sort_order")
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@map("produccion_furniture_category_configs")
+}
+
+model ProduccionProductionStageConfig {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  stageKey      String  @map("stage_key")
+  label         String
+  sortOrder     Int     @map("sort_order")
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, stageKey])
+  @@index([applicationId])
+  @@map("produccion_production_stage_configs")
+}
+
+model ProduccionUnitConfig {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  code          String
+  label         String
+  sortOrder     Int     @map("sort_order")
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@map("produccion_unit_configs")
+}
+
+model ProduccionNumberingSeries {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  seriesKey     String  @map("series_key")
+  prefix        String
+  lastNumber    Int     @default(0) @map("last_number")
+  padLength     Int     @default(4) @map("pad_length")
+  includeYear   Boolean @default(true) @map("include_year")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, seriesKey])
+  @@index([applicationId])
+  @@map("produccion_numbering_series")
+}

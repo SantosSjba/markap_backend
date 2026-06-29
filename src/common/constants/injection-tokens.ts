@@ -45,6 +45,7 @@ export {
   PRODUCCION_DELIVERY_REPOSITORY,
 } from '@domain/repositories/produccion-sales.repository';
 export { PRODUCCION_REPORTS_REPOSITORY } from '@domain/repositories/produccion-reports.repository';
+export { PRODUCCION_CONFIG_REPOSITORY } from '@domain/repositories/produccion-config.repository';
 export { INTERIOR_MATERIAL_SUPPLIER_REPOSITORY } from '@domain/repositories/interior-material-supplier.repository';
 export { INTERIOR_EXECUTION_REPOSITORY } from '@domain/repositories/interior-execution.repository';
 export { INTERIOR_FINANCE_REPOSITORY } from '@domain/repositories/interior-finance.repository';

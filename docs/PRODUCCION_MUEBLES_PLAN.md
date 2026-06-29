@@ -266,11 +266,11 @@ Reportes · Configuración
 
 ## Fase 9 — Configuración
 
-- [ ] Categorías de muebles
-- [ ] Etapas de producción (nombres, orden)
-- [ ] Unidades de medida
-- [ ] Parámetros por defecto (IGV costeo, % desperdicio madera, etc.)
-- [ ] Numeración automática (código mueble, OT, cotización, OC)
+- [x] Categorías de muebles
+- [x] Etapas de producción (nombres, orden)
+- [x] Unidades de medida
+- [x] Parámetros por defecto (IGV costeo, % desperdicio madera, etc.)
+- [x] Numeración automática (código mueble, OT, cotización, OC, pedido, entrega)
 
 ---
 
@@ -290,7 +290,7 @@ Reportes · Configuración
        →  7 Ventas  →  8 Reportes  →  9 Config  →  10 Dashboard
 ```
 
-**Siguiente paso:** Fase 9 — Configuración.
+**Siguiente paso:** Fase 10 — Dashboard integrado.
 
 ---
 

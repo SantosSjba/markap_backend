@@ -49,6 +49,11 @@ model Application {
   produccionQuotations       ProduccionQuotation[]
   produccionOrders           ProduccionOrder[]
   produccionDeliveries       ProduccionDelivery[]
+  produccionAppSettings      ProduccionAppSettings?
+  produccionFurnitureCategories ProduccionFurnitureCategoryConfig[]
+  produccionProductionStages ProduccionProductionStageConfig[]
+  produccionUnitConfigs      ProduccionUnitConfig[]
+  produccionNumberingSeries  ProduccionNumberingSeries[]
   interiorMaterialSuppliers    InteriorMaterialSupplier[]
   interiorCalendarEvents       InteriorCalendarEvent[]
   genArchivos                  GenArchivo[]

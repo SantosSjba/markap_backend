@@ -1,5 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PRODUCCION_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
+import { PRODUCCION_NUMBERING_SERIES_KEYS } from '@domain/constants/produccion-config.defaults';
+import type { ProduccionConfigRepository } from '@domain/repositories/produccion-config.repository';
 import { PrismaService } from '../prisma.service';
 import type {
   CreateProduccionPurchaseOrderPayload,
@@ -29,7 +32,11 @@ function computeStatus(lines: { quantityOrdered: Prisma.Decimal; quantityReceive
 
 @Injectable()
 export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurchaseOrderRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(PRODUCCION_CONFIG_REPOSITORY)
+    private readonly configRepo: ProduccionConfigRepository,
+  ) {}
 
   private mapLine(row: {
     id: string;
@@ -54,12 +61,6 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
       unitPrice,
       lineTotal: ordered * unitPrice,
     };
-  }
-
-  private async nextCode(applicationId: string): Promise<string> {
-    const count = await this.prisma.produccionPurchaseOrder.count({ where: { applicationId } });
-    const year = new Date().getFullYear();
-    return `OC-${year}-${String(count + 1).padStart(4, '0')}`;
   }
 
   private async loadDetail(id: string): Promise<ProduccionPurchaseOrderDetail | null> {
@@ -188,7 +189,11 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
       throw new BadRequestException('Uno o más materiales no son válidos');
     }
 
-    const code = await this.nextCode(applicationId);
+    await this.configRepo.ensureDefaults(applicationId);
+    const code = await this.configRepo.allocateNextCode(
+      applicationId,
+      PRODUCCION_NUMBERING_SERIES_KEYS.PURCHASE_ORDER,
+    );
     const orderedAt = payload.orderedAt ? new Date(payload.orderedAt) : new Date();
 
     const row = await this.prisma.produccionPurchaseOrder.create({

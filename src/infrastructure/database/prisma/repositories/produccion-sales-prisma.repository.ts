@@ -1,5 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PRODUCCION_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
+import { PRODUCCION_NUMBERING_SERIES_KEYS } from '@domain/constants/produccion-config.defaults';
+import type { ProduccionConfigRepository } from '@domain/repositories/produccion-config.repository';
 import { PrismaService } from '../prisma.service';
 import type {
   CreateProduccionDeliveryPayload,
@@ -39,6 +42,8 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
   constructor(
     private readonly prisma: PrismaService,
     private readonly orderRepo: ProduccionOrderPrismaRepository,
+    @Inject(PRODUCCION_CONFIG_REPOSITORY)
+    private readonly configRepo: ProduccionConfigRepository,
   ) {}
 
   private mapLine(row: {
@@ -61,12 +66,6 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
       lineTotal: roundMoney(quantity * unitPrice),
       notes: row.notes,
     };
-  }
-
-  private async nextCode(applicationId: string): Promise<string> {
-    const count = await this.prisma.produccionQuotation.count({ where: { applicationId } });
-    const year = new Date().getFullYear();
-    return `COT-${year}-${String(count + 1).padStart(4, '0')}`;
   }
 
   private validateLines(lines: LineInput[]) {
@@ -195,7 +194,11 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
       throw new BadRequestException('Uno o más muebles no son válidos');
     }
 
-    const code = await this.nextCode(applicationId);
+    await this.configRepo.ensureDefaults(applicationId);
+    const code = await this.configRepo.allocateNextCode(
+      applicationId,
+      PRODUCCION_NUMBERING_SERIES_KEYS.QUOTATION,
+    );
     const row = await this.prisma.produccionQuotation.create({
       data: {
         applicationId,
@@ -337,13 +340,11 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
 
 @Injectable()
 export class ProduccionOrderPrismaRepository implements ProduccionOrderRepository {
-  constructor(private readonly prisma: PrismaService) {}
-
-  private async nextCode(applicationId: string): Promise<string> {
-    const count = await this.prisma.produccionOrder.count({ where: { applicationId } });
-    const year = new Date().getFullYear();
-    return `PED-${year}-${String(count + 1).padStart(4, '0')}`;
-  }
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(PRODUCCION_CONFIG_REPOSITORY)
+    private readonly configRepo: ProduccionConfigRepository,
+  ) {}
 
   private mapOrderDetail(row: {
     id: string;
@@ -430,7 +431,11 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
       notes: string | null;
     }[];
   }) {
-    const code = await this.nextCode(q.applicationId);
+    await this.configRepo.ensureDefaults(q.applicationId);
+    const code = await this.configRepo.allocateNextCode(
+      q.applicationId,
+      PRODUCCION_NUMBERING_SERIES_KEYS.ORDER,
+    );
     const row = await this.prisma.produccionOrder.create({
       data: {
         applicationId: q.applicationId,
@@ -536,7 +541,11 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
     });
     if (!client) throw new BadRequestException('Cliente no encontrado');
 
-    const code = await this.nextCode(applicationId);
+    await this.configRepo.ensureDefaults(applicationId);
+    const code = await this.configRepo.allocateNextCode(
+      applicationId,
+      PRODUCCION_NUMBERING_SERIES_KEYS.ORDER,
+    );
     const row = await this.prisma.produccionOrder.create({
       data: {
         applicationId,
@@ -665,13 +674,11 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
 
 @Injectable()
 export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRepository {
-  constructor(private readonly prisma: PrismaService) {}
-
-  private async nextCode(applicationId: string): Promise<string> {
-    const count = await this.prisma.produccionDelivery.count({ where: { applicationId } });
-    const year = new Date().getFullYear();
-    return `ENT-${year}-${String(count + 1).padStart(4, '0')}`;
-  }
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(PRODUCCION_CONFIG_REPOSITORY)
+    private readonly configRepo: ProduccionConfigRepository,
+  ) {}
 
   private async loadDetail(id: string): Promise<ProduccionDeliveryDetail | null> {
     const row = await this.prisma.produccionDelivery.findUnique({
@@ -776,7 +783,11 @@ export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRep
       throw new BadRequestException('El pedido no está listo para entrega');
     }
 
-    const code = await this.nextCode(applicationId);
+    await this.configRepo.ensureDefaults(applicationId);
+    const code = await this.configRepo.allocateNextCode(
+      applicationId,
+      PRODUCCION_NUMBERING_SERIES_KEYS.DELIVERY,
+    );
     const row = await this.prisma.produccionDelivery.create({
       data: {
         applicationId,
