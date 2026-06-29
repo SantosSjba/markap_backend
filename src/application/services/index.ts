@@ -4,6 +4,7 @@ export * from './ventas-reports-operations.service';
 export * from './ventas-config-operations.service';
 export * from './interiorismo-config-operations.service';
 export * from './produccion-config-operations.service';
+export * from './contabilidad-config-operations.service';
 export * from './ventas-compliance-operations.service';
 export * from './notifications.service';
 export * from './rental-alerts.scheduler';

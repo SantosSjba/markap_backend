@@ -58,6 +58,9 @@ model Application {
   interiorMaterialSuppliers    InteriorMaterialSupplier[]
   interiorCalendarEvents       InteriorCalendarEvent[]
   genArchivos                  GenArchivo[]
+  contabilidadCompanyProfile   ContabilidadCompanyProfile?
+  contabilidadAppSettings      ContabilidadAppSettings?
+  contabilidadDocumentSeries   ContabilidadDocumentSeries[]
 
   @@index([slug])
   @@index([isActive])

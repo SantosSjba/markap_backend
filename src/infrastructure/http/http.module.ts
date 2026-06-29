@@ -361,6 +361,7 @@ import { ProduccionOrdersController } from './controllers/produccion-orders.cont
 import { ProduccionDeliveriesController } from './controllers/produccion-deliveries.controller';
 import { ProduccionReportsController } from './controllers/produccion-reports.controller';
 import { ProduccionConfigController } from './controllers/produccion-config.controller';
+import { ContabilidadConfigController } from './controllers/contabilidad-config.controller';
 import { InteriorismoMaterialSuppliersController } from './controllers/interiorismo-material-suppliers.controller';
 import { InteriorismoExecutionController } from './controllers/interiorismo-execution.controller';
 import { InteriorismoFinanceController } from './controllers/interiorismo-finance.controller';
@@ -375,6 +376,7 @@ import {
   VentasComplianceOperationsService,
   InteriorismoConfigOperationsService,
   ProduccionConfigOperationsService,
+  ContabilidadConfigOperationsService,
 } from '../../application/services';
 
 // Gateways
@@ -438,6 +440,7 @@ import {
     ProduccionDeliveriesController,
     ProduccionReportsController,
     ProduccionConfigController,
+    ContabilidadConfigController,
     InteriorismoMaterialSuppliersController,
     InteriorismoExecutionController,
     InteriorismoFinanceController,
@@ -570,6 +573,7 @@ import {
     VentasComplianceOperationsService,
     InteriorismoConfigOperationsService,
     ProduccionConfigOperationsService,
+    ContabilidadConfigOperationsService,
 
     ListInteriorProjectsUseCase,
     GetInteriorProjectByIdUseCase,
