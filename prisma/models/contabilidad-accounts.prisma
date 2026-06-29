@@ -28,6 +28,7 @@ model ContabilidadAccount {
   treasuryOffsetMovements ContabilidadTreasuryMovement[] @relation("TreasuryOffsetAccount")
   purchaseExpenseInvoices ContabilidadPurchaseInvoice[] @relation("PurchaseExpenseAccount")
   salesIncomeInvoices     ContabilidadSalesInvoice[] @relation("SalesIncomeAccount")
+  inventoryItems          ContabilidadInventoryItem[]
 
   @@unique([applicationId, code])
   @@index([applicationId])

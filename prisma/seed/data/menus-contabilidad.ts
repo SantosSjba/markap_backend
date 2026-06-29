@@ -11,9 +11,10 @@ export const CONTABILIDAD_PARENT_MENUS = [
   { label: 'Compras', icon: 'shopping-cart', path: null, order: 3 },
   { label: 'Ventas', icon: 'receipt', path: null, order: 4 },
   { label: 'Tributos', icon: 'percent', path: null, order: 5 },
-  { label: 'Libros electrónicos', icon: 'library', path: null, order: 6 },
-  { label: 'Reportes financieros', icon: 'pie-chart', path: null, order: 7 },
-  { label: 'Configuración', icon: 'settings', path: '/contabilidad/configuracion', order: 8 },
+  { label: 'Inventario permanente', icon: 'package', path: null, order: 6 },
+  { label: 'Libros electrónicos', icon: 'library', path: null, order: 7 },
+  { label: 'Reportes financieros', icon: 'pie-chart', path: null, order: 8 },
+  { label: 'Configuración', icon: 'settings', path: '/contabilidad/configuracion', order: 9 },
 ];
 
 export const CONTABILIDAD_CHILD_MENUS = [
@@ -183,6 +184,31 @@ export const CONTABILIDAD_CHILD_MENUS = [
     path: '/contabilidad/tributos/renta',
     order: 4,
     parentLabel: 'Tributos',
+  },
+  // Inventario permanente
+  {
+    label: 'Ítems de inventario',
+    path: '/contabilidad/inventario-permanente/items',
+    order: 0,
+    parentLabel: 'Inventario permanente',
+  },
+  {
+    label: 'Movimientos',
+    path: '/contabilidad/inventario-permanente/movimientos',
+    order: 1,
+    parentLabel: 'Inventario permanente',
+  },
+  {
+    label: 'Kardex',
+    path: '/contabilidad/inventario-permanente/kardex',
+    order: 2,
+    parentLabel: 'Inventario permanente',
+  },
+  {
+    label: 'Saldo valorizado',
+    path: '/contabilidad/inventario-permanente/valorizado',
+    order: 3,
+    parentLabel: 'Inventario permanente',
   },
   // Libros electrónicos
   {

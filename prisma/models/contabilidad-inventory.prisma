@@ -1,0 +1,56 @@
+/// Inventario permanente contable (cuentas 20/21).
+
+model ContabilidadInventoryItem {
+  id             String  @id @default(uuid())
+  applicationId  String  @map("application_id")
+  code           String
+  description    String
+  accountId      String  @map("account_id")
+  unit           String  @default("UN")
+  costMethod     String  @default("PROMEDIO") @map("cost_method")
+  quantityOnHand Decimal @default(0) @map("quantity_on_hand") @db.Decimal(14, 4)
+  avgUnitCost    Decimal @default(0) @map("avg_unit_cost") @db.Decimal(14, 4)
+  isActive       Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  account     ContabilidadAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  movements   ContabilidadInventoryMovement[]
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@index([accountId])
+  @@map("contabilidad_inventory_items")
+}
+
+model ContabilidadInventoryMovement {
+  id             String   @id @default(uuid())
+  applicationId  String   @map("application_id")
+  itemId         String   @map("item_id")
+  periodId       String   @map("period_id")
+  movementType   String   @map("movement_type")
+  movementDate   DateTime @map("movement_date") @db.Date
+  quantity       Decimal  @db.Decimal(14, 4)
+  unitCost       Decimal  @map("unit_cost") @db.Decimal(14, 4)
+  totalAmount    Decimal  @map("total_amount") @db.Decimal(14, 2)
+  offsetType     String?  @map("offset_type")
+  remainingQty   Decimal? @map("remaining_qty") @db.Decimal(14, 4)
+  notes          String?
+  journalEntryId String?  @map("journal_entry_id")
+  createdBy      String?  @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  item         ContabilidadInventoryItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  period       ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  journalEntry ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([itemId])
+  @@index([periodId])
+  @@index([movementDate])
+  @@map("contabilidad_inventory_movements")
+}

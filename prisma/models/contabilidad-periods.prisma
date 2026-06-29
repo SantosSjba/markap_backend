@@ -29,6 +29,7 @@ model ContabilidadPeriod {
   electronicDocLogs    ContabilidadElectronicDocumentLog[]
   incomeTaxSummaries   ContabilidadIncomeTaxPeriodSummary[]
   pleExportLogs        ContabilidadPleExportLog[]
+  inventoryMovements   ContabilidadInventoryMovement[]
 
   @@unique([applicationId, year, month])
   @@index([applicationId])

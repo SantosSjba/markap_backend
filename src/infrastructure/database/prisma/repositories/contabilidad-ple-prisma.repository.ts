@@ -638,13 +638,23 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       _sum: { debit: true, credit: true },
     });
 
-    if (!grouped.length) return [];
+    const inventoryItems = await this.prisma.contabilidadInventoryItem.findMany({
+      where: { applicationId: ctx.applicationId },
+      include: { account: { select: { id: true, code: true, name: true, accountType: true } } },
+    });
 
-    const accountIds = grouped.map((g) => g.accountId);
+    if (!grouped.length && inventoryItems.length === 0) return [];
+
+    const accountIds = [
+      ...new Set([
+        ...grouped.map((g) => g.accountId),
+        ...inventoryItems.map((i) => i.accountId),
+      ]),
+    ];
     const accounts = await this.prisma.contabilidadAccount.findMany({
       where: {
         applicationId: ctx.applicationId,
-        id: { in: accountIds },
+        id: { in: accountIds.length ? accountIds : ['__none__'] },
         accountType: {
           in: [
             CONTABILIDAD_ACCOUNT_TYPES.ASSET,
@@ -658,6 +668,36 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     });
     const accountMap = new Map(accounts.map((a) => [a.id, a]));
 
+    const inventoryBalanceByAccount = new Map<string, number>();
+    for (const item of inventoryItems) {
+      const valued = roundPenAmount(Number(item.quantityOnHand) * Number(item.avgUnitCost));
+      if (Math.abs(valued) < 0.005) continue;
+      inventoryBalanceByAccount.set(
+        item.accountId,
+        roundPenAmount((inventoryBalanceByAccount.get(item.accountId) ?? 0) + valued),
+      );
+    }
+
+    const balanceByAccount = new Map<string, number>();
+    for (const g of grouped) {
+      const acc = accountMap.get(g.accountId);
+      if (!acc) continue;
+      const balance = accountBalanceFromTotals(
+        acc.accountType,
+        Number(g._sum.debit ?? 0),
+        Number(g._sum.credit ?? 0),
+      );
+      balanceByAccount.set(g.accountId, roundPenAmount(balance));
+    }
+
+    for (const [accountId, invBalance] of inventoryBalanceByAccount) {
+      balanceByAccount.set(accountId, invBalance);
+      if (!accountMap.has(accountId)) {
+        const acc = inventoryItems.find((i) => i.accountId === accountId)?.account;
+        if (acc) accountMap.set(accountId, acc);
+      }
+    }
+
     const snapshotRows: {
       applicationId: string;
       periodId: string;
@@ -668,14 +708,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     }[] = [];
 
     const lines: string[] = [];
-    for (const g of grouped) {
-      const acc = accountMap.get(g.accountId);
+    for (const [accountId, balance] of balanceByAccount) {
+      const acc = accountMap.get(accountId);
       if (!acc) continue;
-      const balance = accountBalanceFromTotals(
-        acc.accountType,
-        Number(g._sum.debit ?? 0),
-        Number(g._sum.credit ?? 0),
-      );
       if (Math.abs(balance) < 0.005) continue;
 
       snapshotRows.push({

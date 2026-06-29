@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 17 (PLE ampliado y validación SUNAT) completada — **siguiente: Fase 18** (Inventario permanente contable)
+> **Estado general:** Fase 18 (Inventario permanente contable) completada — **siguiente: Fase 19** (PCGE catálogo completo)
 
 ---
 
@@ -549,16 +549,16 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Modelo `ContabilidadInventoryItem` (código, descripción, cuenta 20x, unidad, método costo PEPS/PROMEDIO)
-- [ ] `ContabilidadInventoryMovement`: entrada, salida, ajuste; cantidad, costo unitario, asiento vinculado
-- [ ] Asientos automáticos: entrada (Dr 20 / Cr 421 o 61), salida (Dr 69 / Cr 20)
-- [ ] Reporte kardex por ítem y saldo valorizado al cierre
-- [ ] Alimentar PLE 3.1 con saldos reales de inventario (no solo trial balance de cuentas)
+- [x] Modelo `ContabilidadInventoryItem` (código, descripción, cuenta 20x, unidad, método costo PEPS/PROMEDIO)
+- [x] `ContabilidadInventoryMovement`: entrada, salida, ajuste; cantidad, costo unitario, asiento vinculado
+- [x] Asientos automáticos: entrada (Dr 20 / Cr 421 o 61), salida (Dr 69 / Cr 20)
+- [x] Reporte kardex por ítem y saldo valorizado al cierre
+- [x] Alimentar PLE 3.1 con saldos reales de inventario (no solo trial balance de cuentas)
 
 ### Frontend
 
-- [ ] `features/inventario-contable/`: ítems, movimientos, kardex, reporte valorizado
-- [ ] Menú Contabilidad → Inventario permanente
+- [x] `features/inventario-contable/`: ítems, movimientos, kardex, reporte valorizado
+- [x] Menú Contabilidad → Inventario permanente
 
 ### Criterio de cierre
 
