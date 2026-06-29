@@ -14,6 +14,9 @@ model ContabilidadPeriod {
   journalEntries       ContabilidadJournalEntry[]
   treasuryMovements    ContabilidadTreasuryMovement[]
   bankReconciliations  ContabilidadBankReconciliation[]
+  purchaseInvoices     ContabilidadPurchaseInvoice[]
+  purchaseCreditNotes  ContabilidadPurchaseCreditNote[]
+  purchasePayments     ContabilidadPurchasePayment[]
 
   @@unique([applicationId, year, month])
   @@index([applicationId])

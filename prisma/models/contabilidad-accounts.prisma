@@ -24,6 +24,7 @@ model ContabilidadAccount {
   cashBoxes              ContabilidadCashBox[]
   bankAccounts           ContabilidadBankAccount[]
   treasuryOffsetMovements ContabilidadTreasuryMovement[] @relation("TreasuryOffsetAccount")
+  purchaseExpenseInvoices ContabilidadPurchaseInvoice[] @relation("PurchaseExpenseAccount")
 
   @@unique([applicationId, code])
   @@index([applicationId])

@@ -1,0 +1,48 @@
+export const CONTABILIDAD_PURCHASE_STATUS = {
+  PENDING: 'PENDING',
+  PARTIAL: 'PARTIAL',
+  PAID: 'PAID',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export const CONTABILIDAD_PURCHASE_CREDIT_NOTE_STATUS = {
+  ACTIVE: 'ACTIVE',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export const CONTABILIDAD_PURCHASE_TAX_AFFECTATION = {
+  TAXABLE: 'TAXABLE',
+  EXEMPT: 'EXEMPT',
+  NON_TAXABLE: 'NON_TAXABLE',
+} as const;
+
+export const CONTABILIDAD_PURCHASE_DOCUMENT_TYPE = {
+  FACTURA: 'FACTURA',
+  BOLETA: 'BOLETA',
+  RECIBO_HONORARIOS: 'RECIBO_HONORARIOS',
+  OTRO: 'OTRO',
+} as const;
+
+export const CONTABILIDAD_PAYABLE_ACCOUNT_CODE = '421';
+export const CONTABILIDAD_IGV_ACCOUNT_CODE = '4011';
+export const CONTABILIDAD_DEFAULT_EXPENSE_ACCOUNT_CODE = '601';
+
+export const CONTABILIDAD_PURCHASE_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Pendiente',
+  PARTIAL: 'Parcial',
+  PAID: 'Pagada',
+  CANCELLED: 'Anulada',
+};
+
+export const CONTABILIDAD_PURCHASE_TAX_AFFECTATION_LABELS: Record<string, string> = {
+  TAXABLE: 'Gravada',
+  EXEMPT: 'Exonerada',
+  NON_TAXABLE: 'Inafecta',
+};
+
+export const CONTABILIDAD_PURCHASE_DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  FACTURA: 'Factura',
+  BOLETA: 'Boleta',
+  RECIBO_HONORARIOS: 'Recibo por honorarios',
+  OTRO: 'Otro',
+};

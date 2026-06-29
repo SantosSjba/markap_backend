@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-06-29  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 5 (tesorería) completada — Fase 6 pendiente
+> **Estado general:** Fase 6 (compras contables) completada — Fase 7 pendiente
 
 ---
 
@@ -64,7 +64,7 @@ Integración con apps MARKAP (alquileres, ventas, producción, interiorismo…)
 | Dashboard | `/contabilidad` | Shell (KPIs placeholder) |
 | Contabilidad | plan-cuentas, asientos, periodos, centros-costo, cierre | **Placeholder** |
 | Tesorería | caja, bancos, conciliaciones, movimientos, transferencias | **Placeholder** |
-| Compras | facturas, NC, proveedores, pagos | **Placeholder** |
+| Compras | facturas, NC, proveedores, pagos | **Implementado** |
 | Ventas | facturas, boletas, NC, clientes, cobros | **Placeholder** |
 | Tributos | IGV, detracciones, retenciones, percepciones | **Placeholder** |
 | Libros electrónicos | registro compras/ventas, diario, mayor, caja, bancos, PLE | **Placeholder** |
@@ -100,7 +100,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 3 | Periodos y centros de costo | ✅ Completa |
 | 4 | Asientos y libro diario | ✅ Completa |
 | 5 | Tesorería | ✅ Completa |
-| 6 | Compras contables | ⬜ Pendiente |
+| 6 | Compras contables | ✅ Completa |
 | 7 | Ventas contables | ⬜ Pendiente |
 | 8 | Tributos (IGV, detracciones, retenciones) | ⬜ Pendiente |
 | 9 | Libros electrónicos y PLE | ⬜ Pendiente |
@@ -231,19 +231,19 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Modelo `PurchaseInvoice` (CPE compra): proveedor RUC, tipo doc, serie-número, fecha, base imponible, IGV, total, detracción
-- [ ] `PurchaseCreditNote`; estado `PENDING` | `PAID` | `CANCELLED`
-- [ ] Proveedor contable (puede reutilizar entidad compartida o tabla auxiliar por RUC)
-- [ ] Pago a proveedor → tesorería + asiento (42/40 vs 10)
-- [ ] Asiento automático plantilla: compra gravada / exonerada / inafecta
-- [ ] API `/contabilidad-purchases`
+- [x] Modelo `PurchaseInvoice` (CPE compra): proveedor RUC, tipo doc, serie-número, fecha, base imponible, IGV, total, detracción
+- [x] `PurchaseCreditNote`; estado `PENDING` | `PARTIAL` | `PAID` | `CANCELLED`
+- [x] Proveedor contable (`ContabilidadSupplier` por RUC)
+- [x] Pago a proveedor → tesorería + asiento (421 vs 10xx)
+- [x] Asiento automático plantilla: compra gravada / exonerada / inafecta
+- [x] API `/contabilidad-purchases`
 
 ### Frontend (`features/compras`)
 
-- [ ] Facturas de compra: listado, registro, detalle
-- [ ] NC compra
-- [ ] Pagos vinculados
-- [ ] Vista proveedores (saldo CxP)
+- [x] Facturas de compra: listado, registro, detalle/asiento
+- [x] NC compra
+- [x] Pagos vinculados
+- [x] Vista proveedores (saldo CxP)
 
 ---
 

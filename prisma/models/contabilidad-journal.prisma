@@ -25,6 +25,8 @@ model ContabilidadJournalEntry {
   reversals   ContabilidadJournalEntry[] @relation("ContabilidadJournalReversal")
   lines             ContabilidadJournalEntryLine[]
   treasuryMovements ContabilidadTreasuryMovement[]
+  purchaseInvoices  ContabilidadPurchaseInvoice[]
+  purchaseCreditNotes ContabilidadPurchaseCreditNote[]
 
   @@unique([applicationId, periodId, entryNumber])
   @@index([applicationId])

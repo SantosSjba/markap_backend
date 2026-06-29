@@ -69,6 +69,10 @@ model Application {
   contabilidadBankAccounts     ContabilidadBankAccount[]
   contabilidadTreasuryMovements ContabilidadTreasuryMovement[]
   contabilidadBankReconciliations ContabilidadBankReconciliation[]
+  contabilidadSuppliers          ContabilidadSupplier[]
+  contabilidadPurchaseInvoices   ContabilidadPurchaseInvoice[]
+  contabilidadPurchaseCreditNotes ContabilidadPurchaseCreditNote[]
+  contabilidadPurchasePayments   ContabilidadPurchasePayment[]
 
   @@index([slug])
   @@index([isActive])
