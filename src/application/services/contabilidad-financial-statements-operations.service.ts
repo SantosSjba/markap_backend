@@ -1,20 +1,30 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
   APPLICATION_REPOSITORY,
+  CONTABILIDAD_CONFIG_REPOSITORY,
   CONTABILIDAD_FINANCIAL_REPOSITORY,
   CONTABILIDAD_REPORTS_REPOSITORY,
 } from '@common/constants/injection-tokens';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import type { ContabilidadConfigRepository } from '@domain/repositories/contabilidad-config.repository';
 import type { ContabilidadFinancialRepository } from '@domain/repositories/contabilidad-financial.repository';
 import type { ContabilidadReportsRepository } from '@domain/repositories/contabilidad-reports.repository';
 import {
   buildFinancialStatementExcel,
+  buildFinancialStatementPdf,
   financialExportFileName,
+  type FinancialExportHeader,
   type FinancialExportType,
 } from '@domain/utils/contabilidad-financial-export.util';
 import { EntityNotFoundException } from '@domain/exceptions';
 
 const CONTABILIDAD_SLUG = 'contabilidad';
+const VALID_EXPORT_TYPES: FinancialExportType[] = [
+  'balance-sheet',
+  'income-statement',
+  'trial-balance',
+  'cash-flow',
+];
 
 function assertContabilidadSlug(slug: string | undefined | null) {
   if (slug?.trim() !== CONTABILIDAD_SLUG) {
@@ -29,6 +39,8 @@ export class ContabilidadFinancialStatementsOperationsService {
     private readonly financial: ContabilidadFinancialRepository,
     @Inject(CONTABILIDAD_REPORTS_REPOSITORY)
     private readonly reports: ContabilidadReportsRepository,
+    @Inject(CONTABILIDAD_CONFIG_REPOSITORY)
+    private readonly config: ContabilidadConfigRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applications: ApplicationRepository,
   ) {}
@@ -43,6 +55,39 @@ export class ContabilidadFinancialStatementsOperationsService {
   private requirePeriodId(periodId?: string): string {
     if (!periodId?.trim()) throw new BadRequestException('periodId es obligatorio.');
     return periodId.trim();
+  }
+
+  private parseExportType(type?: string): FinancialExportType {
+    const exportType = type?.trim() as FinancialExportType;
+    if (!exportType || !VALID_EXPORT_TYPES.includes(exportType)) {
+      throw new BadRequestException(
+        'type debe ser balance-sheet, income-statement, trial-balance o cash-flow.',
+      );
+    }
+    return exportType;
+  }
+
+  private async loadExportData(
+    applicationId: string,
+    periodId: string,
+    exportType: FinancialExportType,
+    costCenterId?: string | null,
+  ) {
+    if (exportType === 'balance-sheet') {
+      return this.financial.getBalanceSheet(applicationId, periodId);
+    }
+    if (exportType === 'income-statement') {
+      return this.financial.getIncomeStatement(applicationId, periodId);
+    }
+    if (exportType === 'cash-flow') {
+      return this.financial.getCashFlowStatement(applicationId, periodId);
+    }
+    return this.reports.getTrialBalance(applicationId, periodId, costCenterId?.trim() || null);
+  }
+
+  private async resolveExportHeader(applicationId: string): Promise<FinancialExportHeader> {
+    const profile = await this.config.getCompanyProfile(applicationId);
+    return { ruc: profile.ruc, legalName: profile.legalName };
   }
 
   async getBalanceSheet(applicationSlug: string | undefined, periodId?: string, comparePrior = true) {
@@ -85,31 +130,43 @@ export class ContabilidadFinancialStatementsOperationsService {
     applicationSlug: string | undefined,
     periodId?: string,
     type?: string,
+    costCenterId?: string,
   ): Promise<{ buffer: Buffer; fileName: string }> {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const id = this.requirePeriodId(periodId);
-    const exportType = type?.trim() as FinancialExportType;
-
-    if (!exportType || !['balance-sheet', 'income-statement', 'trial-balance'].includes(exportType)) {
-      throw new BadRequestException(
-        'type debe ser balance-sheet, income-statement o trial-balance.',
-      );
-    }
+    const exportType = this.parseExportType(type);
 
     try {
-      let data;
-      if (exportType === 'balance-sheet') {
-        data = await this.financial.getBalanceSheet(applicationId, id);
-      } else if (exportType === 'income-statement') {
-        data = await this.financial.getIncomeStatement(applicationId, id);
-      } else {
-        data = await this.reports.getTrialBalance(applicationId, id);
-      }
-
+      const data = await this.loadExportData(applicationId, id, exportType, costCenterId);
       const buffer = await buildFinancialStatementExcel(exportType, data);
-      return { buffer, fileName: financialExportFileName(exportType, id) };
+      return { buffer, fileName: financialExportFileName(exportType, id, 'xlsx') };
     } catch (e) {
+      if (e instanceof BadRequestException) throw e;
       const message = e instanceof Error ? e.message : 'No se pudo exportar el reporte.';
+      throw new BadRequestException(message);
+    }
+  }
+
+  async exportPdf(
+    applicationSlug: string | undefined,
+    periodId?: string,
+    type?: string,
+    costCenterId?: string,
+  ): Promise<{ buffer: Buffer; fileName: string }> {
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const id = this.requirePeriodId(periodId);
+    const exportType = this.parseExportType(type);
+
+    try {
+      const [data, header] = await Promise.all([
+        this.loadExportData(applicationId, id, exportType, costCenterId),
+        this.resolveExportHeader(applicationId),
+      ]);
+      const buffer = await buildFinancialStatementPdf(exportType, data, header);
+      return { buffer, fileName: financialExportFileName(exportType, id, 'pdf') };
+    } catch (e) {
+      if (e instanceof BadRequestException) throw e;
+      const message = e instanceof Error ? e.message : 'No se pudo exportar el reporte PDF.';
       throw new BadRequestException(message);
     }
   }

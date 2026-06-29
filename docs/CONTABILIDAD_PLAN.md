@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 13 (UI y cierre de huecos) completada — **siguiente: Fase 14** (export PDF)
+> **Estado general:** Fase 14 (export PDF y reportes avanzados) completada — **siguiente: Fase 15** (multimoneda en asientos)
 
 ---
 
@@ -73,7 +73,7 @@ Fase 23 — Integración con apps MARKAP (al final)
 | Libros electrónicos | registro compras/ventas, diario, mayor, caja, bancos, PLE | ✅ |
 | Libros electrónicos | PLE libros adicionales SUNAT | ⬜ Fase 17 |
 | Reportes financieros | balance, ER, flujos, KPIs, análisis | ✅ |
-| Reportes financieros | Export PDF nativo | ⬜ Fase 14 |
+| Reportes financieros | Export PDF nativo | ✅ Fase 14 |
 | Configuración | empresa, series, tipos de cambio | ✅ |
 | Configuración | CPE / log electrónico, multi-empresa | ✅ CPE log · multi-empresa Fase 20 |
 
@@ -378,7 +378,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 - [x] Balance de comprobación (`trial-balance`) y análisis financiero (ratios)
 - [x] Flujo de caja tesorería (`cash-flow-treasury`)
 - [x] Export Excel reportes financieros (`/contabilidad-financial-statements/export/excel`)
-- [ ] Export PDF nativo → **Fase 14**
+- [x] Export PDF nativo → **Fase 14** ✅
 
 ### Frontend
 
@@ -448,15 +448,16 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] `GET /contabilidad-financial-statements/export/pdf?periodId=&type=...` (pdfkit o puppeteer según stack)
-- [ ] Tipos: `balance-sheet`, `income-statement`, `trial-balance`, `cash-flow`
-- [ ] Cabecera con RUC, razón social, periodo (desde `ContabilidadCompanyProfile`)
+- [x] `GET /contabilidad-financial-statements/export/pdf?periodId=&type=...` (pdfkit)
+- [x] Tipos: `balance-sheet`, `income-statement`, `trial-balance`, `cash-flow`
+- [x] Cabecera con RUC, razón social, periodo (desde `ContabilidadCompanyProfile`)
 
 ### Frontend
 
-- [ ] Botón **Exportar PDF** en BG, ER, flujo de efectivo, balance de comprobación, análisis financiero
-- [ ] Hoja de estilos `@media print` mejorada en vistas de reporte (fallback sin backend)
-- [ ] Export Excel de trial-balance y análisis financiero (si no existe)
+- [x] Botón **Exportar PDF** en BG, ER, flujo de efectivo, balance de comprobación (KPIs)
+- [x] Análisis financiero: Excel + imprimir/PDF vía navegador
+- [x] Hoja de estilos `@media print` en vistas de reporte (fallback sin backend)
+- [x] Export Excel de trial-balance (KPIs) y análisis financiero (cliente)
 
 ### Criterio de cierre
 

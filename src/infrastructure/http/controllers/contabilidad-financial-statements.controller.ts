@@ -54,21 +54,60 @@ export class ContabilidadFinancialStatementsController {
   }
 
   @Get('export/excel')
-  @ApiOperation({ summary: 'Exportar balance, EE.RR. o balance de comprobación a Excel' })
+  @ApiOperation({ summary: 'Exportar reportes financieros a Excel' })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'periodId', required: true })
-  @ApiQuery({ name: 'type', required: true, enum: ['balance-sheet', 'income-statement', 'trial-balance'] })
+  @ApiQuery({
+    name: 'type',
+    required: true,
+    enum: ['balance-sheet', 'income-statement', 'trial-balance', 'cash-flow'],
+  })
+  @ApiQuery({ name: 'costCenterId', required: false })
   async exportExcel(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('periodId') periodId?: string,
     @Query('type') type?: string,
+    @Query('costCenterId') costCenterId?: string,
     @Res() res?: Response,
   ) {
-    const { buffer, fileName } = await this.statements.exportExcel(applicationSlug, periodId, type);
+    const { buffer, fileName } = await this.statements.exportExcel(
+      applicationSlug,
+      periodId,
+      type,
+      costCenterId,
+    );
     res!.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
+    res!.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res!.send(buffer);
+  }
+
+  @Get('export/pdf')
+  @ApiOperation({ summary: 'Exportar reportes financieros a PDF' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'periodId', required: true })
+  @ApiQuery({
+    name: 'type',
+    required: true,
+    enum: ['balance-sheet', 'income-statement', 'trial-balance', 'cash-flow'],
+  })
+  @ApiQuery({ name: 'costCenterId', required: false })
+  async exportPdf(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('periodId') periodId?: string,
+    @Query('type') type?: string,
+    @Query('costCenterId') costCenterId?: string,
+    @Res() res?: Response,
+  ) {
+    const { buffer, fileName } = await this.statements.exportPdf(
+      applicationSlug,
+      periodId,
+      type,
+      costCenterId,
+    );
+    res!.setHeader('Content-Type', 'application/pdf');
     res!.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res!.send(buffer);
   }
