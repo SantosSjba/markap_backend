@@ -178,6 +178,12 @@ export const CONTABILIDAD_CHILD_MENUS = [
     order: 3,
     parentLabel: 'Tributos',
   },
+  {
+    label: 'Impuesto a la renta',
+    path: '/contabilidad/tributos/renta',
+    order: 4,
+    parentLabel: 'Tributos',
+  },
   // Libros electrónicos
   {
     label: 'Registro de compras',

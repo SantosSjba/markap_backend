@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 12 (completitud normativa Perú) completada — Fase 13 (integración MARKAP) diferida
+> **Estado general:** Fase 13 (UI y cierre de huecos) completada — **siguiente: Fase 14** (export PDF)
 
 ---
 
@@ -52,7 +52,9 @@ Libros electrónicos + export PLE
     ↓
 Cierre mensual → Estados financieros + Reportes + Dashboard
     ↓
-Integración con apps MARKAP (alquileres, ventas, producción, interiorismo…)
+Fases 13–22 (huecos UI, multimoneda, IR, PLE+, inventario, multi-RUC, CPE, SOL)
+    ↓
+Fase 23 — Integración con apps MARKAP (al final)
 ```
 
 ---
@@ -66,10 +68,14 @@ Integración con apps MARKAP (alquileres, ventas, producción, interiorismo…)
 | Tesorería | caja, bancos, conciliaciones, movimientos, transferencias | ✅ |
 | Compras | facturas, NC, ND, proveedores, pagos | ✅ |
 | Ventas | facturas, boletas, NC, ND, clientes, cobros | ✅ |
-| Tributos | IGV, detracciones, retenciones, percepciones, renta | ✅ |
+| Tributos | IGV, detracciones, retenciones, percepciones | ✅ |
+| Tributos | Renta / IR (vista dedicada) | ✅ |
 | Libros electrónicos | registro compras/ventas, diario, mayor, caja, bancos, PLE | ✅ |
+| Libros electrónicos | PLE libros adicionales SUNAT | ⬜ Fase 17 |
 | Reportes financieros | balance, ER, flujos, KPIs, análisis | ✅ |
+| Reportes financieros | Export PDF nativo | ⬜ Fase 14 |
 | Configuración | empresa, series, tipos de cambio | ✅ |
+| Configuración | CPE / log electrónico, multi-empresa | ✅ CPE log · multi-empresa Fase 20 |
 
 Seed menú: `prisma/seed/data/menus-contabilidad.ts`  
 Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
@@ -78,15 +84,15 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ## Decisiones de diseño (cerrar antes de codear)
 
-- [ ] **Multi-empresa / multi-RUC:** ¿Un `applicationSlug=contabilidad` por holding o una empresa contable por `companyId`? (Recomendado: entidad `AccountingCompany` con RUC propio dentro de la app.)
+- [ ] **Multi-empresa / multi-RUC:** varias empresas en la app → **Fase 20**
 - [x] **Estados del asiento:** `DRAFT` → `POSTED` → `REVERSED`; periodo cerrado bloquea edición/publicación.
 - [x] **Partida doble estricta:** publicar solo si debe = haber.
-- [ ] **Plan de cuentas jerárquico:** código PCGE (ej. `1011`, `40111`); cuentas de movimiento vs título; no borrar cuentas con movimiento.
-- [x] **Moneda:** PEN en v1; tipos de cambio manuales (USD) en configuración; asientos en PEN.
-- [x] **CPE / facturación electrónica:** registro contable + log local de trazabilidad CPE (sin OSE/PSE en v1).
-- [x] **PLE:** generación de archivos según estructura SUNAT; no reemplaza el envío por SOL (export + validación local).
-- [ ] **Integración MARKAP:** eventos de dominio → plantillas de asiento configurables (**Fase 13 — diferida**).
-- [ ] **Auditoría:** `createdBy`, `postedBy`, `postedAt`; trazabilidad de cambios en asientos publicados = solo reversa.
+- [x] **Plan de cuentas jerárquico:** código PCGE; cuentas título vs movimiento; no desactivar con movimientos.
+- [x] **Moneda funcional:** PEN; tipos de cambio manuales registrados → **multimoneda en asientos: Fase 15**
+- [x] **CPE v1:** registro contable + log local (sin OSE/PSE) → **facturación electrónica real: Fase 21**
+- [x] **PLE v1:** libros principales + export local → **PLE ampliado + validador: Fase 17**
+- [ ] **Integración MARKAP:** eventos de dominio → asientos automáticos → **Fase 23 (al final)**
+- [ ] **Auditoría completa:** historial de cambios y trazabilidad → **Fase 20**
 
 ---
 
@@ -106,8 +112,34 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 9 | Libros electrónicos y PLE | ✅ Completa |
 | 10 | Cierre mensual y EEFF | ✅ Completa |
 | 11 | Reportes y dashboard | ✅ Completa |
-| 12 | Completitud normativa Perú | ✅ Completa |
-| 13 | Integración con apps MARKAP | ⬜ Diferida |
+| 12 | Completitud normativa Perú (ND, PLE 8.2/3.1, plantillas API) | ✅ Completa |
+| 13 | UI y cierre de huecos (APIs sin pantalla) | ✅ Completa |
+| 14 | Exportación PDF y reportes avanzados | ⬜ Pendiente |
+| 15 | Multimoneda operativa en asientos | ⬜ Pendiente |
+| 16 | Impuesto a la renta (IR) completo | ⬜ Pendiente |
+| 17 | PLE ampliado y validación SUNAT | ⬜ Pendiente |
+| 18 | Inventario permanente contable (20/21) | ⬜ Pendiente |
+| 19 | PCGE catálogo completo | ⬜ Pendiente |
+| 20 | Multi-empresa y auditoría | ⬜ Pendiente |
+| 21 | Facturación electrónica (OSE/PSE) | ⬜ Pendiente |
+| 22 | Declaraciones SUNAT (SOL) | ⬜ Pendiente |
+| 23 | Integración con apps MARKAP | ⬜ Al final |
+
+### Roadmap pendiente (resumen ejecutivo)
+
+| Fase | Entregable clave | Esfuerzo relativo |
+|------|------------------|-------------------|
+| **13** | Pantallas que faltan (proveedor ND, plantilla→asiento, renta, log CPE) | Bajo |
+| **14** | PDF reportes financieros | Bajo |
+| **15** | Asientos en USD con TC | Medio |
+| **16** | Módulo renta / IR | Medio |
+| **17** | Más libros PLE + validador + historial | Medio |
+| **18** | Inventario permanente 20/21 | Alto |
+| **19** | Import PCGE completo | Medio |
+| **20** | Multi-RUC + auditoría | Alto |
+| **21** | CPE electrónico OSE/PSE | Alto (externo) |
+| **22** | Envío/preparación SOL | Medio (externo) |
+| **23** | Puentes alquileres, ventas, producción, interiorismo | Muy alto |
 
 ---
 
@@ -199,7 +231,8 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 - [x] Listado libro diario (`DataTable`, `PageHeader`, `Badge`, filtros con `SearchInput` + `FormSelect`)
 - [x] Formulario asiento manual (grilla líneas dinámica, indicador cuadre)
 - [x] Detalle asiento + imprimir
-- [ ] Plantillas de asiento recurrentes (opcional v1.1)
+- [x] CRUD plantillas de asiento (`/contabilidad-extensions/journal-templates`) — Fase 12
+- [x] Aplicar plantilla al crear asiento manual — Fase 13
 
 ---
 
@@ -243,8 +276,10 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 - [x] Facturas de compra: listado, registro, detalle/asiento
 - [x] NC compra
+- [x] ND compra (Fase 12)
 - [x] Pagos vinculados
 - [x] Vista proveedores (saldo CxP)
+- [ ] Campos proveedor no domiciliado en UI → **Fase 13**
 
 ---
 
@@ -263,6 +298,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 - [x] Facturas y boletas (vista compartida con filtro por `documentType`)
 - [x] NC venta
+- [x] ND venta (Fase 12)
 - [x] Cobros
 - [x] Clientes con saldo CxC (1041)
 
@@ -342,7 +378,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 - [x] Balance de comprobación (`trial-balance`) y análisis financiero (ratios)
 - [x] Flujo de caja tesorería (`cash-flow-treasury`)
 - [x] Export Excel reportes financieros (`/contabilidad-financial-statements/export/excel`)
-- [ ] Export PDF reportes (usar impresión navegador / fase posterior)
+- [ ] Export PDF nativo → **Fase 14**
 
 ### Frontend
 
@@ -364,7 +400,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 - [x] Plantillas de asiento recurrentes (`/contabilidad-extensions/journal-templates`)
 - [x] Tipos de cambio manuales (`/contabilidad-extensions/exchange-rates`)
 - [x] Resumen impuesto a la renta por periodo (`/contabilidad-extensions/income-tax-summary`)
-- [x] Log trazabilidad CPE local (`/contabilidad-extensions/electronic-documents`)
+- [x] Log trazabilidad CPE local — API (`/contabilidad-extensions/electronic-document-logs`)
 - [x] PCGE seed ampliado (~75 cuentas)
 - [x] Serie ND compras `FD02`
 
@@ -382,9 +418,252 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ---
 
-## Fase 13 — Integración con apps MARKAP (diferida)
+## Fase 13 — UI y cierre de huecos
 
-> La contabilidad recibe hechos económicos de otros módulos; no duplica operación comercial.
+> Conectar en pantalla lo que ya existe en backend (Fase 12) y cerrar fricciones operativas del día a día.
+
+### Backend
+
+- [x] DTOs proveedor exponen `countryCode` e `isNonDomiciled` en list/detail
+- [x] Endpoint `apply` de plantilla devuelve líneas para borrador de asiento
+
+### Frontend
+
+- [x] **Proveedores:** campos país y checkbox «No domiciliado» en alta/edición
+- [x] **Asientos:** selector «Aplicar plantilla» en `ContabilidadAsientoFormView`
+- [x] **Renta:** vista `ContabilidadTributosRentaView` (`income-tax-summary`)
+- [x] **Log CPE:** vista `ContabilidadCpeLogView` (`electronic-document-logs`)
+- [x] Menú Tributos → Renta y Configuración → Trazabilidad CPE
+- [x] Seed menú + `fallbackMenus.ts` alineados
+
+### Criterio de cierre
+
+- Usuario puede marcar proveedor no domiciliado, aplicar plantilla en asiento nuevo y consultar resumen renta sin Postman.
+
+---
+
+## Fase 14 — Exportación PDF y reportes avanzados
+
+> Complementar Excel con PDF descargable y mejorar salidas para contador/gerencia.
+
+### Backend
+
+- [ ] `GET /contabilidad-financial-statements/export/pdf?periodId=&type=...` (pdfkit o puppeteer según stack)
+- [ ] Tipos: `balance-sheet`, `income-statement`, `trial-balance`, `cash-flow`
+- [ ] Cabecera con RUC, razón social, periodo (desde `ContabilidadCompanyProfile`)
+
+### Frontend
+
+- [ ] Botón **Exportar PDF** en BG, ER, flujo de efectivo, balance de comprobación, análisis financiero
+- [ ] Hoja de estilos `@media print` mejorada en vistas de reporte (fallback sin backend)
+- [ ] Export Excel de trial-balance y análisis financiero (si no existe)
+
+### Criterio de cierre
+
+- Descarga PDF con datos del periodo activo; build OK.
+
+---
+
+## Fase 15 — Multimoneda operativa
+
+> Operaciones en USD (u otra moneda) con conversión a PEN en el asiento publicado.
+
+### Backend
+
+- [ ] Campos opcionales en `ContabilidadJournalEntryLine`: `foreignCurrency`, `foreignAmount`, `exchangeRate`
+- [ ] Al publicar: calcular `debit`/`credit` en PEN desde TC del día (`ContabilidadExchangeRate`) o TC manual en línea
+- [ ] Validación: moneda extranjera solo si hay TC registrado o `exchangeRate` en línea
+- [ ] Compras/ventas: campo opcional moneda y monto extranjero en factura (vincular TC)
+- [ ] Tesorería: movimientos en cuenta bancaria USD con conversión
+
+### Frontend
+
+- [ ] Columnas moneda extranjera en grilla de asiento manual
+- [ ] Selector TC del día al registrar factura en USD
+- [ ] Indicador en listados cuando comprobante es multimoneda
+
+### Criterio de cierre
+
+- Asiento publicado en PEN cuadra con importe USD × TC; PLE sigue en PEN.
+
+---
+
+## Fase 16 — Impuesto a la renta (IR) completo
+
+> Más allá del resumen API actual: ciclo renta mensual/anual para empresas del régimen general.
+
+### Backend
+
+- [ ] Modelo `ContabilidadIncomeTaxPeriodSummary` (o ampliar extensions): base imponible, gastos deducibles, pagos a cuenta, saldo
+- [ ] Cálculo desde ER + ajustes manuales + saldo cuenta `4012`
+- [ ] Retenciones renta acumuladas (desde `ContabilidadRetention` tipo RENTA)
+- [ ] Export borrador declaración anual (estructura JSON/Excel; sin envío SOL — eso es Fase 22)
+- [ ] API `/contabilidad-taxes/renta` o ampliar `/contabilidad-extensions/income-tax`
+
+### Frontend
+
+- [ ] `ContabilidadTributosRentaView` completa: tabs Resumen periodo, Pagos a cuenta, Retenciones, Ajustes
+- [ ] Gráfico evolución resultado acumulado vs impuesto estimado
+- [ ] Enlace a ER y cuenta 4012
+
+### Criterio de cierre
+
+- Contador puede revisar base renta del periodo y exportar borrador sin integración externa.
+
+---
+
+## Fase 17 — PLE ampliado y validación SUNAT
+
+> Libros adicionales según régimen y validación más estricta pre-envío.
+
+### Backend
+
+- [ ] Registrar libros PLE adicionales según necesidad del cliente (validar en SUNAT vigente):
+  - [ ] 5.3 Libro diario simplificado (`050300`) — si aplica RMT/MYPE
+  - [ ] 5.4 Detalle del libro diario (`050400`)
+  - [ ] 8.3 / 8.4 Registros de compras complementarios (si aplica)
+  - [ ] Otros códigos que exija el régimen de la empresa demo
+- [ ] Modelo `ContabilidadPleExportLog`: periodo, libros, usuario, hash archivo, issues
+- [ ] Validador local ampliado: longitudes de campo, RUC, fechas, correlativo según estructura oficial
+- [ ] Generación ZIP de todos los libros del periodo en un solo archivo
+- [ ] Incluir NC/ND en registros 8.1 y 14.1 si aún no están explícitos
+
+### Frontend
+
+- [ ] PLE: checklist de libros obligatorios según perfil tributario de la empresa
+- [ ] Historial de exportaciones PLE
+- [ ] Vista previa de líneas con error antes de descargar
+
+### Criterio de cierre
+
+- Generación ZIP periodo completo; log de export; validador bloquea errores críticos.
+
+---
+
+## Fase 18 — Inventario permanente contable (cuentas 20/21)
+
+> Inventario valorizado en contabilidad, independiente de la integración con producción (eso refina en Fase 23).
+
+### Backend
+
+- [ ] Modelo `ContabilidadInventoryItem` (código, descripción, cuenta 20x, unidad, método costo PEPS/PROMEDIO)
+- [ ] `ContabilidadInventoryMovement`: entrada, salida, ajuste; cantidad, costo unitario, asiento vinculado
+- [ ] Asientos automáticos: entrada (Dr 20 / Cr 421 o 61), salida (Dr 69 / Cr 20)
+- [ ] Reporte kardex por ítem y saldo valorizado al cierre
+- [ ] Alimentar PLE 3.1 con saldos reales de inventario (no solo trial balance de cuentas)
+
+### Frontend
+
+- [ ] `features/inventario-contable/`: ítems, movimientos, kardex, reporte valorizado
+- [ ] Menú Contabilidad → Inventario permanente
+
+### Criterio de cierre
+
+- Entrada y salida de mercadería generan asiento y actualizan saldo 20; kardex consultable.
+
+---
+
+## Fase 19 — PCGE catálogo completo
+
+> Pasar del seed esencial (~75 cuentas) a catálogo PCGE importable por clase.
+
+### Backend
+
+- [ ] Archivo seed o import JSON con PCGE completo (Res. 194-2013-EF) por clases 1–9
+- [ ] `POST /contabilidad-accounts/import-pcge?classes=1,2,3` — merge sin duplicar códigos existentes
+- [ ] Flag `isSystem` en cuentas importadas vs personalizadas
+
+### Frontend
+
+- [ ] Plan de cuentas: acción «Importar PCGE» (selector de clases)
+- [ ] Indicador cuentas sistema vs personalizadas
+
+### Criterio de cierre
+
+- Importación idempotente de al menos clases 1–7 sin romper cuentas con movimiento.
+
+---
+
+## Fase 20 — Multi-empresa y auditoría
+
+> Holding con varios RUC y trazabilidad de cambios.
+
+### Backend
+
+- [ ] Modelo `ContabilidadLegalEntity` (o `AccountingCompany`): RUC, razón social, vinculado a `applicationId` + selector activo por usuario/sesión
+- [ ] Migrar `ContabilidadCompanyProfile` a entidad multi-RUC o `companyId` en tablas operativas
+- [ ] Modelo `ContabilidadAuditLog`: entidad, acción, userId, payload diff, timestamp
+- [ ] Registrar en audit: publicar/reversar asiento, cierre periodo, cambios maestros
+
+### Frontend
+
+- [ ] Selector de empresa/RUC en `ContabilidadLayout` (si el usuario tiene acceso a varias)
+- [ ] Pantalla consulta auditoría (filtros por fecha, usuario, tipo)
+
+### Criterio de cierre
+
+- Dos empresas demo con datos aislados; log de publicación de asiento visible.
+
+---
+
+## Fase 21 — Facturación electrónica (OSE/PSE)
+
+> Emisión real de CPE ante SUNAT. Requiere proveedor certificado y credenciales.
+
+### Backend
+
+- [ ] Generación XML UBL 2.1 (factura, boleta, NC, ND)
+- [ ] Firma digital (certificado `.pfx` en vault seguro, no en repo)
+- [ ] Integración OSE/PSE configurable (Nubefact, Bizlinks, SUNAT directo, etc.)
+- [ ] Estados: `DRAFT` → `SENT` → `ACCEPTED` / `REJECTED`; almacenar CDR y hash
+- [ ] Vincular respuesta SUNAT al comprobante contable y al log CPE (Fase 13)
+
+### Frontend
+
+- [ ] Configuración → Facturación electrónica: proveedor, serie, certificado
+- [ ] Botón «Emitir electrónicamente» en factura venta; badge estado SUNAT
+- [ ] Descarga XML/CDR
+
+### Criterio de cierre
+
+- Emisión en ambiente beta SUNAT de al menos una factura de prueba (con credenciales del cliente).
+
+### Dependencias externas
+
+- Proveedor OSE/PSE contratado; certificado digital vigente.
+
+---
+
+## Fase 22 — Declaraciones SUNAT (SOL)
+
+> Envío o preparación asistida de obligaciones mensuales/anuales.
+
+### Backend
+
+- [ ] Almacén seguro credenciales SOL (encriptado)
+- [ ] Envío PDT 621 desde datos ya exportados (si API SUNAT disponible; si no, paquete listo para carga manual asistida)
+- [ ] Preparación PLAME (estructura datos; envío según viabilidad API)
+- [ ] Log de declaraciones: periodo, tipo, estado, respuesta
+
+### Frontend
+
+- [ ] Tributos → Declaraciones SOL: wizard PDT 621 por periodo
+- [ ] Estado última declaración y errores SUNAT
+
+### Criterio de cierre
+
+- Al menos export + flujo guiado de carga; envío automático si hay API y credenciales de prueba.
+
+### Nota
+
+- El envío 100% automático depende de APIs SUNAT; mantener siempre export manual como respaldo.
+
+---
+
+## Fase 23 — Integración con apps MARKAP (al final)
+
+> La contabilidad recibe hechos económicos de otros módulos; no duplica operación comercial.  
+> **Implementar solo después de Fases 13–22** (o cuando el negocio priorice un puente puntual).
 
 | App origen | Evento ejemplo | Asiento sugerido |
 |------------|----------------|------------------|
@@ -396,34 +675,43 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] `AccountingIntegrationEvent` + plantillas configurables (cuenta por concepto)
-- [ ] Cola o hook post-operación en cada app (feature flag)
-- [ ] Idempotencia (no duplicar asiento por mismo `sourceId`)
+- [ ] `ContabilidadIntegrationTemplate`: app origen, evento, líneas de asiento (cuenta, debe/haber, %)
+- [ ] `ContabilidadIntegrationEvent` + cola o hook post-operación en cada app (feature flag por app)
+- [ ] Idempotencia (`sourceApp`, `sourceId`, `eventType`) — no duplicar asiento
+- [ ] Puente inventario producción ↔ cuentas 20/21 (refina Fase 18)
 
 ### Frontend
 
 - [ ] Configuración → Integraciones: mapeo cuentas por app/evento
-- [ ] Log de asientos generados automáticamente
+- [ ] Log de asientos generados automáticamente (filtro por app, fecha, estado)
+- [ ] Reprocesar / revertir integración fallida
+
+### Integraciones por app (orden sugerido dentro de Fase 23)
+
+| Orden | App | Eventos prioritarios |
+|-------|-----|----------------------|
+| 1 | `alquileres` | Cobro alquiler, gastos mantenimiento |
+| 2 | `ventas` (inmob.) | Separación, cierre, comisiones |
+| 3 | `produccion` | Cotización facturada, entrega, costo ventas, OC/pago proveedor |
+| 4 | `interiorismo` | Cobro etapa, pago proveedor material |
 
 ---
 
 ## Orden recomendado de implementación
 
 ```text
-0 Infra menú
-  → 1 Configuración
-  → 2 Plan de cuentas (PCGE)
-  → 3 Periodos + centros de costo
-  → 4 Asientos / libro diario
-  → 5 Tesorería
-  → 6 Compras contables
-  → 7 Ventas contables
-  → 8 Tributos
-  → 9 Libros electrónicos + PLE
-  → 10 Cierre + EEFF
-  → 11 Reportes + dashboard
-  → 12 Completitud normativa Perú
-  → 13 Integración MARKAP (cuando el usuario lo solicite)
+0–12  ✅ Completadas (ver secciones anteriores)
+  → 13 UI y huecos (proveedor ND, plantilla en asiento, renta borrador, log CPE)
+  → 14 Export PDF + reportes avanzados
+  → 15 Multimoneda en asientos
+  → 16 IR completo
+  → 17 PLE ampliado + validador + historial
+  → 18 Inventario permanente 20/21
+  → 19 PCGE catálogo completo
+  → 20 Multi-empresa + auditoría
+  → 21 Facturación electrónica OSE/PSE
+  → 22 Declaraciones SOL
+  → 23 Integración MARKAP (al final)
 ```
 
 ---
@@ -431,17 +719,20 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 ## Modelo de datos (borrador Prisma)
 
 ```text
-AccountingCompanySettings
-AccountingAccount          (árbol PCGE)
-AccountingPeriod
-CostCenter
-JournalEntry + JournalEntryLine
+ContabilidadCompanyProfile / ContabilidadLegalEntity (Fase 20)
+ContabilidadAccount (árbol PCGE + import completo Fase 19)
+ContabilidadPeriod, CostCenter
+JournalEntry + JournalEntryLine (+ multimoneda Fase 15)
 CashBox, BankAccount, TreasuryMovement, BankReconciliation
-PurchaseInvoice, PurchaseCreditNote, PurchasePayment
-SalesInvoice, SalesReceipt, SalesCreditNote, SalesCollection
-TaxDetraction, TaxRetention, TaxPerception, IgvPeriodSummary
-PleExportLog
-AccountingIntegrationTemplate
+PurchaseInvoice, PurchaseCreditNote, PurchaseDebitNote, PurchasePayment
+SalesInvoice, SalesCreditNote, SalesDebitNote, SalesCollection
+TaxDetraction, TaxRetention, TaxPerception, IgvPeriodSummary, IncomeTaxPeriodSummary (Fase 16)
+ContabilidadExchangeRate, ContabilidadJournalTemplate
+ContabilidadInventoryBalanceSnapshot, ContabilidadInventoryItem/Movement (Fase 18)
+ContabilidadElectronicDocumentLog (+ estados OSE Fase 21)
+ContabilidadPleExportLog (Fase 17)
+ContabilidadAuditLog (Fase 20)
+ContabilidadIntegrationTemplate + IntegrationEvent (Fase 23)
 ```
 
 Archivos sugeridos: `prisma/models/contabilidad-*.prisma` (dividir por subdominio como en `produccion`).
@@ -460,14 +751,22 @@ Archivos sugeridos: `prisma/models/contabilidad-*.prisma` (dividir por subdomini
 
 ---
 
-## Riesgos y fuera de alcance v1
+## Riesgos y dependencias externas
 
-- **Facturación electrónica SUNAT (OSE/PSE)** y envío en línea de CPE → requiere proveedor certificado (log local implementado).
-- **Declaraciones SOL automáticas** (PDT 621, PLAME) → solo export de datos en v1.
-- **NIIF completas** para consolidación de grupos → evaluar según cliente.
-- **Inventarios permanentes valorizados** (cuenta 20/21 integrada con stock producción) → integración Fase 13.
-- **Multimoneda en asientos** (líneas en USD con TC) → tipos de cambio registrados; conversión en asiento fase posterior.
-- **Export PDF** nativo → Excel implementado; PDF vía impresión o librería futura.
+| Tema | Fase | Nota |
+|------|------|------|
+| OSE/PSE y certificado digital | 21 | Requiere contrato con proveedor y `.pfx` del cliente |
+| Envío SOL automático | 22 | Depende de APIs SUNAT; siempre mantener export manual |
+| NIIF / consolidación grupos | 19+ | Opcional; PCGE es base Perú |
+| Validación PLE oficial | 17 | Comparar con validador SUNAT al actualizar estructuras |
+| Multimoneda | 15 | TC SUNAT diario (opcional: integrar API SBS) |
+| Inventario + stock producción | 18 + 23 | Contable en 18; sincronización stock en 23 |
+
+## Fuera de alcance indefinido
+
+- Consolidación NIIF de grupos internacionales
+- Nómina / PLAME completo como módulo RRHH (solo preparación datos en Fase 22)
+- Contabilidad analítica avanzada más allá de centros de costo
 
 ---
 
