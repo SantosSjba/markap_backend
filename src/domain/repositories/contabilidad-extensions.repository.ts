@@ -68,6 +68,80 @@ export interface IncomeTaxSummaryDto {
   estimatedTaxProvision: string;
 }
 
+export interface IncomeTaxAdjustmentsDto {
+  deductibleAdjustments: string;
+  nonDeductibleAdjustments: string;
+  otherIncomeAdjustments: string;
+  otherExpenseAdjustments: string;
+  advancePaymentAmount: string;
+  notes: string | null;
+}
+
+export interface IncomeTaxRetentionLineDto {
+  id: string;
+  issueDate: string;
+  counterpartyRuc: string;
+  counterpartyName: string;
+  documentRef: string | null;
+  taxableBase: string;
+  ratePercent: string;
+  amount: string;
+}
+
+export interface IncomeTaxMonthlyTrendDto {
+  periodId: string;
+  year: number;
+  month: number;
+  label: string;
+  netIncome: string;
+  estimatedTax: string;
+  accumulatedNetIncome: string;
+}
+
+export interface IncomeTaxDetailDto {
+  periodId: string;
+  year: number;
+  month: number;
+  ruc: string;
+  legalName: string;
+  incomeTaxRatePercent: string;
+  totalIncome: string;
+  totalExpenses: string;
+  netIncomeBeforeTax: string;
+  taxableBase: string;
+  estimatedTaxProvision: string;
+  ytdNetIncome: string;
+  ytdTaxableBase: string;
+  ytdEstimatedTax: string;
+  rentaAccountBalance: string;
+  adjustments: IncomeTaxAdjustmentsDto;
+  retentionsPeriod: IncomeTaxRetentionLineDto[];
+  retentionsPeriodTotal: string;
+  retentionsYtdTotal: string;
+  advancePaymentsYtd: string;
+  netTaxBalanceYtd: string;
+  monthlyTrend: IncomeTaxMonthlyTrendDto[];
+}
+
+export interface UpsertIncomeTaxPeriodInput {
+  deductibleAdjustments?: number | string;
+  nonDeductibleAdjustments?: number | string;
+  otherIncomeAdjustments?: number | string;
+  otherExpenseAdjustments?: number | string;
+  advancePaymentAmount?: number | string;
+  notes?: string | null;
+}
+
+export interface IncomeTaxExportDto {
+  periodId: string;
+  year: number;
+  month: number;
+  ruc: string;
+  legalName: string;
+  generatedAt: string;
+  detail: IncomeTaxDetailDto;
+}
+
 export interface ApplyJournalTemplateResultDto {
   templateId: string;
   templateName: string;
@@ -183,4 +257,11 @@ export interface ContabilidadExtensionsRepository {
   ): Promise<ContabilidadElectronicDocumentLogDto>;
 
   getIncomeTaxSummary(applicationId: string, periodId: string): Promise<IncomeTaxSummaryDto>;
+  getIncomeTaxDetail(applicationId: string, periodId: string): Promise<IncomeTaxDetailDto>;
+  upsertIncomeTaxPeriodSummary(
+    applicationId: string,
+    periodId: string,
+    input: UpsertIncomeTaxPeriodInput,
+  ): Promise<IncomeTaxDetailDto>;
+  exportIncomeTaxDraft(applicationId: string, periodId: string): Promise<IncomeTaxExportDto>;
 }

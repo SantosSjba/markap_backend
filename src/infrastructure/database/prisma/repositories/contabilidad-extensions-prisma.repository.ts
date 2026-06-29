@@ -1,6 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CONTABILIDAD_FINANCIAL_REPOSITORY } from '@common/constants/injection-tokens';
 import { CONTABILIDAD_JOURNAL_STATUS } from '@domain/constants/contabilidad-journal.defaults';
+import { CONTABILIDAD_RETENTION_TYPE } from '@domain/constants/contabilidad-taxes.defaults';
+import {
+  CONTABILIDAD_DEFAULT_INCOME_TAX_RATE_PERCENT,
+  CONTABILIDAD_RENTA_ACCOUNT_CODE,
+} from '@domain/constants/contabilidad-taxes.defaults';
 import { CONTABILIDAD_ACCOUNT_TYPES } from '@domain/constants/contabilidad-pcge.defaults';
 import { accountBalanceFromTotals } from '@domain/constants/contabilidad-financial.defaults';
 import type { ContabilidadFinancialRepository } from '@domain/repositories/contabilidad-financial.repository';
@@ -13,13 +18,21 @@ import type {
   ContabilidadJournalTemplateDto,
   CreateElectronicDocumentLogInput,
   CreateJournalTemplateInput,
+  IncomeTaxDetailDto,
+  IncomeTaxExportDto,
   IncomeTaxSummaryDto,
   ListElectronicDocumentLogsFilters,
   ListExchangeRatesFilters,
   UpdateJournalTemplateInput,
   UpsertExchangeRateInput,
+  UpsertIncomeTaxPeriodInput,
 } from '@domain/repositories/contabilidad-extensions.repository';
-import { formatPenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import {
+  computeEstimatedIncomeTax,
+  computeNetTaxBalance,
+  computeTaxableBase,
+} from '@domain/utils/contabilidad-income-tax.util';
+import { formatPenAmount, parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
 import { PrismaService } from '../prisma.service';
 
 const templateInclude = {
@@ -454,16 +467,223 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
   }
 
   async getIncomeTaxSummary(applicationId: string, periodId: string): Promise<IncomeTaxSummaryDto> {
+    const detail = await this.getIncomeTaxDetail(applicationId, periodId);
+    return {
+      periodId: detail.periodId,
+      year: detail.year,
+      month: detail.month,
+      totalIncome: detail.totalIncome,
+      totalExpenses: detail.totalExpenses,
+      netIncomeBeforeTax: detail.netIncomeBeforeTax,
+      rentaAccountBalance: detail.rentaAccountBalance,
+      estimatedTaxProvision: detail.estimatedTaxProvision,
+    };
+  }
+
+  async getIncomeTaxDetail(applicationId: string, periodId: string): Promise<IncomeTaxDetailDto> {
     const period = await this.prisma.contabilidadPeriod.findFirst({
       where: { applicationId, id: periodId },
     });
     if (!period) throw new Error('Periodo no encontrado');
 
+    const company = await this.prisma.contabilidadCompanyProfile.findFirst({
+      where: { applicationId },
+    });
+
+    const stored = await this.prisma.contabilidadIncomeTaxPeriodSummary.findUnique({
+      where: { applicationId_periodId: { applicationId, periodId } },
+    });
+
+    const adjustments = this.mapStoredAdjustments(stored);
     const incomeStmt = await this.financial.getIncomeStatement(applicationId, periodId);
     const totalIncome = Number(incomeStmt.income.total);
     const totalExpenses = Number(incomeStmt.expenses.total);
     const netIncome = Number(incomeStmt.netIncome);
+    const taxableBase = computeTaxableBase(netIncome, adjustments);
+    const estimatedTax = computeEstimatedIncomeTax(taxableBase);
+    const rentaAccountBalance = await this.getRentaAccountBalance(applicationId, period);
 
+    const yearPeriods = await this.prisma.contabilidadPeriod.findMany({
+      where: { applicationId, year: period.year, month: { lte: period.month } },
+      orderBy: { month: 'asc' },
+    });
+    const yearPeriodIds = yearPeriods.map((p) => p.id);
+
+    const storedByPeriod = await this.prisma.contabilidadIncomeTaxPeriodSummary.findMany({
+      where: { applicationId, periodId: { in: yearPeriodIds } },
+    });
+    const storedMap = new Map(storedByPeriod.map((row) => [row.periodId, row]));
+
+    let ytdNetIncome = 0;
+    let ytdTaxableBase = 0;
+    let accumulatedNet = 0;
+    const monthlyTrend: IncomeTaxDetailDto['monthlyTrend'] = [];
+
+    for (const p of yearPeriods) {
+      const er = await this.financial.getIncomeStatement(applicationId, p.id);
+      const pNet = Number(er.netIncome);
+      const pAdj = this.mapStoredAdjustments(storedMap.get(p.id) ?? null);
+      const pTaxable = computeTaxableBase(pNet, pAdj);
+      const pTax = computeEstimatedIncomeTax(pTaxable);
+      ytdNetIncome += pNet;
+      ytdTaxableBase += pTaxable;
+      accumulatedNet += pNet;
+      monthlyTrend.push({
+        periodId: p.id,
+        year: p.year,
+        month: p.month,
+        label: `${p.year}-${String(p.month).padStart(2, '0')}`,
+        netIncome: formatPenAmount(pNet),
+        estimatedTax: formatPenAmount(pTax),
+        accumulatedNetIncome: formatPenAmount(accumulatedNet),
+      });
+    }
+
+    const ytdEstimatedTax = computeEstimatedIncomeTax(ytdTaxableBase);
+
+    const retentionsPeriodRows = await this.prisma.contabilidadRetention.findMany({
+      where: {
+        applicationId,
+        periodId,
+        retentionType: CONTABILIDAD_RETENTION_TYPE.RENTA,
+        status: 'ACTIVE',
+      },
+      orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    const retentionsYtdAgg = await this.prisma.contabilidadRetention.aggregate({
+      where: {
+        applicationId,
+        periodId: { in: yearPeriodIds },
+        retentionType: CONTABILIDAD_RETENTION_TYPE.RENTA,
+        status: 'ACTIVE',
+      },
+      _sum: { amount: true },
+    });
+
+    const advancesYtdAgg = await this.prisma.contabilidadIncomeTaxPeriodSummary.aggregate({
+      where: { applicationId, periodId: { in: yearPeriodIds } },
+      _sum: { advancePaymentAmount: true },
+    });
+
+    const retentionsPeriodTotal = retentionsPeriodRows.reduce((sum, row) => sum + Number(row.amount), 0);
+    const retentionsYtdTotal = Number(retentionsYtdAgg._sum.amount ?? 0);
+    const advancePaymentsYtd = Number(advancesYtdAgg._sum.advancePaymentAmount ?? 0);
+    const netTaxBalanceYtd = computeNetTaxBalance(ytdEstimatedTax, retentionsYtdTotal, advancePaymentsYtd);
+
+    return {
+      periodId,
+      year: period.year,
+      month: period.month,
+      ruc: company?.ruc ?? '',
+      legalName: company?.legalName ?? '',
+      incomeTaxRatePercent: CONTABILIDAD_DEFAULT_INCOME_TAX_RATE_PERCENT.toFixed(2),
+      totalIncome: formatPenAmount(totalIncome),
+      totalExpenses: formatPenAmount(totalExpenses),
+      netIncomeBeforeTax: formatPenAmount(netIncome),
+      taxableBase: formatPenAmount(taxableBase),
+      estimatedTaxProvision: formatPenAmount(estimatedTax),
+      ytdNetIncome: formatPenAmount(ytdNetIncome),
+      ytdTaxableBase: formatPenAmount(ytdTaxableBase),
+      ytdEstimatedTax: formatPenAmount(ytdEstimatedTax),
+      rentaAccountBalance: formatPenAmount(rentaAccountBalance),
+      adjustments: {
+        deductibleAdjustments: formatPenAmount(adjustments.deductibleAdjustments),
+        nonDeductibleAdjustments: formatPenAmount(adjustments.nonDeductibleAdjustments),
+        otherIncomeAdjustments: formatPenAmount(adjustments.otherIncomeAdjustments),
+        otherExpenseAdjustments: formatPenAmount(adjustments.otherExpenseAdjustments),
+        advancePaymentAmount: formatPenAmount(Number(stored?.advancePaymentAmount ?? 0)),
+        notes: stored?.notes ?? null,
+      },
+      retentionsPeriod: retentionsPeriodRows.map((row) => ({
+        id: row.id,
+        issueDate: row.issueDate.toISOString().slice(0, 10),
+        counterpartyRuc: row.counterpartyRuc,
+        counterpartyName: row.counterpartyName,
+        documentRef:
+          row.documentSeries && row.documentNumber
+            ? `${row.documentSeries}-${row.documentNumber}`
+            : null,
+        taxableBase: formatPenAmount(Number(row.taxableBase)),
+        ratePercent: Number(row.ratePercent).toFixed(2),
+        amount: formatPenAmount(Number(row.amount)),
+      })),
+      retentionsPeriodTotal: formatPenAmount(retentionsPeriodTotal),
+      retentionsYtdTotal: formatPenAmount(retentionsYtdTotal),
+      advancePaymentsYtd: formatPenAmount(advancePaymentsYtd),
+      netTaxBalanceYtd: formatPenAmount(netTaxBalanceYtd),
+      monthlyTrend,
+    };
+  }
+
+  async upsertIncomeTaxPeriodSummary(
+    applicationId: string,
+    periodId: string,
+    input: UpsertIncomeTaxPeriodInput,
+  ): Promise<IncomeTaxDetailDto> {
+    const period = await this.prisma.contabilidadPeriod.findFirst({
+      where: { applicationId, id: periodId },
+    });
+    if (!period) throw new Error('Periodo no encontrado');
+
+    await this.prisma.contabilidadIncomeTaxPeriodSummary.upsert({
+      where: { applicationId_periodId: { applicationId, periodId } },
+      create: {
+        applicationId,
+        periodId,
+        deductibleAdjustments: parsePenAmount(input.deductibleAdjustments ?? 0),
+        nonDeductibleAdjustments: parsePenAmount(input.nonDeductibleAdjustments ?? 0),
+        otherIncomeAdjustments: parsePenAmount(input.otherIncomeAdjustments ?? 0),
+        otherExpenseAdjustments: parsePenAmount(input.otherExpenseAdjustments ?? 0),
+        advancePaymentAmount: parsePenAmount(input.advancePaymentAmount ?? 0),
+        notes: input.notes?.trim() || null,
+      },
+      update: {
+        deductibleAdjustments: parsePenAmount(input.deductibleAdjustments ?? 0),
+        nonDeductibleAdjustments: parsePenAmount(input.nonDeductibleAdjustments ?? 0),
+        otherIncomeAdjustments: parsePenAmount(input.otherIncomeAdjustments ?? 0),
+        otherExpenseAdjustments: parsePenAmount(input.otherExpenseAdjustments ?? 0),
+        advancePaymentAmount: parsePenAmount(input.advancePaymentAmount ?? 0),
+        notes: input.notes?.trim() || null,
+      },
+    });
+
+    return this.getIncomeTaxDetail(applicationId, periodId);
+  }
+
+  async exportIncomeTaxDraft(applicationId: string, periodId: string): Promise<IncomeTaxExportDto> {
+    const detail = await this.getIncomeTaxDetail(applicationId, periodId);
+    return {
+      periodId: detail.periodId,
+      year: detail.year,
+      month: detail.month,
+      ruc: detail.ruc,
+      legalName: detail.legalName,
+      generatedAt: new Date().toISOString(),
+      detail,
+    };
+  }
+
+  private mapStoredAdjustments(
+    stored: {
+      deductibleAdjustments: { toString(): string } | number;
+      nonDeductibleAdjustments: { toString(): string } | number;
+      otherIncomeAdjustments: { toString(): string } | number;
+      otherExpenseAdjustments: { toString(): string } | number;
+    } | null,
+  ) {
+    return {
+      deductibleAdjustments: stored ? Number(stored.deductibleAdjustments) : 0,
+      nonDeductibleAdjustments: stored ? Number(stored.nonDeductibleAdjustments) : 0,
+      otherIncomeAdjustments: stored ? Number(stored.otherIncomeAdjustments) : 0,
+      otherExpenseAdjustments: stored ? Number(stored.otherExpenseAdjustments) : 0,
+    };
+  }
+
+  private async getRentaAccountBalance(
+    applicationId: string,
+    period: { year: number; month: number },
+  ): Promise<number> {
     const periodIds = await this.prisma.contabilidadPeriod.findMany({
       where: {
         applicationId,
@@ -479,28 +699,15 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
           periodId: { in: periodIds.map((p) => p.id) },
           status: CONTABILIDAD_JOURNAL_STATUS.POSTED,
         },
-        account: { code: '4012' },
+        account: { code: CONTABILIDAD_RENTA_ACCOUNT_CODE },
       },
       _sum: { debit: true, credit: true },
     });
 
-    const rentaBalance = accountBalanceFromTotals(
+    return accountBalanceFromTotals(
       CONTABILIDAD_ACCOUNT_TYPES.LIABILITY,
       Number(rentaAgg._sum.debit ?? 0),
       Number(rentaAgg._sum.credit ?? 0),
     );
-
-    const estimatedTax = roundPenAmount(Math.max(0, netIncome * 0.295));
-
-    return {
-      periodId,
-      year: period.year,
-      month: period.month,
-      totalIncome: formatPenAmount(totalIncome),
-      totalExpenses: formatPenAmount(totalExpenses),
-      netIncomeBeforeTax: formatPenAmount(netIncome),
-      rentaAccountBalance: formatPenAmount(rentaBalance),
-      estimatedTaxProvision: formatPenAmount(estimatedTax),
-    };
   }
 }

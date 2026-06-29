@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 15 (multimoneda operativa) completada — **siguiente: Fase 16** (IR completo)
+> **Estado general:** Fase 16 (IR completo) completada — **siguiente: Fase 17** (PLE ampliado y validación SUNAT)
 
 ---
 
@@ -497,17 +497,17 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Modelo `ContabilidadIncomeTaxPeriodSummary` (o ampliar extensions): base imponible, gastos deducibles, pagos a cuenta, saldo
-- [ ] Cálculo desde ER + ajustes manuales + saldo cuenta `4012`
-- [ ] Retenciones renta acumuladas (desde `ContabilidadRetention` tipo RENTA)
-- [ ] Export borrador declaración anual (estructura JSON/Excel; sin envío SOL — eso es Fase 22)
-- [ ] API `/contabilidad-taxes/renta` o ampliar `/contabilidad-extensions/income-tax`
+- [x] Modelo `ContabilidadIncomeTaxPeriodSummary` (o ampliar extensions): base imponible, gastos deducibles, pagos a cuenta, saldo
+- [x] Cálculo desde ER + ajustes manuales + saldo cuenta `4012`
+- [x] Retenciones renta acumuladas (desde `ContabilidadRetention` tipo RENTA)
+- [x] Export borrador declaración anual (estructura JSON/Excel; sin envío SOL — eso es Fase 22)
+- [x] API `/contabilidad-extensions/income-tax-detail`, `income-tax-period`, `income-tax-export`
 
 ### Frontend
 
-- [ ] `ContabilidadTributosRentaView` completa: tabs Resumen periodo, Pagos a cuenta, Retenciones, Ajustes
-- [ ] Gráfico evolución resultado acumulado vs impuesto estimado
-- [ ] Enlace a ER y cuenta 4012
+- [x] `ContabilidadTributosRentaView` completa: tabs Resumen periodo, Pagos a cuenta, Retenciones, Ajustes
+- [x] Gráfico evolución resultado acumulado vs impuesto estimado
+- [x] Enlace a ER y cuenta 4012
 
 ### Criterio de cierre
 

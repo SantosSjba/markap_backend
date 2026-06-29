@@ -27,6 +27,7 @@ model ContabilidadPeriod {
   perceptions          ContabilidadPerception[]
   inventorySnapshots   ContabilidadInventoryBalanceSnapshot[]
   electronicDocLogs    ContabilidadElectronicDocumentLog[]
+  incomeTaxSummaries   ContabilidadIncomeTaxPeriodSummary[]
 
   @@unique([applicationId, year, month])
   @@index([applicationId])

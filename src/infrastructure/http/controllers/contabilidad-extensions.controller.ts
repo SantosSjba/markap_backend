@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadExtensionsOperationsService } from '../../../application/services/contabilidad-extensions-operations.service';
@@ -7,6 +7,7 @@ import type {
   CreateJournalTemplateInput,
   UpdateJournalTemplateInput,
   UpsertExchangeRateInput,
+  UpsertIncomeTaxPeriodInput,
 } from '@domain/repositories/contabilidad-extensions.repository';
 
 @ApiTags('Contabilidad — Extensiones')
@@ -149,5 +150,39 @@ export class ContabilidadExtensionsController {
     @Query('periodId') periodId?: string,
   ) {
     return this.extensions.getIncomeTaxSummary(applicationSlug, periodId ?? '');
+  }
+
+  @Get('income-tax-detail')
+  @ApiOperation({ summary: 'Detalle IR: ajustes, retenciones, pagos a cuenta y tendencia anual' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'periodId', required: true })
+  getIncomeTaxDetail(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('periodId') periodId?: string,
+  ) {
+    return this.extensions.getIncomeTaxDetail(applicationSlug, periodId ?? '');
+  }
+
+  @Put('income-tax-period')
+  @ApiOperation({ summary: 'Guardar ajustes y pago a cuenta del periodo (borrador IR)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'periodId', required: true })
+  upsertIncomeTaxPeriod(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Query('periodId') periodId: string,
+    @Body() body: UpsertIncomeTaxPeriodInput,
+  ) {
+    return this.extensions.upsertIncomeTaxPeriod(applicationSlug, periodId, body);
+  }
+
+  @Get('income-tax-export')
+  @ApiOperation({ summary: 'Export borrador declaración renta (JSON)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'periodId', required: true })
+  exportIncomeTaxDraft(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('periodId') periodId?: string,
+  ) {
+    return this.extensions.exportIncomeTaxDraft(applicationSlug, periodId ?? '');
   }
 }

@@ -63,5 +63,9 @@ export const CONTABILIDAD_DEFAULT_RETENTION_RATES = {
   RENTA: 1.5,
 } as const;
 
-/** Tasa percepción IGV agente (referencia). */
+/** Tasa percepción IGV agente (referencia SUNAT). */
 export const CONTABILIDAD_DEFAULT_PERCEPTION_RATE = 2;
+
+/** Tasa corporativa referencial Perú (régimen general). */
+export const CONTABILIDAD_DEFAULT_INCOME_TAX_RATE_PERCENT = 29.5;
+export const CONTABILIDAD_RENTA_ACCOUNT_CODE = '4012';

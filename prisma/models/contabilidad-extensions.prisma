@@ -97,3 +97,27 @@ model ContabilidadElectronicDocumentLog {
   @@index([documentKind, documentRef])
   @@map("contabilidad_electronic_document_logs")
 }
+
+/// Ajustes manuales y pagos a cuenta de renta por periodo (borrador declaración).
+model ContabilidadIncomeTaxPeriodSummary {
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
+  periodId      String @map("period_id")
+
+  deductibleAdjustments    Decimal @default(0) @map("deductible_adjustments") @db.Decimal(14, 2)
+  nonDeductibleAdjustments Decimal @default(0) @map("non_deductible_adjustments") @db.Decimal(14, 2)
+  otherIncomeAdjustments   Decimal @default(0) @map("other_income_adjustments") @db.Decimal(14, 2)
+  otherExpenseAdjustments  Decimal @default(0) @map("other_expense_adjustments") @db.Decimal(14, 2)
+  advancePaymentAmount     Decimal @default(0) @map("advance_payment_amount") @db.Decimal(14, 2)
+  notes                    String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period      ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, periodId])
+  @@index([applicationId])
+  @@map("contabilidad_income_tax_period_summaries")
+}

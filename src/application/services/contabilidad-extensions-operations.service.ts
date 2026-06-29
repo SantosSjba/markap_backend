@@ -13,6 +13,7 @@ import type {
   ListExchangeRatesFilters,
   UpdateJournalTemplateInput,
   UpsertExchangeRateInput,
+  UpsertIncomeTaxPeriodInput,
 } from '@domain/repositories/contabilidad-extensions.repository';
 import type { ContabilidadPeriodRepository } from '@domain/repositories/contabilidad-period.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
@@ -181,6 +182,49 @@ export class ContabilidadExtensionsOperationsService {
     if (!period) throw new EntityNotFoundException('ContabilidadPeriod', periodId);
     try {
       return await this.extensions.getIncomeTaxSummary(applicationId, periodId.trim());
+    } catch (error) {
+      mapRepoError(error);
+    }
+  }
+
+  async getIncomeTaxDetail(applicationSlug: string | undefined, periodId: string) {
+    if (!periodId?.trim()) throw new BadRequestException('periodId es obligatorio.');
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const period = await this.periods.findPeriodById(applicationId, periodId.trim());
+    if (!period) throw new EntityNotFoundException('ContabilidadPeriod', periodId);
+    try {
+      return await this.extensions.getIncomeTaxDetail(applicationId, periodId.trim());
+    } catch (error) {
+      mapRepoError(error);
+    }
+  }
+
+  async upsertIncomeTaxPeriod(
+    applicationSlug: string | undefined,
+    periodId: string,
+    body: UpsertIncomeTaxPeriodInput,
+  ) {
+    if (!periodId?.trim()) throw new BadRequestException('periodId es obligatorio.');
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const period = await this.periods.findPeriodById(applicationId, periodId.trim());
+    if (!period) throw new EntityNotFoundException('ContabilidadPeriod', periodId);
+    if (period.status !== 'OPEN') {
+      throw new BadRequestException('El periodo contable está cerrado.');
+    }
+    try {
+      return await this.extensions.upsertIncomeTaxPeriodSummary(applicationId, periodId.trim(), body);
+    } catch (error) {
+      mapRepoError(error);
+    }
+  }
+
+  async exportIncomeTaxDraft(applicationSlug: string | undefined, periodId: string) {
+    if (!periodId?.trim()) throw new BadRequestException('periodId es obligatorio.');
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const period = await this.periods.findPeriodById(applicationId, periodId.trim());
+    if (!period) throw new EntityNotFoundException('ContabilidadPeriod', periodId);
+    try {
+      return await this.extensions.exportIncomeTaxDraft(applicationId, periodId.trim());
     } catch (error) {
       mapRepoError(error);
     }
