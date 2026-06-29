@@ -25,6 +25,23 @@ export class ContabilidadAccountsController {
     return this.accounts.listTree(applicationSlug, search);
   }
 
+  @Get('pcge-classes')
+  @ApiOperation({ summary: 'Clases PCGE disponibles para importación' })
+  getPcgeClasses() {
+    return this.accounts.getPcgeCatalogMeta();
+  }
+
+  @Post('import-pcge')
+  @ApiOperation({ summary: 'Importar cuentas PCGE por clase (merge idempotente)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'classes', required: false, description: 'Clases separadas por coma, ej. 1,2,3' })
+  importPcge(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Query('classes') classes?: string,
+  ) {
+    return this.accounts.importPcge(applicationSlug, classes);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener cuenta por ID' })
   @ApiQuery({ name: 'applicationSlug', required: false })

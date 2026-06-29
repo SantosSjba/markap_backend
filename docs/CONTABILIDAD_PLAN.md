@@ -4,7 +4,7 @@
 >
 > **Última actualización:** 2026-05-27  
 > **App slug:** `contabilidad` · **Base path:** `/contabilidad`  
-> **Estado general:** Fase 18 (Inventario permanente contable) completada — **siguiente: Fase 19** (PCGE catálogo completo)
+> **Estado general:** Fase 19 (PCGE catálogo completo) completada — **siguiente: Fase 20** (Multi-empresa y auditoría)
 
 ---
 
@@ -119,7 +119,7 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 | 16 | Impuesto a la renta (IR) completo | ⬜ Pendiente |
 | 17 | PLE ampliado y validación SUNAT | ⬜ Pendiente |
 | 18 | Inventario permanente contable (20/21) | ⬜ Pendiente |
-| 19 | PCGE catálogo completo | ⬜ Pendiente |
+| 19 | PCGE catálogo completo | ✅ Completa |
 | 20 | Multi-empresa y auditoría | ⬜ Pendiente |
 | 21 | Facturación electrónica (OSE/PSE) | ⬜ Pendiente |
 | 22 | Declaraciones SUNAT (SOL) | ⬜ Pendiente |
@@ -572,14 +572,14 @@ Rutas frontend: `markap_frontend/src/modules/contabilidad/presentation/router/`
 
 ### Backend
 
-- [ ] Archivo seed o import JSON con PCGE completo (Res. 194-2013-EF) por clases 1–9
-- [ ] `POST /contabilidad-accounts/import-pcge?classes=1,2,3` — merge sin duplicar códigos existentes
-- [ ] Flag `isSystem` en cuentas importadas vs personalizadas
+- [x] Archivo seed o import JSON con PCGE completo (Res. 194-2013-EF) por clases 1–9
+- [x] `POST /contabilidad-accounts/import-pcge?classes=1,2,3` — merge sin duplicar códigos existentes
+- [x] Flag `isSystem` en cuentas importadas vs personalizadas
 
 ### Frontend
 
-- [ ] Plan de cuentas: acción «Importar PCGE» (selector de clases)
-- [ ] Indicador cuentas sistema vs personalizadas
+- [x] Plan de cuentas: acción «Importar PCGE» (selector de clases)
+- [x] Indicador cuentas sistema vs personalizadas
 
 ### Criterio de cierre
 

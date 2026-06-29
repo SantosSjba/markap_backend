@@ -47,8 +47,17 @@ export interface UpdateContabilidadAccountInput {
   isActive?: boolean;
 }
 
+export interface ImportPcgeResultDto {
+  classes: number[];
+  created: number;
+  skipped: number;
+  pendingParent: number;
+  totalInCatalog: number;
+}
+
 export interface ContabilidadAccountRepository {
   ensurePcgeSeed(applicationId: string): Promise<void>;
+  importPcge(applicationId: string, classes: number[]): Promise<ImportPcgeResultDto>;
   listFlat(applicationId: string, search?: string): Promise<ContabilidadAccountFlatDto[]>;
   findById(applicationId: string, id: string): Promise<ContabilidadAccountFlatDto | null>;
   findByCode(applicationId: string, code: string): Promise<ContabilidadAccountFlatDto | null>;

@@ -4,6 +4,7 @@ import {
   CONTABILIDAD_ACCOUNT_TYPES,
   CONTABILIDAD_ACCOUNT_TYPE_LABELS,
 } from '@domain/constants/contabilidad-pcge.defaults';
+import { listPcgeCatalogClassesMeta } from '@domain/constants/contabilidad-pcge-catalog';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import type {
   ContabilidadAccountDto,
@@ -140,5 +141,25 @@ export class ContabilidadAccountOperationsService {
     }
 
     return this.accounts.deactivate(applicationId, id);
+  }
+
+  getPcgeCatalogMeta() {
+    return { classes: listPcgeCatalogClassesMeta() };
+  }
+
+  async importPcge(applicationSlug: string | undefined, classesParam?: string) {
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    await this.accounts.ensurePcgeSeed(applicationId);
+
+    const classes = (classesParam ?? '1,2,3,4,5,6,7')
+      .split(',')
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => Number.isFinite(n) && n >= 1 && n <= 9);
+
+    if (!classes.length) {
+      throw new BadRequestException('Indique al menos una clase PCGE válida (1–9) en el parámetro classes.');
+    }
+
+    return this.accounts.importPcge(applicationId, classes);
   }
 }
