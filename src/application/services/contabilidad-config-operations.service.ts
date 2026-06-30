@@ -1,16 +1,31 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { APPLICATION_REPOSITORY, CONTABILIDAD_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  CONTABILIDAD_ACCOUNT_REPOSITORY,
+  CONTABILIDAD_CONFIG_REPOSITORY,
+  CONTABILIDAD_LEGAL_ENTITY_REPOSITORY,
+  CONTABILIDAD_PERIOD_REPOSITORY,
+  CONTABILIDAD_TAXES_REPOSITORY,
+  CONTABILIDAD_TREASURY_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import {
   CONTABILIDAD_DOCUMENT_SERIES_KEYS,
   CONTABILIDAD_TAX_REGIMES,
 } from '@domain/constants/contabilidad-config.defaults';
+import { CONTABILIDAD_MONTH_LABELS } from '@domain/constants/contabilidad-period.defaults';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
+import type { ContabilidadAccountRepository } from '@domain/repositories/contabilidad-account.repository';
 import type {
   ContabilidadCompanyProfileDto,
   ContabilidadConfigRepository,
 } from '@domain/repositories/contabilidad-config.repository';
+import type { ContabilidadLegalEntityRepository } from '@domain/repositories/contabilidad-legal-entity.repository';
+import type { ContabilidadPeriodRepository } from '@domain/repositories/contabilidad-period.repository';
+import type { ContabilidadTaxesRepository } from '@domain/repositories/contabilidad-taxes.repository';
+import type { ContabilidadTreasuryRepository } from '@domain/repositories/contabilidad-treasury.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { isValidPeruvianRuc, normalizeRuc } from '@common/utils/ruc-validator';
+import { ContabilidadContextService } from './contabilidad-context.service';
 
 const CONTABILIDAD_SLUG = 'contabilidad';
 
@@ -29,6 +44,17 @@ export class ContabilidadConfigOperationsService {
     private readonly config: ContabilidadConfigRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applications: ApplicationRepository,
+    @Inject(CONTABILIDAD_LEGAL_ENTITY_REPOSITORY)
+    private readonly legalEntities: ContabilidadLegalEntityRepository,
+    @Inject(CONTABILIDAD_PERIOD_REPOSITORY)
+    private readonly periods: ContabilidadPeriodRepository,
+    @Inject(CONTABILIDAD_ACCOUNT_REPOSITORY)
+    private readonly accounts: ContabilidadAccountRepository,
+    @Inject(CONTABILIDAD_TREASURY_REPOSITORY)
+    private readonly treasury: ContabilidadTreasuryRepository,
+    @Inject(CONTABILIDAD_TAXES_REPOSITORY)
+    private readonly taxes: ContabilidadTaxesRepository,
+    private readonly context: ContabilidadContextService,
   ) {}
 
   private async resolveApplicationId(applicationSlug?: string): Promise<string> {
@@ -38,17 +64,43 @@ export class ContabilidadConfigOperationsService {
     return app.id;
   }
 
-  async bootstrap(applicationSlug?: string) {
+  async bootstrap(applicationSlug?: string, legalEntityId?: string, year?: number) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
-    await this.config.ensureDefaults(applicationId);
 
-    const [company, settings, documentSeries] = await Promise.all([
+    await this.config.ensureDefaults(applicationId);
+    await this.legalEntities.ensureDefaults(applicationId);
+    await this.accounts.ensurePcgeSeed(applicationId);
+    await this.periods.ensureDefaultCostCenters(applicationId);
+    await this.treasury.ensureDefaults(applicationId);
+    await this.taxes.ensureDefaults(applicationId);
+
+    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
+    const targetYear = year ?? new Date().getFullYear();
+    if (targetYear < 2000 || targetYear > 2100) {
+      throw new BadRequestException('Año no válido.');
+    }
+
+    await this.periods.ensureYearPeriods(applicationId, entityId, targetYear - 1);
+    const periodRows = await this.periods.ensureYearPeriods(applicationId, entityId, targetYear);
+    await this.periods.ensureYearPeriods(applicationId, entityId, targetYear + 1);
+
+    const [company, settings, documentSeries, legalEntitiesList] = await Promise.all([
       this.config.getCompanyProfile(applicationId),
       this.config.getSettings(applicationId),
       this.config.listDocumentSeries(applicationId),
+      this.legalEntities.list(applicationId),
     ]);
 
-    return { company, settings, documentSeries };
+    return {
+      company,
+      settings,
+      documentSeries,
+      legalEntities: legalEntitiesList,
+      defaultLegalEntityId: entityId,
+      year: targetYear,
+      periods: periodRows,
+      monthLabels: CONTABILIDAD_MONTH_LABELS,
+    };
   }
 
   async updateCompanyProfile(

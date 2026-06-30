@@ -12,10 +12,20 @@ export class ContabilidadConfigController {
   constructor(private readonly contabilidadConfig: ContabilidadConfigOperationsService) {}
 
   @Get('bootstrap')
-  @ApiOperation({ summary: 'Parametrización: empresa, tributos, series documentales' })
+  @ApiOperation({
+    summary:
+      'Inicialización contable: empresa, entidades legales, periodos, PCGE, tesorería y tributos',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  bootstrap(@Query('applicationSlug') applicationSlug?: string) {
-    return this.contabilidadConfig.bootstrap(applicationSlug);
+  @ApiQuery({ name: 'legalEntityId', required: false })
+  @ApiQuery({ name: 'year', required: false, description: 'Año fiscal para generar periodos' })
+  bootstrap(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('legalEntityId') legalEntityId?: string,
+    @Query('year') year?: string,
+  ) {
+    const parsedYear = year !== undefined && year !== '' ? Number(year) : undefined;
+    return this.contabilidadConfig.bootstrap(applicationSlug, legalEntityId, parsedYear);
   }
 
   @Put('company')
