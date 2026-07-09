@@ -53,6 +53,7 @@ model ArquitecturaProject {
   budgetSections ArquitecturaProjectSection[]
   payments       ArquitecturaProjectPayment[]
   financeSchedules ArquitecturaFinanceIncomeSchedule[]
+  calendarEvents   ArquitecturaCalendarEvent[]
 
   @@unique([applicationId, code])
   @@index([applicationId])

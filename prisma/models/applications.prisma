@@ -41,6 +41,7 @@ model Application {
   arquitecturaProjectStageConfigs ArquitecturaProjectStageConfig[]
   arquitecturaNumberingSeries     ArquitecturaNumberingSeries[]
   arquitecturaProjects             ArquitecturaProject[]
+  arquitecturaCalendarEvents     ArquitecturaCalendarEvent[]
   interiorCatalogMaterials     InteriorCatalogMaterial[]
   produccionFurniture          ProduccionFurniture[]
   produccionLaborRates       ProduccionLaborRate[]

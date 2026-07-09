@@ -107,8 +107,9 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 
 ### Fase 6 — Cronograma
 
-- [ ] Prisma + API `arquitectura-calendar` (equivalente `interiorismo-calendar`)
-- [ ] Frontend: `features/cronograma/` (vista calendario)
+- [x] Prisma + API `arquitectura-calendar` (equivalente `interiorismo-calendar`)
+- [x] Frontend: `features/cronograma/` (vista calendario en `/arquitectura/cronograma`)
+- Feed: eventos manuales + cobros programados (hitos/ejecución cuando existan Fase 8)
 
 ### Fase 7 — Documentos
 

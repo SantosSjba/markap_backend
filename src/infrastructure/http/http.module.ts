@@ -348,6 +348,12 @@ import {
   GetInteriorCalendarFeedUseCase,
   UpdateInteriorCalendarEventUseCase,
 } from '../../application/use-cases/interior-calendar';
+import {
+  CreateArquitecturaCalendarEventUseCase,
+  DeleteArquitecturaCalendarEventUseCase,
+  GetArquitecturaCalendarFeedUseCase,
+  UpdateArquitecturaCalendarEventUseCase,
+} from '../../application/use-cases/arquitectura-calendar';
 import { GetInteriorReportsDashboardUseCase } from '../../application/use-cases/interior-reports';
 import {
   CreateInteriorProjectDocumentUseCase,
@@ -384,6 +390,7 @@ import { ArquitecturaConfigController } from './controllers/arquitectura-config.
 import { ArquitecturaProjectsController } from './controllers/arquitectura-projects.controller';
 import { ArquitecturaProjectBudgetController } from './controllers/arquitectura-project-budget.controller';
 import { ArquitecturaFinanceController } from './controllers/arquitectura-finance.controller';
+import { ArquitecturaCalendarController } from './controllers/arquitectura-calendar.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoProjectBudgetController } from './controllers/interiorismo-project-budget.controller';
@@ -505,6 +512,7 @@ import {
     ArquitecturaProjectsController,
     ArquitecturaProjectBudgetController,
     ArquitecturaFinanceController,
+    ArquitecturaCalendarController,
     VentasComplianceController,
     InteriorismoProjectsController,
     InteriorismoProjectBudgetController,
@@ -732,6 +740,11 @@ import {
     GetArquitecturaFinanceOverviewUseCase,
     UpdateArquitecturaFinancePaymentUseCase,
     UpdateArquitecturaFinanceScheduleUseCase,
+
+    GetArquitecturaCalendarFeedUseCase,
+    CreateArquitecturaCalendarEventUseCase,
+    UpdateArquitecturaCalendarEventUseCase,
+    DeleteArquitecturaCalendarEventUseCase,
 
     GetInteriorProjectBudgetUseCase,
     GetInteriorProjectSettlementUseCase,
