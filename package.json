@@ -24,6 +24,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:push": "prisma db push",
+    "prisma:migrate:prod-safe": "ts-node prisma/scripts/apply-prod-safe-migrations.ts",
     "prisma:seed": "prisma db seed",
     "prisma:seed:prod": "ts-node prisma/seed-prod.ts",
     "prisma:migrate:interior-budgets": "ts-node -r tsconfig-paths/register prisma/scripts/migrate-interior-budgets-to-project-budget.ts",
