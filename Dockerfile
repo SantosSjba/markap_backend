@@ -1,8 +1,8 @@
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /usr/src/app
 
-RUN corepack enable pnpm
+RUN corepack enable && corepack prepare pnpm@11.5.0 --activate
 
 # Copiar archivos de dependencias
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
