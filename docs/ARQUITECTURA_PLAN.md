@@ -71,7 +71,7 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 - [x] Dominio: constantes de etapas, repositorio config, entidades
 - [x] Backend: `arquitectura-config` (bootstrap, etapas, numeración)
 - [x] Frontend: `features/configuracion/` + ruta real
-- [ ] Seeds: etapas y numeración por defecto para slug `arquitectura`
+- [x] Seeds: etapas y numeración por defecto para slug `arquitectura`
 
 ### Fase 2 — Clientes ✅
 
@@ -150,9 +150,9 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 
 ### Fase 12 — Demo, seeds y cierre
 
-- [ ] `demo-arquitectura-*` seeds (cliente, proyecto, presupuesto ejemplo)
-- [ ] Builds backend + frontend
-- [ ] Actualizar este plan con ✅ por fase
+- [x] `demo-arquitectura-*` seeds (config, clientes, proyectos, presupuesto, materiales, ejecución, finanzas, calendario)
+- [x] Builds backend + frontend
+- [x] Actualizar este plan con ✅ por fase
 
 ---
 
@@ -190,5 +190,4 @@ Fase 1 → 2 → 3 → 4 → 5 → 6 → 11 (MVP usable)
 | 3 | ✅ |
 | 4 | ✅ |
 | 5 | ✅ |
-| 6–11 | ✅ |
-| 12 | ⏳ Pendiente |
+| 6–12 | ✅ |
