@@ -1,0 +1,86 @@
+/// Ejecución de obra: tareas por fase, evidencias, incidencias y costos reales (Arquitectura).
+
+/// DESIGN | PURCHASES | PRODUCTION | INSTALLATION
+/// BACKLOG | IN_PROGRESS | DONE | BLOCKED
+model ArquitecturaExecutionTask {
+  id            String    @id @default(uuid())
+  projectId     String    @map("project_id")
+  phase         String    @map("phase")
+  title         String    @map("title")
+  description   String?   @map("description") @db.Text
+  kanbanStatus  String    @default("BACKLOG") @map("kanban_status")
+  sortOrder     Int       @default(0) @map("sort_order")
+  plannedStart  DateTime? @map("planned_start") @db.Date
+  plannedEnd    DateTime? @map("planned_end") @db.Date
+  progressPct   Decimal   @default(0) @map("progress_pct") @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project   ArquitecturaProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  evidences ArquitecturaExecutionEvidence[]
+
+  @@index([projectId])
+  @@index([projectId, phase])
+  @@index([projectId, kanbanStatus])
+  @@map("arquitectura_execution_tasks")
+}
+
+/// PHOTO | DOCUMENT | OTHER
+model ArquitecturaExecutionEvidence {
+  id         String   @id @default(uuid())
+  projectId  String   @map("project_id")
+  taskId     String?  @map("task_id")
+  kind       String   @map("kind")
+  title      String   @map("title")
+  fileUrl    String   @map("file_url") @db.Text
+  capturedAt DateTime @map("captured_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project ArquitecturaProject        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task    ArquitecturaExecutionTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([taskId])
+  @@map("arquitectura_execution_evidences")
+}
+
+/// LOW | MEDIUM | HIGH — OPEN | IN_PROGRESS | CLOSED
+model ArquitecturaExecutionIncident {
+  id          String    @id @default(uuid())
+  projectId   String    @map("project_id")
+  severity    String    @map("severity")
+  title       String    @map("title")
+  description String?   @map("description") @db.Text
+  status      String    @default("OPEN") @map("status")
+  reportedAt  DateTime  @map("reported_at")
+  closedAt    DateTime? @map("closed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project ArquitecturaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([projectId, status])
+  @@map("arquitectura_execution_incidents")
+}
+
+/// LABOR | MATERIAL | EXPENSE | TRANSPORT
+model ArquitecturaExecutionActualCost {
+  id           String   @id @default(uuid())
+  projectId    String   @map("project_id")
+  costCategory String   @map("cost_category")
+  concept      String   @map("concept") @db.Text
+  amount       Decimal  @map("amount") @db.Decimal(14, 2)
+  occurredAt   DateTime @map("occurred_at") @db.Date
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project ArquitecturaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([projectId, costCategory])
+  @@map("arquitectura_execution_actual_costs")
+}

@@ -109,7 +109,7 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 
 - [x] Prisma + API `arquitectura-calendar` (equivalente `interiorismo-calendar`)
 - [x] Frontend: `features/cronograma/` (vista calendario en `/arquitectura/cronograma`)
-- Feed: eventos manuales + cobros programados (hitos/ejecución cuando existan Fase 8)
+- Feed: eventos manuales + hitos + tareas ejecución + cobros programados
 
 ### Fase 7 — Documentos
 
@@ -120,8 +120,11 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 
 ### Fase 8 — Ejecución de obra
 
-- [ ] Prisma + API ejecución (tablero, tareas, evidencias, incidencias)
-- [ ] Frontend `features/ejecucion/`
+- [x] Prisma + API `arquitectura-execution` (tablero, tareas, evidencias, incidencias, costos reales)
+- [x] Hitos `arquitectura_project_milestones` (lectura en overview y cronograma)
+- [x] Frontend `features/ejecucion/` (`/arquitectura/ejecucion`)
+- [x] Sync presupuesto ↔ ejecución (`syncActualCostsFromExecution`)
+- [x] Cronograma alimentado con hitos + tareas de ejecución
 
 ### Fase 9 — Materiales y proveedores (opcional)
 

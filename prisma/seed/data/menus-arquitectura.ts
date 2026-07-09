@@ -11,8 +11,9 @@ export const ARQUITECTURA_PARENT_MENUS = [
   { label: 'Presupuestos', icon: 'file-text', path: null, order: 3 },
   { label: 'Cronograma', icon: 'calendar-range', path: '/arquitectura/cronograma', order: 4 },
   { label: 'Documentos', icon: 'files', path: null, order: 5 },
-  { label: 'Reportes', icon: 'bar-chart', path: '/arquitectura/reportes', order: 6 },
-  { label: 'Configuración', icon: 'settings', path: '/arquitectura/configuracion', order: 7 },
+  { label: 'Ejecución', icon: 'hard-hat', path: '/arquitectura/ejecucion', order: 6 },
+  { label: 'Reportes', icon: 'bar-chart', path: '/arquitectura/reportes', order: 7 },
+  { label: 'Configuración', icon: 'settings', path: '/arquitectura/configuracion', order: 8 },
 ];
 
 export const ARQUITECTURA_CHILD_MENUS = [

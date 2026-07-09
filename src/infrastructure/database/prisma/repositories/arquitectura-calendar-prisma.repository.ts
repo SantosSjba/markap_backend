@@ -118,7 +118,7 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
       ...(filters.agentId?.trim() ? { assignedAgentId: filters.agentId.trim() } : {}),
     };
 
-    const [manualRows, financeRows] = await Promise.all([
+    const [manualRows, milestones, tasks, financeRows] = await Promise.all([
       this.prisma.arquitecturaCalendarEvent.findMany({
         where: manualWhere,
         include: {
@@ -127,6 +127,22 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
         },
         orderBy: { startsAt: 'asc' },
       }),
+      projectIds.length === 0
+        ? []
+        : this.prisma.arquitecturaProjectMilestone.findMany({
+            where: {
+              projectId: { in: projectIds },
+              plannedDate: { gte: from, lte: to },
+            },
+          }),
+      projectIds.length === 0
+        ? []
+        : this.prisma.arquitecturaExecutionTask.findMany({
+            where: {
+              projectId: { in: projectIds },
+              OR: [{ plannedStart: { not: null } }, { plannedEnd: { not: null } }],
+            },
+          }),
       projectIds.length === 0
         ? []
         : this.prisma.arquitecturaFinanceIncomeSchedule.findMany({
@@ -148,6 +164,69 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
           assignedAgent: row.assignedAgent,
         }),
       );
+    }
+
+    for (const ms of milestones) {
+      const p = projMap.get(ms.projectId);
+      out.push({
+        id: `ml:${ms.id}`,
+        source: 'MILESTONE',
+        eventType: 'MILESTONE',
+        title: `Hito: ${ms.title}`,
+        description: ms.completedAt ? 'Completado' : null,
+        location: null,
+        startsAt: iso(dateAtNoonUtc(ms.plannedDate)),
+        endsAt: null,
+        allDay: true,
+        projectId: ms.projectId,
+        projectCode: p?.code ?? null,
+        projectName: p?.name ?? null,
+        assignedAgentId: null,
+        assignedAgentName: null,
+        readOnly: true,
+        executionPhase: null,
+      });
+    }
+
+    for (const t of tasks) {
+      const p = projMap.get(t.projectId);
+      const ps = t.plannedStart;
+      const pe = t.plannedEnd ?? t.plannedStart;
+      if (!ps && !pe) continue;
+      const start = ps ? dateAtNoonUtc(ps) : dateAtNoonUtc(pe!);
+      const end = pe ? dateAtNoonUtc(pe) : start;
+      const taskType =
+        t.phase === 'INSTALLATION'
+          ? 'TASK_INSTALLATION'
+          : t.phase === 'DESIGN'
+            ? 'TASK_DESIGN'
+            : t.phase === 'PURCHASES'
+              ? 'TASK_PURCHASES'
+              : t.phase === 'PRODUCTION'
+                ? 'TASK_PRODUCTION'
+                : 'TASK_OTHER';
+
+      const overlaps = start.getTime() <= to.getTime() && end.getTime() >= from.getTime();
+      if (!overlaps) continue;
+
+      out.push({
+        id: `tk:${t.id}`,
+        source: 'EXECUTION_TASK',
+        eventType: taskType,
+        title: t.title,
+        description: t.description,
+        location: null,
+        startsAt: iso(start),
+        endsAt: iso(end),
+        allDay: true,
+        projectId: t.projectId,
+        projectCode: p?.code ?? null,
+        projectName: p?.name ?? null,
+        assignedAgentId: null,
+        assignedAgentName: null,
+        readOnly: true,
+        executionPhase: t.phase,
+      });
     }
 
     for (const f of financeRows) {

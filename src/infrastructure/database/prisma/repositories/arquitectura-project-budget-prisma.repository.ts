@@ -495,10 +495,52 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
   async syncActualCostsFromExecution(projectId: string, applicationSlug?: string) {
     await this.assertProject(projectId, applicationSlug);
 
+    const costs = await this.prisma.arquitecturaExecutionActualCost.findMany({
+      where: {
+        projectId,
+        costCategory: { in: ['MATERIAL', 'EXPENSE', 'TRANSPORT'] },
+      },
+    });
+
+    const amountByConcept = new Map<string, number>();
+    const displayByConcept = new Map<string, string>();
+    for (const cost of costs) {
+      const key = cost.concept.trim().toLowerCase();
+      if (!key) continue;
+      amountByConcept.set(key, (amountByConcept.get(key) ?? 0) + num(cost.amount));
+      if (!displayByConcept.has(key)) displayByConcept.set(key, cost.concept.trim());
+    }
+
+    const lineItems = await this.prisma.arquitecturaProjectLineItem.findMany({
+      where: { section: { projectId } },
+    });
+
+    const matchedKeys = new Set<string>();
+    let updatedLineItems = 0;
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const item of lineItems) {
+        const key = item.description.trim().toLowerCase();
+        const amount = amountByConcept.get(key);
+        if (amount == null) continue;
+
+        await tx.arquitecturaProjectLineItem.update({
+          where: { id: item.id },
+          data: { actualPurchaseCost: new Prisma.Decimal(amount) },
+        });
+        matchedKeys.add(key);
+        updatedLineItems++;
+      }
+    });
+
+    const unmatchedConcepts = [...amountByConcept.keys()]
+      .filter((key) => !matchedKeys.has(key))
+      .map((key) => displayByConcept.get(key) ?? key);
+
     const budget = await this.loadBudget(projectId, applicationSlug);
     if (!budget) throw new NotFoundException('Presupuesto no encontrado');
 
-    return { updatedLineItems: 0, unmatchedConcepts: [] as string[], budget };
+    return { updatedLineItems, unmatchedConcepts, budget };
   }
 
   async assertProjectExists(projectId: string, applicationSlug?: string): Promise<void> {

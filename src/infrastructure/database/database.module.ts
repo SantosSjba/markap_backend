@@ -32,6 +32,7 @@ import { ArquitecturaProjectBudgetPrismaRepository } from './prisma/repositories
 import { ArquitecturaFinancePrismaRepository } from './prisma/repositories/arquitectura-finance-prisma.repository';
 import { ArquitecturaCalendarPrismaRepository } from './prisma/repositories/arquitectura-calendar-prisma.repository';
 import { ArquitecturaProjectDocumentPrismaRepository } from './prisma/repositories/arquitectura-project-document-prisma.repository';
+import { ArquitecturaExecutionPrismaRepository } from './prisma/repositories/arquitectura-execution-prisma.repository';
 import { VentasCompliancePrismaRepository } from './prisma/repositories/ventas-compliance-prisma.repository';
 import { InteriorProjectPrismaRepository } from './prisma/repositories/interior-project-prisma.repository';
 import { InteriorProjectBudgetPrismaRepository } from './prisma/repositories/interior-project-budget-prisma.repository';
@@ -97,6 +98,7 @@ import {
   ARQUITECTURA_FINANCE_REPOSITORY,
   ARQUITECTURA_CALENDAR_REPOSITORY,
   ARQUITECTURA_PROJECT_DOCUMENT_REPOSITORY,
+  ARQUITECTURA_EXECUTION_REPOSITORY,
   VENTAS_COMPLIANCE_REPOSITORY,
   INTERIOR_PROJECT_REPOSITORY,
   INTERIOR_PROJECT_BUDGET_REPOSITORY,
@@ -241,6 +243,10 @@ import {
     {
       provide: ARQUITECTURA_PROJECT_DOCUMENT_REPOSITORY,
       useClass: ArquitecturaProjectDocumentPrismaRepository,
+    },
+    {
+      provide: ARQUITECTURA_EXECUTION_REPOSITORY,
+      useClass: ArquitecturaExecutionPrismaRepository,
     },
     {
       provide: VENTAS_COMPLIANCE_REPOSITORY,
@@ -435,6 +441,7 @@ import {
     ARQUITECTURA_FINANCE_REPOSITORY,
     ARQUITECTURA_CALENDAR_REPOSITORY,
     ARQUITECTURA_PROJECT_DOCUMENT_REPOSITORY,
+    ARQUITECTURA_EXECUTION_REPOSITORY,
     VENTAS_COMPLIANCE_REPOSITORY,
     INTERIOR_PROJECT_REPOSITORY,
     INTERIOR_PROJECT_BUDGET_REPOSITORY,

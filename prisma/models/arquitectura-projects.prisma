@@ -55,6 +55,11 @@ model ArquitecturaProject {
   financeSchedules ArquitecturaFinanceIncomeSchedule[]
   calendarEvents   ArquitecturaCalendarEvent[]
   documents        ArquitecturaProjectDocument[]
+  milestones       ArquitecturaProjectMilestone[]
+  executionTasks       ArquitecturaExecutionTask[]
+  executionEvidences   ArquitecturaExecutionEvidence[]
+  executionIncidents   ArquitecturaExecutionIncident[]
+  executionActualCosts ArquitecturaExecutionActualCost[]
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -100,4 +105,19 @@ model ArquitecturaProjectDocument {
 
   @@index([projectId])
   @@map("arquitectura_project_documents")
+}
+
+model ArquitecturaProjectMilestone {
+  id          String    @id @default(uuid())
+  projectId   String    @map("project_id")
+  title       String    @map("title")
+  plannedDate DateTime  @map("planned_date") @db.Date
+  completedAt DateTime? @map("completed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project ArquitecturaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("arquitectura_project_milestones")
 }

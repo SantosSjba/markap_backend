@@ -360,6 +360,19 @@ import {
   ListArquitecturaProjectDocumentsUseCase,
   UpdateArquitecturaProjectDocumentUseCase,
 } from '../../application/use-cases/arquitectura-project-documents';
+import {
+  CreateArquitecturaExecutionActualCostUseCase,
+  CreateArquitecturaExecutionEvidenceUseCase,
+  CreateArquitecturaExecutionIncidentUseCase,
+  CreateArquitecturaExecutionTaskUseCase,
+  DeleteArquitecturaExecutionActualCostUseCase,
+  DeleteArquitecturaExecutionEvidenceUseCase,
+  DeleteArquitecturaExecutionTaskUseCase,
+  GetArquitecturaExecutionOverviewUseCase,
+  PatchArquitecturaExecutionProgressUseCase,
+  UpdateArquitecturaExecutionIncidentUseCase,
+  UpdateArquitecturaExecutionTaskUseCase,
+} from '../../application/use-cases/arquitectura-execution';
 import { GetInteriorReportsDashboardUseCase } from '../../application/use-cases/interior-reports';
 import {
   CreateInteriorProjectDocumentUseCase,
@@ -398,6 +411,7 @@ import { ArquitecturaProjectBudgetController } from './controllers/arquitectura-
 import { ArquitecturaFinanceController } from './controllers/arquitectura-finance.controller';
 import { ArquitecturaCalendarController } from './controllers/arquitectura-calendar.controller';
 import { ArquitecturaDocumentsController } from './controllers/arquitectura-documents.controller';
+import { ArquitecturaExecutionController } from './controllers/arquitectura-execution.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoProjectBudgetController } from './controllers/interiorismo-project-budget.controller';
@@ -521,6 +535,7 @@ import {
     ArquitecturaFinanceController,
     ArquitecturaCalendarController,
     ArquitecturaDocumentsController,
+    ArquitecturaExecutionController,
     VentasComplianceController,
     InteriorismoProjectsController,
     InteriorismoProjectBudgetController,
@@ -758,6 +773,18 @@ import {
     CreateArquitecturaProjectDocumentUseCase,
     UpdateArquitecturaProjectDocumentUseCase,
     DeleteArquitecturaProjectDocumentUseCase,
+
+    GetArquitecturaExecutionOverviewUseCase,
+    CreateArquitecturaExecutionTaskUseCase,
+    UpdateArquitecturaExecutionTaskUseCase,
+    DeleteArquitecturaExecutionTaskUseCase,
+    CreateArquitecturaExecutionEvidenceUseCase,
+    DeleteArquitecturaExecutionEvidenceUseCase,
+    CreateArquitecturaExecutionIncidentUseCase,
+    UpdateArquitecturaExecutionIncidentUseCase,
+    CreateArquitecturaExecutionActualCostUseCase,
+    DeleteArquitecturaExecutionActualCostUseCase,
+    PatchArquitecturaExecutionProgressUseCase,
 
     GetInteriorProjectBudgetUseCase,
     GetInteriorProjectSettlementUseCase,
