@@ -11,9 +11,10 @@ export const ARQUITECTURA_PARENT_MENUS = [
   { label: 'Presupuestos', icon: 'file-text', path: null, order: 3 },
   { label: 'Cronograma', icon: 'calendar-range', path: '/arquitectura/cronograma', order: 4 },
   { label: 'Documentos', icon: 'files', path: null, order: 5 },
-  { label: 'Ejecución', icon: 'hard-hat', path: '/arquitectura/ejecucion', order: 6 },
-  { label: 'Reportes', icon: 'bar-chart', path: '/arquitectura/reportes', order: 7 },
-  { label: 'Configuración', icon: 'settings', path: '/arquitectura/configuracion', order: 8 },
+  { label: 'Materiales', icon: 'layers', path: null, order: 6 },
+  { label: 'Ejecución', icon: 'hard-hat', path: '/arquitectura/ejecucion', order: 7 },
+  { label: 'Reportes', icon: 'bar-chart', path: '/arquitectura/reportes', order: 8 },
+  { label: 'Configuración', icon: 'settings', path: '/arquitectura/configuracion', order: 9 },
 ];
 
 export const ARQUITECTURA_CHILD_MENUS = [
@@ -70,4 +71,6 @@ export const ARQUITECTURA_CHILD_MENUS = [
   },
   { label: 'Facturas', path: '/arquitectura/documentos/facturas', order: 4, parentLabel: 'Documentos' },
   { label: 'Actas', path: '/arquitectura/documentos/actas', order: 5, parentLabel: 'Documentos' },
+  { label: 'Catálogo', path: '/arquitectura/materiales/catalogo', order: 0, parentLabel: 'Materiales' },
+  { label: 'Proveedores', path: '/arquitectura/materiales/proveedores', order: 1, parentLabel: 'Materiales' },
 ];

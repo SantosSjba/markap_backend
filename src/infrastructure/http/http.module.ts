@@ -373,6 +373,26 @@ import {
   UpdateArquitecturaExecutionIncidentUseCase,
   UpdateArquitecturaExecutionTaskUseCase,
 } from '../../application/use-cases/arquitectura-execution';
+
+import {
+  CreateArquitecturaCatalogMaterialUseCase,
+  DeleteArquitecturaCatalogMaterialUseCase,
+  GetArquitecturaCatalogMaterialByIdUseCase,
+  ListArquitecturaCatalogMaterialsUseCase,
+  UpdateArquitecturaCatalogMaterialUseCase,
+} from '../../application/use-cases/arquitectura-catalog-materials';
+
+import {
+  CreateArquitecturaMaterialSupplierUseCase,
+  DeleteArquitecturaMaterialSupplierUseCase,
+  GetArquitecturaMaterialSupplierByIdUseCase,
+  LinkArquitecturaSupplierCatalogMaterialUseCase,
+  ListArquitecturaMaterialSuppliersUseCase,
+  RecordArquitecturaMaterialPurchaseUseCase,
+  UnlinkArquitecturaSupplierCatalogMaterialUseCase,
+  UpdateArquitecturaMaterialSupplierUseCase,
+} from '../../application/use-cases/arquitectura-material-suppliers';
+
 import { GetInteriorReportsDashboardUseCase } from '../../application/use-cases/interior-reports';
 import {
   CreateInteriorProjectDocumentUseCase,
@@ -412,6 +432,8 @@ import { ArquitecturaFinanceController } from './controllers/arquitectura-financ
 import { ArquitecturaCalendarController } from './controllers/arquitectura-calendar.controller';
 import { ArquitecturaDocumentsController } from './controllers/arquitectura-documents.controller';
 import { ArquitecturaExecutionController } from './controllers/arquitectura-execution.controller';
+import { ArquitecturaCatalogMaterialsController } from './controllers/arquitectura-catalog-materials.controller';
+import { ArquitecturaMaterialSuppliersController } from './controllers/arquitectura-material-suppliers.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoProjectBudgetController } from './controllers/interiorismo-project-budget.controller';
@@ -536,6 +558,8 @@ import {
     ArquitecturaCalendarController,
     ArquitecturaDocumentsController,
     ArquitecturaExecutionController,
+    ArquitecturaCatalogMaterialsController,
+    ArquitecturaMaterialSuppliersController,
     VentasComplianceController,
     InteriorismoProjectsController,
     InteriorismoProjectBudgetController,
@@ -785,6 +809,21 @@ import {
     CreateArquitecturaExecutionActualCostUseCase,
     DeleteArquitecturaExecutionActualCostUseCase,
     PatchArquitecturaExecutionProgressUseCase,
+
+    ListArquitecturaCatalogMaterialsUseCase,
+    GetArquitecturaCatalogMaterialByIdUseCase,
+    CreateArquitecturaCatalogMaterialUseCase,
+    UpdateArquitecturaCatalogMaterialUseCase,
+    DeleteArquitecturaCatalogMaterialUseCase,
+
+    ListArquitecturaMaterialSuppliersUseCase,
+    GetArquitecturaMaterialSupplierByIdUseCase,
+    CreateArquitecturaMaterialSupplierUseCase,
+    UpdateArquitecturaMaterialSupplierUseCase,
+    DeleteArquitecturaMaterialSupplierUseCase,
+    LinkArquitecturaSupplierCatalogMaterialUseCase,
+    UnlinkArquitecturaSupplierCatalogMaterialUseCase,
+    RecordArquitecturaMaterialPurchaseUseCase,
 
     GetInteriorProjectBudgetUseCase,
     GetInteriorProjectSettlementUseCase,

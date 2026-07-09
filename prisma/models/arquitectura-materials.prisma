@@ -1,0 +1,101 @@
+/// Catálogo de materiales y proveedores (Arquitectura) — uso en presupuestos y obra.
+
+model ArquitecturaCatalogMaterial {
+  id                String  @id @default(uuid())
+  applicationId     String  @map("application_id")
+  code              String  @map("code")
+  name              String  @map("name")
+  category          String  @map("category")
+  brand             String  @map("brand")
+  unit              String  @map("unit")
+  price             Decimal @map("price") @db.Decimal(14, 2)
+  stock             Decimal @default(0) @map("stock") @db.Decimal(14, 4)
+  technicalSheetUrl String? @map("technical_sheet_url") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application          Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  images               ArquitecturaCatalogMaterialImage[]
+  supplierLinks        ArquitecturaSupplierCatalogLink[]
+  purchases            ArquitecturaMaterialPurchase[]
+  executionActualCosts ArquitecturaExecutionActualCost[]
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@index([category])
+  @@map("arquitectura_catalog_materials")
+}
+
+model ArquitecturaCatalogMaterialImage {
+  id         String @id @default(uuid())
+  materialId String @map("material_id")
+  sortOrder  Int    @default(0) @map("sort_order")
+  url        String @map("url") @db.Text
+
+  material ArquitecturaCatalogMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@index([materialId])
+  @@map("arquitectura_catalog_material_images")
+}
+
+model ArquitecturaMaterialSupplier {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  companyName   String  @map("company_name")
+  ruc           String  @map("ruc")
+  contactName   String? @map("contact_name")
+  phone         String? @map("phone")
+  email         String? @map("email")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  catalogLinks    ArquitecturaSupplierCatalogLink[]
+  purchases       ArquitecturaMaterialPurchase[]
+  budgetLineItems ArquitecturaProjectLineItem[]
+
+  @@unique([applicationId, ruc])
+  @@index([applicationId])
+  @@map("arquitectura_material_suppliers")
+}
+
+/// Materiales del catálogo que surte cada proveedor.
+model ArquitecturaSupplierCatalogLink {
+  id                String  @id @default(uuid())
+  supplierId        String  @map("supplier_id")
+  catalogMaterialId String  @map("catalog_material_id")
+  supplierSku       String? @map("supplier_sku")
+  notes             String? @map("notes") @db.Text
+
+  supplier        ArquitecturaMaterialSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  catalogMaterial ArquitecturaCatalogMaterial  @relation(fields: [catalogMaterialId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, catalogMaterialId])
+  @@index([supplierId])
+  @@index([catalogMaterialId])
+  @@map("arquitectura_supplier_catalog_links")
+}
+
+model ArquitecturaMaterialPurchase {
+  id                String   @id @default(uuid())
+  supplierId        String   @map("supplier_id")
+  catalogMaterialId String?  @map("catalog_material_id")
+  purchasedAt       DateTime @map("purchased_at")
+  quantity          Decimal  @map("quantity") @db.Decimal(14, 4)
+  unitPrice         Decimal  @map("unit_price") @db.Decimal(14, 4)
+  totalAmount       Decimal  @map("total_amount") @db.Decimal(16, 2)
+  invoiceRef        String?  @map("invoice_ref")
+  notes             String?  @map("notes") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  supplier        ArquitecturaMaterialSupplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  catalogMaterial ArquitecturaCatalogMaterial? @relation(fields: [catalogMaterialId], references: [id], onDelete: SetNull)
+
+  @@index([supplierId])
+  @@index([catalogMaterialId])
+  @@index([purchasedAt])
+  @@map("arquitectura_material_purchases")
+}

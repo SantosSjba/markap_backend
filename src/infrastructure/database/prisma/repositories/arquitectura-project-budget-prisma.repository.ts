@@ -340,7 +340,18 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     if (!existing) throw new NotFoundException('Partida no encontrada');
 
     let resolvedSupplierName: string | null | undefined;
-    if (payload.supplierName !== undefined) {
+    if (payload.supplierId !== undefined) {
+      if (payload.supplierId === null) {
+        resolvedSupplierName =
+          payload.supplierName !== undefined ? payload.supplierName?.trim() || null : undefined;
+      } else {
+        const supplier = await this.prisma.arquitecturaMaterialSupplier.findUnique({
+          where: { id: payload.supplierId },
+        });
+        if (!supplier) throw new NotFoundException('Proveedor no encontrado');
+        resolvedSupplierName = supplier.companyName;
+      }
+    } else if (payload.supplierName !== undefined) {
       resolvedSupplierName = payload.supplierName?.trim() || null;
     }
 

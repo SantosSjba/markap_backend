@@ -128,7 +128,11 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 
 ### Fase 9 — Materiales y proveedores (opcional)
 
-- [ ] Solo si el flujo de obra lo requiere (catálogo, compras vinculadas)
+- [x] Prisma: catálogo, proveedores, vínculos, historial compras
+- [x] API `/arquitectura-catalog-materials` y `/arquitectura-material-suppliers`
+- [x] FK `catalogMaterialId` en costos de ejecución + FK proveedor en partidas presupuesto
+- [x] Frontend `features/materiales/` (`/arquitectura/materiales/*`)
+- [x] Selector proveedor en compras + material catálogo en tablero ejecución
 
 ### Fase 10 — Finanzas / liquidación avanzada
 

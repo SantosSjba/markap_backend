@@ -33,6 +33,8 @@ import { ArquitecturaFinancePrismaRepository } from './prisma/repositories/arqui
 import { ArquitecturaCalendarPrismaRepository } from './prisma/repositories/arquitectura-calendar-prisma.repository';
 import { ArquitecturaProjectDocumentPrismaRepository } from './prisma/repositories/arquitectura-project-document-prisma.repository';
 import { ArquitecturaExecutionPrismaRepository } from './prisma/repositories/arquitectura-execution-prisma.repository';
+import { ArquitecturaCatalogMaterialPrismaRepository } from './prisma/repositories/arquitectura-catalog-material-prisma.repository';
+import { ArquitecturaMaterialSupplierPrismaRepository } from './prisma/repositories/arquitectura-material-supplier-prisma.repository';
 import { VentasCompliancePrismaRepository } from './prisma/repositories/ventas-compliance-prisma.repository';
 import { InteriorProjectPrismaRepository } from './prisma/repositories/interior-project-prisma.repository';
 import { InteriorProjectBudgetPrismaRepository } from './prisma/repositories/interior-project-budget-prisma.repository';
@@ -99,6 +101,8 @@ import {
   ARQUITECTURA_CALENDAR_REPOSITORY,
   ARQUITECTURA_PROJECT_DOCUMENT_REPOSITORY,
   ARQUITECTURA_EXECUTION_REPOSITORY,
+  ARQUITECTURA_CATALOG_MATERIAL_REPOSITORY,
+  ARQUITECTURA_MATERIAL_SUPPLIER_REPOSITORY,
   VENTAS_COMPLIANCE_REPOSITORY,
   INTERIOR_PROJECT_REPOSITORY,
   INTERIOR_PROJECT_BUDGET_REPOSITORY,
@@ -247,6 +251,14 @@ import {
     {
       provide: ARQUITECTURA_EXECUTION_REPOSITORY,
       useClass: ArquitecturaExecutionPrismaRepository,
+    },
+    {
+      provide: ARQUITECTURA_CATALOG_MATERIAL_REPOSITORY,
+      useClass: ArquitecturaCatalogMaterialPrismaRepository,
+    },
+    {
+      provide: ARQUITECTURA_MATERIAL_SUPPLIER_REPOSITORY,
+      useClass: ArquitecturaMaterialSupplierPrismaRepository,
     },
     {
       provide: VENTAS_COMPLIANCE_REPOSITORY,
@@ -442,6 +454,8 @@ import {
     ARQUITECTURA_CALENDAR_REPOSITORY,
     ARQUITECTURA_PROJECT_DOCUMENT_REPOSITORY,
     ARQUITECTURA_EXECUTION_REPOSITORY,
+    ARQUITECTURA_CATALOG_MATERIAL_REPOSITORY,
+    ARQUITECTURA_MATERIAL_SUPPLIER_REPOSITORY,
     VENTAS_COMPLIANCE_REPOSITORY,
     INTERIOR_PROJECT_REPOSITORY,
     INTERIOR_PROJECT_BUDGET_REPOSITORY,

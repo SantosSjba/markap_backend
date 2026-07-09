@@ -117,6 +117,7 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
       }),
       this.prisma.arquitecturaExecutionActualCost.findMany({
         where: { projectId },
+        include: { catalogMaterial: { select: { code: true, name: true } } },
         orderBy: { occurredAt: 'desc' },
       }),
       getArquitecturaProjectBudgetPriceTotal(this.prisma, projectId),
@@ -148,9 +149,9 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
       concept: c.concept,
       amount: num(c.amount),
       occurredAt: toDateOnly(c.occurredAt) ?? '',
-      catalogMaterialId: null,
-      materialCode: null,
-      materialName: null,
+      catalogMaterialId: c.catalogMaterialId,
+      materialCode: c.catalogMaterial?.code ?? null,
+      materialName: c.catalogMaterial?.name ?? null,
     }));
 
     return {
@@ -354,6 +355,7 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
     projectId: string,
     payload: CreateArquitecturaExecutionActualCostPayload,
   ): Promise<ArquitecturaExecutionActualCostDto> {
+    const mid = payload.catalogMaterialId?.trim() || null;
     const row = await this.prisma.arquitecturaExecutionActualCost.create({
       data: {
         projectId,
@@ -361,7 +363,9 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
         concept: payload.concept.trim(),
         amount: new Prisma.Decimal(payload.amount),
         occurredAt: payload.occurredAt,
+        catalogMaterialId: mid,
       },
+      include: { catalogMaterial: { select: { code: true, name: true } } },
     });
     return {
       id: row.id,
@@ -370,9 +374,9 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
       concept: row.concept,
       amount: num(row.amount),
       occurredAt: toDateOnly(row.occurredAt) ?? '',
-      catalogMaterialId: null,
-      materialCode: null,
-      materialName: null,
+      catalogMaterialId: row.catalogMaterialId,
+      materialCode: row.catalogMaterial?.code ?? null,
+      materialName: row.catalogMaterial?.name ?? null,
     };
   }
 

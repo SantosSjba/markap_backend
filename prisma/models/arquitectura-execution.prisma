@@ -69,18 +69,21 @@ model ArquitecturaExecutionIncident {
 
 /// LABOR | MATERIAL | EXPENSE | TRANSPORT
 model ArquitecturaExecutionActualCost {
-  id           String   @id @default(uuid())
-  projectId    String   @map("project_id")
-  costCategory String   @map("cost_category")
-  concept      String   @map("concept") @db.Text
-  amount       Decimal  @map("amount") @db.Decimal(14, 2)
-  occurredAt   DateTime @map("occurred_at") @db.Date
+  id                String   @id @default(uuid())
+  projectId         String   @map("project_id")
+  costCategory      String   @map("cost_category")
+  concept           String   @map("concept") @db.Text
+  amount            Decimal  @map("amount") @db.Decimal(14, 2)
+  occurredAt        DateTime @map("occurred_at") @db.Date
+  catalogMaterialId String?  @map("catalog_material_id")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  project ArquitecturaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project         ArquitecturaProject          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  catalogMaterial ArquitecturaCatalogMaterial? @relation(fields: [catalogMaterialId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([projectId, costCategory])
+  @@index([catalogMaterialId])
   @@map("arquitectura_execution_actual_costs")
 }

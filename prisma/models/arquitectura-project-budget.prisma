@@ -27,13 +27,13 @@ model ArquitecturaProjectLineItem {
 
   actualPurchaseCost Decimal? @map("actual_purchase_cost") @db.Decimal(14, 2)
   supplierName       String?  @map("supplier_name")
-  /// Texto libre hasta catálogo de proveedores (fase 9)
   supplierId         String?  @map("supplier_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   section          ArquitecturaProjectSection            @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  materialSupplier ArquitecturaMaterialSupplier?         @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   supplierPayments ArquitecturaLineItemSupplierPayment[]
 
   @@index([sectionId])

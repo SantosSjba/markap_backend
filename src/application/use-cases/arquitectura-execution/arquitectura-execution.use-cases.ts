@@ -15,6 +15,7 @@ import {
   type UpdateArquitecturaExecutionTaskPayload,
 } from '@domain/repositories/arquitectura-execution.repository';
 import { UpdateArquitecturaProjectUseCase } from '../arquitectura-projects/update-arquitectura-project.use-case';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 
 const SLUG_DFLT = 'arquitectura';
 
@@ -218,12 +219,33 @@ export class CreateArquitecturaExecutionActualCostUseCase {
   constructor(
     @Inject(ARQUITECTURA_EXECUTION_REPOSITORY)
     private readonly repo: ArquitecturaExecutionRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
   async execute(projectId: string, applicationSlug: string | undefined, payload: CreateArquitecturaExecutionActualCostPayload) {
     await assertProject(this.repo, projectId, applicationSlug);
     assertCostCat(payload.costCategory);
-    return this.repo.createActualCost(projectId, payload);
+
+    const proj = await this.prisma.arquitecturaProject.findFirst({
+      where: { id: projectId, deletedAt: null },
+      select: { applicationId: true },
+    });
+    if (!proj) throw new NotFoundException('Proyecto no encontrado');
+
+    const mid = payload.catalogMaterialId?.trim();
+    if (mid) {
+      const mat = await this.prisma.arquitecturaCatalogMaterial.findFirst({
+        where: { id: mid, applicationId: proj.applicationId },
+      });
+      if (!mat) {
+        throw new BadRequestException('Material del catálogo no válido para este proyecto');
+      }
+    }
+
+    return this.repo.createActualCost(projectId, {
+      ...payload,
+      catalogMaterialId: mid ?? null,
+    });
   }
 }
 
