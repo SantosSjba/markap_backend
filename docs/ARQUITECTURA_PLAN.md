@@ -136,7 +136,11 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 
 ### Fase 10 — Finanzas / liquidación avanzada
 
-- [ ] Cronograma de ingresos, pagos cliente, sync presupuesto ↔ ejecución
+- [x] Panel financiero avanzado (adelantos/cuotas, pagos vinculados, egresos, flujo, rentabilidad)
+- [x] Overview con costos reales de ejecución (fix repo finanzas)
+- [x] Tab Liquidación: sub-pestañas Liquidación + Ingresos y flujo en detalle proyecto
+- [x] Invalidación cronograma al mutar finanzas
+- [x] Sync presupuesto ↔ ejecución (Compras, desde Fase 8)
 
 ### Fase 11 — Reportes y dashboard
 
@@ -185,4 +189,5 @@ Fase 1 → 2 → 3 → 4 → 5 → 6 → 11 (MVP usable)
 | 3 | ✅ |
 | 4 | ✅ |
 | 5 | ✅ |
-| 6–12 | ⏳ Pendiente |
+| 6–10 | ✅ |
+| 11–12 | ⏳ Pendiente |

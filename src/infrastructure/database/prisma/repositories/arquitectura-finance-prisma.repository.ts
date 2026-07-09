@@ -113,7 +113,10 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
         where: { projectId },
         orderBy: { paidAt: 'desc' },
       }),
-      Promise.resolve([] as Array<{ id: string; costCategory: string; concept: string; amount: Prisma.Decimal; occurredAt: Date }>),
+      this.prisma.arquitecturaExecutionActualCost.findMany({
+        where: { projectId },
+        orderBy: { occurredAt: 'desc' },
+      }),
       getArquitecturaProjectBudgetPriceTotal(this.prisma, projectId),
       this.prisma.arquitecturaProjectSection.count({ where: { projectId } }),
     ]);
