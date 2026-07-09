@@ -144,8 +144,9 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 
 ### Fase 11 — Reportes y dashboard
 
-- [ ] API `arquitectura-reports/dashboard`
-- [ ] Frontend reportes + home con datos reales
+- [x] API `GET /arquitectura-reports/dashboard` (ventas, conversión, rentabilidad, productividad, costos, KPIs)
+- [x] Frontend `features/reportes/` (`/arquitectura/reportes`)
+- [x] Home con datos reales del dashboard (mes en curso)
 
 ### Fase 12 — Demo, seeds y cierre
 
@@ -189,5 +190,5 @@ Fase 1 → 2 → 3 → 4 → 5 → 6 → 11 (MVP usable)
 | 3 | ✅ |
 | 4 | ✅ |
 | 5 | ✅ |
-| 6–10 | ✅ |
-| 11–12 | ⏳ Pendiente |
+| 6–11 | ✅ |
+| 12 | ⏳ Pendiente |

@@ -393,6 +393,7 @@ import {
   UpdateArquitecturaMaterialSupplierUseCase,
 } from '../../application/use-cases/arquitectura-material-suppliers';
 
+import { GetArquitecturaReportsDashboardUseCase } from '../../application/use-cases/arquitectura-reports';
 import { GetInteriorReportsDashboardUseCase } from '../../application/use-cases/interior-reports';
 import {
   CreateInteriorProjectDocumentUseCase,
@@ -434,6 +435,7 @@ import { ArquitecturaDocumentsController } from './controllers/arquitectura-docu
 import { ArquitecturaExecutionController } from './controllers/arquitectura-execution.controller';
 import { ArquitecturaCatalogMaterialsController } from './controllers/arquitectura-catalog-materials.controller';
 import { ArquitecturaMaterialSuppliersController } from './controllers/arquitectura-material-suppliers.controller';
+import { ArquitecturaReportsController } from './controllers/arquitectura-reports.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoProjectBudgetController } from './controllers/interiorismo-project-budget.controller';
@@ -560,6 +562,7 @@ import {
     ArquitecturaExecutionController,
     ArquitecturaCatalogMaterialsController,
     ArquitecturaMaterialSuppliersController,
+    ArquitecturaReportsController,
     VentasComplianceController,
     InteriorismoProjectsController,
     InteriorismoProjectBudgetController,
@@ -824,6 +827,8 @@ import {
     LinkArquitecturaSupplierCatalogMaterialUseCase,
     UnlinkArquitecturaSupplierCatalogMaterialUseCase,
     RecordArquitecturaMaterialPurchaseUseCase,
+
+    GetArquitecturaReportsDashboardUseCase,
 
     GetInteriorProjectBudgetUseCase,
     GetInteriorProjectSettlementUseCase,

@@ -35,6 +35,7 @@ import { ArquitecturaProjectDocumentPrismaRepository } from './prisma/repositori
 import { ArquitecturaExecutionPrismaRepository } from './prisma/repositories/arquitectura-execution-prisma.repository';
 import { ArquitecturaCatalogMaterialPrismaRepository } from './prisma/repositories/arquitectura-catalog-material-prisma.repository';
 import { ArquitecturaMaterialSupplierPrismaRepository } from './prisma/repositories/arquitectura-material-supplier-prisma.repository';
+import { ArquitecturaReportsPrismaRepository } from './prisma/repositories/arquitectura-reports-prisma.repository';
 import { VentasCompliancePrismaRepository } from './prisma/repositories/ventas-compliance-prisma.repository';
 import { InteriorProjectPrismaRepository } from './prisma/repositories/interior-project-prisma.repository';
 import { InteriorProjectBudgetPrismaRepository } from './prisma/repositories/interior-project-budget-prisma.repository';
@@ -103,6 +104,7 @@ import {
   ARQUITECTURA_EXECUTION_REPOSITORY,
   ARQUITECTURA_CATALOG_MATERIAL_REPOSITORY,
   ARQUITECTURA_MATERIAL_SUPPLIER_REPOSITORY,
+  ARQUITECTURA_REPORTS_REPOSITORY,
   VENTAS_COMPLIANCE_REPOSITORY,
   INTERIOR_PROJECT_REPOSITORY,
   INTERIOR_PROJECT_BUDGET_REPOSITORY,
@@ -259,6 +261,10 @@ import {
     {
       provide: ARQUITECTURA_MATERIAL_SUPPLIER_REPOSITORY,
       useClass: ArquitecturaMaterialSupplierPrismaRepository,
+    },
+    {
+      provide: ARQUITECTURA_REPORTS_REPOSITORY,
+      useClass: ArquitecturaReportsPrismaRepository,
     },
     {
       provide: VENTAS_COMPLIANCE_REPOSITORY,
@@ -456,6 +462,7 @@ import {
     ARQUITECTURA_EXECUTION_REPOSITORY,
     ARQUITECTURA_CATALOG_MATERIAL_REPOSITORY,
     ARQUITECTURA_MATERIAL_SUPPLIER_REPOSITORY,
+    ARQUITECTURA_REPORTS_REPOSITORY,
     VENTAS_COMPLIANCE_REPOSITORY,
     INTERIOR_PROJECT_REPOSITORY,
     INTERIOR_PROJECT_BUDGET_REPOSITORY,

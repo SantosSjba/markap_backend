@@ -18,3 +18,4 @@ export * from './ventas-sales.entity';
 export * from './ventas-finanzas.entity';
 export * from './ventas-reports.entity';
 export * from './interior-reports.entity';
+export * from './arquitectura-reports.entity';

@@ -88,3 +88,15 @@ export async function sumProjectBudgetPriceTotals(
   }
   return Math.round(sum * 100) / 100;
 }
+
+export async function sumArquitecturaProjectBudgetPriceTotals(
+  prisma: ArquitecturaBudgetPrisma,
+  projectIds: string[],
+): Promise<number> {
+  if (!projectIds.length) return 0;
+  let sum = 0;
+  for (const id of projectIds) {
+    sum += await getArquitecturaProjectBudgetPriceTotal(prisma, id);
+  }
+  return Math.round(sum * 100) / 100;
+}
