@@ -16,8 +16,10 @@ export interface CreateOrUpdateRentalFinancialConfigData {
   baseAmount?: number | null;
   expenseType?: FinancialValueType;
   expenseValue?: number;
+  expenseDetail?: string | null;
   taxType?: FinancialValueType;
   taxValue?: number;
+  taxDetail?: string | null;
   externalAgentId?: string | null;
   externalAgentType?: FinancialValueType;
   externalAgentValue?: number;

@@ -92,5 +92,6 @@ export class FinancialDistributionReportItem {
     public readonly externalAgentName: string | null,
     public readonly internalAgentName: string | null,
     public readonly status: string,
+    public readonly contractStartDate: string,
   ) {}
 }

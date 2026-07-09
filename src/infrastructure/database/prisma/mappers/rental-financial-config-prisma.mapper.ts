@@ -9,8 +9,10 @@ export class RentalFinancialConfigPrismaMapper {
     baseAmount?: number | null;
     expenseType: string;
     expenseValue: number | { toNumber?: () => number };
+    expenseDetail?: string | null;
     taxType: string;
     taxValue: number | { toNumber?: () => number };
+    taxDetail?: string | null;
     externalAgentId: string | null;
     externalAgentType: string;
     externalAgentValue: number | { toNumber?: () => number };
@@ -33,8 +35,10 @@ export class RentalFinancialConfigPrismaMapper {
       row.baseAmount != null ? Number(row.baseAmount) : null,
       row.expenseType as FinancialValueType,
       n(row.expenseValue),
+      row.expenseDetail ?? null,
       row.taxType as FinancialValueType,
       n(row.taxValue),
+      row.taxDetail ?? null,
       row.externalAgentId ?? null,
       row.externalAgentType as FinancialValueType,
       n(row.externalAgentValue),

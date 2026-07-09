@@ -31,6 +31,11 @@ export class UpsertRentalFinancialConfigDto {
   @Min(0)
   expenseValue?: number;
 
+  @ApiPropertyOptional({ description: 'Detalle del gasto (ej. mantenimiento, comisión bancaria)' })
+  @IsOptional()
+  @IsString()
+  expenseDetail?: string | null;
+
   @ApiPropertyOptional({ description: 'Tipo de impuesto', enum: ['PERCENT', 'FIXED'] })
   @IsOptional()
   @IsString()
@@ -43,6 +48,11 @@ export class UpsertRentalFinancialConfigDto {
   @IsNumber()
   @Min(0)
   taxValue?: number;
+
+  @ApiPropertyOptional({ description: 'Detalle del impuesto (ej. IGV, renta de 4ta)' })
+  @IsOptional()
+  @IsString()
+  taxDetail?: string | null;
 
   @ApiPropertyOptional({ description: 'ID del agente externo (tabla agents, type EXTERNAL)' })
   @IsOptional()

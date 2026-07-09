@@ -7,11 +7,7 @@ import type {
 } from '@domain/repositories/rental-financial-config.repository';
 import { RentalFinancialBreakdown } from '@domain/entities/rental-financial-config.entity';
 import type { RentalFinancialConfig } from '@domain/entities/rental-financial-config.entity';
-
-function computeAmount(type: string, value: number, base: number): number {
-  if (type === 'PERCENT') return Math.round((base * value) / 100 * 100) / 100;
-  return Math.round(value * 100) / 100;
-}
+import { computeRentalFinancialBreakdown } from '@domain/utils/rental-financial-breakdown.util';
 
 @Injectable()
 export class RentalFinancialConfigPrismaRepository implements RentalFinancialConfigRepository {
@@ -37,8 +33,10 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
         baseAmount: data.baseAmount ?? null,
         expenseType: data.expenseType ?? 'FIXED',
         expenseValue: data.expenseValue ?? 0,
+        expenseDetail: data.expenseDetail ?? null,
         taxType: data.taxType ?? 'FIXED',
         taxValue: data.taxValue ?? 0,
+        taxDetail: data.taxDetail ?? null,
         externalAgentId: data.externalAgentId ?? null,
         externalAgentType: data.externalAgentType ?? 'FIXED',
         externalAgentValue: data.externalAgentValue ?? 0,
@@ -53,8 +51,10 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
         ...(data.baseAmount !== undefined && { baseAmount: data.baseAmount }),
         ...(data.expenseType != null && { expenseType: data.expenseType }),
         ...(data.expenseValue != null && { expenseValue: data.expenseValue }),
+        ...(data.expenseDetail !== undefined && { expenseDetail: data.expenseDetail }),
         ...(data.taxType != null && { taxType: data.taxType }),
         ...(data.taxValue != null && { taxValue: data.taxValue }),
+        ...(data.taxDetail !== undefined && { taxDetail: data.taxDetail }),
         ...(data.externalAgentId !== undefined && { externalAgentId: data.externalAgentId }),
         ...(data.externalAgentType != null && { externalAgentType: data.externalAgentType }),
         ...(data.externalAgentValue != null && { externalAgentValue: data.externalAgentValue }),
@@ -78,34 +78,17 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
     currency: string,
   ): Promise<RentalFinancialBreakdown> {
     const config = await this.findByRentalId(rentalId);
-    // Si hay un monto ingresado configurado, se usa como base; de lo contrario el monthlyAmount del contrato
-    const base = (config?.baseAmount != null && config.baseAmount > 0)
-      ? config.baseAmount
-      : monthlyAmount;
-
-    const expense = config
-      ? computeAmount(config.expenseType, config.expenseValue, base)
-      : 0;
-    const tax = config ? computeAmount(config.taxType, config.taxValue, base) : 0;
-    const externalAgentCommission = config
-      ? computeAmount(config.externalAgentType, config.externalAgentValue, base)
-      : 0;
-    const internalAgentCommission = config
-      ? computeAmount(config.internalAgentType, config.internalAgentValue, base)
-      : 0;
-
-    const totalDeductions = expense + tax + externalAgentCommission + internalAgentCommission;
-    const utility = Math.round((base - totalDeductions) * 100) / 100;
+    const breakdown = computeRentalFinancialBreakdown(monthlyAmount, config ?? undefined);
 
     return new RentalFinancialBreakdown(
       monthlyAmount,
-      base,
+      breakdown.base,
       currency,
-      expense,
-      tax,
-      externalAgentCommission,
-      internalAgentCommission,
-      utility,
+      breakdown.expense,
+      breakdown.tax,
+      breakdown.externalAgentCommission,
+      breakdown.internalAgentCommission,
+      breakdown.utility,
       config,
     );
   }

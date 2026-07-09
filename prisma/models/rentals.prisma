@@ -54,9 +54,11 @@ model RentalFinancialConfig {
 
   expenseType  String @default("FIXED") @map("expense_type")
   expenseValue Float  @default(0) @map("expense_value")
+  expenseDetail String? @map("expense_detail")
 
   taxType  String @default("FIXED") @map("tax_type")
   taxValue Float  @default(0) @map("tax_value")
+  taxDetail String? @map("tax_detail")
 
   externalAgentId     String? @map("external_agent_id")
   externalAgentType   String  @default("FIXED") @map("external_agent_type")

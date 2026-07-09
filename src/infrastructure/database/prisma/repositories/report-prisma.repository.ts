@@ -14,6 +14,7 @@ import type {
   ContractExpiringItem,
   PropertyWithoutContractItem,
 } from '@domain/entities/report.entity';
+import { computeRentalFinancialBreakdown } from '@domain/utils/rental-financial-breakdown.util';
 
 @Injectable()
 export class ReportPrismaRepository implements ReportRepository {
@@ -290,6 +291,8 @@ export class ReportPrismaRepository implements ReportRepository {
 
     const result: RentalsByMonthItem[] = [];
     const baseWhere = { applicationId: app.id, deletedAt: null };
+    const rangeStart = startDate ? new Date(startDate + 'T00:00:00') : undefined;
+    const rangeEnd = endDate ? new Date(endDate + 'T23:59:59') : undefined;
 
     for (const { year: y, month: m } of monthsToProcess) {
       const firstDay = new Date(y, m - 1, 1);
@@ -297,10 +300,14 @@ export class ReportPrismaRepository implements ReportRepository {
       const lastDay = new Date(y, m, 0);
       lastDay.setHours(23, 59, 59, 999);
 
+      const periodStart =
+        rangeStart && rangeStart > firstDay ? rangeStart : firstDay;
+      const periodEnd = rangeEnd && rangeEnd < lastDay ? rangeEnd : lastDay;
+
       const [newContracts, expiredContracts, activeAtEnd, revenueRentals] =
         await Promise.all([
           (this.prisma as any).rental.count({
-            where: { ...baseWhere, startDate: { gte: firstDay, lte: lastDay } },
+            where: { ...baseWhere, startDate: { gte: periodStart, lte: periodEnd } },
           }),
           (this.prisma as any).rental.count({
             where: { ...baseWhere, endDate: { gte: firstDay, lte: lastDay } },
@@ -313,12 +320,11 @@ export class ReportPrismaRepository implements ReportRepository {
               endDate: { gte: lastDay },
             },
           }),
-          // Solo alquileres CONCRETADOS (startDate) dentro del mes
-          // El ingreso de la empresa es único por alquiler, no mensual recurrente
+          // Solo alquileres CONCRETADOS (startDate) dentro del período efectivo del mes
           (this.prisma as any).rental.findMany({
             where: {
               ...baseWhere,
-              startDate: { gte: firstDay, lte: lastDay },
+              startDate: { gte: periodStart, lte: periodEnd },
             },
             select: {
               monthlyAmount: true,
@@ -340,11 +346,6 @@ export class ReportPrismaRepository implements ReportRepository {
           }),
         ]);
 
-      function computeAmount(type: string, value: number, base: number): number {
-        if (type === 'PERCENT') return Math.round((base * value) / 100 * 100) / 100;
-        return Math.round(value * 100) / 100;
-      }
-
       let totalRevenue = 0;
       let companyRevenue = 0;
       let totalExpense = 0;
@@ -357,25 +358,13 @@ export class ReportPrismaRepository implements ReportRepository {
         const monthly = Number(r.monthlyAmount || 0);
         totalRevenue += monthly;
         const cfg = r.financialConfig;
-        // Ingreso real = baseAmount configurado (monto ingresado al concretar), sino monthlyAmount
-        const base = cfg?.baseAmount != null && Number(cfg.baseAmount) > 0
-          ? Number(cfg.baseAmount)
-          : monthly;
-        companyRevenue += base;
-
-        if (cfg) {
-          const expense = computeAmount(cfg.expenseType ?? 'FIXED', Number(cfg.expenseValue ?? 0), base);
-          const tax = computeAmount(cfg.taxType ?? 'FIXED', Number(cfg.taxValue ?? 0), base);
-          const extComm = computeAmount(cfg.externalAgentType ?? 'FIXED', Number(cfg.externalAgentValue ?? 0), base);
-          const intComm = computeAmount(cfg.internalAgentType ?? 'FIXED', Number(cfg.internalAgentValue ?? 0), base);
-          totalExpense += expense;
-          totalTax += tax;
-          totalExternalCommission += extComm;
-          totalInternalCommission += intComm;
-          totalUtility += base - expense - tax - extComm - intComm;
-        } else {
-          totalUtility += base;
-        }
+        const breakdown = computeRentalFinancialBreakdown(monthly, cfg ?? undefined);
+        companyRevenue += breakdown.base;
+        totalExpense += breakdown.expense;
+        totalTax += breakdown.tax;
+        totalExternalCommission += breakdown.externalAgentCommission;
+        totalInternalCommission += breakdown.internalAgentCommission;
+        totalUtility += breakdown.utility;
       }
 
       const currency =
@@ -464,27 +453,10 @@ export class ReportPrismaRepository implements ReportRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    function computeAmount(type: string, value: number, base: number): number {
-      if (type === 'PERCENT') return Math.round((base * value) / 100 * 100) / 100;
-      return Math.round(value * 100) / 100;
-    }
-
     return rentals.map((r: any) => {
       const cfg = r.financialConfig;
       const monthlyAmount = Number(r.monthlyAmount);
-      const base = (cfg?.baseAmount != null && Number(cfg.baseAmount) > 0)
-        ? Number(cfg.baseAmount)
-        : monthlyAmount;
-
-      const expense = cfg ? computeAmount(cfg.expenseType, Number(cfg.expenseValue), base) : 0;
-      const tax = cfg ? computeAmount(cfg.taxType, Number(cfg.taxValue), base) : 0;
-      const externalAgentCommission = cfg
-        ? computeAmount(cfg.externalAgentType, Number(cfg.externalAgentValue), base)
-        : 0;
-      const internalAgentCommission = cfg
-        ? computeAmount(cfg.internalAgentType, Number(cfg.internalAgentValue), base)
-        : 0;
-      const utility = Math.round((base - expense - tax - externalAgentCommission - internalAgentCommission) * 100) / 100;
+      const breakdown = computeRentalFinancialBreakdown(monthlyAmount, cfg ?? undefined);
 
       const year = new Date(r.startDate).getFullYear();
       const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
@@ -497,20 +469,21 @@ export class ReportPrismaRepository implements ReportRepository {
       return new FinancialDistributionReportItem(
         r.id,
         rentalCode,
-        r.property.addressLine,
-        r.property.owner.fullName,
-        r.tenant.fullName,
+        r.property?.addressLine ?? '—',
+        r.property?.owner?.fullName ?? '—',
+        r.tenant?.fullName ?? '—',
         r.currency,
-        base,
+        breakdown.base,
         monthlyAmount,
-        expense,
-        tax,
-        externalAgentCommission,
-        internalAgentCommission,
-        utility,
+        breakdown.expense,
+        breakdown.tax,
+        breakdown.externalAgentCommission,
+        breakdown.internalAgentCommission,
+        breakdown.utility,
         externalAgentName,
         internalAgentName,
         r.status,
+        new Date(r.startDate).toISOString().slice(0, 10),
       );
     });
   }
