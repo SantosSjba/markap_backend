@@ -354,6 +354,12 @@ import {
   GetArquitecturaCalendarFeedUseCase,
   UpdateArquitecturaCalendarEventUseCase,
 } from '../../application/use-cases/arquitectura-calendar';
+import {
+  CreateArquitecturaProjectDocumentUseCase,
+  DeleteArquitecturaProjectDocumentUseCase,
+  ListArquitecturaProjectDocumentsUseCase,
+  UpdateArquitecturaProjectDocumentUseCase,
+} from '../../application/use-cases/arquitectura-project-documents';
 import { GetInteriorReportsDashboardUseCase } from '../../application/use-cases/interior-reports';
 import {
   CreateInteriorProjectDocumentUseCase,
@@ -391,6 +397,7 @@ import { ArquitecturaProjectsController } from './controllers/arquitectura-proje
 import { ArquitecturaProjectBudgetController } from './controllers/arquitectura-project-budget.controller';
 import { ArquitecturaFinanceController } from './controllers/arquitectura-finance.controller';
 import { ArquitecturaCalendarController } from './controllers/arquitectura-calendar.controller';
+import { ArquitecturaDocumentsController } from './controllers/arquitectura-documents.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoProjectBudgetController } from './controllers/interiorismo-project-budget.controller';
@@ -513,6 +520,7 @@ import {
     ArquitecturaProjectBudgetController,
     ArquitecturaFinanceController,
     ArquitecturaCalendarController,
+    ArquitecturaDocumentsController,
     VentasComplianceController,
     InteriorismoProjectsController,
     InteriorismoProjectBudgetController,
@@ -745,6 +753,11 @@ import {
     CreateArquitecturaCalendarEventUseCase,
     UpdateArquitecturaCalendarEventUseCase,
     DeleteArquitecturaCalendarEventUseCase,
+
+    ListArquitecturaProjectDocumentsUseCase,
+    CreateArquitecturaProjectDocumentUseCase,
+    UpdateArquitecturaProjectDocumentUseCase,
+    DeleteArquitecturaProjectDocumentUseCase,
 
     GetInteriorProjectBudgetUseCase,
     GetInteriorProjectSettlementUseCase,

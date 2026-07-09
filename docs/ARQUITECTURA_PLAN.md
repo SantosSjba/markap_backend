@@ -113,8 +113,10 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 
 ### Fase 7 — Documentos
 
-- [ ] Categorías: Contratos, Planos, Renders, Memoria descriptiva, Facturas, Actas
-- [ ] API + frontend `features/documentos/`
+- [x] Categorías: Contratos, Planos, Renders, Memoria descriptiva, Facturas, Actas
+- [x] API `arquitectura-documents` + Prisma `arquitectura_project_documents`
+- [x] Frontend: `features/documentos/` (`/arquitectura/documentos/*`)
+- [x] Tab documentos en detalle de proyecto (lectura desde API proyecto)
 
 ### Fase 8 — Ejecución de obra
 

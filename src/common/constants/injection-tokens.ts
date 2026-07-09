@@ -34,6 +34,7 @@ export { ARQUITECTURA_PROJECT_REPOSITORY } from '@domain/repositories/arquitectu
 export { ARQUITECTURA_PROJECT_BUDGET_REPOSITORY } from '@domain/repositories/arquitectura-project-budget.repository';
 export { ARQUITECTURA_FINANCE_REPOSITORY } from '@domain/repositories/arquitectura-finance.repository';
 export { ARQUITECTURA_CALENDAR_REPOSITORY } from '@domain/repositories/arquitectura-calendar.repository';
+export { ARQUITECTURA_PROJECT_DOCUMENT_REPOSITORY } from '@domain/repositories/arquitectura-project-document.repository';
 export { INTERIOR_PROJECT_BUDGET_REPOSITORY } from '@domain/repositories/interior-project-budget.repository';
 export { INTERIOR_CATALOG_MATERIAL_REPOSITORY } from '@domain/repositories/interior-catalog-material.repository';
 export { PRODUCCION_FURNITURE_REPOSITORY } from '@domain/repositories/produccion-furniture.repository';

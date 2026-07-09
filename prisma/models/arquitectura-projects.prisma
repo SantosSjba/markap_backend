@@ -54,6 +54,7 @@ model ArquitecturaProject {
   payments       ArquitecturaProjectPayment[]
   financeSchedules ArquitecturaFinanceIncomeSchedule[]
   calendarEvents   ArquitecturaCalendarEvent[]
+  documents        ArquitecturaProjectDocument[]
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -84,4 +85,19 @@ model ArquitecturaProjectPayment {
   @@index([projectId])
   @@index([scheduleItemId])
   @@map("arquitectura_project_payments")
+}
+
+model ArquitecturaProjectDocument {
+  id        String  @id @default(uuid())
+  projectId String  @map("project_id")
+  docType   String  @map("doc_type")
+  title     String  @map("title")
+  fileUrl   String? @map("file_url") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project ArquitecturaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("arquitectura_project_documents")
 }

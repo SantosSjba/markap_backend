@@ -112,6 +112,7 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
         supervisorAgent: { select: { id: true, fullName: true } },
         commercialAgent: { select: { id: true, fullName: true } },
         payments: { orderBy: { paidAt: 'desc' } },
+        documents: { orderBy: { createdAt: 'desc' } },
       },
     });
 
@@ -282,6 +283,12 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
         paymentType: p.paymentType ?? 'OTHER',
         status: p.status,
         scheduleItemId: p.scheduleItemId ?? null,
+      })),
+      documents: (row.documents ?? []).map((d: { id: string; docType: string; title: string; fileUrl: string | null }) => ({
+        id: d.id,
+        docType: d.docType,
+        title: d.title,
+        fileUrl: d.fileUrl,
       })),
     };
   }
