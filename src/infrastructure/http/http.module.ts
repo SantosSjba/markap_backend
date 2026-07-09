@@ -143,6 +143,26 @@ import {
 } from '../../application/use-cases/arquitectura-projects';
 
 import {
+  CreateArquitecturaLineItemSupplierPaymentUseCase,
+  CreateArquitecturaProjectBudgetLineItemUseCase,
+  CreateArquitecturaProjectBudgetSectionUseCase,
+  DeleteArquitecturaLineItemSupplierPaymentUseCase,
+  DeleteArquitecturaProjectBudgetLineItemUseCase,
+  DeleteArquitecturaProjectBudgetSectionUseCase,
+  GetArquitecturaProjectBudgetUseCase,
+  GetArquitecturaProjectSettlementUseCase,
+  RenderArquitecturaProjectBudgetHtmlUseCase,
+  UpdateArquitecturaProjectBudgetLineItemUseCase,
+  UpdateArquitecturaProjectBudgetSectionUseCase,
+  DuplicateArquitecturaProjectBudgetSnapshotUseCase,
+  SyncArquitecturaProjectBudgetFromExecutionUseCase,
+  ImportArquitecturaProjectBudgetFromExcelUseCase,
+  ListArquitecturaProjectBudgetAttachmentsUseCase,
+  UploadArquitecturaProjectBudgetAttachmentUseCase,
+  DeleteArquitecturaProjectBudgetAttachmentUseCase,
+} from '../../application/use-cases/arquitectura-project-budget';
+
+import {
   CreateInteriorLineItemSupplierPaymentUseCase,
   CreateInteriorProjectBudgetLineItemUseCase,
   CreateInteriorProjectBudgetSectionUseCase,
@@ -313,6 +333,15 @@ import {
   UpdateInteriorFinanceScheduleUseCase,
 } from '../../application/use-cases/interior-finance';
 import {
+  CreateArquitecturaFinancePaymentUseCase,
+  CreateArquitecturaFinanceScheduleUseCase,
+  DeleteArquitecturaFinancePaymentUseCase,
+  DeleteArquitecturaFinanceScheduleUseCase,
+  GetArquitecturaFinanceOverviewUseCase,
+  UpdateArquitecturaFinancePaymentUseCase,
+  UpdateArquitecturaFinanceScheduleUseCase,
+} from '../../application/use-cases/arquitectura-finance';
+import {
   CreateInteriorCalendarEventUseCase,
   DeleteInteriorCalendarEventUseCase,
   GetInteriorCalendarFeedUseCase,
@@ -352,6 +381,8 @@ import { VentasConfigController } from './controllers/ventas-config.controller';
 import { InteriorismoConfigController } from './controllers/interiorismo-config.controller';
 import { ArquitecturaConfigController } from './controllers/arquitectura-config.controller';
 import { ArquitecturaProjectsController } from './controllers/arquitectura-projects.controller';
+import { ArquitecturaProjectBudgetController } from './controllers/arquitectura-project-budget.controller';
+import { ArquitecturaFinanceController } from './controllers/arquitectura-finance.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoProjectBudgetController } from './controllers/interiorismo-project-budget.controller';
@@ -471,6 +502,8 @@ import {
     InteriorismoConfigController,
     ArquitecturaConfigController,
     ArquitecturaProjectsController,
+    ArquitecturaProjectBudgetController,
+    ArquitecturaFinanceController,
     VentasComplianceController,
     InteriorismoProjectsController,
     InteriorismoProjectBudgetController,
@@ -671,6 +704,32 @@ import {
     GetArquitecturaProjectByIdUseCase,
     CreateArquitecturaProjectUseCase,
     UpdateArquitecturaProjectUseCase,
+
+    GetArquitecturaProjectBudgetUseCase,
+    GetArquitecturaProjectSettlementUseCase,
+    CreateArquitecturaProjectBudgetSectionUseCase,
+    UpdateArquitecturaProjectBudgetSectionUseCase,
+    DeleteArquitecturaProjectBudgetSectionUseCase,
+    CreateArquitecturaProjectBudgetLineItemUseCase,
+    UpdateArquitecturaProjectBudgetLineItemUseCase,
+    DeleteArquitecturaProjectBudgetLineItemUseCase,
+    CreateArquitecturaLineItemSupplierPaymentUseCase,
+    DeleteArquitecturaLineItemSupplierPaymentUseCase,
+    RenderArquitecturaProjectBudgetHtmlUseCase,
+    DuplicateArquitecturaProjectBudgetSnapshotUseCase,
+    SyncArquitecturaProjectBudgetFromExecutionUseCase,
+    ImportArquitecturaProjectBudgetFromExcelUseCase,
+    ListArquitecturaProjectBudgetAttachmentsUseCase,
+    UploadArquitecturaProjectBudgetAttachmentUseCase,
+    DeleteArquitecturaProjectBudgetAttachmentUseCase,
+
+    CreateArquitecturaFinancePaymentUseCase,
+    CreateArquitecturaFinanceScheduleUseCase,
+    DeleteArquitecturaFinancePaymentUseCase,
+    DeleteArquitecturaFinanceScheduleUseCase,
+    GetArquitecturaFinanceOverviewUseCase,
+    UpdateArquitecturaFinancePaymentUseCase,
+    UpdateArquitecturaFinanceScheduleUseCase,
 
     GetInteriorProjectBudgetUseCase,
     GetInteriorProjectSettlementUseCase,

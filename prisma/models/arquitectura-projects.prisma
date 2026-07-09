@@ -50,6 +50,10 @@ model ArquitecturaProject {
   supervisorAgent  Agent?      @relation("ArquitecturaProjectSupervisor", fields: [supervisorAgentId], references: [id], onDelete: SetNull)
   commercialAgent  Agent?      @relation("ArquitecturaProjectCommercial", fields: [commercialAgentId], references: [id], onDelete: SetNull)
 
+  budgetSections ArquitecturaProjectSection[]
+  payments       ArquitecturaProjectPayment[]
+  financeSchedules ArquitecturaFinanceIncomeSchedule[]
+
   @@unique([applicationId, code])
   @@index([applicationId])
   @@index([clientId])
@@ -57,4 +61,26 @@ model ArquitecturaProject {
   @@index([projectType])
   @@index([deletedAt])
   @@map("arquitectura_projects")
+}
+
+model ArquitecturaProjectPayment {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  paidAt    DateTime @map("paid_at")
+  amount    Decimal  @map("amount") @db.Decimal(14, 2)
+  concept   String   @map("concept") @db.Text
+  /// ABONO | PAGO_FINAL | SALDO | OTHER
+  paymentType String @default("OTHER") @map("payment_type")
+  /// PENDING | PAID | CANCELLED
+  status    String   @map("status")
+  scheduleItemId String? @map("schedule_item_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project      ArquitecturaProject                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scheduleItem ArquitecturaFinanceIncomeSchedule? @relation(fields: [scheduleItemId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([scheduleItemId])
+  @@map("arquitectura_project_payments")
 }

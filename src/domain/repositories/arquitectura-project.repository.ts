@@ -54,6 +54,17 @@ export interface ArquitecturaProjectDetail extends ArquitecturaProjectListItem {
   estimatedBudget: number | null;
   projectedCost: number | null;
   expectedMargin: number | null;
+  payments: ArquitecturaProjectPaymentDto[];
+}
+
+export interface ArquitecturaProjectPaymentDto {
+  id: string;
+  paidAt: string;
+  amount: number;
+  concept: string;
+  paymentType: string;
+  status: string;
+  scheduleItemId: string | null;
 }
 
 export interface CreateArquitecturaProjectData {

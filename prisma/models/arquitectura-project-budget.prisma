@@ -1,0 +1,58 @@
+/// Presupuesto por proyecto de arquitectura (modelo Excel: sección → partida → abonos proveedor)
+
+model ArquitecturaProjectSection {
+  id        String @id @default(uuid())
+  projectId String @map("project_id")
+  name      String @map("name")
+  sortOrder Int    @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project   ArquitecturaProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  lineItems ArquitecturaProjectLineItem[]
+
+  @@index([projectId])
+  @@map("arquitectura_project_sections")
+}
+
+model ArquitecturaProjectLineItem {
+  id          String @id @default(uuid())
+  sectionId   String @map("section_id")
+  sortOrder   Int    @default(0) @map("sort_order")
+  description String @map("description") @db.Text
+
+  budgetedCost Decimal @default(0) @map("budgeted_cost") @db.Decimal(14, 2)
+  hasIgv       Boolean @default(false) @map("has_igv")
+
+  actualPurchaseCost Decimal? @map("actual_purchase_cost") @db.Decimal(14, 2)
+  supplierName       String?  @map("supplier_name")
+  /// Texto libre hasta catálogo de proveedores (fase 9)
+  supplierId         String?  @map("supplier_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  section          ArquitecturaProjectSection            @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  supplierPayments ArquitecturaLineItemSupplierPayment[]
+
+  @@index([sectionId])
+  @@map("arquitectura_project_line_items")
+}
+
+model ArquitecturaLineItemSupplierPayment {
+  id            String   @id @default(uuid())
+  lineItemId    String   @map("line_item_id")
+  paymentNumber Int      @map("payment_number")
+  amount        Decimal  @map("amount") @db.Decimal(14, 2)
+  paidAt        DateTime @map("paid_at") @db.Date
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  lineItem ArquitecturaProjectLineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+
+  @@unique([lineItemId, paymentNumber])
+  @@index([lineItemId])
+  @@map("arquitectura_line_item_supplier_payments")
+}

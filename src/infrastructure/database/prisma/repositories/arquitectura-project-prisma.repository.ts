@@ -111,6 +111,7 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
         architectSrAgent: { select: { id: true, fullName: true } },
         supervisorAgent: { select: { id: true, fullName: true } },
         commercialAgent: { select: { id: true, fullName: true } },
+        payments: { orderBy: { paidAt: 'desc' } },
       },
     });
 
@@ -273,6 +274,15 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
       estimatedBudget: num(row.estimatedBudget),
       projectedCost: num(row.projectedCost),
       expectedMargin: num(row.expectedMargin),
+      payments: (row.payments ?? []).map((p: { id: string; paidAt: Date; amount: Prisma.Decimal; concept: string; paymentType: string; status: string; scheduleItemId: string | null }) => ({
+        id: p.id,
+        paidAt: p.paidAt.toISOString(),
+        amount: num(p.amount) ?? 0,
+        concept: p.concept,
+        paymentType: p.paymentType ?? 'OTHER',
+        status: p.status,
+        scheduleItemId: p.scheduleItemId ?? null,
+      })),
     };
   }
 }

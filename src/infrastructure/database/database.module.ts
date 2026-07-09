@@ -28,6 +28,8 @@ import { VentasConfigPrismaRepository } from './prisma/repositories/ventas-confi
 import { InteriorismoConfigPrismaRepository } from './prisma/repositories/interiorismo-config-prisma.repository';
 import { ArquitecturaConfigPrismaRepository } from './prisma/repositories/arquitectura-config-prisma.repository';
 import { ArquitecturaProjectPrismaRepository } from './prisma/repositories/arquitectura-project-prisma.repository';
+import { ArquitecturaProjectBudgetPrismaRepository } from './prisma/repositories/arquitectura-project-budget-prisma.repository';
+import { ArquitecturaFinancePrismaRepository } from './prisma/repositories/arquitectura-finance-prisma.repository';
 import { VentasCompliancePrismaRepository } from './prisma/repositories/ventas-compliance-prisma.repository';
 import { InteriorProjectPrismaRepository } from './prisma/repositories/interior-project-prisma.repository';
 import { InteriorProjectBudgetPrismaRepository } from './prisma/repositories/interior-project-budget-prisma.repository';
@@ -89,6 +91,8 @@ import {
   INTERIORISMO_CONFIG_REPOSITORY,
   ARQUITECTURA_CONFIG_REPOSITORY,
   ARQUITECTURA_PROJECT_REPOSITORY,
+  ARQUITECTURA_PROJECT_BUDGET_REPOSITORY,
+  ARQUITECTURA_FINANCE_REPOSITORY,
   VENTAS_COMPLIANCE_REPOSITORY,
   INTERIOR_PROJECT_REPOSITORY,
   INTERIOR_PROJECT_BUDGET_REPOSITORY,
@@ -217,6 +221,14 @@ import {
     {
       provide: ARQUITECTURA_PROJECT_REPOSITORY,
       useClass: ArquitecturaProjectPrismaRepository,
+    },
+    {
+      provide: ARQUITECTURA_PROJECT_BUDGET_REPOSITORY,
+      useClass: ArquitecturaProjectBudgetPrismaRepository,
+    },
+    {
+      provide: ARQUITECTURA_FINANCE_REPOSITORY,
+      useClass: ArquitecturaFinancePrismaRepository,
     },
     {
       provide: VENTAS_COMPLIANCE_REPOSITORY,
@@ -407,6 +419,8 @@ import {
     INTERIORISMO_CONFIG_REPOSITORY,
     ARQUITECTURA_CONFIG_REPOSITORY,
     ARQUITECTURA_PROJECT_REPOSITORY,
+    ARQUITECTURA_PROJECT_BUDGET_REPOSITORY,
+    ARQUITECTURA_FINANCE_REPOSITORY,
     VENTAS_COMPLIANCE_REPOSITORY,
     INTERIOR_PROJECT_REPOSITORY,
     INTERIOR_PROJECT_BUDGET_REPOSITORY,

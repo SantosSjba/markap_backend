@@ -88,10 +88,15 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 
 ### Fase 4 — Presupuesto por proyecto
 
-- [ ] Prisma: `arquitectura-project-budget.prisma`
-- [ ] Dominio: cálculos (reutilizar/adaptar `interior-project-budget-calculations`)
-- [ ] API: secciones, partidas, abonos proveedor, import Excel, PDF, adjuntos
-- [ ] Frontend: `features/proyecto-presupuesto/` (tabs Presupuesto / Compras / Liquidación)
+- [x] Prisma: `arquitectura-project-budget.prisma`, `arquitectura-finance.prisma`, pagos cliente
+- [x] SQL manual: `arquitectura-phase4-budget-finance-postgres.sql`
+- [x] Dominio: cálculos reutilizando `interior-project-budget-calculations`
+- [x] API: `/arquitectura-projects/:id/budget`, settlement, secciones, partidas, abonos, Excel, PDF, adjuntos
+- [x] API finanzas: `/arquitectura-finance` (pagos cliente para liquidación)
+- [x] Frontend: `features/proyecto-presupuesto/` + `features/finanzas/` (pagos)
+- [x] Detalle proyecto: tabs Presupuesto / Compras / Liquidación
+- [x] Compras: proveedor texto libre (sin catálogo hasta fase 9)
+- [x] Sync desde ejecución: stub (sin módulo ejecución aún)
 
 ### Fase 5 — Hub Presupuestos (menú lateral)
 
@@ -167,4 +172,5 @@ Fase 1 → 2 → 3 → 4 → 5 → 6 → 11 (MVP usable)
 | 1 | ✅ |
 | 2 | ✅ |
 | 3 | ✅ |
-| 4–12 | ⏳ Pendiente |
+| 4 | ✅ |
+| 5–12 | ⏳ Pendiente |

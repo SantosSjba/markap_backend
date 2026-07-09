@@ -1,0 +1,24 @@
+/// Programación de cobranzas (adelantos y cuotas) por proyecto — Arquitectura.
+
+model ArquitecturaFinanceIncomeSchedule {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  /// ADVANCE | INSTALLMENT | OTHER
+  kind      String   @map("kind")
+  dueDate   DateTime @map("due_date") @db.Date
+  amount    Decimal  @map("amount") @db.Decimal(14, 2)
+  concept   String   @map("concept") @db.Text
+  sortOrder Int      @default(0) @map("sort_order")
+  /// PENDING | PARTIAL | PAID | WAIVED
+  status    String   @default("PENDING") @map("status")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project  ArquitecturaProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  payments ArquitecturaProjectPayment[]
+
+  @@index([projectId])
+  @@index([projectId, kind])
+  @@map("arquitectura_finance_income_schedules")
+}
