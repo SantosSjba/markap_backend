@@ -12,6 +12,9 @@ import type {
   CreateProjectBudgetLineItemPayload,
   CreateProjectBudgetSectionPayload,
   ArquitecturaProjectBudgetRepository,
+  ListProjectBudgetSummariesFilters,
+  ListProjectBudgetSummariesResult,
+  ProjectBudgetSummaryListItem,
   ProjectBudgetDetailDto,
   ProjectBudgetLineItemDto,
   ProjectBudgetSectionDto,
@@ -568,5 +571,122 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     if (!budget) throw new NotFoundException('Presupuesto no encontrado');
 
     return { sectionsCreated, lineItemsCreated, budget };
+  }
+
+  async listBudgetSummaries(
+    filters: ListProjectBudgetSummariesFilters,
+  ): Promise<ListProjectBudgetSummariesResult> {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: filters.applicationSlug },
+    });
+    if (!app) {
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    }
+
+    const andParts: Prisma.ArquitecturaProjectWhereInput[] = [
+      { applicationId: app.id, deletedAt: null },
+    ];
+
+    if (filters.clientId?.trim()) {
+      andParts.push({ clientId: filters.clientId.trim() });
+    }
+    if (filters.status?.trim()) {
+      andParts.push({ status: filters.status.trim() });
+    }
+    if (filters.onlyWithBudget) {
+      andParts.push({ budgetSections: { some: {} } });
+    }
+    if (filters.search?.trim()) {
+      const q = filters.search.trim();
+      andParts.push({
+        OR: [
+          { code: { contains: q, mode: 'insensitive' } },
+          { name: { contains: q, mode: 'insensitive' } },
+          { client: { fullName: { contains: q, mode: 'insensitive' } } },
+        ],
+      });
+    }
+
+    const where: Prisma.ArquitecturaProjectWhereInput = { AND: andParts };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.arquitecturaProject.findMany({
+        where,
+        include: {
+          client: { select: { id: true, fullName: true, documentNumber: true } },
+          budgetSections: {
+            select: {
+              updatedAt: true,
+              lineItems: {
+                select: {
+                  budgetedCost: true,
+                  hasIgv: true,
+                  updatedAt: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { updatedAt: 'desc' },
+        skip: (filters.page - 1) * filters.limit,
+        take: filters.limit,
+      }),
+      this.prisma.arquitecturaProject.count({ where }),
+    ]);
+
+    const data: ProjectBudgetSummaryListItem[] = rows.map((row) => {
+      const utilityPct = num(row.defaultUtilityPct);
+      const igvPct = num(row.defaultIgvPct);
+      let lineItemCount = 0;
+      let priceTotal = 0;
+      let budgetUpdatedAt: Date | null = null;
+
+      for (const section of row.budgetSections) {
+        if (!budgetUpdatedAt || section.updatedAt > budgetUpdatedAt) {
+          budgetUpdatedAt = section.updatedAt;
+        }
+        for (const item of section.lineItems) {
+          lineItemCount++;
+          if (!budgetUpdatedAt || item.updatedAt > budgetUpdatedAt) {
+            budgetUpdatedAt = item.updatedAt;
+          }
+          const pricing = computeLineItemPricing({
+            budgetedCost: num(item.budgetedCost),
+            hasIgv: item.hasIgv,
+            utilityPct,
+            igvPct,
+          });
+          priceTotal += pricing.price;
+        }
+      }
+
+      const sectionCount = row.budgetSections.length;
+
+      return {
+        projectId: row.id,
+        projectCode: row.code,
+        projectName: row.name,
+        projectStatus: row.status,
+        projectType: row.projectType,
+        client: {
+          id: row.client.id,
+          fullName: row.client.fullName,
+          documentNumber: row.client.documentNumber,
+        },
+        currency: row.currency,
+        sectionCount,
+        lineItemCount,
+        priceTotal: Math.round(priceTotal * 100) / 100,
+        hasBudget: sectionCount > 0,
+        budgetUpdatedAt: budgetUpdatedAt ? budgetUpdatedAt.toISOString() : null,
+      };
+    });
+
+    return {
+      data,
+      total,
+      page: filters.page,
+      limit: filters.limit,
+    };
   }
 }

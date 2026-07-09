@@ -160,6 +160,7 @@ import {
   ListArquitecturaProjectBudgetAttachmentsUseCase,
   UploadArquitecturaProjectBudgetAttachmentUseCase,
   DeleteArquitecturaProjectBudgetAttachmentUseCase,
+  ListArquitecturaProjectBudgetSummariesUseCase,
 } from '../../application/use-cases/arquitectura-project-budget';
 
 import {
@@ -722,6 +723,7 @@ import {
     ListArquitecturaProjectBudgetAttachmentsUseCase,
     UploadArquitecturaProjectBudgetAttachmentUseCase,
     DeleteArquitecturaProjectBudgetAttachmentUseCase,
+    ListArquitecturaProjectBudgetSummariesUseCase,
 
     CreateArquitecturaFinancePaymentUseCase,
     CreateArquitecturaFinanceScheduleUseCase,

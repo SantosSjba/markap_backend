@@ -174,4 +174,43 @@ export interface ArquitecturaProjectBudgetRepository {
     lineItemsCreated: number;
     budget: ProjectBudgetDetailDto;
   }>;
+  listBudgetSummaries(
+    filters: ListProjectBudgetSummariesFilters,
+  ): Promise<ListProjectBudgetSummariesResult>;
+}
+
+export interface ProjectBudgetSummaryListItem {
+  projectId: string;
+  projectCode: string;
+  projectName: string;
+  projectStatus: string;
+  projectType: string;
+  client: {
+    id: string;
+    fullName: string;
+    documentNumber: string;
+  };
+  currency: string;
+  sectionCount: number;
+  lineItemCount: number;
+  priceTotal: number;
+  hasBudget: boolean;
+  budgetUpdatedAt: string | null;
+}
+
+export interface ListProjectBudgetSummariesFilters {
+  applicationSlug: string;
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+  clientId?: string;
+  onlyWithBudget?: boolean;
+}
+
+export interface ListProjectBudgetSummariesResult {
+  data: ProjectBudgetSummaryListItem[];
+  total: number;
+  page: number;
+  limit: number;
 }

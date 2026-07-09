@@ -100,9 +100,10 @@ Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
 
 ### Fase 5 — Hub Presupuestos (menú lateral)
 
-- [ ] Vista listado transversal de proyectos con presupuesto activo
-- [ ] “Nuevo presupuesto” → flujo crear proyecto o abrir detalle tab presupuesto
-- [ ] Redirects coherentes con menú seed
+- [x] API `GET /arquitectura-projects/budget-summaries` (listado transversal con totales)
+- [x] Vista listado `/arquitectura/presupuestos`
+- [x] Flujo “Nuevo presupuesto”: proyecto existente o crear proyecto → tab presupuesto
+- [x] Rutas y menú seed alineados (`/presupuestos`, `/presupuestos/nuevo`)
 
 ### Fase 6 — Cronograma
 
@@ -173,4 +174,5 @@ Fase 1 → 2 → 3 → 4 → 5 → 6 → 11 (MVP usable)
 | 2 | ✅ |
 | 3 | ✅ |
 | 4 | ✅ |
-| 5–12 | ⏳ Pendiente |
+| 5 | ✅ |
+| 6–12 | ⏳ Pendiente |

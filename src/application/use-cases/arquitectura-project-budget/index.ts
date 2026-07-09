@@ -176,3 +176,4 @@ export {
   UploadArquitecturaProjectBudgetAttachmentUseCase,
   DeleteArquitecturaProjectBudgetAttachmentUseCase,
 } from './budget-attachments.use-case';
+export { ListArquitecturaProjectBudgetSummariesUseCase } from './list-budget-summaries.use-case';

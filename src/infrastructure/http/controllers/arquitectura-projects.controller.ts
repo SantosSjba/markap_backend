@@ -19,6 +19,7 @@ import type {
 } from '@domain/repositories/arquitectura-project.repository';
 import { CreateArquitecturaProjectDto } from '../dtos/arquitectura-projects/create-arquitectura-project.dto';
 import { UpdateArquitecturaProjectDto } from '../dtos/arquitectura-projects/update-arquitectura-project.dto';
+import { ListArquitecturaProjectBudgetSummariesUseCase } from '../../../application/use-cases/arquitectura-project-budget/list-budget-summaries.use-case';
 
 @ApiTags('Arquitectura — Proyectos')
 @Controller('arquitectura-projects')
@@ -30,6 +31,7 @@ export class ArquitecturaProjectsController {
     private readonly getByIdUc: GetArquitecturaProjectByIdUseCase,
     private readonly createUc: CreateArquitecturaProjectUseCase,
     private readonly updateUc: UpdateArquitecturaProjectUseCase,
+    private readonly listBudgetSummariesUc: ListArquitecturaProjectBudgetSummariesUseCase,
   ) {}
 
   private parseDate(s?: string | null): Date | null {
@@ -69,6 +71,40 @@ export class ArquitecturaProjectsController {
       status,
       inProgressOnly: inProgressOnly === 'true',
       clientId: clientId?.trim() || undefined,
+    });
+  }
+
+  @Get('budget-summaries')
+  @ApiOperation({ summary: 'Listado transversal de proyectos con resumen de presupuesto (hub)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'clientId', required: false })
+  @ApiQuery({
+    name: 'onlyWithBudget',
+    required: false,
+    description: 'true = solo proyectos con al menos una sección de presupuesto',
+  })
+  @ApiResponse({ status: 200 })
+  async listBudgetSummaries(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: ArquitecturaProjectStatus,
+    @Query('clientId') clientId?: string,
+    @Query('onlyWithBudget') onlyWithBudget?: string,
+  ) {
+    return this.listBudgetSummariesUc.execute({
+      applicationSlug: applicationSlug ?? 'arquitectura',
+      page: Math.max(1, parseInt(page ?? '1', 10)),
+      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      search: search?.trim() || undefined,
+      status,
+      clientId: clientId?.trim() || undefined,
+      onlyWithBudget: onlyWithBudget === 'true',
     });
   }
 
