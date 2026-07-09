@@ -1,0 +1,60 @@
+/// Proyectos de arquitectura (aplicación arquitectura)
+
+model ArquitecturaProject {
+  id             String @id @default(uuid())
+  applicationId  String @map("application_id")
+  /// Código único por aplicación (ej. ARQ-PRY-001)
+  code           String @map("code")
+  name           String @map("name")
+  clientId       String @map("client_id")
+  /// RESIDENTIAL | COMMERCIAL | INSTITUTIONAL | MIXED_USE | URBAN
+  projectType    String @map("project_type")
+  /// DESIGN | QUOTE | APPROVED | IN_PROGRESS | FINISHED | CANCELLED
+  status         String @map("status")
+
+  addressLine       String?   @map("address_line") @db.Text
+  city              String?   @map("city")
+  /// I | II | III — nivel de intervención
+  interventionLevel String?   @map("intervention_level")
+  /// Ej. "30 DÍAS HÁBILES"
+  executionTimeNote String?   @map("execution_time_note") @db.Text
+  currency          String    @default("PEN") @map("currency")
+  defaultUtilityPct Decimal   @default(20) @map("default_utility_pct") @db.Decimal(8, 2)
+  defaultIgvPct     Decimal   @default(18) @map("default_igv_pct") @db.Decimal(8, 2)
+  areaSqm           Decimal?  @map("area_sqm") @db.Decimal(12, 2)
+  levelsCount       Int?      @map("levels_count")
+  environmentsNote  String?   @map("environments_note") @db.Text
+  startDate         DateTime? @map("start_date") @db.Date
+  estimatedEndDate  DateTime? @map("estimated_end_date") @db.Date
+
+  designerAgentId    String? @map("designer_agent_id")
+  architectJrAgentId String? @map("architect_jr_agent_id")
+  architectSrAgentId String? @map("architect_agent_id")
+  supervisorAgentId  String? @map("supervisor_agent_id")
+  commercialAgentId  String? @map("commercial_agent_id")
+
+  estimatedBudget Decimal? @map("estimated_budget") @db.Decimal(14, 2)
+  projectedCost   Decimal? @map("projected_cost") @db.Decimal(14, 2)
+  expectedMargin  Decimal? @map("expected_margin") @db.Decimal(8, 2)
+  progressPct     Decimal  @default(0) @map("progress_pct") @db.Decimal(5, 2)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  client           Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  designerAgent    Agent?      @relation("ArquitecturaProjectDesigner", fields: [designerAgentId], references: [id], onDelete: SetNull)
+  architectJrAgent Agent?      @relation("ArquitecturaProjectArchitectJr", fields: [architectJrAgentId], references: [id], onDelete: SetNull)
+  architectSrAgent Agent?      @relation("ArquitecturaProjectArchitectSr", fields: [architectSrAgentId], references: [id], onDelete: SetNull)
+  supervisorAgent  Agent?      @relation("ArquitecturaProjectSupervisor", fields: [supervisorAgentId], references: [id], onDelete: SetNull)
+  commercialAgent  Agent?      @relation("ArquitecturaProjectCommercial", fields: [commercialAgentId], references: [id], onDelete: SetNull)
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@index([clientId])
+  @@index([status])
+  @@index([projectType])
+  @@index([deletedAt])
+  @@map("arquitectura_projects")
+}

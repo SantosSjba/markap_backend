@@ -1,0 +1,170 @@
+# Plan de implementación — HITO Arquitectura
+
+> **Objetivo:** Replicar el módulo **Interiorismo (Carolina Zavala)** como **HITO Arquitectura**, con la misma arquitectura limpia (backend) y modular (frontend), adaptando nomenclatura, menús y flujos al negocio de arquitectura.
+>
+> **Referencia:** `INTERIORISMO_PRESUPUESTOS_PLAN.md` + código en `src/modules/interiorismo/` y `interiorismo-*` en backend.
+>
+> **Última actualización:** 2026-07-09
+
+---
+
+## Contexto
+
+| | Interiorismo | Arquitectura (HITO) |
+|---|-------------|---------------------|
+| Slug app | `interiorismo` | `arquitectura` |
+| Estado actual | ✅ Operativo completo | 🟡 Solo shell frontend + menús seed |
+| Menú principal | Proyectos (presupuesto dentro del detalle) | Cliente → Proyecto → **Presupuestos** → **Cronograma** → Reportes → Config |
+| Prefijo códigos | `INT-PRY-####` | `ARQ-PRY-####` |
+| Calendario | Calendario | **Cronograma** |
+
+**Decisión:** Misma lógica de negocio que Interiorismo (proyecto → presupuesto por secciones/partidas → compras → liquidación → cronograma → reportes). El menú **Presupuestos** será un hub transversal (listado de proyectos con presupuesto) además del tab dentro del detalle de proyecto.
+
+---
+
+## Convenciones de código
+
+| Capa | Interiorismo | Arquitectura |
+|------|-------------|--------------|
+| Prisma | `InteriorProject`, `InteriorismoProjectStageConfig` | `ArquitecturaProject`, `ArquitecturaProjectStageConfig` |
+| API HTTP | `/interiorismo-projects`, `/interiorismo-config` | `/arquitectura-projects`, `/arquitectura-config` |
+| Use cases | `interior-projects/` | `arquitectura-projects/` |
+| Frontend | `src/modules/interiorismo/features/*` | `src/modules/arquitectura/features/*` |
+| Clientes | API compartida `?applicationSlug=arquitectura` | Igual |
+
+---
+
+## Modelo objetivo (paridad Interiorismo)
+
+```
+ArquitecturaProject
+  └── ArquitecturaProjectSection[]
+        └── ArquitecturaProjectLineItem[]
+              └── ArquitecturaLineItemSupplierPayment[]
+  └── ArquitecturaProjectPayment[]
+  └── ArquitecturaExecutionTask[]        (fase obra)
+  └── ArquitecturaCalendarEvent[]        (cronograma)
+  └── ArquitecturaProjectDocument[]
+  └── GenArchivo (módulo arquitectura-budget)
+```
+
+Etapas de ciclo (códigos iguales, etiquetas adaptadas a arquitectura):
+
+`DESIGN` → Anteproyecto · `QUOTE` → Cotización · `APPROVED` → Aprobación · `IN_PROGRESS` → Obra · `FINISHED` → Finalizado
+
+---
+
+## Fases
+
+### Fase 0 — Alineación ✅
+
+- [x] Inventario Interiorismo vs shell Arquitectura
+- [x] Este documento (`ARQUITECTURA_PLAN.md`)
+- [x] Menús seed existentes (`menus-arquitectura.ts`)
+
+### Fase 1 — Base de datos y configuración ✅
+
+- [x] Prisma: `arquitectura-config.prisma` (etapas + numeración)
+- [x] Prisma: `arquitectura-projects.prisma` (cabecera proyecto)
+- [x] Relaciones en `applications.prisma` y `clients.prisma`
+- [x] Migración SQL manual + `prisma db push`
+- [x] Dominio: constantes de etapas, repositorio config, entidades
+- [x] Backend: `arquitectura-config` (bootstrap, etapas, numeración)
+- [x] Frontend: `features/configuracion/` + ruta real
+- [ ] Seeds: etapas y numeración por defecto para slug `arquitectura`
+
+### Fase 2 — Clientes ✅
+
+- [x] Backend: permitir `applicationSlug=arquitectura` en clientes
+- [x] Frontend: `features/clientes/` (listado, nuevo, detalle, editar)
+- [x] Rutas y menú operativos
+
+### Fase 3 — Proyectos (CRUD) ✅
+
+- [x] Backend: `arquitectura-projects` (list, get, create, update, filtros en ejecución)
+- [x] Tipos de proyecto: `RESIDENTIAL`, `COMMERCIAL`, `INSTITUTIONAL`, `MIXED_USE`, `URBAN`
+- [x] Frontend: listado, nuevo, editar, detalle (tab Resumen)
+- [ ] Dashboard home con KPIs reales (fase 11)
+
+### Fase 4 — Presupuesto por proyecto
+
+- [ ] Prisma: `arquitectura-project-budget.prisma`
+- [ ] Dominio: cálculos (reutilizar/adaptar `interior-project-budget-calculations`)
+- [ ] API: secciones, partidas, abonos proveedor, import Excel, PDF, adjuntos
+- [ ] Frontend: `features/proyecto-presupuesto/` (tabs Presupuesto / Compras / Liquidación)
+
+### Fase 5 — Hub Presupuestos (menú lateral)
+
+- [ ] Vista listado transversal de proyectos con presupuesto activo
+- [ ] “Nuevo presupuesto” → flujo crear proyecto o abrir detalle tab presupuesto
+- [ ] Redirects coherentes con menú seed
+
+### Fase 6 — Cronograma
+
+- [ ] Prisma + API `arquitectura-calendar` (equivalente `interiorismo-calendar`)
+- [ ] Frontend: `features/cronograma/` (vista calendario)
+
+### Fase 7 — Documentos
+
+- [ ] Categorías: Contratos, Planos, Renders, Memoria descriptiva, Facturas, Actas
+- [ ] API + frontend `features/documentos/`
+
+### Fase 8 — Ejecución de obra
+
+- [ ] Prisma + API ejecución (tablero, tareas, evidencias, incidencias)
+- [ ] Frontend `features/ejecucion/`
+
+### Fase 9 — Materiales y proveedores (opcional)
+
+- [ ] Solo si el flujo de obra lo requiere (catálogo, compras vinculadas)
+
+### Fase 10 — Finanzas / liquidación avanzada
+
+- [ ] Cronograma de ingresos, pagos cliente, sync presupuesto ↔ ejecución
+
+### Fase 11 — Reportes y dashboard
+
+- [ ] API `arquitectura-reports/dashboard`
+- [ ] Frontend reportes + home con datos reales
+
+### Fase 12 — Demo, seeds y cierre
+
+- [ ] `demo-arquitectura-*` seeds (cliente, proyecto, presupuesto ejemplo)
+- [ ] Builds backend + frontend
+- [ ] Actualizar este plan con ✅ por fase
+
+---
+
+## Orden de ejecución recomendado
+
+```
+Fase 1 → 2 → 3 → 4 → 5 → 6 → 11 (MVP usable)
+         luego 7 → 8 → 9 → 10 → 12
+```
+
+**MVP (fases 1–6 + 11):** Config, clientes, proyectos, presupuesto, cronograma, reportes básicos.
+
+---
+
+## Archivos plantilla (Interiorismo → copiar/adaptar)
+
+| Feature | Backend | Frontend |
+|---------|---------|----------|
+| Config | `interiorismo-config.*` | `features/configuracion/` |
+| Clientes | `clients` + slug | `features/clientes/` |
+| Proyectos | `interiorismo-projects.*` | `features/proyectos/` |
+| Presupuesto | `interiorismo-project-budget.*` | `features/proyecto-presupuesto/` |
+| Cronograma | `interiorismo-calendar.*` | `features/calendario/` → `cronograma/` |
+| Reportes | `interiorismo-reports.*` | `features/reportes/` |
+
+---
+
+## Estado de avance
+
+| Fase | Estado |
+|------|--------|
+| 0 | ✅ |
+| 1 | ✅ |
+| 2 | ✅ |
+| 3 | ✅ |
+| 4–12 | ⏳ Pendiente |

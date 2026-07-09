@@ -34,6 +34,11 @@ model Agent {
   interiorProjectsAsArchitectSr  InteriorProject[] @relation("InteriorProjectArchitectSr")
   interiorProjectsAsSupervisor   InteriorProject[] @relation("InteriorProjectSupervisor")
   interiorProjectsAsCommercial   InteriorProject[] @relation("InteriorProjectCommercial")
+  arquitecturaProjectsAsDesigner    ArquitecturaProject[] @relation("ArquitecturaProjectDesigner")
+  arquitecturaProjectsAsArchitectJr ArquitecturaProject[] @relation("ArquitecturaProjectArchitectJr")
+  arquitecturaProjectsAsArchitectSr ArquitecturaProject[] @relation("ArquitecturaProjectArchitectSr")
+  arquitecturaProjectsAsSupervisor  ArquitecturaProject[] @relation("ArquitecturaProjectSupervisor")
+  arquitecturaProjectsAsCommercial  ArquitecturaProject[] @relation("ArquitecturaProjectCommercial")
   interiorCalendarEvents          InteriorCalendarEvent[]
 
   @@index([applicationId])

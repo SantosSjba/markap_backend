@@ -136,6 +136,13 @@ import {
 } from '../../application/use-cases/interior-projects';
 
 import {
+  ListArquitecturaProjectsUseCase,
+  GetArquitecturaProjectByIdUseCase,
+  CreateArquitecturaProjectUseCase,
+  UpdateArquitecturaProjectUseCase,
+} from '../../application/use-cases/arquitectura-projects';
+
+import {
   CreateInteriorLineItemSupplierPaymentUseCase,
   CreateInteriorProjectBudgetLineItemUseCase,
   CreateInteriorProjectBudgetSectionUseCase,
@@ -343,6 +350,8 @@ import { VentasFinanzasController } from './controllers/ventas-finanzas.controll
 import { VentasReportsController } from './controllers/ventas-reports.controller';
 import { VentasConfigController } from './controllers/ventas-config.controller';
 import { InteriorismoConfigController } from './controllers/interiorismo-config.controller';
+import { ArquitecturaConfigController } from './controllers/arquitectura-config.controller';
+import { ArquitecturaProjectsController } from './controllers/arquitectura-projects.controller';
 import { VentasComplianceController } from './controllers/ventas-compliance.controller';
 import { InteriorismoProjectsController } from './controllers/interiorismo-projects.controller';
 import { InteriorismoProjectBudgetController } from './controllers/interiorismo-project-budget.controller';
@@ -392,6 +401,7 @@ import {
   VentasConfigOperationsService,
   VentasComplianceOperationsService,
   InteriorismoConfigOperationsService,
+  ArquitecturaConfigOperationsService,
   ProduccionConfigOperationsService,
   ContabilidadConfigOperationsService,
   ContabilidadAccountOperationsService,
@@ -459,6 +469,8 @@ import {
     VentasReportsController,
     VentasConfigController,
     InteriorismoConfigController,
+    ArquitecturaConfigController,
+    ArquitecturaProjectsController,
     VentasComplianceController,
     InteriorismoProjectsController,
     InteriorismoProjectBudgetController,
@@ -626,6 +638,7 @@ import {
     VentasConfigOperationsService,
     VentasComplianceOperationsService,
     InteriorismoConfigOperationsService,
+    ArquitecturaConfigOperationsService,
     ProduccionConfigOperationsService,
     ContabilidadConfigOperationsService,
     ContabilidadAccountOperationsService,
@@ -653,6 +666,11 @@ import {
     GetInteriorProjectByIdUseCase,
     CreateInteriorProjectUseCase,
     UpdateInteriorProjectUseCase,
+
+    ListArquitecturaProjectsUseCase,
+    GetArquitecturaProjectByIdUseCase,
+    CreateArquitecturaProjectUseCase,
+    UpdateArquitecturaProjectUseCase,
 
     GetInteriorProjectBudgetUseCase,
     GetInteriorProjectSettlementUseCase,

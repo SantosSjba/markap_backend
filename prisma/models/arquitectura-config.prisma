@@ -1,0 +1,38 @@
+/// Parametrización específica de la aplicación Arquitectura (etapas de proyecto, numeración)
+
+model ArquitecturaProjectStageConfig {
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
+  /// Código alineado con estado de proyecto (DESIGN, QUOTE, APPROVED, IN_PROGRESS, FINISHED)
+  code          String
+  label         String
+  sortOrder     Int    @map("sort_order")
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, code])
+  @@index([applicationId])
+  @@map("arquitectura_project_stage_configs")
+}
+
+model ArquitecturaNumberingSeries {
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
+  /// ARQUITECTURA_PROJECT — referencia para códigos de proyecto (ej. ARQ-PRY-0001)
+  seriesKey     String @map("series_key")
+  prefix        String
+  lastNumber    Int    @default(0) @map("last_number")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, seriesKey])
+  @@index([applicationId])
+  @@map("arquitectura_numbering_series")
+}

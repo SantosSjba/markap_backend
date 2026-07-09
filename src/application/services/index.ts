@@ -3,6 +3,7 @@ export * from './ventas-finanzas-operations.service';
 export * from './ventas-reports-operations.service';
 export * from './ventas-config-operations.service';
 export * from './interiorismo-config-operations.service';
+export * from './arquitectura-config-operations.service';
 export * from './produccion-config-operations.service';
 export * from './contabilidad-config-operations.service';
 export * from './contabilidad-account-operations.service';
