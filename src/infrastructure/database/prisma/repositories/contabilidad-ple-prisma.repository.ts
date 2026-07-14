@@ -49,6 +49,7 @@ import {
 } from '@domain/utils/contabilidad-ple-validator.util';
 import { buildPleZipBuffer } from '@domain/utils/contabilidad-ple-zip.util';
 import { roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { formatDateOnly } from '@domain/utils/peru-date.util';
 import { PrismaService } from '../prisma.service';
 
 interface PeriodCtx {
@@ -273,7 +274,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         accountId: accId,
         accountCode: line.account.code,
         accountName: line.account.name,
-        entryDate: line.journalEntry.entryDate.toISOString().slice(0, 10),
+        entryDate: formatDateOnly(line.journalEntry.entryDate),
         entryNumber: line.journalEntry.entryNumber,
         description: line.description ?? line.journalEntry.description,
         debit: pleFormatAmount(debit),
@@ -453,7 +454,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
           pleJoin([
             'M',
             entry.entryNumber,
-            pleFormatDate(entry.entryDate.toISOString().slice(0, 10)),
+            pleFormatDate(formatDateOnly(entry.entryDate)),
             line.account.code,
             line.auxiliaryRuc ?? '',
             pleFormatAmount(line.debit),
@@ -598,7 +599,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       }
       return pleJoin([
         'M',
-        pleFormatDate(inv.issueDate.toISOString().slice(0, 10)),
+        pleFormatDate(formatDateOnly(inv.issueDate)),
         inv.documentType,
         inv.series,
         inv.number,
@@ -846,7 +847,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     return movements.map((mov) =>
       pleJoin([
         'M',
-        pleFormatDate(mov.movementDate.toISOString().slice(0, 10)),
+        pleFormatDate(formatDateOnly(mov.movementDate)),
         mov.movementType === CONTABILIDAD_TREASURY_MOVEMENT_TYPE.IN ? 'INGRESO' : 'EGRESO',
         mov.sourceType,
         mov.cashBox?.code ?? '',
@@ -874,7 +875,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
 
     return entries.map((entry, idx) => {
       const lineNumber = idx + 2;
-      const linePreview = pleJoin(['M', entry.entryNumber, pleFormatDate(entry.entryDate.toISOString().slice(0, 10))]);
+      const linePreview = pleJoin(['M', entry.entryNumber, pleFormatDate(formatDateOnly(entry.entryDate))]);
       if (roundPenAmount(Number(entry.totalDebit)) !== roundPenAmount(Number(entry.totalCredit))) {
         issues.push({
           severity: 'error',
@@ -888,7 +889,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       return pleJoin([
         'M',
         entry.entryNumber,
-        pleFormatDate(entry.entryDate.toISOString().slice(0, 10)),
+        pleFormatDate(formatDateOnly(entry.entryDate)),
         pleFormatAmount(entry.totalDebit),
         pleFormatAmount(entry.totalCredit),
         entry.description,
@@ -939,7 +940,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
           pleJoin([
             'M',
             entry.entryNumber,
-            pleFormatDate(entry.entryDate.toISOString().slice(0, 10)),
+            pleFormatDate(formatDateOnly(entry.entryDate)),
             line.lineNumber,
             line.account.code,
             line.auxiliaryRuc ?? '',
@@ -1092,7 +1093,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
 
     const rows: PurchaseRegistroRow[] = [
       ...invoices.map((inv) => ({
-        issueDate: inv.issueDate.toISOString().slice(0, 10),
+        issueDate: formatDateOnly(inv.issueDate),
         documentType: this.mapPurchaseDocumentType(inv.documentType),
         series: inv.series,
         number: inv.number,
@@ -1105,10 +1106,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         detraccionAmount: Number(inv.detraccionAmount),
         modifiedDocRef: '',
         status: inv.status,
-        sortKey: `${inv.issueDate.toISOString().slice(0, 10)}|${inv.series}|${inv.number}`,
+        sortKey: `${formatDateOnly(inv.issueDate)}|${inv.series}|${inv.number}`,
       })),
       ...creditNotes.map((nc) => ({
-        issueDate: nc.issueDate.toISOString().slice(0, 10),
+        issueDate: formatDateOnly(nc.issueDate),
         documentType: CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE,
         series: nc.series,
         number: nc.number,
@@ -1121,10 +1122,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         detraccionAmount: 0,
         modifiedDocRef: nc.invoice ? `${nc.invoice.series}-${nc.invoice.number}` : '',
         status: nc.status,
-        sortKey: `${nc.issueDate.toISOString().slice(0, 10)}|${nc.series}|${nc.number}`,
+        sortKey: `${formatDateOnly(nc.issueDate)}|${nc.series}|${nc.number}`,
       })),
       ...debitNotes.map((nd) => ({
-        issueDate: nd.issueDate.toISOString().slice(0, 10),
+        issueDate: formatDateOnly(nd.issueDate),
         documentType: CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE,
         series: nd.series,
         number: nd.number,
@@ -1137,7 +1138,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         detraccionAmount: 0,
         modifiedDocRef: nd.invoice ? `${nd.invoice.series}-${nd.invoice.number}` : '',
         status: nd.status,
-        sortKey: `${nd.issueDate.toISOString().slice(0, 10)}|${nd.series}|${nd.number}`,
+        sortKey: `${formatDateOnly(nd.issueDate)}|${nd.series}|${nd.number}`,
       })),
     ];
 
@@ -1180,7 +1181,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
 
     const rows: SalesRegistroRow[] = [
       ...invoices.map((inv) => ({
-        issueDate: inv.issueDate.toISOString().slice(0, 10),
+        issueDate: formatDateOnly(inv.issueDate),
         documentType: this.mapSalesDocumentType(inv.documentType),
         series: inv.series,
         number: inv.number,
@@ -1192,10 +1193,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         totalAmount: Number(inv.totalAmount),
         modifiedDocRef: '',
         status: inv.status,
-        sortKey: `${inv.issueDate.toISOString().slice(0, 10)}|${inv.series}|${inv.number}`,
+        sortKey: `${formatDateOnly(inv.issueDate)}|${inv.series}|${inv.number}`,
       })),
       ...creditNotes.map((nc) => ({
-        issueDate: nc.issueDate.toISOString().slice(0, 10),
+        issueDate: formatDateOnly(nc.issueDate),
         documentType: CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE,
         series: nc.series,
         number: nc.number,
@@ -1207,10 +1208,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         totalAmount: Number(nc.totalAmount),
         modifiedDocRef: nc.invoice ? `${nc.invoice.series}-${nc.invoice.number}` : '',
         status: nc.status,
-        sortKey: `${nc.issueDate.toISOString().slice(0, 10)}|${nc.series}|${nc.number}`,
+        sortKey: `${formatDateOnly(nc.issueDate)}|${nc.series}|${nc.number}`,
       })),
       ...debitNotes.map((nd) => ({
-        issueDate: nd.issueDate.toISOString().slice(0, 10),
+        issueDate: formatDateOnly(nd.issueDate),
         documentType: CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE,
         series: nd.series,
         number: nd.number,
@@ -1222,7 +1223,7 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         totalAmount: Number(nd.totalAmount),
         modifiedDocRef: nd.invoice ? `${nd.invoice.series}-${nd.invoice.number}` : '',
         status: nd.status,
-        sortKey: `${nd.issueDate.toISOString().slice(0, 10)}|${nd.series}|${nd.number}`,
+        sortKey: `${formatDateOnly(nd.issueDate)}|${nd.series}|${nd.number}`,
       })),
     ];
 

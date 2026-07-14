@@ -5,6 +5,7 @@ import {
   parseExchangeRate,
 } from '@domain/utils/contabilidad-multicurrency.util';
 import { parsePenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { parseDateOnly } from '@domain/utils/peru-date.util';
 import type { PrismaService } from '../prisma.service';
 
 export interface InvoiceMulticurrencyInput {
@@ -32,7 +33,7 @@ async function lookupExchangeRate(
     where: {
       applicationId_rateDate_currencyCode: {
         applicationId,
-        rateDate: new Date(`${rateDate}T12:00:00.000Z`),
+        rateDate: parseDateOnly(rateDate),
         currencyCode,
       },
     },

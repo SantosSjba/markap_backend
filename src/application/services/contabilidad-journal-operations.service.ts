@@ -18,6 +18,7 @@ import type {
 import type { ContabilidadPeriodRepository } from '@domain/repositories/contabilidad-period.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { parsePenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { parseDateOnly } from '@domain/utils/peru-date.util';
 import { ContabilidadAuditOperationsService } from './contabilidad-audit-operations.service';
 import { ContabilidadContextService } from './contabilidad-context.service';
 
@@ -47,7 +48,7 @@ export class ContabilidadJournalOperationsService {
   }
 
   private assertEntryDateInPeriod(entryDate: string, year: number, month: number) {
-    const date = new Date(`${entryDate}T12:00:00.000Z`);
+    const date = parseDateOnly(entryDate);
     if (Number.isNaN(date.getTime())) {
       throw new BadRequestException('Fecha del asiento no válida.');
     }

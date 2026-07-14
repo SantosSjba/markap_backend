@@ -1,4 +1,5 @@
 import type { VentasReportsGranularity } from '@domain/entities/ventas-reports.entity';
+import { formatDateOnly, startOfDayLima } from '@domain/utils/peru-date.util';
 
 export function periodLabel(d: Date, granularity: VentasReportsGranularity): string {
   const y = d.getFullYear();
@@ -10,9 +11,5 @@ export function periodLabel(d: Date, granularity: VentasReportsGranularity): str
   const dow = weekStart.getDay();
   const diff = dow === 0 ? -6 : 1 - dow;
   weekStart.setDate(weekStart.getDate() + diff);
-  weekStart.setHours(0, 0, 0, 0);
-  const wy = weekStart.getFullYear();
-  const wm = String(weekStart.getMonth() + 1).padStart(2, '0');
-  const wd = String(weekStart.getDate()).padStart(2, '0');
-  return `${wy}-${wm}-${wd}`;
+  return formatDateOnly(startOfDayLima(weekStart));
 }

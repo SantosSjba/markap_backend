@@ -13,6 +13,7 @@ import type {
   UpsertCpeProviderConfigInput,
 } from '@domain/repositories/contabilidad-cpe.repository';
 import { PrismaService } from '../prisma.service';
+import { formatDateOnly } from '@domain/utils/peru-date.util';
 
 function maskToken(token: string): string {
   const t = token.trim();
@@ -156,7 +157,7 @@ export class ContabilidadCpePrismaRepository implements ContabilidadCpeRepositor
       series: row.series,
       number: row.number,
       fullNumber,
-      issueDate: row.issueDate.toISOString().slice(0, 10),
+      issueDate: formatDateOnly(row.issueDate),
       taxAffectation: row.taxAffectation,
       currencyCode: row.currencyCode,
       taxableBase: row.taxableBase.toString(),

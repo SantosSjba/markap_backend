@@ -1,9 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import {
-  deriveBuyerPaymentDisplayStatus,
-  startOfLocalDay,
-} from '../mappers/ventas-finanzas-prisma.mapper';
+import { deriveBuyerPaymentDisplayStatus } from '../mappers/ventas-finanzas-prisma.mapper';
+import { startOfTodayLima } from '@domain/utils/peru-date.util';
 import type {
   VentasFinanzasRepository,
   ListBuyerPaymentsFilters,
@@ -131,7 +129,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
 
     if (filters.kind) where.kind = filters.kind;
 
-    const today = startOfLocalDay();
+    const today = startOfTodayLima();
     if (filters.displayStatus === 'PAID') {
       where.status = 'PAID';
     } else if (filters.displayStatus === 'OVERDUE') {

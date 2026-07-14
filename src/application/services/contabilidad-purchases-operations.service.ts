@@ -37,6 +37,7 @@ import type {
 import type { ContabilidadTreasuryRepository } from '@domain/repositories/contabilidad-treasury.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { parsePenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { parseDateOnly } from '@domain/utils/peru-date.util';
 
 const CONTABILIDAD_SLUG = 'contabilidad';
 
@@ -92,7 +93,7 @@ export class ContabilidadPurchasesOperationsService {
   }
 
   private assertEntryDateInPeriod(entryDate: string, year: number, month: number) {
-    const date = new Date(`${entryDate}T12:00:00.000Z`);
+    const date = parseDateOnly(entryDate);
     if (Number.isNaN(date.getTime())) throw new BadRequestException('Fecha no válida.');
     if (date.getUTCFullYear() !== year || date.getUTCMonth() + 1 !== month) {
       throw new BadRequestException('La fecha debe pertenecer al periodo seleccionado.');

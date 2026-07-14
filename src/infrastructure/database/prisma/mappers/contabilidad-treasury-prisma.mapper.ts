@@ -6,10 +6,7 @@ import type {
 } from '@domain/repositories/contabilidad-treasury.repository';
 import { formatPenAmount } from '@domain/utils/contabilidad-journal-amounts';
 import { formatExchangeRate, FUNCTIONAL_CURRENCY } from '@domain/utils/contabilidad-multicurrency.util';
-
-function toIsoDate(value: Date): string {
-  return value.toISOString().slice(0, 10);
-}
+import { toIsoDate } from '@domain/utils/peru-date.util';
 
 export const ContabilidadTreasuryPrismaMapper = {
   toCashBox(

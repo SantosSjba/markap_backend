@@ -13,6 +13,7 @@ import type {
 import {
   INTERIOR_PROJECT_ACTIVE_STATUS_CODES,
 } from '@domain/constants/interior-project-stages.constants';
+import { formatDateOnly } from '@domain/utils/peru-date.util';
 
 const IN_PROGRESS_STATUSES = [...INTERIOR_PROJECT_ACTIVE_STATUS_CODES] as const;
 
@@ -81,7 +82,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         status: r.status as InteriorProjectDetail['status'],
         progressPct: num(r.progressPct) ?? 0,
         estimatedEndDate: r.estimatedEndDate
-          ? r.estimatedEndDate.toISOString().slice(0, 10)
+          ? formatDateOnly(r.estimatedEndDate)
           : null,
         client: {
           id: r.client.id,
@@ -245,7 +246,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       status: row.status,
       progressPct: num(row.progressPct) ?? 0,
       estimatedEndDate: row.estimatedEndDate
-        ? row.estimatedEndDate.toISOString().slice(0, 10)
+        ? formatDateOnly(row.estimatedEndDate)
         : null,
       client: {
         id: row.client.id,
@@ -262,7 +263,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       areaSqm: num(row.areaSqm),
       levelsCount: row.levelsCount ?? null,
       environmentsNote: row.environmentsNote ?? null,
-      startDate: row.startDate ? row.startDate.toISOString().slice(0, 10) : null,
+      startDate: row.startDate ? formatDateOnly(row.startDate) : null,
       designerAgent: row.designerAgent
         ? { id: row.designerAgent.id, fullName: row.designerAgent.fullName }
         : null,
@@ -313,8 +314,8 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       milestones: (row.milestones ?? []).map((m: any) => ({
         id: m.id,
         title: m.title,
-        plannedDate: m.plannedDate.toISOString().slice(0, 10),
-        completedAt: m.completedAt ? m.completedAt.toISOString().slice(0, 10) : null,
+        plannedDate: formatDateOnly(m.plannedDate),
+        completedAt: m.completedAt ? formatDateOnly(m.completedAt) : null,
       })),
     };
   }

@@ -33,6 +33,7 @@ import type {
 } from '@domain/repositories/contabilidad-taxes.repository';
 import type { ContabilidadTreasuryRepository } from '@domain/repositories/contabilidad-treasury.repository';
 import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { parseDateOnly } from '@domain/utils/peru-date.util';
 import { PrismaService } from '../prisma.service';
 import { ContabilidadTaxesPrismaMapper } from '../mappers/contabilidad-taxes-prisma.mapper';
 
@@ -266,7 +267,7 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
         supplierRuc: input.supplierRuc.trim(),
         supplierName: input.supplierName.trim(),
         certificateNumber: input.certificateNumber.trim(),
-        operationDate: new Date(`${input.operationDate}T12:00:00.000Z`),
+        operationDate: parseDateOnly(input.operationDate),
         baseAmount: base,
         ratePercent,
         amount,
@@ -375,7 +376,7 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
         documentType: input.documentType ?? null,
         documentSeries: input.documentSeries ?? null,
         documentNumber: input.documentNumber ?? null,
-        issueDate: new Date(`${input.issueDate}T12:00:00.000Z`),
+        issueDate: parseDateOnly(input.issueDate),
         taxableBase: base,
         ratePercent,
         amount,
@@ -441,7 +442,7 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
         customerRuc: input.customerRuc.trim(),
         customerName: input.customerName.trim(),
         salesInvoiceId: input.salesInvoiceId ?? null,
-        issueDate: new Date(`${input.issueDate}T12:00:00.000Z`),
+        issueDate: parseDateOnly(input.issueDate),
         taxableBase: base,
         ratePercent,
         amount,

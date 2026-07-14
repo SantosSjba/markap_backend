@@ -1,4 +1,6 @@
 import 'dotenv/config';
+// Calendar math and legacy `setHours` must use Peru time (no DST).
+process.env.TZ = process.env.TZ || 'America/Lima';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';

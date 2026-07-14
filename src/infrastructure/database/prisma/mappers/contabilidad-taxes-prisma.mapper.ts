@@ -1,4 +1,5 @@
 import { formatPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { formatDateOnly } from '@domain/utils/peru-date.util';
 import type {
   ContabilidadDetraccionDto,
   ContabilidadDetraccionRateDto,
@@ -57,7 +58,7 @@ export const ContabilidadTaxesPrismaMapper = {
       supplierRuc: row.supplierRuc,
       supplierName: row.supplierName,
       certificateNumber: row.certificateNumber,
-      operationDate: row.operationDate.toISOString().slice(0, 10),
+      operationDate: formatDateOnly(row.operationDate),
       baseAmount: formatPenAmount(Number(row.baseAmount)),
       ratePercent: formatPenAmount(Number(row.ratePercent)),
       amount: formatPenAmount(Number(row.amount)),
@@ -101,7 +102,7 @@ export const ContabilidadTaxesPrismaMapper = {
       documentSeries: row.documentSeries,
       documentNumber: row.documentNumber,
       fullDocument: fullDocument ?? null,
-      issueDate: row.issueDate.toISOString().slice(0, 10),
+      issueDate: formatDateOnly(row.issueDate),
       taxableBase: formatPenAmount(Number(row.taxableBase)),
       ratePercent: formatPenAmount(Number(row.ratePercent)),
       amount: formatPenAmount(Number(row.amount)),
@@ -139,7 +140,7 @@ export const ContabilidadTaxesPrismaMapper = {
       invoiceFullNumber: row.salesInvoice
         ? `${row.salesInvoice.series}-${row.salesInvoice.number}`
         : null,
-      issueDate: row.issueDate.toISOString().slice(0, 10),
+      issueDate: formatDateOnly(row.issueDate),
       taxableBase: formatPenAmount(Number(row.taxableBase)),
       ratePercent: formatPenAmount(Number(row.ratePercent)),
       amount: formatPenAmount(Number(row.amount)),

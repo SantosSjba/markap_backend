@@ -21,6 +21,7 @@ import {
   parsePenAmount,
   roundPenAmount,
 } from '@domain/utils/contabilidad-journal-amounts';
+import { formatDateOnly, parseDateOnly } from '@domain/utils/peru-date.util';
 import { PrismaService } from '../prisma.service';
 import { ContabilidadJournalPrismaMapper } from '../mappers/contabilidad-journal-prisma.mapper';
 
@@ -166,7 +167,7 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       ? await this.normalizeLines(
           applicationId,
           input.lines,
-          input.entryDate ?? existing.entryDate.toISOString().slice(0, 10),
+          input.entryDate ?? formatDateOnly(existing.entryDate),
         )
       : null;
     const totals = normalized ? this.computeTotals(normalized) : null;
@@ -426,7 +427,7 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
   }
 
   private parseEntryDate(value: string): Date {
-    const date = new Date(`${value}T12:00:00.000Z`);
+    const date = parseDateOnly(value);
     if (Number.isNaN(date.getTime())) throw new Error('Invalid entry date');
     return date;
   }
@@ -446,7 +447,7 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       where: {
         applicationId_rateDate_currencyCode: {
           applicationId,
-          rateDate: new Date(`${rateDate}T12:00:00.000Z`),
+          rateDate: parseDateOnly(rateDate),
           currencyCode,
         },
       },

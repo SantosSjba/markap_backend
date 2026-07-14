@@ -16,6 +16,7 @@ import type {
   UpdateArquitecturaFinanceSchedulePayload,
 } from '@domain/repositories/arquitectura-finance.repository';
 import { PrismaService } from '../prisma.service';
+import { formatDateOnly } from '@domain/utils/peru-date.util';
 import { getArquitecturaProjectBudgetPriceTotal } from '../helpers/project-budget-query.helper';
 
 function num(v: unknown): number {
@@ -25,7 +26,7 @@ function num(v: unknown): number {
 }
 
 function ym(d: Date): string {
-  return d.toISOString().slice(0, 7);
+  return formatDateOnly(d).slice(0, 7);
 }
 
 function buildExpenseSummary(costs: { costCategory: string; amount: Prisma.Decimal }[]): ArquitecturaFinanceExpenseSummaryDto {
@@ -138,7 +139,7 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     const mappedSchedules: ArquitecturaFinanceScheduleDto[] = schedules.map((s) => ({
       id: s.id,
       kind: s.kind,
-      dueDate: s.dueDate.toISOString().slice(0, 10),
+      dueDate: formatDateOnly(s.dueDate),
       amount: num(s.amount),
       concept: s.concept,
       sortOrder: s.sortOrder,
@@ -161,7 +162,7 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
       costCategory: c.costCategory,
       concept: c.concept,
       amount: num(c.amount),
-      occurredAt: c.occurredAt.toISOString().slice(0, 10),
+      occurredAt: formatDateOnly(c.occurredAt),
     }));
 
     const expenseSummary = buildExpenseSummary(costs);
@@ -299,7 +300,7 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     return {
       id: row.id,
       kind: row.kind,
-      dueDate: row.dueDate.toISOString().slice(0, 10),
+      dueDate: formatDateOnly(row.dueDate),
       amount: num(row.amount),
       concept: row.concept,
       sortOrder: row.sortOrder,

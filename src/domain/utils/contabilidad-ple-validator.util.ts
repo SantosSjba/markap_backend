@@ -1,5 +1,6 @@
 import { isValidPeruvianRuc, normalizeRuc } from '@common/utils/ruc-validator';
 import type { ContabilidadPleValidationIssue } from '@domain/repositories/contabilidad-ple.repository';
+import { parseDateOnly } from '@domain/utils/peru-date.util';
 
 export const PLE_FIELD_LIMITS = {
   RUC: 11,
@@ -96,7 +97,7 @@ export function pleValidateIsoDate(
       linePreview,
     };
   }
-  const d = new Date(`${isoDate}T12:00:00`);
+  const d = parseDateOnly(isoDate);
   if (Number.isNaN(d.getTime())) {
     return {
       severity: 'error',

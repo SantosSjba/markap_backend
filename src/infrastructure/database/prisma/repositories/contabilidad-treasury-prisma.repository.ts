@@ -25,6 +25,7 @@ import type {
   UpsertReconciliationInput,
 } from '@domain/repositories/contabilidad-treasury.repository';
 import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { parseDateOnly } from '@domain/utils/peru-date.util';
 import { resolveTreasuryPenAmount } from '../helpers/contabilidad-invoice-multicurrency.helper';
 import { PrismaService } from '../prisma.service';
 import { ContabilidadTreasuryPrismaMapper } from '../mappers/contabilidad-treasury-prisma.mapper';
@@ -319,7 +320,7 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
         foreignAmount: fx.foreignAmount,
         exchangeRate: fx.exchangeRate,
         amount,
-        movementDate: new Date(`${input.movementDate}T12:00:00.000Z`),
+        movementDate: parseDateOnly(input.movementDate),
         description: input.description.trim(),
         journalEntryId: journal.id,
         createdBy: createdBy ?? null,
@@ -365,7 +366,7 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     );
 
     const transferGroupId = randomUUID();
-    const movementDate = new Date(`${input.movementDate}T12:00:00.000Z`);
+    const movementDate = parseDateOnly(input.movementDate);
 
     const outRow = await this.prisma.contabilidadTreasuryMovement.create({
       data: {

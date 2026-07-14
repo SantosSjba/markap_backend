@@ -6,6 +6,7 @@ import type {
 } from '@domain/repositories/contabilidad-journal.repository';
 import { formatPenAmount } from '@domain/utils/contabilidad-journal-amounts';
 import { formatExchangeRate } from '@domain/utils/contabilidad-multicurrency.util';
+import { toIsoDate } from '@domain/utils/peru-date.util';
 
 type JournalLineRow = {
   id: string;
@@ -40,10 +41,6 @@ type JournalEntryRow = {
   lines?: JournalLineRow[];
   _count?: { lines: number };
 };
-
-function toIsoDate(value: Date): string {
-  return value.toISOString().slice(0, 10);
-}
 
 function toLineDto(row: JournalLineRow): ContabilidadJournalLineDto {
   return {

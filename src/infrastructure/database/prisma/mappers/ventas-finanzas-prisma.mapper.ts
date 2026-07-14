@@ -1,8 +1,4 @@
-export function startOfLocalDay(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+import { startOfDayLima, startOfTodayLima } from '@domain/utils/peru-date.util';
 
 export function deriveBuyerPaymentDisplayStatus(row: {
   status: string;
@@ -10,9 +6,8 @@ export function deriveBuyerPaymentDisplayStatus(row: {
   paidAt: Date | null;
 }): 'PENDING' | 'PAID' | 'OVERDUE' {
   if (row.status === 'PAID' || row.paidAt) return 'PAID';
-  const due = new Date(row.dueDate);
-  due.setHours(0, 0, 0, 0);
-  const today = startOfLocalDay();
+  const due = startOfDayLima(row.dueDate);
+  const today = startOfTodayLima();
   if (due < today) return 'OVERDUE';
   return 'PENDING';
 }

@@ -14,6 +14,7 @@ import {
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { PAYMENT_PORT, type PaymentPort } from '@application/ports';
 import { RegisterPaymentDto } from '../dtos/payments';
+import { parseDateOnly } from '@domain/utils/peru-date.util';
 
 @UseGuards(JwtAuthGuard)
 @Controller('payments')
@@ -50,7 +51,7 @@ export class PaymentsController {
   ) {
     return this.payments.registerPayment({
       paymentId: id,
-      paidDate: new Date(dto.paidDate),
+      paidDate: parseDateOnly(dto.paidDate),
       paidAmount: dto.paidAmount,
       paymentMethod: dto.paymentMethod,
       referenceNumber: dto.referenceNumber,

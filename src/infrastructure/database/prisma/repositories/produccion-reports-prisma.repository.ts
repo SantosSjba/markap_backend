@@ -7,6 +7,7 @@ import type {
   ProduccionReportsFilters,
   ProduccionReportsRepository,
 } from '@domain/repositories/produccion-reports.repository';
+import { formatDateOnly, parseDateOnly, todayDateOnlyLima } from '@domain/utils/peru-date.util';
 
 function num(v: unknown): number {
   if (v === null || v === undefined) return 0;
@@ -19,21 +20,25 @@ function round2(n: number): number {
 }
 
 function defaultRange(): { startDate: string; endDate: string } {
-  const end = new Date();
-  const start = new Date(end);
+  const endDate = todayDateOnlyLima();
+  const start = parseDateOnly(endDate);
   start.setUTCDate(start.getUTCDate() - 89);
   return {
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10),
+    startDate: formatDateOnly(start),
+    endDate,
   };
 }
 
 function dayStartUtc(isoDate: string): Date {
-  return new Date(`${isoDate}T00:00:00.000Z`);
+  const d = parseDateOnly(isoDate);
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
 }
 
 function dayEndUtc(isoDate: string): Date {
-  return new Date(`${isoDate}T23:59:59.999Z`);
+  const d = parseDateOnly(isoDate);
+  d.setUTCHours(23, 59, 59, 999);
+  return d;
 }
 
 function isLowStock(stock: number, min: number): boolean {

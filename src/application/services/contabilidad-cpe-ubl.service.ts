@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { CpeSalesInvoiceEmitContext } from '@domain/repositories/contabilidad-cpe.repository';
+import { todayDateOnlyLima } from '@domain/utils/peru-date.util';
 
 export interface CpeUblInvoicePayload {
   invoiceTypeCode: string;
@@ -102,7 +103,7 @@ export class ContabilidadCpeUblService {
   buildMockCdr(documentRef: string, responseCode: string, description: string): string {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <ApplicationResponse xmlns="urn:oasis:names:specification:ubl:schema:xsd:ApplicationResponse-2">
-  <cbc:ResponseDate>${new Date().toISOString().slice(0, 10)}</cbc:ResponseDate>
+  <cbc:ResponseDate>${todayDateOnlyLima()}</cbc:ResponseDate>
   <cbc:ResponseTime>${new Date().toISOString().slice(11, 19)}</cbc:ResponseTime>
   <cac:DocumentResponse>
     <cac:Response>

@@ -36,6 +36,7 @@ import type {
 } from '@domain/repositories/contabilidad-sales.repository';
 import type { ContabilidadTreasuryRepository } from '@domain/repositories/contabilidad-treasury.repository';
 import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { parseDateOnly } from '@domain/utils/peru-date.util';
 import { resolveInvoiceTaxableBaseInPen } from '../helpers/contabilidad-invoice-multicurrency.helper';
 import { PrismaService } from '../prisma.service';
 import { ContabilidadSalesPrismaMapper } from '../mappers/contabilidad-sales-prisma.mapper';
@@ -316,8 +317,8 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
         documentType: input.documentType,
         series: input.series.trim().toUpperCase(),
         number: input.number.trim(),
-        issueDate: new Date(`${input.issueDate}T12:00:00.000Z`),
-        dueDate: input.dueDate ? new Date(`${input.dueDate}T12:00:00.000Z`) : null,
+        issueDate: parseDateOnly(input.issueDate),
+        dueDate: input.dueDate ? parseDateOnly(input.dueDate) : null,
         taxAffectation: input.taxAffectation,
         currencyCode: fx.currencyCode,
         exchangeRate: fx.exchangeRate,
@@ -439,7 +440,7 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
         periodId: input.periodId,
         series: input.series.trim().toUpperCase(),
         number: input.number.trim(),
-        issueDate: new Date(`${input.issueDate}T12:00:00.000Z`),
+        issueDate: parseDateOnly(input.issueDate),
         taxableBase: amounts.taxableBase,
         igvAmount: amounts.igvAmount,
         totalAmount: amounts.totalAmount,
@@ -546,7 +547,7 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
         periodId: input.periodId,
         series: input.series.trim().toUpperCase(),
         number: input.number.trim(),
-        issueDate: new Date(`${input.issueDate}T12:00:00.000Z`),
+        issueDate: parseDateOnly(input.issueDate),
         taxableBase: amounts.taxableBase,
         igvAmount: amounts.igvAmount,
         totalAmount: amounts.totalAmount,
@@ -633,7 +634,7 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
         invoiceId: invoice.id,
         periodId: input.periodId,
         amount,
-        collectionDate: new Date(`${input.collectionDate}T12:00:00.000Z`),
+        collectionDate: parseDateOnly(input.collectionDate),
         description: input.description.trim(),
         sourceType: input.sourceType,
         cashBoxId: input.sourceType === 'CASH' ? input.cashBoxId : null,

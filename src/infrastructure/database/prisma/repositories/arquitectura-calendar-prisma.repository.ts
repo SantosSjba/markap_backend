@@ -8,6 +8,7 @@ import type {
   UpdateArquitecturaCalendarEventPayload,
 } from '@domain/repositories/arquitectura-calendar.repository';
 import { PrismaService } from '../prisma.service';
+import { startOfDayLima } from '@domain/utils/peru-date.util';
 
 function startOfDayUtc(d: Date): Date {
   const x = new Date(d);
@@ -23,11 +24,6 @@ function endOfDayUtc(d: Date): Date {
 
 function iso(d: Date): string {
   return d.toISOString();
-}
-
-function dateAtNoonUtc(ymd: Date): Date {
-  const s = ymd.toISOString().slice(0, 10);
-  return new Date(`${s}T12:00:00.000Z`);
 }
 
 function mapManual(row: {
@@ -175,7 +171,7 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
         title: `Hito: ${ms.title}`,
         description: ms.completedAt ? 'Completado' : null,
         location: null,
-        startsAt: iso(dateAtNoonUtc(ms.plannedDate)),
+        startsAt: iso(startOfDayLima(ms.plannedDate)),
         endsAt: null,
         allDay: true,
         projectId: ms.projectId,
@@ -193,8 +189,8 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
       const ps = t.plannedStart;
       const pe = t.plannedEnd ?? t.plannedStart;
       if (!ps && !pe) continue;
-      const start = ps ? dateAtNoonUtc(ps) : dateAtNoonUtc(pe!);
-      const end = pe ? dateAtNoonUtc(pe) : start;
+      const start = ps ? startOfDayLima(ps) : startOfDayLima(pe!);
+      const end = pe ? startOfDayLima(pe) : start;
       const taskType =
         t.phase === 'INSTALLATION'
           ? 'TASK_INSTALLATION'
@@ -238,7 +234,7 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
         title: `Cobro: ${f.concept}`,
         description: `Estado ${f.status}`,
         location: null,
-        startsAt: iso(dateAtNoonUtc(f.dueDate)),
+        startsAt: iso(startOfDayLima(f.dueDate)),
         endsAt: null,
         allDay: true,
         projectId: f.projectId,

@@ -7,6 +7,7 @@ import {
   computeLineItemPurchase,
   computeProjectSettlement,
 } from '@domain/interior-project-budget/interior-project-budget-calculations';
+import { formatDateOnly } from '@domain/utils/peru-date.util';
 import type {
   CreateLineItemSupplierPaymentPayload,
   CreateProjectBudgetLineItemPayload,
@@ -101,7 +102,7 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
         id: p.id,
         paymentNumber: p.paymentNumber,
         amount: num(p.amount),
-        paidAt: p.paidAt.toISOString().slice(0, 10),
+        paidAt: formatDateOnly(p.paidAt),
       })),
     };
   }

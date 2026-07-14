@@ -17,11 +17,25 @@ import {
   PaymentStats,
   PendingPaymentItem,
 } from '@domain/entities/payment.entity';
+import {
+  parseDateOnly,
+  startOfDayLima,
+  startOfTodayLima,
+  todayDateOnlyLima,
+} from '@domain/utils/peru-date.util';
 
 const MONTH_NAMES_ES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+function lastDayOfMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
 
 @Injectable()
 export class PaymentPrismaRepository implements PaymentRepository {
@@ -32,9 +46,13 @@ export class PaymentPrismaRepository implements PaymentRepository {
   // ACTIVE que no tengan pago registrado aún.
   // ─────────────────────────────────────────────────────────────────────────
   async generateMonthlyPending(applicationSlug: string): Promise<number> {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1; // 1-12
+    const todayYmd = todayDateOnlyLima();
+    const year = Number(todayYmd.slice(0, 4));
+    const month = Number(todayYmd.slice(5, 7)); // 1-12
+    const monthStart = parseDateOnly(`${year}-${pad2(month)}-01`);
+    const monthEnd = parseDateOnly(
+      `${year}-${pad2(month)}-${pad2(lastDayOfMonth(year, month))}`,
+    );
 
     const app = await this.prisma.application.findFirst({
       where: { slug: applicationSlug, deletedAt: null },
@@ -47,8 +65,8 @@ export class PaymentPrismaRepository implements PaymentRepository {
         applicationId: app.id,
         status: 'ACTIVE',
         deletedAt: null,
-        startDate: { lte: new Date(year, month - 1 + 1, 0) }, // startDate <= fin del mes
-        endDate: { gte: new Date(year, month - 1, 1) },        // endDate >= inicio del mes
+        startDate: { lte: monthEnd },
+        endDate: { gte: monthStart },
       },
       select: {
         id: true,
@@ -61,7 +79,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
     let created = 0;
     for (const rental of activeRentals) {
       const dueDay = Math.min(rental.paymentDueDay, 28);
-      const dueDate = new Date(year, month - 1, dueDay);
+      const dueDate = parseDateOnly(`${year}-${pad2(month)}-${pad2(dueDay)}`);
 
       await this.prisma.payment.upsert({
         where: {
@@ -85,11 +103,11 @@ export class PaymentPrismaRepository implements PaymentRepository {
       created++;
     }
 
-    // Actualizar a OVERDUE los pagos PENDING cuya dueDate ya pasó
+    // Actualizar a OVERDUE los pagos PENDING cuya dueDate ya pasó (día civil Lima)
     await this.prisma.payment.updateMany({
       where: {
         status: 'PENDING',
-        dueDate: { lt: new Date() },
+        dueDate: { lt: startOfTodayLima() },
         rental: { applicationId: app.id, deletedAt: null },
       },
       data: { status: 'OVERDUE' },
@@ -144,12 +162,10 @@ export class PaymentPrismaRepository implements PaymentRepository {
       orderBy: [{ createdAt: 'desc' }, { dueDate: 'desc' }],
     });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfTodayLima();
 
     return payments.map((p) => {
-      const due = new Date(p.dueDate);
-      due.setHours(0, 0, 0, 0);
+      const due = startOfDayLima(p.dueDate);
       const diffMs = today.getTime() - due.getTime();
       const daysOverdue = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
@@ -359,8 +375,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
       grouped.get(tid)!.payments.push(p);
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfTodayLima();
 
     const result: OverduePaymentItem[] = [];
     for (const [, { tenant, payments, rental }] of grouped) {
@@ -368,8 +383,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
       const monthsOverdue = payments.length;
       const maxDays = Math.max(
         ...payments.map((p) => {
-          const due = new Date(p.dueDate);
-          due.setHours(0, 0, 0, 0);
+          const due = startOfDayLima(p.dueDate);
           return Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
         }),
       );
@@ -419,9 +433,9 @@ export class PaymentPrismaRepository implements PaymentRepository {
     });
     if (!app) return new PaymentStats(0, 0, 0, 0, 'PEN');
 
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+    const todayYmd = todayDateOnlyLima();
+    const year = Number(todayYmd.slice(0, 4));
+    const month = Number(todayYmd.slice(5, 7));
 
     const [pendingAgg, collectedAgg, pendingCount, overdueCount] = await Promise.all([
       this.prisma.payment.aggregate({

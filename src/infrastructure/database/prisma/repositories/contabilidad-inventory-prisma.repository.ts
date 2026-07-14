@@ -23,6 +23,7 @@ import type {
   UpdateInventoryItemInput,
 } from '@domain/repositories/contabilidad-inventory.repository';
 import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { formatDateOnly, parseDateOnly } from '@domain/utils/peru-date.util';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 
@@ -170,8 +171,8 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
         ...(filters.dateFrom || filters.dateTo
           ? {
               movementDate: {
-                ...(filters.dateFrom ? { gte: new Date(`${filters.dateFrom}T12:00:00.000Z`) } : {}),
-                ...(filters.dateTo ? { lte: new Date(`${filters.dateTo}T12:00:00.000Z`) } : {}),
+                ...(filters.dateFrom ? { gte: parseDateOnly(filters.dateFrom) } : {}),
+                ...(filters.dateTo ? { lte: parseDateOnly(filters.dateTo) } : {}),
               },
             }
           : {}),
@@ -191,7 +192,7 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
         itemDescription: row.item.description,
         periodId: row.periodId,
         movementType: row.movementType,
-        movementDate: row.movementDate.toISOString().slice(0, 10),
+        movementDate: formatDateOnly(row.movementDate),
         quantity: formatQty(row.quantity),
         unitCost: formatQty(row.unitCost),
         totalAmount: formatMoney(Number(row.totalAmount)),
@@ -294,7 +295,7 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
           itemId: item.id,
           periodId: input.periodId,
           movementType,
-          movementDate: new Date(`${input.movementDate}T12:00:00.000Z`),
+          movementDate: parseDateOnly(input.movementDate),
           quantity: storedQty,
           unitCost,
           totalAmount,
@@ -349,7 +350,7 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
       itemDescription: movement.item.description,
       periodId: movement.periodId,
       movementType: movement.movementType,
-      movementDate: movement.movementDate.toISOString().slice(0, 10),
+      movementDate: formatDateOnly(movement.movementDate),
       quantity: formatQty(movement.quantity),
       unitCost: formatQty(movement.unitCost),
       totalAmount: formatMoney(Number(movement.totalAmount)),
@@ -552,7 +553,7 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
 
       lines.push({
         id: row.id,
-        movementDate: row.movementDate.toISOString().slice(0, 10),
+        movementDate: formatDateOnly(row.movementDate),
         movementType: row.movementType,
         quantity: formatQty(qty),
         unitCost: formatQty(row.unitCost),

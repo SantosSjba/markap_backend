@@ -7,6 +7,10 @@ import type {
   ListContabilidadAuditLogsFilters,
 } from '@domain/repositories/contabilidad-audit.repository';
 import { PrismaService } from '../prisma.service';
+import {
+  endOfLimaDayInstant,
+  startOfLimaDayInstant,
+} from '@domain/utils/peru-date.util';
 
 @Injectable()
 export class ContabilidadAuditPrismaRepository implements ContabilidadAuditRepository {
@@ -41,8 +45,8 @@ export class ContabilidadAuditPrismaRepository implements ContabilidadAuditRepos
 
     if (filters.dateFrom || filters.dateTo) {
       where.createdAt = {};
-      if (filters.dateFrom) where.createdAt.gte = new Date(`${filters.dateFrom}T00:00:00.000Z`);
-      if (filters.dateTo) where.createdAt.lte = new Date(`${filters.dateTo}T23:59:59.999Z`);
+      if (filters.dateFrom) where.createdAt.gte = startOfLimaDayInstant(filters.dateFrom);
+      if (filters.dateTo) where.createdAt.lte = endOfLimaDayInstant(filters.dateTo);
     }
 
     const rows = await this.prisma.contabilidadAuditLog.findMany({

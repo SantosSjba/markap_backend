@@ -1,4 +1,5 @@
 import { Rental, RentalListItem } from '@domain/entities/rental.entity';
+import { dateOnlyYear } from '@domain/utils/peru-date.util';
 
 export class RentalPrismaMapper {
   static toListItem(r: {
@@ -14,10 +15,7 @@ export class RentalPrismaMapper {
     status: string;
     attachments?: unknown[];
   }): RentalListItem {
-    const year =
-      r.startDate instanceof Date
-        ? r.startDate.getFullYear()
-        : new Date(r.startDate).getFullYear();
+    const year = dateOnlyYear(r.startDate);
     const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
     const n = (v: number | { toNumber?: () => number } | null | undefined): number | null => {
       if (v == null) return null;

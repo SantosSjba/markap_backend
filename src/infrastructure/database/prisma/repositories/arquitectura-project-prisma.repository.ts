@@ -10,6 +10,7 @@ import type {
   UpdateArquitecturaProjectData,
 } from '@domain/repositories/arquitectura-project.repository';
 import { ARQUITECTURA_PROJECT_IN_EXECUTION_STATUS_CODES } from '@domain/constants/arquitectura-project-stages.constants';
+import { formatDateOnly } from '@domain/utils/peru-date.util';
 
 const IN_EXECUTION_STATUSES = [...ARQUITECTURA_PROJECT_IN_EXECUTION_STATUS_CODES] as const;
 
@@ -78,7 +79,7 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
         status: r.status as ArquitecturaProjectDetail['status'],
         progressPct: num(r.progressPct) ?? 0,
         estimatedEndDate: r.estimatedEndDate
-          ? r.estimatedEndDate.toISOString().slice(0, 10)
+          ? formatDateOnly(r.estimatedEndDate)
           : null,
         client: {
           id: r.client.id,
@@ -239,7 +240,7 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
       status: row.status,
       progressPct: num(row.progressPct) ?? 0,
       estimatedEndDate: row.estimatedEndDate
-        ? row.estimatedEndDate.toISOString().slice(0, 10)
+        ? formatDateOnly(row.estimatedEndDate)
         : null,
       client: {
         id: row.client.id,
@@ -256,7 +257,7 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
       areaSqm: num(row.areaSqm),
       levelsCount: row.levelsCount ?? null,
       environmentsNote: row.environmentsNote ?? null,
-      startDate: row.startDate ? row.startDate.toISOString().slice(0, 10) : null,
+      startDate: row.startDate ? formatDateOnly(row.startDate) : null,
       designerAgent: row.designerAgent
         ? { id: row.designerAgent.id, fullName: row.designerAgent.fullName }
         : null,

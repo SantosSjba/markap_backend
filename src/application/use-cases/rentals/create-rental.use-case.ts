@@ -5,6 +5,7 @@ import type { ApplicationRepository } from '@domain/repositories/application.rep
 import type { PropertyRepository } from '@domain/repositories/property.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { Money } from '@domain/value-objects';
+import { parseDateOnly } from '@domain/utils/peru-date.util';
 
 export interface CreateRentalInput {
   applicationSlug?: string;
@@ -60,8 +61,8 @@ export class CreateRentalUseCase {
       propertyId: input.propertyId,
       tenantIds: input.tenantIds,
       tenantId: input.tenantIds[0],
-      startDate: new Date(input.startDate),
-      endDate: new Date(input.endDate),
+      startDate: parseDateOnly(input.startDate),
+      endDate: parseDateOnly(input.endDate),
       currency: monthly.currency,
       monthlyAmount: monthly.amount,
       securityDeposit: security ? security.amount : null,

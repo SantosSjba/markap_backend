@@ -7,6 +7,7 @@ import {
   type VentasReportsGranularity,
 } from '@domain/repositories/ventas-reports.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+import { formatDateOnly, parseDateOnly, todayDateOnlyLima } from '@domain/utils/peru-date.util';
 
 const VENTAS_SLUG = 'ventas';
 
@@ -23,25 +24,32 @@ function isGranularity(v: string): v is VentasReportsGranularity {
 }
 
 function parseRange(startDate?: string, endDate?: string): { start: Date; end: Date } {
-  const end = endDate?.trim()
-    ? new Date(endDate.trim())
-    : new Date();
-  if (Number.isNaN(end.getTime())) {
-    throw new BadRequestException('endDate inválida. Use YYYY-MM-DD.');
+  let end: Date;
+  if (endDate?.trim()) {
+    try {
+      end = parseDateOnly(endDate.trim());
+    } catch {
+      throw new BadRequestException('endDate inválida. Use YYYY-MM-DD.');
+    }
+    end.setUTCHours(23, 59, 59, 999);
+  } else {
+    end = new Date();
   }
-  end.setHours(23, 59, 59, 999);
 
-  const start = startDate?.trim()
-    ? new Date(startDate.trim())
-    : (() => {
-        const s = new Date(end);
-        s.setDate(s.getDate() - 89);
-        return s;
-      })();
-  if (Number.isNaN(start.getTime())) {
-    throw new BadRequestException('startDate inválida. Use YYYY-MM-DD.');
+  let start: Date;
+  if (startDate?.trim()) {
+    try {
+      start = parseDateOnly(startDate.trim());
+    } catch {
+      throw new BadRequestException('startDate inválida. Use YYYY-MM-DD.');
+    }
+    start.setUTCHours(0, 0, 0, 0);
+  } else {
+    const endYmd = endDate?.trim() || todayDateOnlyLima();
+    start = parseDateOnly(endYmd);
+    start.setUTCDate(start.getUTCDate() - 89);
+    start.setUTCHours(0, 0, 0, 0);
   }
-  start.setHours(0, 0, 0, 0);
 
   if (start.getTime() > end.getTime()) {
     throw new BadRequestException('startDate no puede ser posterior a endDate.');

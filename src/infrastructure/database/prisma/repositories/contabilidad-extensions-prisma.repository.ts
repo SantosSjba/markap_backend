@@ -33,6 +33,7 @@ import {
   computeTaxableBase,
 } from '@domain/utils/contabilidad-income-tax.util';
 import { formatPenAmount, parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import { formatDateOnly, parseDateOnly, toIsoDate } from '@domain/utils/peru-date.util';
 import { PrismaService } from '../prisma.service';
 
 const templateInclude = {
@@ -44,10 +45,6 @@ const templateInclude = {
     },
   },
 };
-
-function toIsoDate(value: Date): string {
-  return value.toISOString().slice(0, 10);
-}
 
 function mapTemplate(row: {
   id: string;
@@ -109,8 +106,8 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
         ...(filters.dateFrom || filters.dateTo
           ? {
               rateDate: {
-                ...(filters.dateFrom ? { gte: new Date(`${filters.dateFrom}T12:00:00.000Z`) } : {}),
-                ...(filters.dateTo ? { lte: new Date(`${filters.dateTo}T12:00:00.000Z`) } : {}),
+                ...(filters.dateFrom ? { gte: parseDateOnly(filters.dateFrom) } : {}),
+                ...(filters.dateTo ? { lte: parseDateOnly(filters.dateTo) } : {}),
               },
             }
           : {}),
@@ -134,7 +131,7 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     applicationId: string,
     input: UpsertExchangeRateInput,
   ): Promise<ContabilidadExchangeRateDto> {
-    const rateDate = new Date(`${input.rateDate}T12:00:00.000Z`);
+    const rateDate = parseDateOnly(input.rateDate);
     const currencyCode = input.currencyCode.trim().toUpperCase();
     const buyRate = roundPenAmount(Number(input.buyRate));
     const sellRate = roundPenAmount(Number(input.sellRate));
@@ -597,7 +594,7 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
       },
       retentionsPeriod: retentionsPeriodRows.map((row) => ({
         id: row.id,
-        issueDate: row.issueDate.toISOString().slice(0, 10),
+        issueDate: formatDateOnly(row.issueDate),
         counterpartyRuc: row.counterpartyRuc,
         counterpartyName: row.counterpartyName,
         documentRef:

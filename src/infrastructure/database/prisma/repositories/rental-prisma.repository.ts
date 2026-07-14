@@ -12,6 +12,7 @@ import type {
 } from '@domain/repositories/rental.repository';
 import { RentalAttachment, RentalDetail, RentalStats } from '@domain/entities/rental.entity';
 import type { Rental } from '@domain/entities/rental.entity';
+import { dateOnlyYear, startOfTodayLima } from '@domain/utils/peru-date.util';
 
 const rentalTenantsInclude = {
   tenants: {
@@ -127,10 +128,9 @@ export class RentalPrismaRepository implements RentalRepository {
       return new RentalStats(0, 0, 0, 0);
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfTodayLima();
     const in30Days = new Date(today);
-    in30Days.setDate(in30Days.getDate() + 30);
+    in30Days.setUTCDate(in30Days.getUTCDate() + 30);
 
     const baseWhere = { applicationId: app.id, deletedAt: null };
 
@@ -183,7 +183,7 @@ export class RentalPrismaRepository implements RentalRepository {
     });
     if (!r) return null;
     const tenantClients = resolveTenantClients(r);
-    const year = r.startDate instanceof Date ? r.startDate.getFullYear() : new Date(r.startDate).getFullYear();
+    const year = dateOnlyYear(r.startDate);
     const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
     const attachmentRows: Array<{
       id: string;
@@ -230,8 +230,7 @@ export class RentalPrismaRepository implements RentalRepository {
   }
 
   async countActiveByPropertyId(propertyId: string): Promise<number> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfTodayLima();
     return (this.prisma as any).rental.count({
       where: {
         propertyId,
@@ -243,8 +242,7 @@ export class RentalPrismaRepository implements RentalRepository {
   }
 
   async countActiveInvolvingClient(clientId: string, applicationId: string): Promise<number> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfTodayLima();
     const activeRental = {
       status: 'ACTIVE',
       endDate: { gte: today },

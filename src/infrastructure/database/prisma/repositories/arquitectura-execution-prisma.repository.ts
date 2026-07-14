@@ -16,6 +16,7 @@ import type {
   UpdateArquitecturaExecutionTaskPayload,
 } from '@domain/repositories/arquitectura-execution.repository';
 import { PrismaService } from '../prisma.service';
+import { formatDateOnly } from '@domain/utils/peru-date.util';
 import { getArquitecturaProjectBudgetPriceTotal } from '../helpers/project-budget-query.helper';
 
 function num(v: unknown): number {
@@ -26,7 +27,7 @@ function num(v: unknown): number {
 
 function toDateOnly(d: Date | null): string | null {
   if (!d) return null;
-  return d.toISOString().slice(0, 10);
+  return formatDateOnly(d);
 }
 
 const PHASE_RANK: Record<string, number> = {

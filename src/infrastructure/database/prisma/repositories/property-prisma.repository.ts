@@ -12,6 +12,7 @@ import type {
 } from '@domain/repositories/property.repository';
 import { PropertyListItem, PropertyStats } from '@domain/entities/property.entity';
 import type { Property } from '@domain/entities/property.entity';
+import { startOfTodayLima } from '@domain/utils/peru-date.util';
 
 @Injectable()
 export class PropertyPrismaRepository implements PropertyRepository {
@@ -148,8 +149,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
 
     const isVentasList = filters.applicationSlug === 'ventas';
     const propertyIds = data.map((p) => p.id);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfTodayLima();
     const activeRentalPropertyIds = new Set<string>();
     const activeRentalEndByPropertyId = new Map<string, Date>();
     const activeRentalTenantByPropertyId = new Map<string, string | null>();

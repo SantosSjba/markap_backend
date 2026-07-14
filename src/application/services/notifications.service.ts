@@ -5,6 +5,7 @@ import type { AlertConfigRepository } from '@domain/repositories/alert-config.re
 import type { NotificationPayload } from '@infrastructure/http/gateways/notifications.gateway';
 import { NotificationsGateway } from '@infrastructure/http/gateways/notifications.gateway';
 import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
+import { startOfDayLima, startOfTodayLima } from '@domain/utils/peru-date.util';
 
 import { ALERT_CONFIG_REPOSITORY, NOTIFICATION_REPOSITORY } from '@common/constants/injection-tokens';
 
@@ -258,7 +259,7 @@ export class NotificationsService {
     overduePayments: number;
   }> {
     const stats = { expiring: 0, pendingPayments: 0, overduePayments: 0 };
-    const today = this.startOfDay(new Date());
+    const today = startOfTodayLima();
 
     const rentals = await (this.prisma as any).rental.findMany({
       where: { deletedAt: null, status: 'ACTIVE' },
@@ -280,7 +281,7 @@ export class NotificationsService {
       const propertyAddress = rental.property?.addressLine ?? '—';
 
       if (rental.enableExpirationAlerts) {
-        const end = this.startOfDay(new Date(rental.endDate));
+        const end = startOfDayLima(rental.endDate);
         const daysLeft = Math.round((end.getTime() - today.getTime()) / 86_400_000);
         const expiringMap: Record<number, 'RENTAL_EXPIRING_30' | 'RENTAL_EXPIRING_60' | 'RENTAL_EXPIRING_90'> = {
           30: 'RENTAL_EXPIRING_30',
@@ -333,7 +334,7 @@ export class NotificationsService {
       const rental = payment.rental;
       if (!rental?.enableCollectionAlerts) continue;
 
-      const due = this.startOfDay(new Date(payment.dueDate));
+      const due = startOfDayLima(payment.dueDate);
       const applicationId = rental.applicationId as string;
       const applicationSlug = rental.application?.slug ?? 'alquileres';
       const tenantName = this.formatTenantNames(rental);
@@ -375,12 +376,6 @@ export class NotificationsService {
     }
 
     return stats;
-  }
-
-  private startOfDay(d: Date): Date {
-    const x = new Date(d);
-    x.setHours(0, 0, 0, 0);
-    return x;
   }
 
   private formatTenantNames(rental: {

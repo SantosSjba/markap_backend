@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import type { RentalRepository } from '@domain/repositories/rental.repository';
 import type { Rental, UpdateRentalData } from '@domain/repositories/rental.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
+import { parseDateOnly } from '@domain/utils/peru-date.util';
 
 import { RENTAL_REPOSITORY } from '@common/constants/injection-tokens';
 
@@ -33,8 +34,8 @@ export class UpdateRentalUseCase {
       throw new EntityNotFoundException('Rental', input.id);
     }
     const data: UpdateRentalData = {};
-    if (input.startDate != null) data.startDate = new Date(input.startDate);
-    if (input.endDate != null) data.endDate = new Date(input.endDate);
+    if (input.startDate != null) data.startDate = parseDateOnly(input.startDate);
+    if (input.endDate != null) data.endDate = parseDateOnly(input.endDate);
     if (input.currency != null) data.currency = input.currency;
     if (input.monthlyAmount != null) data.monthlyAmount = input.monthlyAmount;
     if (input.securityDeposit !== undefined) data.securityDeposit = input.securityDeposit;
