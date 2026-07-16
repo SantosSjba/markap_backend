@@ -407,6 +407,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
 
 // Controllers
+import { HealthController } from './controllers/health.controller';
 import { AuthController } from './controllers/auth.controller';
 import { ApplicationsController } from './controllers/applications.controller';
 import { UsersController } from './controllers/users.controller';
@@ -534,6 +535,7 @@ import {
 @Module({
   imports: [DatabaseModule, StorageModule],
   controllers: [
+    HealthController,
     AuthController,
     ApplicationsController,
     UsersController,

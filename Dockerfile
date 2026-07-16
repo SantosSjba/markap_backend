@@ -1,24 +1,37 @@
-FROM node:22-alpine
-
-WORKDIR /usr/src/app
-
+FROM node:24-alpine AS base
+WORKDIR /app
+ENV NODE_OPTIONS="--experimental-require-module --max-old-space-size=4096"
+# Placeholder solo para `prisma generate` durante el build
+ENV DATABASE_URL=postgresql://prisma:prisma@127.0.0.1:5432/prisma?schema=public
 RUN corepack enable && corepack prepare pnpm@11.5.0 --activate
 
-# Copiar archivos de dependencias
+FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY prisma prisma
 COPY prisma.config.ts ./
-COPY prisma ./prisma/
-
-# Instalar todas las dependencias (incluyendo dev)
 RUN pnpm install --frozen-lockfile
 
-# Generar Prisma Client (multi-file schema vía prisma.config.ts)
-RUN pnpm exec prisma generate
-
-# Copiar código fuente
+FROM deps AS build
 COPY . .
+RUN pnpm exec nest build \
+    && pnpm exec prisma generate \
+    && pnpm prune --prod --ignore-scripts
 
+FROM node:24-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NODE_OPTIONS=--experimental-require-module
+ENV PORT=4001
+# curl: Coolify HEALTHCHECK lo necesita dentro del contenedor Alpine
+RUN apk add --no-cache curl \
+    && corepack enable && corepack prepare pnpm@11.5.0 --activate
+COPY --from=build /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/prisma.config.ts ./
+COPY --from=build /app/node_modules ./node_modules
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh \
+    && mkdir -p uploads
 EXPOSE 4001
-
-# Modo desarrollo con hot-reload
-CMD ["pnpm", "run", "start:dev"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
