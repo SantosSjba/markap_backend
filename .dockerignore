@@ -1,43 +1,20 @@
-# Dependencies
+.git
+.github
+.pnpm-store
 node_modules
-
-# Build output (rebuilt inside Docker)
 dist
-
-# Environment files (NEVER bake secrets into the image)
+coverage
+uploads
 .env
 .env.*
 !.env.example
-
-# Git
-.git
-.gitignore
-
-# Editor / OS
+*.md
+*.tsbuildinfo
+.DS_Store
 .vscode
 .idea
-*.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs
-
-# Test artifacts
-coverage
 test
-
-# Docker files themselves (entrypoint IS needed by the build)
-Dockerfile*
-.dockerignore
-docker-compose*.yml
-
-# Documentation
 docs
-README.md
-
-# Uploads (should be a volume in production)
-uploads
-
-# Misc
-*.tgz
+Dockerfile
+docker-compose*.yml
+.dockerignore
