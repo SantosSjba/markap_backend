@@ -117,10 +117,20 @@ export function mapSaleProcessDetail(row: Record<string, unknown>): Record<strin
     (row.commissions as Record<string, unknown>[] | undefined) ??
     (row.commission ? [row.commission as Record<string, unknown>] : []);
 
-  const buyers = buyersRaw.map((l) => ({
+  let buyers = buyersRaw.map((l) => ({
     ...mapParticipantClient(l.buyer),
     isPrimary: l.isPrimary,
   }));
+
+  // Legacy/seed rows may only have buyer_client_id — do not require bridge writes.
+  if (!buyers.length && row.buyer) {
+    buyers = [
+      {
+        ...mapParticipantClient(row.buyer as OwnerClientShape),
+        isPrimary: true,
+      },
+    ];
+  }
 
   let owners = ownersRaw.map((l) => mapParticipantClient(l.owner));
 

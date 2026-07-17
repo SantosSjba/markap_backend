@@ -216,15 +216,24 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       this.prisma.saleProcess.count({ where }),
     ]);
     return {
-      data: rows.map((row) => ({
-        ...row,
-        property: row.property
-          ? {
-              ...row.property,
-              salePrice: prismaAmountToNumber(row.property.salePrice as unknown),
-            }
-          : row.property,
-      })) as unknown[],
+      data: rows.map((row) => {
+        const buyers =
+          row.buyers.length > 0
+            ? row.buyers
+            : row.buyer
+              ? [{ isPrimary: true as const, buyer: row.buyer }]
+              : [];
+        return {
+          ...row,
+          buyers,
+          property: row.property
+            ? {
+                ...row.property,
+                salePrice: prismaAmountToNumber(row.property.salePrice as unknown),
+              }
+            : row.property,
+        };
+      }) as unknown[],
       total,
     };
   }

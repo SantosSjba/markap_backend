@@ -41,27 +41,38 @@ export class RentalPrismaRepository implements RentalRepository {
 
   async create(data: CreateRentalData): Promise<Rental> {
     const primaryTenantId = data.tenantIds[0];
-    const rental = await (this.prisma as any).rental.create({
-      data: {
-        applicationId: data.applicationId,
-        propertyId: data.propertyId,
-        tenantId: primaryTenantId,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        currency: data.currency,
-        monthlyAmount: data.monthlyAmount,
-        securityDeposit: data.securityDeposit ?? null,
-        paymentDueDay: data.paymentDueDay,
-        notes: data.notes?.trim() || null,
-        enableExpirationAlerts: data.enableExpirationAlerts ?? true,
-        enableCollectionAlerts: data.enableCollectionAlerts ?? true,
-        tenants: {
-          create: data.tenantIds.map((clientId, sortOrder) => ({
-            clientId,
-            sortOrder,
-          })),
+    const rental = await this.prisma.$transaction(async (tx) => {
+      const created = await (tx as any).rental.create({
+        data: {
+          applicationId: data.applicationId,
+          propertyId: data.propertyId,
+          tenantId: primaryTenantId,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          currency: data.currency,
+          monthlyAmount: data.monthlyAmount,
+          securityDeposit: data.securityDeposit ?? null,
+          paymentDueDay: data.paymentDueDay,
+          notes: data.notes?.trim() || null,
+          enableExpirationAlerts: data.enableExpirationAlerts ?? true,
+          enableCollectionAlerts: data.enableCollectionAlerts ?? true,
+          tenants: {
+            create: data.tenantIds.map((clientId, sortOrder) => ({
+              clientId,
+              sortOrder,
+            })),
+          },
         },
-      },
+      });
+      // Default empty config so new rentals have a row; existing ones without config stay untouched.
+      await tx.rentalFinancialConfig.create({
+        data: {
+          rentalId: created.id,
+          currency: data.currency,
+          baseAmount: data.monthlyAmount,
+        },
+      });
+      return created;
     });
     return RentalPrismaMapper.toDomain(rental);
   }

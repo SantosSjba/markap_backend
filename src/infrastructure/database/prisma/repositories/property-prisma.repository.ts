@@ -307,6 +307,30 @@ export class PropertyPrismaRepository implements PropertyRepository {
             })),
           });
         }
+      } else if (data.ownerId !== undefined) {
+        // Keep bridge in sync when only primary ownerId changes (no wipe of co-owners).
+        await tx.propertyOwnerLink.updateMany({
+          where: { propertyId: data.id, isPrimary: true },
+          data: { isPrimary: false },
+        });
+        const existingLink = await tx.propertyOwnerLink.findFirst({
+          where: { propertyId: data.id, ownerClientId: data.ownerId },
+        });
+        if (existingLink) {
+          await tx.propertyOwnerLink.update({
+            where: { id: existingLink.id },
+            data: { isPrimary: true, sortOrder: 0 },
+          });
+        } else {
+          await tx.propertyOwnerLink.create({
+            data: {
+              propertyId: data.id,
+              ownerClientId: data.ownerId,
+              isPrimary: true,
+              sortOrder: 0,
+            },
+          });
+        }
       }
     });
     const full = await this.findById(data.id);
