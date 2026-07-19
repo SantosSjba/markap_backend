@@ -155,14 +155,22 @@ export class GenArchivoService {
     if (archivoId) {
       return this.getPresignedDownloadUrl(archivoId, expiresInSeconds);
     }
-    if (legacyFilePath?.trim()) {
-      const base =
-        process.env.API_PUBLIC_URL?.replace(/\/$/, '') ||
-        `http://localhost:${process.env.PORT ?? 4001}`;
-      const path = legacyFilePath.replace(/^uploads\//, '');
-      return `${base}/uploads/${path}`;
+    const path = legacyFilePath?.trim();
+    if (!path) return null;
+    if (/^https?:\/\//i.test(path)) return path;
+
+    const byKey = await this.prisma.genArchivo.findFirst({
+      where: { objectKey: path, deletedAt: null },
+      select: { id: true },
+    });
+    if (byKey) {
+      return this.getPresignedDownloadUrl(byKey.id, expiresInSeconds);
     }
-    return null;
+
+    const base =
+      process.env.API_PUBLIC_URL?.replace(/\/$/, '') ||
+      `http://localhost:${process.env.PORT ?? 4001}`;
+    return `${base}/uploads/${path.replace(/^uploads\//, '')}`;
   }
 
   async softDelete(archivoId: string): Promise<void> {

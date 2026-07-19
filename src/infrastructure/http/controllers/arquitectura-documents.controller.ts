@@ -10,16 +10,22 @@
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiConsumes,
   ApiOperation,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
+import { GenArchivoService } from '../../../application/services/gen-archivo.service';
 import {
   ARQUITECTURA_DOCUMENT_TYPES,
   type ArquitecturaDocumentType,
@@ -43,20 +49,35 @@ export class ArquitecturaDocumentsController {
     private readonly createUc: CreateArquitecturaProjectDocumentUseCase,
     private readonly updateUc: UpdateArquitecturaProjectDocumentUseCase,
     private readonly deleteUc: DeleteArquitecturaProjectDocumentUseCase,
+    private readonly genArchivo: GenArchivoService,
   ) {}
 
   private parseDocType(raw?: string): ArquitecturaDocumentType {
     const v = raw?.trim();
     if (!v || !(ARQUITECTURA_DOCUMENT_TYPES as readonly string[]).includes(v)) {
       throw new BadRequestException(
-        `docType invÃ¡lido. Valores: ${ARQUITECTURA_DOCUMENT_TYPES.join(', ')}`,
+        `docType inválido. Valores: ${ARQUITECTURA_DOCUMENT_TYPES.join(', ')}`,
       );
     }
     return v as ArquitecturaDocumentType;
   }
 
+  private async withDownloadUrl<T extends { archivoId: string | null; fileUrl: string | null }>(
+    row: T,
+  ): Promise<T & { downloadUrl: string | null }> {
+    if (row.archivoId) {
+      const downloadUrl = await this.genArchivo.resolveDownloadUrl(row.archivoId, null);
+      return { ...row, downloadUrl };
+    }
+    const url = row.fileUrl?.trim() || null;
+    if (url && /^https?:\/\//i.test(url)) {
+      return { ...row, downloadUrl: url };
+    }
+    return { ...row, downloadUrl: null };
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Listar documentos por tipo y aplicaciÃ³n' })
+  @ApiOperation({ summary: 'Listar documentos por tipo y aplicación' })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'docType', required: true })
   @ApiQuery({ name: 'page', required: false })
@@ -72,7 +93,7 @@ export class ArquitecturaDocumentsController {
     @Query('search') search?: string,
     @Query('projectId') projectId?: string,
   ) {
-    return this.listUc.execute({
+    const result = await this.listUc.execute({
       applicationSlug: applicationSlug ?? 'arquitectura',
       docType: this.parseDocType(docType),
       page: Math.max(1, parseInt(page ?? '1', 10)),
@@ -80,21 +101,72 @@ export class ArquitecturaDocumentsController {
       search: search?.trim() || undefined,
       projectId: projectId?.trim() || undefined,
     });
+    return {
+      ...result,
+      data: await Promise.all(result.data.map((row) => this.withDownloadUrl(row))),
+    };
+  }
+
+  @Post('upload')
+  @ApiOperation({ summary: 'Subir archivo y registrar documento en un proyecto' })
+  @ApiConsumes('multipart/form-data')
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @UseInterceptors(FileInterceptor('file'))
+  async upload(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body()
+    body: {
+      projectId?: string;
+      docType?: string;
+      title?: string;
+    },
+    @UploadedFile() file?: MulterUploadedFile,
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Archivo requerido');
+    }
+    const projectId = body.projectId?.trim();
+    const title = body.title?.trim();
+    if (!projectId || !title) {
+      throw new BadRequestException('projectId y title son obligatorios');
+    }
+    const docType = this.parseDocType(body.docType);
+    const slug = applicationSlug ?? 'arquitectura';
+    const archivo = await this.genArchivo.upload(
+      {
+        applicationSlug: slug,
+        module: 'arquitectura-documents',
+        entityType: 'arquitectura_project',
+        entityId: projectId,
+        category: docType,
+      },
+      file,
+    );
+    const row = await this.createUc.execute({
+      applicationSlug: slug,
+      projectId,
+      docType,
+      title,
+      fileUrl: archivo.objectKey,
+      archivoId: archivo.id,
+    });
+    return this.withDownloadUrl(row);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Registrar documento en un proyecto' })
+  @ApiOperation({ summary: 'Registrar documento en un proyecto (JSON legacy)' })
   async create(
     @Body() dto: CreateArquitecturaProjectDocumentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createUc.execute({
+    const row = await this.createUc.execute({
       applicationSlug: applicationSlug ?? 'arquitectura',
       projectId: dto.projectId,
       docType: dto.docType,
       title: dto.title,
       fileUrl: dto.fileUrl,
     });
+    return this.withDownloadUrl(row);
   }
 
   @Patch(':id')
@@ -104,7 +176,8 @@ export class ArquitecturaDocumentsController {
     @Body() dto: UpdateArquitecturaProjectDocumentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateUc.execute(id, applicationSlug ?? 'arquitectura', dto);
+    const row = await this.updateUc.execute(id, applicationSlug ?? 'arquitectura', dto);
+    return this.withDownloadUrl(row);
   }
 
   @Delete(':id')

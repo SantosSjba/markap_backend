@@ -49,6 +49,7 @@ export interface InteriorProjectDocumentDto {
   docType: string;
   title: string;
   fileUrl: string | null;
+  archivoId: string | null;
 }
 
 export interface InteriorProjectPaymentDto {

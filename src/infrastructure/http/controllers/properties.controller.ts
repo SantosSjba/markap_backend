@@ -1,18 +1,40 @@
-import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards, HttpCode, HttpStatus, Inject } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import {
   ApiBearerAuth,
-  ApiQuery,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
   ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { Prisma } from '@prisma/client';
 import { PROPERTY_PORT, type PropertyPort } from '@application/ports';
 import { CreatePropertyDto, UpdatePropertyDto } from '../dtos/properties';
 import { UpdateListingStatusDto } from '../dtos/properties/update-listing-status.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
+import { GenArchivoService } from '../../../application/services/gen-archivo.service';
+import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
+import type { PropertyMediaItem } from '@domain/entities/property.entity';
 
 @ApiTags('Properties')
 @Controller('properties')
@@ -22,6 +44,7 @@ export class PropertiesController {
   constructor(
     @Inject(PROPERTY_PORT) private readonly properties: PropertyPort,
     private readonly prisma: PrismaService,
+    private readonly genArchivo: GenArchivoService,
   ) {}
 
   @Get()
@@ -184,6 +207,105 @@ export class PropertiesController {
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     return this.properties.getPropertyById(id, applicationSlug);
+  }
+
+  @Post(':id/media')
+  @ApiOperation({ summary: 'Subir foto/plano a MinIO y agregarlo a mediaItems' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        kind: { type: 'string', enum: ['photo', 'plan'] },
+      },
+    },
+  })
+  @ApiParam({ name: 'id', description: 'UUID de la propiedad' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadMedia(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body() body: { kind?: string },
+    @UploadedFile() file?: MulterUploadedFile,
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Archivo requerido');
+    }
+    const kind = body.kind === 'plan' ? 'plan' : 'photo';
+    const property = await this.properties.getPropertyById(id, applicationSlug);
+    const app = await this.prisma.application.findFirst({
+      where: { id: property.applicationId, deletedAt: null },
+      select: { slug: true },
+    });
+    const slug = applicationSlug?.trim() || app?.slug || 'alquileres';
+
+    const archivo = await this.genArchivo.upload(
+      {
+        applicationSlug: slug,
+        module: 'properties',
+        entityType: 'property',
+        entityId: id,
+        category: kind,
+      },
+      file,
+    );
+
+    const existing: PropertyMediaItem[] = [...(property.mediaItems ?? [])];
+    const item: PropertyMediaItem = {
+      url: archivo.objectKey,
+      kind,
+      archivoId: archivo.id,
+    };
+    existing.push(item);
+
+    const updated = await this.properties.updateProperty(
+      { id, mediaItems: existing },
+      applicationSlug,
+    );
+
+    const downloadUrl = await this.genArchivo.resolveDownloadUrl(
+      archivo.id,
+      archivo.objectKey,
+    );
+
+    return {
+      mediaItem: item,
+      downloadUrl,
+      mediaItems: updated.mediaItems,
+      property: updated,
+    };
+  }
+
+  @Delete(':id/media')
+  @ApiOperation({ summary: 'Quitar un ítem de mediaItems por url (y opcionalmente archivoId)' })
+  @ApiParam({ name: 'id' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async removeMedia(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body() body: { url: string; archivoId?: string },
+  ) {
+    if (!body?.url?.trim()) {
+      throw new BadRequestException('url es obligatorio');
+    }
+    const property = await this.properties.getPropertyById(id, applicationSlug);
+    const next = (property.mediaItems ?? []).filter((m) => {
+      if (body.archivoId && m.archivoId) {
+        return m.archivoId !== body.archivoId;
+      }
+      return m.url !== body.url.trim();
+    });
+    const updated = await this.properties.updateProperty(
+      {
+        id,
+        mediaItems: next.length ? next : null,
+      },
+      applicationSlug,
+    );
+    return updated;
   }
 
   @Patch(':id/listing-status')

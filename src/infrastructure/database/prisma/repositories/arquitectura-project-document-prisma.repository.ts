@@ -15,7 +15,15 @@ export class ArquitecturaProjectDocumentPrismaRepository implements Arquitectura
   constructor(private readonly prisma: PrismaService) {}
 
   private mapRow(
-    doc: { id: string; projectId: string; docType: string; title: string; fileUrl: string | null; createdAt: Date },
+    doc: {
+      id: string;
+      projectId: string;
+      docType: string;
+      title: string;
+      fileUrl: string | null;
+      archivoId: string | null;
+      createdAt: Date;
+    },
     project: { code: string; name: string },
   ): ArquitecturaProjectDocumentListItem {
     return {
@@ -26,6 +34,7 @@ export class ArquitecturaProjectDocumentPrismaRepository implements Arquitectura
       docType: doc.docType,
       title: doc.title,
       fileUrl: doc.fileUrl,
+      archivoId: doc.archivoId,
       createdAt: doc.createdAt.toISOString(),
     };
   }
@@ -108,6 +117,7 @@ export class ArquitecturaProjectDocumentPrismaRepository implements Arquitectura
         docType: data.docType,
         title: data.title.trim(),
         fileUrl: data.fileUrl?.trim() || null,
+        archivoId: data.archivoId?.trim() || null,
       },
     });
 
@@ -136,6 +146,7 @@ export class ArquitecturaProjectDocumentPrismaRepository implements Arquitectura
     const patch: Prisma.ArquitecturaProjectDocumentUncheckedUpdateInput = {};
     if (data.title !== undefined) patch.title = data.title.trim();
     if (data.fileUrl !== undefined) patch.fileUrl = data.fileUrl?.trim() || null;
+    if (data.archivoId !== undefined) patch.archivoId = data.archivoId?.trim() || null;
     if (data.docType !== undefined) patch.docType = data.docType;
 
     const row = await this.prisma.arquitecturaProjectDocument.update({

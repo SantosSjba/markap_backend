@@ -28,6 +28,8 @@ export interface InteriorExecutionEvidenceDto {
   kind: string;
   title: string;
   fileUrl: string;
+  archivoId: string | null;
+  downloadUrl?: string | null;
   capturedAt: string;
 }
 
@@ -111,6 +113,7 @@ export interface CreateInteriorExecutionEvidencePayload {
   kind: string;
   title: string;
   fileUrl: string;
+  archivoId?: string | null;
   capturedAt: Date;
 }
 

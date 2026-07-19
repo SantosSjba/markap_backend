@@ -17,6 +17,8 @@ export interface ArquitecturaProjectDocumentListItem {
   docType: string;
   title: string;
   fileUrl: string | null;
+  archivoId: string | null;
+  downloadUrl?: string | null;
   createdAt: string;
 }
 
@@ -42,11 +44,13 @@ export interface CreateArquitecturaProjectDocumentData {
   docType: ArquitecturaDocumentType;
   title: string;
   fileUrl?: string | null;
+  archivoId?: string | null;
 }
 
 export interface UpdateArquitecturaProjectDocumentData {
   title?: string;
   fileUrl?: string | null;
+  archivoId?: string | null;
   docType?: ArquitecturaDocumentType;
 }
 

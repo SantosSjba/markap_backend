@@ -10,16 +10,22 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiConsumes,
   ApiOperation,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
+import { GenArchivoService } from '../../../application/services/gen-archivo.service';
 import {
   INTERIOR_DOCUMENT_TYPES,
   type InteriorDocumentType,
@@ -43,6 +49,7 @@ export class InteriorismoDocumentsController {
     private readonly createUc: CreateInteriorProjectDocumentUseCase,
     private readonly updateUc: UpdateInteriorProjectDocumentUseCase,
     private readonly deleteUc: DeleteInteriorProjectDocumentUseCase,
+    private readonly genArchivo: GenArchivoService,
   ) {}
 
   private parseDocType(raw?: string): InteriorDocumentType {
@@ -53,6 +60,20 @@ export class InteriorismoDocumentsController {
       );
     }
     return v as InteriorDocumentType;
+  }
+
+  private async withDownloadUrl<T extends { archivoId: string | null; fileUrl: string | null }>(
+    row: T,
+  ): Promise<T & { downloadUrl: string | null }> {
+    if (row.archivoId) {
+      const downloadUrl = await this.genArchivo.resolveDownloadUrl(row.archivoId, null);
+      return { ...row, downloadUrl };
+    }
+    const url = row.fileUrl?.trim() || null;
+    if (url && /^https?:\/\//i.test(url)) {
+      return { ...row, downloadUrl: url };
+    }
+    return { ...row, downloadUrl: null };
   }
 
   @Get()
@@ -72,7 +93,7 @@ export class InteriorismoDocumentsController {
     @Query('search') search?: string,
     @Query('projectId') projectId?: string,
   ) {
-    return this.listUc.execute({
+    const result = await this.listUc.execute({
       applicationSlug: applicationSlug ?? 'interiorismo',
       docType: this.parseDocType(docType),
       page: Math.max(1, parseInt(page ?? '1', 10)),
@@ -80,21 +101,72 @@ export class InteriorismoDocumentsController {
       search: search?.trim() || undefined,
       projectId: projectId?.trim() || undefined,
     });
+    return {
+      ...result,
+      data: await Promise.all(result.data.map((row) => this.withDownloadUrl(row))),
+    };
+  }
+
+  @Post('upload')
+  @ApiOperation({ summary: 'Subir archivo y registrar documento en un proyecto' })
+  @ApiConsumes('multipart/form-data')
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @UseInterceptors(FileInterceptor('file'))
+  async upload(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body()
+    body: {
+      projectId?: string;
+      docType?: string;
+      title?: string;
+    },
+    @UploadedFile() file?: MulterUploadedFile,
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Archivo requerido');
+    }
+    const projectId = body.projectId?.trim();
+    const title = body.title?.trim();
+    if (!projectId || !title) {
+      throw new BadRequestException('projectId y title son obligatorios');
+    }
+    const docType = this.parseDocType(body.docType);
+    const slug = applicationSlug ?? 'interiorismo';
+    const archivo = await this.genArchivo.upload(
+      {
+        applicationSlug: slug,
+        module: 'interiorismo-documents',
+        entityType: 'interior_project',
+        entityId: projectId,
+        category: docType,
+      },
+      file,
+    );
+    const row = await this.createUc.execute({
+      applicationSlug: slug,
+      projectId,
+      docType,
+      title,
+      fileUrl: archivo.objectKey,
+      archivoId: archivo.id,
+    });
+    return this.withDownloadUrl(row);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Registrar documento en un proyecto' })
+  @ApiOperation({ summary: 'Registrar documento en un proyecto (JSON legacy)' })
   async create(
     @Body() dto: CreateInteriorProjectDocumentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createUc.execute({
+    const row = await this.createUc.execute({
       applicationSlug: applicationSlug ?? 'interiorismo',
       projectId: dto.projectId,
       docType: dto.docType,
       title: dto.title,
       fileUrl: dto.fileUrl,
     });
+    return this.withDownloadUrl(row);
   }
 
   @Patch(':id')
@@ -104,7 +176,8 @@ export class InteriorismoDocumentsController {
     @Body() dto: UpdateInteriorProjectDocumentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateUc.execute(id, applicationSlug ?? 'interiorismo', dto);
+    const row = await this.updateUc.execute(id, applicationSlug ?? 'interiorismo', dto);
+    return this.withDownloadUrl(row);
   }
 
   @Delete(':id')

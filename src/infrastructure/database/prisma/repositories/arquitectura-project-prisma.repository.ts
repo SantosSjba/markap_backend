@@ -285,11 +285,12 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
         status: p.status,
         scheduleItemId: p.scheduleItemId ?? null,
       })),
-      documents: (row.documents ?? []).map((d: { id: string; docType: string; title: string; fileUrl: string | null }) => ({
+      documents: (row.documents ?? []).map((d: { id: string; docType: string; title: string; fileUrl: string | null; archivoId: string | null }) => ({
         id: d.id,
         docType: d.docType,
         title: d.title,
         fileUrl: d.fileUrl,
+        archivoId: d.archivoId,
       })),
     };
   }

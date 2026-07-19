@@ -11,10 +11,14 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -22,6 +26,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
+import { GenArchivoService } from '../../../application/services/gen-archivo.service';
 import {
   CreateInteriorExecutionActualCostUseCase,
   CreateInteriorExecutionEvidenceUseCase,
@@ -67,7 +73,22 @@ export class InteriorismoExecutionController {
     private readonly createCostUc: CreateInteriorExecutionActualCostUseCase,
     private readonly deleteCostUc: DeleteInteriorExecutionActualCostUseCase,
     private readonly patchProgressUc: PatchInteriorExecutionProgressUseCase,
+    private readonly genArchivo: GenArchivoService,
   ) {}
+
+  private async withEvidenceDownloadUrl<
+    T extends { archivoId: string | null; fileUrl: string },
+  >(row: T): Promise<T & { downloadUrl: string | null }> {
+    if (row.archivoId) {
+      const downloadUrl = await this.genArchivo.resolveDownloadUrl(row.archivoId, null);
+      return { ...row, downloadUrl };
+    }
+    const url = row.fileUrl?.trim() || null;
+    if (url && /^https?:\/\//i.test(url)) {
+      return { ...row, downloadUrl: url };
+    }
+    return { ...row, downloadUrl: null };
+  }
 
   @Get('projects/:projectId/overview')
   @ApiOperation({ summary: 'Tablero ejecución: tareas, costos reales, evidencias, incidencias, vs presupuesto' })
@@ -76,7 +97,10 @@ export class InteriorismoExecutionController {
   async overview(@Param('projectId') projectId: string, @Query('applicationSlug') applicationSlug?: string) {
     const row = await this.overviewUc.execute(projectId, applicationSlug ?? 'interiorismo');
     if (!row) throw new NotFoundException('Proyecto no encontrado');
-    return row;
+    return {
+      ...row,
+      evidences: await Promise.all(row.evidences.map((e) => this.withEvidenceDownloadUrl(e))),
+    };
   }
 
   @Patch('projects/:projectId/progress')
@@ -141,21 +165,74 @@ export class InteriorismoExecutionController {
     await this.deleteTaskUc.execute(projectId, taskId, applicationSlug ?? 'interiorismo');
   }
 
+  @Post('projects/:projectId/evidences/upload')
+  @ApiOperation({ summary: 'Subir archivo y registrar evidencia' })
+  @ApiConsumes('multipart/form-data')
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadEvidence(
+    @Param('projectId') projectId: string,
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body()
+    body: {
+      taskId?: string;
+      kind?: string;
+      title?: string;
+      capturedAt?: string;
+    },
+    @UploadedFile() file?: MulterUploadedFile,
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Archivo requerido');
+    }
+    const kind = body.kind?.trim();
+    const title = body.title?.trim();
+    const capturedAtRaw = body.capturedAt?.trim();
+    if (!kind || !title || !capturedAtRaw) {
+      throw new BadRequestException('kind, title y capturedAt son obligatorios');
+    }
+    const capturedAt = new Date(capturedAtRaw);
+    if (Number.isNaN(capturedAt.getTime())) {
+      throw new BadRequestException('capturedAt inválido');
+    }
+    const slug = applicationSlug ?? 'interiorismo';
+    const archivo = await this.genArchivo.upload(
+      {
+        applicationSlug: slug,
+        module: 'interiorismo-execution',
+        entityType: 'interior_project',
+        entityId: projectId,
+        category: kind,
+      },
+      file,
+    );
+    const row = await this.createEvidenceUc.execute(projectId, slug, {
+      taskId: body.taskId?.trim() || null,
+      kind,
+      title,
+      fileUrl: archivo.objectKey,
+      archivoId: archivo.id,
+      capturedAt,
+    });
+    return this.withEvidenceDownloadUrl(row);
+  }
+
   @Post('projects/:projectId/evidences')
-  @ApiOperation({ summary: 'Registrar foto / evidencia' })
+  @ApiOperation({ summary: 'Registrar foto / evidencia (JSON legacy)' })
   async createEvidence(
     @Param('projectId') projectId: string,
     @Body() dto: CreateInteriorExecutionEvidenceDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     const capturedAt = new Date(dto.capturedAt);
-    return this.createEvidenceUc.execute(projectId, applicationSlug ?? 'interiorismo', {
+    const row = await this.createEvidenceUc.execute(projectId, applicationSlug ?? 'interiorismo', {
       taskId: dto.taskId ?? null,
       kind: dto.kind,
       title: dto.title,
       fileUrl: dto.fileUrl,
       capturedAt,
     });
+    return this.withEvidenceDownloadUrl(row);
   }
 
   @Delete('projects/:projectId/evidences/:evidenceId')

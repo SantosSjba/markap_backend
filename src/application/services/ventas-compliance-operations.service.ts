@@ -89,7 +89,22 @@ export class VentasComplianceOperationsService {
   ) {
     const applicationId = await this.resolveVentasApplicationId(applicationSlug);
     await this.ensureOperationScope(applicationId, propertyId, buyerClientId);
-    return this.compliance.getChecklist(applicationId, propertyId, buyerClientId);
+    const row = (await this.compliance.getChecklist(
+      applicationId,
+      propertyId,
+      buyerClientId,
+    )) as {
+      paymentEvidencePath?: string | null;
+      paymentEvidenceArchivoId?: string | null;
+    } | null;
+    if (!row) return null;
+    return {
+      ...row,
+      paymentEvidenceDownloadUrl: await this.genArchivo.resolveDownloadUrl(
+        row.paymentEvidenceArchivoId,
+        row.paymentEvidencePath,
+      ),
+    };
   }
 
   async upsertChecklist(
@@ -122,6 +137,7 @@ export class VentasComplianceOperationsService {
       bankName?: string | null;
       bankAccountHolder?: string | null;
       paymentEvidencePath?: string | null;
+      paymentEvidenceArchivoId?: string | null;
       fundsSourceDeclared?: boolean;
       beneficialOwnerDeclared?: boolean;
       kycRiskLevel?: string;
@@ -188,12 +204,43 @@ export class VentasComplianceOperationsService {
       bankName: body.bankName,
       bankAccountHolder: body.bankAccountHolder,
       paymentEvidencePath: body.paymentEvidencePath,
+      paymentEvidenceArchivoId: body.paymentEvidenceArchivoId,
       fundsSourceDeclared: body.fundsSourceDeclared,
       beneficialOwnerDeclared: body.beneficialOwnerDeclared,
       kycRiskLevel,
       complianceNotes: body.complianceNotes,
       nextActionAt: parseDateOrNull(body.nextActionAt),
     });
+  }
+
+  async uploadPaymentEvidence(
+    applicationSlug: string | undefined,
+    body: {
+      propertyId: string;
+      buyerClientId: string;
+      filePath: string;
+      archivoId: string;
+    },
+  ) {
+    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    await this.ensureOperationScope(applicationId, body.propertyId, body.buyerClientId);
+    const row = (await this.compliance.upsertChecklist({
+      applicationId,
+      propertyId: body.propertyId,
+      buyerClientId: body.buyerClientId,
+      paymentEvidencePath: body.filePath,
+      paymentEvidenceArchivoId: body.archivoId,
+    })) as {
+      paymentEvidencePath?: string | null;
+      paymentEvidenceArchivoId?: string | null;
+    };
+    return {
+      ...row,
+      paymentEvidenceDownloadUrl: await this.genArchivo.resolveDownloadUrl(
+        row.paymentEvidenceArchivoId,
+        row.paymentEvidencePath,
+      ),
+    };
   }
 
   async addDocument(
