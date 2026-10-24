@@ -293,7 +293,7 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
     });
 
     const detail = await this.findById(id);
-    if (!detail) throw new Error('ProduccionFurniture update: not found');
+    if (!detail) throw new Error('Mueble no encontrado.');
     return detail;
   }
 

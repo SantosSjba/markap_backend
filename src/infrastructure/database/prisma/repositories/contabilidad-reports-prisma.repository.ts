@@ -374,7 +374,7 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
       where: { applicationId, id: periodId },
       select: { year: true, month: true },
     });
-    if (!period) throw new Error('Period not found');
+    if (!period) throw new Error('Periodo contable no encontrado.');
     return period;
   }
 

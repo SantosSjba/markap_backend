@@ -667,7 +667,7 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
       where: { applicationId, id: periodId },
       select: { id: true, year: true, month: true, status: true },
     });
-    if (!period) throw new Error('Period not found');
+    if (!period) throw new Error('Periodo contable no encontrado.');
     return period;
   }
 

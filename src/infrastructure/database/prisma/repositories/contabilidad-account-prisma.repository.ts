@@ -165,8 +165,11 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
     const parent = await this.prisma.contabilidadAccount.findFirst({
       where: { applicationId, id: input.parentId },
     });
-    if (!parent) throw new Error('Parent not found');
-    if (parent.isMovement) throw new Error('Parent is movement account');
+    if (!parent) throw new Error('Cuenta padre no encontrada.');
+    if (parent.isMovement)
+      throw new Error(
+        'La cuenta padre es de movimiento y no puede tener subcuentas.',
+      );
 
     const row = await this.prisma.contabilidadAccount.create({
       data: {
@@ -192,7 +195,7 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
     const existing = await this.prisma.contabilidadAccount.findFirst({
       where: { applicationId, id },
     });
-    if (!existing) throw new Error('Account not found');
+    if (!existing) throw new Error('Cuenta contable no encontrada.');
 
     const data: Prisma.ContabilidadAccountUpdateInput = {};
     if (input.name !== undefined) data.name = input.name.trim();
@@ -218,7 +221,7 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
       data: { isActive: false },
     });
     if (row.applicationId !== applicationId)
-      throw new Error('Account not found');
+      throw new Error('Cuenta contable no encontrada.');
     return ContabilidadAccountPrismaMapper.toFlat(row);
   }
 

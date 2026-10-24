@@ -81,7 +81,7 @@ export class CreateClientUseCase {
     }
     if (!applicationId) {
       throw new BadRequestException(
-        'applicationId or applicationSlug is required',
+        'Falta indicar la aplicación (applicationSlug).',
       );
     }
 

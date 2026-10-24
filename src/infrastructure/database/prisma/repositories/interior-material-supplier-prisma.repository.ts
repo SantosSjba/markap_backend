@@ -225,7 +225,7 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
       },
     });
     const detail = await this.loadDetail(row.id);
-    if (!detail) throw new Error('Supplier detail missing');
+    if (!detail) throw new Error('No se pudo cargar el proveedor.');
     return detail;
   }
 
@@ -249,7 +249,7 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
       data: patch,
     });
     const detail = await this.loadDetail(id);
-    if (!detail) throw new Error('Supplier update: not found');
+    if (!detail) throw new Error('Proveedor no encontrado.');
     return detail;
   }
 
@@ -270,7 +270,7 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
       where: { id: catalogMaterialId },
     });
     if (!supplier || !material)
-      throw new Error('Supplier or material not found');
+      throw new Error('Proveedor o material no encontrado.');
     if (supplier.applicationId !== material.applicationId) {
       throw new Error(
         'Proveedor y material deben pertenecer a la misma aplicación',
@@ -287,7 +287,8 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     });
 
     const detail = await this.loadDetail(supplierId);
-    if (!detail) throw new Error('Supplier link: detail missing');
+    if (!detail)
+      throw new Error('No se pudo cargar el vínculo con el proveedor.');
     return detail;
   }
 
@@ -304,7 +305,7 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     const supplier = await this.prisma.interiorMaterialSupplier.findUnique({
       where: { id: supplierId },
     });
-    if (!supplier) throw new Error('Supplier not found');
+    if (!supplier) throw new Error('Proveedor no encontrado.');
 
     const catalogMaterialId: string | null =
       payload.catalogMaterialId?.trim() || null;
@@ -335,7 +336,7 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     });
 
     const detail = await this.loadDetail(supplierId);
-    if (!detail) throw new Error('Purchase: detail missing');
+    if (!detail) throw new Error('No se pudo cargar la compra registrada.');
     return detail;
   }
 }

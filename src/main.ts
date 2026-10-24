@@ -9,6 +9,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters';
+import { validationExceptionFactory } from './common/pipes/validation-messages';
 import { mkdir } from 'fs/promises';
 import { join } from 'path';
 
@@ -49,6 +50,7 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      exceptionFactory: validationExceptionFactory,
     }),
   );
 

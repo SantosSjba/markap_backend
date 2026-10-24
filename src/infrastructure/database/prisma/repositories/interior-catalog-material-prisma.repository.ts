@@ -206,7 +206,7 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
     });
 
     const detail = await this.findById(id);
-    if (!detail) throw new Error('InteriorCatalogMaterial update: not found');
+    if (!detail) throw new Error('Material no encontrado.');
     return detail;
   }
 

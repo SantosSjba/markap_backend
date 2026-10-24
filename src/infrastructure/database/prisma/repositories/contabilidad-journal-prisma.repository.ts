@@ -174,9 +174,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     const existing = await this.prisma.contabilidadJournalEntry.findFirst({
       where: { applicationId, id },
     });
-    if (!existing) throw new Error('Journal entry not found');
+    if (!existing) throw new Error('Asiento contable no encontrado.');
     if (existing.status !== CONTABILIDAD_JOURNAL_STATUS.DRAFT) {
-      throw new Error('Only draft entries can be updated');
+      throw new Error('Solo se pueden editar asientos en borrador.');
     }
 
     const normalized = input.lines
@@ -235,9 +235,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     const existing = await this.prisma.contabilidadJournalEntry.findFirst({
       where: { applicationId, id },
     });
-    if (!existing) throw new Error('Journal entry not found');
+    if (!existing) throw new Error('Asiento contable no encontrado.');
     if (existing.status !== CONTABILIDAD_JOURNAL_STATUS.DRAFT) {
-      throw new Error('Only draft entries can be deleted');
+      throw new Error('Solo se pueden eliminar asientos en borrador.');
     }
     await this.prisma.contabilidadJournalEntry.delete({ where: { id } });
   }
@@ -255,20 +255,22 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       where: { applicationId, id },
       include: { lines: true, period: true },
     });
-    if (!existing) throw new Error('Journal entry not found');
+    if (!existing) throw new Error('Asiento contable no encontrado.');
     if (existing.status !== CONTABILIDAD_JOURNAL_STATUS.DRAFT) {
-      throw new Error('Only draft entries can be posted');
+      throw new Error('Solo se pueden contabilizar asientos en borrador.');
     }
     if (existing.period.status !== 'OPEN') {
-      throw new Error('Period is closed');
+      throw new Error('El periodo contable está cerrado.');
     }
     if (existing.lines.length < 2)
-      throw new Error('At least two lines are required');
+      throw new Error('El asiento necesita al menos dos líneas.');
 
     const totalDebit = roundPenAmount(Number(existing.totalDebit));
     const totalCredit = roundPenAmount(Number(existing.totalCredit));
     if (!amountsBalanced(totalDebit, totalCredit) || totalDebit <= 0) {
-      throw new Error('Entry is not balanced');
+      throw new Error(
+        'El asiento no cuadra: el total del debe y del haber deben ser iguales.',
+      );
     }
 
     const row = await this.prisma.$transaction(async (tx) => {
@@ -307,12 +309,12 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       where: { applicationId, id },
       include: { lines: { orderBy: { lineNumber: 'asc' } }, period: true },
     });
-    if (!original) throw new Error('Journal entry not found');
+    if (!original) throw new Error('Asiento contable no encontrado.');
     if (original.status !== CONTABILIDAD_JOURNAL_STATUS.POSTED) {
-      throw new Error('Only posted entries can be reversed');
+      throw new Error('Solo se pueden revertir asientos contabilizados.');
     }
     if (original.period.status !== 'OPEN') {
-      throw new Error('Period is closed');
+      throw new Error('El periodo contable está cerrado.');
     }
 
     const entryNumber = await this.nextEntryNumber(
@@ -386,18 +388,21 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       input.entryDate,
     );
     if (normalized.length < 2)
-      throw new Error('At least two lines are required');
+      throw new Error('El asiento necesita al menos dos líneas.');
     const totals = this.computeTotals(normalized);
     if (!amountsBalanced(totals.debit, totals.credit) || totals.debit <= 0) {
-      throw new Error('Entry is not balanced');
+      throw new Error(
+        'El asiento no cuadra: el total del debe y del haber deben ser iguales.',
+      );
     }
 
     await this.lockPeriod(input.periodId);
     const period = await this.prisma.contabilidadPeriod.findFirst({
       where: { applicationId, id: input.periodId },
     });
-    if (!period) throw new Error('Period not found');
-    if (period.status !== 'OPEN') throw new Error('Period is closed');
+    if (!period) throw new Error('Periodo contable no encontrado.');
+    if (period.status !== 'OPEN')
+      throw new Error('El periodo contable está cerrado.');
 
     const entryNumber = await this.nextEntryNumber(
       period.legalEntityId,
@@ -462,7 +467,7 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       where: { applicationId, id: periodId },
       select: { legalEntityId: true },
     });
-    if (!period) throw new Error('Period not found');
+    if (!period) throw new Error('Periodo contable no encontrado.');
     return period.legalEntityId;
   }
 
@@ -495,7 +500,8 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
 
   private parseEntryDate(value: string): Date {
     const date = parseDateOnly(value);
-    if (Number.isNaN(date.getTime())) throw new Error('Invalid entry date');
+    if (Number.isNaN(date.getTime()))
+      throw new Error('Fecha del asiento no válida.');
     return date;
   }
 
@@ -536,7 +542,7 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     lines: ContabilidadJournalLineInput[],
     entryDate: string,
   ): Promise<NormalizedLine[]> {
-    if (!lines?.length) throw new Error('At least one line is required');
+    if (!lines?.length) throw new Error('Agrega al menos una línea.');
 
     const normalized: NormalizedLine[] = [];
 
@@ -544,10 +550,10 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       let debit = parsePenAmount(line.debit);
       let credit = parsePenAmount(line.credit);
       if (Number.isNaN(debit) || Number.isNaN(credit)) {
-        throw new Error('Invalid amount');
+        throw new Error('Importe no válido.');
       }
       if (debit > 0 && credit > 0)
-        throw new Error('Line cannot have both debit and credit');
+        throw new Error('Una línea no puede tener debe y haber a la vez.');
 
       const foreignCurrencyInput = line.foreignCurrency?.trim()
         ? normalizeCurrencyCode(line.foreignCurrency)
@@ -599,15 +605,16 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       const account = await this.prisma.contabilidadAccount.findFirst({
         where: { applicationId, id: line.accountId },
       });
-      if (!account || !account.isActive) throw new Error('Account not found');
+      if (!account || !account.isActive)
+        throw new Error('Cuenta contable no encontrada.');
       if (!account.isMovement)
-        throw new Error('Account must be a movement account');
+        throw new Error('La cuenta debe ser una cuenta de movimiento.');
 
       if (line.costCenterId) {
         const cc = await this.prisma.contabilidadCostCenter.findFirst({
           where: { applicationId, id: line.costCenterId, isActive: true },
         });
-        if (!cc) throw new Error('Cost center not found');
+        if (!cc) throw new Error('Centro de costo no encontrado.');
       }
 
       normalized.push({

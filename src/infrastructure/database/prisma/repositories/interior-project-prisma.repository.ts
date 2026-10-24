@@ -174,7 +174,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       },
     });
     const detail = await this.findById(row.id);
-    if (!detail) throw new Error('InteriorProject create: detail not found');
+    if (!detail) throw new Error('No se pudo cargar el proyecto creado.');
     return detail;
   }
 
@@ -258,7 +258,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       data: patch,
     });
     const detail = await this.findById(id);
-    if (!detail) throw new Error('InteriorProject update: detail not found');
+    if (!detail) throw new Error('Proyecto no encontrado.');
     return detail;
   }
 

@@ -172,8 +172,7 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
       },
     });
     const detail = await this.findById(row.id);
-    if (!detail)
-      throw new Error('ArquitecturaProject create: detail not found');
+    if (!detail) throw new Error('No se pudo cargar el proyecto creado.');
     return detail;
   }
 
@@ -257,8 +256,7 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
       data: patch,
     });
     const detail = await this.findById(id);
-    if (!detail)
-      throw new Error('ArquitecturaProject update: detail not found');
+    if (!detail) throw new Error('Proyecto no encontrado.');
     return detail;
   }
 
@@ -326,23 +324,40 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
       estimatedBudget: num(row.estimatedBudget),
       projectedCost: num(row.projectedCost),
       expectedMargin: num(row.expectedMargin),
-      payments: (row.payments ?? []).map((p: { id: string; paidAt: Date; amount: Prisma.Decimal; concept: string; paymentType: string; status: string; scheduleItemId: string | null }) => ({
-        id: p.id,
-        paidAt: p.paidAt.toISOString(),
-        amount: num(p.amount) ?? 0,
-        concept: p.concept,
-        paymentType: p.paymentType ?? 'OTHER',
-        status: p.status,
-        scheduleItemId: p.scheduleItemId ?? null,
-      })),
-      documents: (row.documents ?? []).map((d: { id: string; docType: string; title: string; fileUrl: string | null; archivoId: string | null }) => ({
-        id: d.id,
-        docType: d.docType,
-        title: d.title,
-        fileUrl: d.fileUrl,
-        archivoId: d.archivoId,
-      })),
-
+      payments: (row.payments ?? []).map(
+        (p: {
+          id: string;
+          paidAt: Date;
+          amount: Prisma.Decimal;
+          concept: string;
+          paymentType: string;
+          status: string;
+          scheduleItemId: string | null;
+        }) => ({
+          id: p.id,
+          paidAt: p.paidAt.toISOString(),
+          amount: num(p.amount) ?? 0,
+          concept: p.concept,
+          paymentType: p.paymentType ?? 'OTHER',
+          status: p.status,
+          scheduleItemId: p.scheduleItemId ?? null,
+        }),
+      ),
+      documents: (row.documents ?? []).map(
+        (d: {
+          id: string;
+          docType: string;
+          title: string;
+          fileUrl: string | null;
+          archivoId: string | null;
+        }) => ({
+          id: d.id,
+          docType: d.docType,
+          title: d.title,
+          fileUrl: d.fileUrl,
+          archivoId: d.archivoId,
+        }),
+      ),
     };
   }
 }

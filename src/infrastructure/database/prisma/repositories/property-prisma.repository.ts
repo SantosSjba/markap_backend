@@ -76,7 +76,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
       return created;
     });
     const full = await this.findById(property.id);
-    if (!full) throw new Error('Property create failed');
+    if (!full) throw new Error('No se pudo crear la propiedad.');
     return full;
   }
 
@@ -277,7 +277,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
       where: { id: data.id, deletedAt: null },
     });
     if (!existing) {
-      const err = new Error('Property not found');
+      const err = new Error('Propiedad no encontrada.');
       (err as { code?: string }).code = 'NOT_FOUND';
       throw err;
     }
@@ -381,7 +381,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
       }
     });
     const full = await this.findById(data.id);
-    if (!full) throw new Error('Property update failed');
+    if (!full) throw new Error('No se pudo actualizar la propiedad.');
     return full;
   }
 

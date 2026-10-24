@@ -208,8 +208,7 @@ export class ArquitecturaCatalogMaterialPrismaRepository implements Arquitectura
     });
 
     const detail = await this.findById(id);
-    if (!detail)
-      throw new Error('ArquitecturaCatalogMaterial update: not found');
+    if (!detail) throw new Error('Material no encontrado.');
     return detail;
   }
 

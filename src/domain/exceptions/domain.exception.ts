@@ -12,12 +12,57 @@ export abstract class DomainException extends Error {
 /**
  * Exception thrown when a requested entity is not found
  */
+/** Nombres legibles de las entidades para los mensajes que ve el usuario. */
+const ENTITY_LABELS: Record<string, string> = {
+  Application: 'La aplicación',
+  ContabilidadPeriod: 'El periodo contable',
+  Period: 'El periodo',
+  Client: 'El cliente',
+  SaleProcess: 'El proceso de venta',
+  Property: 'La propiedad',
+  Agent: 'El agente',
+  Role: 'El rol',
+  ContabilidadJournalEntry: 'El asiento contable',
+  SaleClosing: 'El cierre de venta',
+  Menu: 'El menú',
+  ContabilidadAccount: 'La cuenta contable',
+  Rental: 'El contrato de alquiler',
+  InteriorProject: 'El proyecto',
+  ArquitecturaProject: 'El proyecto',
+  ContabilidadJournalTemplate: 'La plantilla de asiento',
+  SaleSeparation: 'La separación',
+  ContabilidadSalesInvoice: 'El comprobante de venta',
+  ContabilidadCostCenter: 'El centro de costo',
+  User: 'El usuario',
+  SaleProcessReminder: 'El recordatorio',
+  SaleCommissionPaymentPart: 'La cuota de comisión',
+  SaleCommission: 'La comisión',
+  SaleBuyerPayment: 'El pago del comprador',
+  ContabilidadSupplier: 'El proveedor',
+  ContabilidadPurchaseInvoice: 'La factura de compra',
+  ContabilidadInventoryItem: 'El ítem de inventario',
+  ContabilidadCustomer: 'El cliente',
+  ContabilidadCashBox: 'La caja',
+  ContabilidadBankAccount: 'La cuenta bancaria',
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  code: 'código',
+  slug: 'identificador',
+  email: 'correo',
+};
+
+function entityLabel(entity: string): string {
+  return ENTITY_LABELS[entity] ?? 'El registro';
+}
+
 export class EntityNotFoundException extends DomainException {
+  // El identificador no se muestra: no aporta al usuario y expone datos internos.
   constructor(entity: string, identifier?: string | number) {
-    const message = identifier
-      ? `${entity} with identifier "${identifier}" not found`
-      : `${entity} not found`;
-    super(message);
+    void identifier;
+    super(
+      `${entityLabel(entity)} no existe o fue eliminado. Actualiza la página e inténtalo nuevamente.`,
+    );
   }
 }
 
@@ -26,7 +71,12 @@ export class EntityNotFoundException extends DomainException {
  */
 export class DuplicateEntityException extends DomainException {
   constructor(entity: string, field: string, value: string | number) {
-    super(`${entity} with ${field} "${value}" already exists`);
+    const indefinite = entityLabel(entity)
+      .replace(/^El /, 'un ')
+      .replace(/^La /, 'una ');
+    super(
+      `Ya existe ${indefinite} con el ${FIELD_LABELS[field] ?? field} "${value}".`,
+    );
   }
 }
 
@@ -47,7 +97,7 @@ export class ValidationException extends DomainException {
 
   constructor(errors: string | string[]) {
     const errorArray = Array.isArray(errors) ? errors : [errors];
-    super(`Validation failed: ${errorArray.join(', ')}`);
+    super(`Datos no válidos: ${errorArray.join(', ')}`);
     this.errors = errorArray;
   }
 }

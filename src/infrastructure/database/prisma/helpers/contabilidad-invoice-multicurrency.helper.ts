@@ -115,7 +115,7 @@ export async function resolveTreasuryPenAmount(
 }> {
   const penFromInput = parsePenAmount(input.amount);
   if (Number.isNaN(penFromInput) || penFromInput <= 0)
-    throw new Error('Invalid amount');
+    throw new Error('Importe no válido.');
 
   if (input.sourceType !== 'BANK' || !input.bankAccountId) {
     return {
@@ -129,7 +129,7 @@ export async function resolveTreasuryPenAmount(
   const bank = await prisma.contabilidadBankAccount.findFirst({
     where: { applicationId, id: input.bankAccountId, isActive: true },
   });
-  if (!bank) throw new Error('Bank account not found');
+  if (!bank) throw new Error('Cuenta bancaria no encontrada.');
 
   const currencyCode = normalizeCurrencyCode(bank.currency);
   if (currencyCode === FUNCTIONAL_CURRENCY) {

@@ -151,7 +151,7 @@ export class ProduccionFurnitureCostingPrismaRepository implements ProduccionFur
     payload: UpdateFurnitureCostingPayload,
   ): Promise<FurnitureCostingDetail> {
     const exists = await this.loadFurniture(furnitureId, applicationSlug);
-    if (!exists) throw new Error('Furniture not found for costing');
+    if (!exists) throw new Error('Mueble no encontrado para el costeo.');
 
     await this.prisma.$transaction(async (tx) => {
       if (payload.bomUnitCosts?.length) {
@@ -222,7 +222,7 @@ export class ProduccionFurnitureCostingPrismaRepository implements ProduccionFur
     });
 
     const detail = await this.getCosting(furnitureId, applicationSlug);
-    if (!detail) throw new Error('Costing update: not found');
+    if (!detail) throw new Error('Costeo no encontrado.');
     return detail;
   }
 
@@ -232,7 +232,7 @@ export class ProduccionFurnitureCostingPrismaRepository implements ProduccionFur
     payload: CreateCostingSnapshotPayload,
   ): Promise<CostingSnapshotDto> {
     const detail = await this.getCosting(furnitureId, applicationSlug);
-    if (!detail) throw new Error('Furniture not found for snapshot');
+    if (!detail) throw new Error('Mueble no encontrado.');
 
     const row = await this.prisma.produccionFurnitureCostSnapshot.create({
       data: {

@@ -42,7 +42,7 @@ export class CreateAgentUseCase {
       applicationId = app.id;
     }
     if (!applicationId) {
-      throw new Error('applicationId or applicationSlug is required');
+      throw new Error('Falta indicar la aplicación (applicationSlug).');
     }
     const data: CreateAgentData = {
       applicationId,

@@ -40,7 +40,7 @@ export class CreateMenuUseCase {
     }
 
     if (!applicationId) {
-      throw new Error('applicationId or applicationSlug is required');
+      throw new Error('Falta indicar la aplicación (applicationSlug).');
     }
 
     // Normalize parentId: empty string or undefined -> null

@@ -72,7 +72,7 @@ export class CreatePropertyUseCase {
       applicationId = app.id;
     }
     if (!applicationId) {
-      throw new Error('applicationId or applicationSlug is required');
+      throw new Error('Falta indicar la aplicación (applicationSlug).');
     }
     const app = await this.applicationRepository.findById(applicationId);
     if (!app) {

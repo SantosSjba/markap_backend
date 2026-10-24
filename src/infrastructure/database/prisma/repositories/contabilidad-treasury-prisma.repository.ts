@@ -172,7 +172,7 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       include: cashInclude,
     });
     if (row.applicationId !== applicationId)
-      throw new Error('Cash box not found');
+      throw new Error('Caja no encontrada.');
     return ContabilidadTreasuryPrismaMapper.toCashBox(
       row,
       await this.computeCashBalance(applicationId, row.id),
@@ -250,7 +250,7 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       include: bankInclude,
     });
     if (row.applicationId !== applicationId)
-      throw new Error('Bank account not found');
+      throw new Error('Cuenta bancaria no encontrada.');
     return ContabilidadTreasuryPrismaMapper.toBankAccount(
       row,
       await this.computeBankBalance(applicationId, row.id),
@@ -315,7 +315,8 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       movementDate: input.movementDate,
     });
     const amount = fx.penAmount;
-    if (Number.isNaN(amount) || amount <= 0) throw new Error('Invalid amount');
+    if (Number.isNaN(amount) || amount <= 0)
+      throw new Error('Importe no válido.');
 
     const ledgerAccountId = await this.resolveLedgerAccountId(
       applicationId,
@@ -378,7 +379,8 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     createdBy?: string | null,
   ): Promise<ContabilidadTreasuryMovementDto[]> {
     const amount = parsePenAmount(input.amount);
-    if (Number.isNaN(amount) || amount <= 0) throw new Error('Invalid amount');
+    if (Number.isNaN(amount) || amount <= 0)
+      throw new Error('Importe no válido.');
 
     const fromAccountId = await this.resolveTransferAccountId(applicationId, {
       type: input.fromType,
@@ -391,7 +393,7 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       bankAccountId: input.toBankAccountId,
     });
     if (fromAccountId === toAccountId)
-      throw new Error('Source and target must differ');
+      throw new Error('El origen y el destino deben ser distintos.');
 
     const journal = await this.journal.createAndPost(
       applicationId,
@@ -489,7 +491,7 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
   ): Promise<ContabilidadBankReconciliationDto> {
     const statementBalance = parsePenAmount(input.statementBalance);
     if (Number.isNaN(statementBalance))
-      throw new Error('Invalid statement balance');
+      throw new Error('Saldo del extracto no válido.');
 
     const row = await this.prisma.contabilidadBankReconciliation.upsert({
       where: {
@@ -527,9 +529,9 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       await this.prisma.contabilidadBankReconciliation.findFirst({
         where: { applicationId, id: reconciliationId },
       });
-    if (!reconciliation) throw new Error('Reconciliation not found');
+    if (!reconciliation) throw new Error('Conciliación no encontrada.');
     if (reconciliation.status === CONTABILIDAD_RECONCILIATION_STATUS.CLOSED) {
-      throw new Error('Reconciliation is closed');
+      throw new Error('La conciliación está cerrada.');
     }
 
     const movement = await this.prisma.contabilidadTreasuryMovement.findFirst({
@@ -540,7 +542,7 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
         periodId: reconciliation.periodId,
       },
     });
-    if (!movement) throw new Error('Movement not found');
+    if (!movement) throw new Error('Movimiento no encontrado.');
 
     await this.prisma.contabilidadTreasuryMovement.update({
       where: { id: movementId },
@@ -554,7 +556,7 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       where: { id: reconciliationId },
       include: { bankAccount: { select: { code: true, bankName: true } } },
     });
-    if (!row) throw new Error('Reconciliation not found');
+    if (!row) throw new Error('Conciliación no encontrada.');
     return this.mapReconciliation(applicationId, row);
   }
 
@@ -655,18 +657,19 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     input: CreateTreasuryMovementInput,
   ): Promise<string> {
     if (input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH) {
-      if (!input.cashBoxId) throw new Error('Cash box required');
+      if (!input.cashBoxId) throw new Error('Selecciona una caja.');
       const box = await this.prisma.contabilidadCashBox.findFirst({
         where: { applicationId, id: input.cashBoxId, isActive: true },
       });
-      if (!box) throw new Error('Cash box not found');
+      if (!box) throw new Error('Caja no encontrada.');
       return box.accountId;
     }
-    if (!input.bankAccountId) throw new Error('Bank account required');
+    if (!input.bankAccountId)
+      throw new Error('Selecciona una cuenta bancaria.');
     const bank = await this.prisma.contabilidadBankAccount.findFirst({
       where: { applicationId, id: input.bankAccountId, isActive: true },
     });
-    if (!bank) throw new Error('Bank account not found');
+    if (!bank) throw new Error('Cuenta bancaria no encontrada.');
     return bank.accountId;
   }
 
@@ -679,18 +682,19 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     },
   ): Promise<string> {
     if (input.type === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH) {
-      if (!input.cashBoxId) throw new Error('Cash box required');
+      if (!input.cashBoxId) throw new Error('Selecciona una caja.');
       const box = await this.prisma.contabilidadCashBox.findFirst({
         where: { applicationId, id: input.cashBoxId, isActive: true },
       });
-      if (!box) throw new Error('Cash box not found');
+      if (!box) throw new Error('Caja no encontrada.');
       return box.accountId;
     }
-    if (!input.bankAccountId) throw new Error('Bank account required');
+    if (!input.bankAccountId)
+      throw new Error('Selecciona una cuenta bancaria.');
     const bank = await this.prisma.contabilidadBankAccount.findFirst({
       where: { applicationId, id: input.bankAccountId, isActive: true },
     });
-    if (!bank) throw new Error('Bank account not found');
+    if (!bank) throw new Error('Cuenta bancaria no encontrada.');
     return bank.accountId;
   }
 }

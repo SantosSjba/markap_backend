@@ -71,7 +71,7 @@ export class ContabilidadPeriodPrismaRepository implements ContabilidadPeriodRep
       data: { status },
     });
     if (row.applicationId !== applicationId)
-      throw new Error('Period not found');
+      throw new Error('Periodo contable no encontrado.');
     return ContabilidadPeriodPrismaMapper.toPeriod(row);
   }
 
@@ -163,7 +163,7 @@ export class ContabilidadPeriodPrismaRepository implements ContabilidadPeriodRep
       data,
     });
     if (row.applicationId !== applicationId)
-      throw new Error('Cost center not found');
+      throw new Error('Centro de costo no encontrado.');
     return ContabilidadPeriodPrismaMapper.toCostCenter(row);
   }
 
@@ -176,7 +176,7 @@ export class ContabilidadPeriodPrismaRepository implements ContabilidadPeriodRep
       data: { isActive: false },
     });
     if (row.applicationId !== applicationId)
-      throw new Error('Cost center not found');
+      throw new Error('Centro de costo no encontrado.');
     return ContabilidadPeriodPrismaMapper.toCostCenter(row);
   }
 

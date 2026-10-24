@@ -9,6 +9,7 @@
  * Real timestamps (createdAt, postedAt, …) stay as instants; format them with
  * `timeZone: America/Lima` at the edges that need human display.
  */
+import { BusinessRuleException } from '@domain/exceptions';
 
 export const PERU_TIME_ZONE = 'America/Lima';
 export const PERU_LOCALE = 'es-PE';
@@ -29,6 +30,19 @@ export function todayDateOnlyLima(now: Date = new Date()): string {
   }).format(now);
 }
 
+/** Fecha mal enviada por el cliente: error de datos (4xx), no del servidor. */
+function invalidDate(value: unknown): BusinessRuleException {
+  const text =
+    typeof value === 'string' || typeof value === 'number'
+      ? String(value).trim()
+      : '';
+  return new BusinessRuleException(
+    text
+      ? `La fecha "${text}" no es válida. Usa el formato AAAA-MM-DD.`
+      : 'Falta indicar la fecha.',
+  );
+}
+
 /**
  * Parse a date-only input (`YYYY-MM-DD` or ISO starting with that) into a Date
  * stored at UTC noon of that civil day.
@@ -39,7 +53,7 @@ export function parseDateOnly(input: string | Date): Date {
   }
   const m = String(input).trim().match(YMD_RE);
   if (!m) {
-    throw new Error(`Invalid date-only value: ${String(input)}`);
+    throw invalidDate(input);
   }
   return new Date(
     Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0),
@@ -58,7 +72,7 @@ export function formatDateOnly(value: Date | string): string {
     value = new Date(value);
   }
   if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
-    throw new Error(`Invalid date value: ${String(value)}`);
+    throw invalidDate(value);
   }
   return `${value.getUTCFullYear()}-${pad2(value.getUTCMonth() + 1)}-${pad2(value.getUTCDate())}`;
 }

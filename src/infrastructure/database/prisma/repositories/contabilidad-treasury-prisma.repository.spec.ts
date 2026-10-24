@@ -37,7 +37,7 @@ describe('Conciliación bancaria: aislamiento de periodos', () => {
     );
     await expect(
       repo.toggleMovementReconciled('app', 'reconciliation', 'movement', true),
-    ).rejects.toThrow('Movement not found');
+    ).rejects.toThrow('Movimiento no encontrado.');
     expect(update).not.toHaveBeenCalled();
   });
 });

@@ -258,7 +258,7 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
       include: supplierInclude,
     });
     if (row.applicationId !== applicationId)
-      throw new Error('Supplier not found');
+      throw new Error('Proveedor no encontrado.');
     return ContabilidadPurchasesPrismaMapper.toSupplier(
       row,
       computeSupplierBalance(row.invoices, row.creditNotes, row.debitNotes),

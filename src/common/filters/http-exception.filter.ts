@@ -5,6 +5,7 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
 import {
@@ -20,8 +21,13 @@ import {
   UserNotFoundException,
 } from '@domain/exceptions';
 
+const SERVER_ERROR_MESSAGE =
+  'Ocurrió un problema en el servidor y no se pudo completar la operación. Inténtalo nuevamente; si el problema continúa, comunícate con soporte.';
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -50,6 +56,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
         /Invalid `.*` invocation/.test(message)
       )
         message = 'Operación no válida.';
+      // Respuestas propias de Nest/Express que llegan en inglés.
+      if (typeof message === 'string' && /^Cannot [A-Z]+ \//.test(message))
+        message = 'El recurso solicitado no existe.';
+      if (status === Number(HttpStatus.PAYLOAD_TOO_LARGE))
+        message =
+          'El archivo o los datos enviados superan el tamaño permitido.';
+      if (
+        status === Number(HttpStatus.UNAUTHORIZED) &&
+        message === 'Unauthorized'
+      )
+        message = 'Tu sesión expiró o no es válida. Inicia sesión nuevamente.';
+      if (
+        status === Number(HttpStatus.FORBIDDEN) &&
+        message === 'Forbidden resource'
+      )
+        message = 'No tienes permisos para realizar esta acción.';
     } else if (
       exception instanceof EntityNotFoundException ||
       exception instanceof UserNotFoundException
@@ -95,15 +117,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
             : exception.code === 'P2025'
               ? 'Registro no encontrado.'
               : 'Conflicto de actualización. Vuelve a intentarlo.';
-    } else if (exception instanceof Error) {
-      status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message =
-        process.env.NODE_ENV === 'production'
-          ? 'Internal server error'
-          : exception.message;
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = 'Internal server error';
+      message = SERVER_ERROR_MESSAGE;
+    }
+
+    // El detalle técnico queda en el registro del servidor, nunca en la respuesta.
+    if (status >= 500) {
+      const request = ctx.getRequest<{ method?: string; url?: string }>();
+      this.logger.error(
+        `${request?.method ?? ''} ${request?.url ?? ''} → ${status}`,
+        exception instanceof Error ? exception.stack : String(exception),
+      );
+      message = SERVER_ERROR_MESSAGE;
     }
 
     response.status(status).json({
