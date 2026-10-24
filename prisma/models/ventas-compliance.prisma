@@ -58,6 +58,7 @@ model SaleComplianceChecklist {
   @@index([propertyId])
   @@index([buyerClientId])
   @@index([sunarpStatus])
+  @@index([paymentEvidenceArchivoId])
   @@map("sale_compliance_checklists")
 }
 
