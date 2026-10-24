@@ -31,7 +31,9 @@ COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./
 COPY --from=build /app/node_modules ./node_modules
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x ./docker-entrypoint.sh \
+# Strip CRLF (Windows) so shebang works on Alpine/Linux
+RUN sed -i 's/\r$//' ./docker-entrypoint.sh \
+    && chmod +x ./docker-entrypoint.sh \
     && mkdir -p uploads
 EXPOSE 4001
 ENTRYPOINT ["./docker-entrypoint.sh"]

@@ -27,6 +27,11 @@ model GenArchivo {
   saleClosingContracts        SaleClosing[]              @relation("ClosingContractArchivo")
   saleCompliancePaymentProofs SaleComplianceChecklist[]  @relation("CompliancePaymentEvidenceArchivo")
 
+  arquitecturaProjectDocuments    ArquitecturaProjectDocument[]  @relation("ArquitecturaProjectDocumentArchivo")
+  interiorProjectDocuments        InteriorProjectDocument[]      @relation("InteriorProjectDocumentArchivo")
+  arquitecturaExecutionEvidences  ArquitecturaExecutionEvidence[] @relation("ArquitecturaExecutionEvidenceArchivo")
+  interiorExecutionEvidences      InteriorExecutionEvidence[]    @relation("InteriorExecutionEvidenceArchivo")
+
   @@unique([bucket, objectKey])
   @@index([applicationSlug])
   @@index([applicationId])

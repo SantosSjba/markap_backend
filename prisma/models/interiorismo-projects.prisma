@@ -96,13 +96,17 @@ model InteriorProjectDocument {
   projectId String  @map("project_id")
   docType   String  @map("doc_type")
   title     String  @map("title")
+  /// objectKey (MinIO) o URL legacy http(s)
   fileUrl   String? @map("file_url") @db.Text
+  archivoId String? @map("archivo_id")
 
   createdAt DateTime @default(now()) @map("created_at")
 
   project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  archivo GenArchivo?     @relation("InteriorProjectDocumentArchivo", fields: [archivoId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
+  @@index([archivoId])
   @@map("interior_project_documents")
 }
 

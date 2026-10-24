@@ -1,5 +1,9 @@
 /** Elemento multimedia en ficha de propiedad. */
-export type PropertyMediaItem = { url: string; kind: 'photo' | 'plan' };
+export type PropertyMediaItem = {
+  url: string;
+  kind: 'photo' | 'plan';
+  archivoId?: string;
+};
 
 /** Propietario vinculado al inmueble (tabla property_owners). */
 export type PropertyOwnerSummary = {

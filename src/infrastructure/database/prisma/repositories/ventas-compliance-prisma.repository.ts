@@ -132,11 +132,11 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
           bankOperationNumber: data.bankOperationNumber,
         }),
         ...(data.bankName !== undefined && { bankName: data.bankName }),
-        ...(data.bankAccountHolder !== undefined && {
-          bankAccountHolder: data.bankAccountHolder,
-        }),
-        ...(data.paymentEvidencePath !== undefined && {
-          paymentEvidencePath: data.paymentEvidencePath,
+        ...(data.bankAccountHolder !== undefined && { bankAccountHolder: data.bankAccountHolder }),
+        ...(data.paymentEvidencePath !== undefined && { paymentEvidencePath: data.paymentEvidencePath }),
+        ...(data.paymentEvidenceArchivoId !== undefined && {
+          paymentEvidenceArchivoId: data.paymentEvidenceArchivoId,
+
         }),
         ...(data.fundsSourceDeclared !== undefined && {
           fundsSourceDeclared: data.fundsSourceDeclared,
@@ -220,11 +220,11 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
           bankOperationNumber: data.bankOperationNumber,
         }),
         ...(data.bankName !== undefined && { bankName: data.bankName }),
-        ...(data.bankAccountHolder !== undefined && {
-          bankAccountHolder: data.bankAccountHolder,
-        }),
-        ...(data.paymentEvidencePath !== undefined && {
-          paymentEvidencePath: data.paymentEvidencePath,
+        ...(data.bankAccountHolder !== undefined && { bankAccountHolder: data.bankAccountHolder }),
+        ...(data.paymentEvidencePath !== undefined && { paymentEvidencePath: data.paymentEvidencePath }),
+        ...(data.paymentEvidenceArchivoId !== undefined && {
+          paymentEvidenceArchivoId: data.paymentEvidenceArchivoId,
+
         }),
         ...(data.fundsSourceDeclared !== undefined && {
           fundsSourceDeclared: data.fundsSourceDeclared,

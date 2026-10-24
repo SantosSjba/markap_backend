@@ -341,6 +341,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         docType: d.docType,
         title: d.title,
         fileUrl: d.fileUrl,
+        archivoId: d.archivoId ?? null,
       })),
       payments: (row.payments ?? []).map((p) => ({
         id: p.id,

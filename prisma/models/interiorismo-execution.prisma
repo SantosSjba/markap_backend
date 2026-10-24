@@ -34,16 +34,20 @@ model InteriorExecutionEvidence {
   taskId      String?  @map("task_id")
   kind        String   @map("kind")
   title       String   @map("title")
+  /// objectKey (MinIO) o URL legacy http(s)
   fileUrl     String   @map("file_url") @db.Text
+  archivoId   String?  @map("archivo_id")
   capturedAt  DateTime @map("captured_at")
 
   createdAt DateTime @default(now()) @map("created_at")
 
   project InteriorProject        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   task    InteriorExecutionTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  archivo GenArchivo?            @relation("InteriorExecutionEvidenceArchivo", fields: [archivoId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([taskId])
+  @@index([archivoId])
   @@map("interior_execution_evidences")
 }
 

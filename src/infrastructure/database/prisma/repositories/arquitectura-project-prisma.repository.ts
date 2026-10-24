@@ -326,38 +326,23 @@ export class ArquitecturaProjectPrismaRepository implements ArquitecturaProjectR
       estimatedBudget: num(row.estimatedBudget),
       projectedCost: num(row.projectedCost),
       expectedMargin: num(row.expectedMargin),
-      payments: (row.payments ?? []).map(
-        (p: {
-          id: string;
-          paidAt: Date;
-          amount: Prisma.Decimal;
-          concept: string;
-          paymentType: string;
-          status: string;
-          scheduleItemId: string | null;
-        }) => ({
-          id: p.id,
-          paidAt: p.paidAt.toISOString(),
-          amount: num(p.amount) ?? 0,
-          concept: p.concept,
-          paymentType: p.paymentType ?? 'OTHER',
-          status: p.status,
-          scheduleItemId: p.scheduleItemId ?? null,
-        }),
-      ),
-      documents: (row.documents ?? []).map(
-        (d: {
-          id: string;
-          docType: string;
-          title: string;
-          fileUrl: string | null;
-        }) => ({
-          id: d.id,
-          docType: d.docType,
-          title: d.title,
-          fileUrl: d.fileUrl,
-        }),
-      ),
+      payments: (row.payments ?? []).map((p: { id: string; paidAt: Date; amount: Prisma.Decimal; concept: string; paymentType: string; status: string; scheduleItemId: string | null }) => ({
+        id: p.id,
+        paidAt: p.paidAt.toISOString(),
+        amount: num(p.amount) ?? 0,
+        concept: p.concept,
+        paymentType: p.paymentType ?? 'OTHER',
+        status: p.status,
+        scheduleItemId: p.scheduleItemId ?? null,
+      })),
+      documents: (row.documents ?? []).map((d: { id: string; docType: string; title: string; fileUrl: string | null; archivoId: string | null }) => ({
+        id: d.id,
+        docType: d.docType,
+        title: d.title,
+        fileUrl: d.fileUrl,
+        archivoId: d.archivoId,
+      })),
+
     };
   }
 }

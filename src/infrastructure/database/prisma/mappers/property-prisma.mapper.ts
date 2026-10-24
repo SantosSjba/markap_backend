@@ -22,7 +22,9 @@ export class PropertyPrismaMapper {
       const kind =
         o.kind === 'plan' ? 'plan' : o.kind === 'photo' ? 'photo' : null;
       if (!url || !kind) continue;
-      out.push({ url, kind });
+      const archivoId =
+        typeof o.archivoId === 'string' && o.archivoId.trim() ? o.archivoId.trim() : undefined;
+      out.push(archivoId ? { url, kind, archivoId } : { url, kind });
     }
     return out.length ? out : null;
   }
@@ -40,10 +42,13 @@ export class PropertyPrismaMapper {
   ): Prisma.InputJsonValue | typeof Prisma.JsonNull {
     if (items == null) return Prisma.JsonNull;
     const cleaned = items
-      .map((m) => ({
-        url: typeof m.url === 'string' ? m.url.trim() : '',
-        kind: m.kind === 'plan' ? 'plan' : 'photo',
-      }))
+      .map((m) => {
+        const url = typeof m.url === 'string' ? m.url.trim() : '';
+        const kind = m.kind === 'plan' ? 'plan' : 'photo';
+        const archivoId =
+          typeof m.archivoId === 'string' && m.archivoId.trim() ? m.archivoId.trim() : undefined;
+        return archivoId ? { url, kind, archivoId } : { url, kind };
+      })
       .filter((m) => m.url.length > 0);
     return cleaned.length ? cleaned : Prisma.JsonNull;
   }

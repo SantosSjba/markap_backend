@@ -1,5 +1,6 @@
 import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -10,15 +11,20 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
   CreateInteriorCatalogMaterialUseCase,
@@ -29,6 +35,9 @@ import {
 } from '../../../application/use-cases/interior-catalog-materials';
 import { CreateInteriorCatalogMaterialDto } from '../dtos/interiorismo-catalog-materials/create-catalog-material.dto';
 import { UpdateInteriorCatalogMaterialDto } from '../dtos/interiorismo-catalog-materials/update-catalog-material.dto';
+import { GenArchivoService } from '../../../application/services/gen-archivo.service';
+import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
+import { randomUUID } from 'crypto';
 
 @ApiTags('Interiorismo — Materiales (catálogo)')
 @Controller('interiorismo-catalog-materials')
@@ -41,6 +50,7 @@ export class InteriorismoCatalogMaterialsController {
     private readonly createUc: CreateInteriorCatalogMaterialUseCase,
     private readonly updateUc: UpdateInteriorCatalogMaterialUseCase,
     private readonly deleteUc: DeleteInteriorCatalogMaterialUseCase,
+    private readonly genArchivo: GenArchivoService,
   ) {}
 
   @Get()
@@ -64,6 +74,63 @@ export class InteriorismoCatalogMaterialsController {
       search: search?.trim() || undefined,
       category: category?.trim() || undefined,
     });
+  }
+
+  @Post('upload')
+  @ApiOperation({
+    summary:
+      'Subir ficha técnica o imagen a MinIO; retorna objectKey para guardar en technicalSheetUrl / imageUrls',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        kind: {
+          type: 'string',
+          enum: ['technical-sheet', 'image'],
+          description: 'Default: image',
+        },
+        materialId: { type: 'string', description: 'Opcional; agrupa archivos bajo el material' },
+      },
+    },
+  })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAsset(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body() body: { kind?: string; materialId?: string },
+    @UploadedFile() file?: MulterUploadedFile,
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Archivo requerido');
+    }
+    const slug = applicationSlug ?? 'interiorismo';
+    const kind = body.kind === 'technical-sheet' ? 'technical-sheet' : 'image';
+    const entityId = body.materialId?.trim() || `pending_${randomUUID()}`;
+    const archivo = await this.genArchivo.upload(
+      {
+        applicationSlug: slug,
+        module: 'interiorismo-catalog-materials',
+        entityType: 'catalog_material',
+        entityId,
+        category: kind,
+      },
+      file,
+    );
+    const downloadUrl = await this.genArchivo.resolveDownloadUrl(
+      archivo.id,
+      archivo.objectKey,
+    );
+    return {
+      objectKey: archivo.objectKey,
+      url: archivo.objectKey,
+      archivoId: archivo.id,
+      downloadUrl,
+      kind,
+    };
   }
 
   @Post()

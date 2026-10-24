@@ -17,6 +17,8 @@ export interface InteriorProjectDocumentListItem {
   docType: string;
   title: string;
   fileUrl: string | null;
+  archivoId: string | null;
+  downloadUrl?: string | null;
   createdAt: string;
 }
 
@@ -42,11 +44,13 @@ export interface CreateInteriorProjectDocumentData {
   docType: InteriorDocumentType;
   title: string;
   fileUrl?: string | null;
+  archivoId?: string | null;
 }
 
 export interface UpdateInteriorProjectDocumentData {
   title?: string;
   fileUrl?: string | null;
+  archivoId?: string | null;
   docType?: InteriorDocumentType;
 }
 

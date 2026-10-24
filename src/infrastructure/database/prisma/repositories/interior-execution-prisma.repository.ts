@@ -191,6 +191,7 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
           kind: e.kind,
           title: e.title,
           fileUrl: e.fileUrl,
+          archivoId: e.archivoId,
           capturedAt: e.capturedAt.toISOString(),
         }),
       ),
@@ -304,6 +305,7 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
         kind: payload.kind,
         title: payload.title.trim(),
         fileUrl: payload.fileUrl.trim(),
+        archivoId: payload.archivoId?.trim() || null,
         capturedAt: payload.capturedAt,
       },
     });
@@ -314,6 +316,7 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
       kind: row.kind,
       title: row.title,
       fileUrl: row.fileUrl,
+      archivoId: row.archivoId,
       capturedAt: row.capturedAt.toISOString(),
     };
   }

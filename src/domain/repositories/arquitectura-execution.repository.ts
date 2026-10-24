@@ -30,6 +30,8 @@ export interface ArquitecturaExecutionEvidenceDto {
   kind: string;
   title: string;
   fileUrl: string;
+  archivoId: string | null;
+  downloadUrl?: string | null;
   capturedAt: string;
 }
 
@@ -113,6 +115,7 @@ export interface CreateArquitecturaExecutionEvidencePayload {
   kind: string;
   title: string;
   fileUrl: string;
+  archivoId?: string | null;
   capturedAt: Date;
 }
 

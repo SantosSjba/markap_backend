@@ -27,6 +27,7 @@ export interface SaleComplianceChecklistUpsertData {
   bankName?: string | null;
   bankAccountHolder?: string | null;
   paymentEvidencePath?: string | null;
+  paymentEvidenceArchivoId?: string | null;
   fundsSourceDeclared?: boolean;
   beneficialOwnerDeclared?: boolean;
   kycRiskLevel?: string;

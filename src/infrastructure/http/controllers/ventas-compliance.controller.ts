@@ -13,6 +13,9 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+
   ApiOperation,
   ApiQuery,
   ApiTags,
@@ -89,6 +92,7 @@ export class VentasComplianceController {
       bankName?: string | null;
       bankAccountHolder?: string | null;
       paymentEvidencePath?: string | null;
+      paymentEvidenceArchivoId?: string | null;
       fundsSourceDeclared?: boolean;
       beneficialOwnerDeclared?: boolean;
       kycRiskLevel?: string;
@@ -188,10 +192,61 @@ export class VentasComplianceController {
     });
   }
 
-  @Post('documents/upload')
-  @ApiOperation({
-    summary: 'Subir archivo de cumplimiento y registrarlo en la operación',
+  @Post('checklist/payment-evidence')
+  @ApiOperation({ summary: 'Subir evidencia de pago bancarizado del checklist' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'propertyId', 'buyerClientId'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        propertyId: { type: 'string' },
+        buyerClientId: { type: 'string' },
+      },
+    },
   })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadPaymentEvidence(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body()
+    body: {
+      propertyId: string;
+      buyerClientId: string;
+    },
+    @UploadedFile() file?: MulterUploadedFile,
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Archivo requerido');
+    }
+    if (!body.propertyId || !body.buyerClientId) {
+      throw new BadRequestException('propertyId y buyerClientId son obligatorios');
+    }
+    const slug = applicationSlug ?? 'ventas';
+    const entityId = `${body.propertyId}_${body.buyerClientId}`;
+    const archivo = await this.genArchivo.upload(
+      {
+        applicationSlug: slug,
+        module: 'compliance',
+        entityType: 'sale_operation',
+        entityId,
+        category: 'payment_evidence',
+      },
+      file,
+    );
+    return this.compliance.uploadPaymentEvidence(applicationSlug, {
+      propertyId: body.propertyId,
+      buyerClientId: body.buyerClientId,
+      filePath: archivo.objectKey,
+      archivoId: archivo.id,
+    });
+  }
+
+  @Post('documents/upload')
+  @ApiOperation({ summary: 'Subir archivo de cumplimiento y registrarlo en la operación' })
+  @ApiConsumes('multipart/form-data')
+
   @ApiQuery({ name: 'applicationSlug', required: false })
   @UseInterceptors(FileInterceptor('file'))
   async uploadDocument(

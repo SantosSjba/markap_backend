@@ -21,6 +21,8 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
       docType: string;
       title: string;
       fileUrl: string | null;
+      archivoId: string | null;
+
       createdAt: Date;
     },
     project: { code: string; name: string },
@@ -33,6 +35,7 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
       docType: doc.docType,
       title: doc.title,
       fileUrl: doc.fileUrl,
+      archivoId: doc.archivoId,
       createdAt: doc.createdAt.toISOString(),
     };
   }
@@ -119,6 +122,7 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
         docType: data.docType,
         title: data.title.trim(),
         fileUrl: data.fileUrl?.trim() || null,
+        archivoId: data.archivoId?.trim() || null,
       },
     });
 
@@ -146,8 +150,9 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
 
     const patch: Prisma.InteriorProjectDocumentUncheckedUpdateInput = {};
     if (data.title !== undefined) patch.title = data.title.trim();
-    if (data.fileUrl !== undefined)
-      patch.fileUrl = data.fileUrl?.trim() || null;
+    if (data.fileUrl !== undefined) patch.fileUrl = data.fileUrl?.trim() || null;
+    if (data.archivoId !== undefined) patch.archivoId = data.archivoId?.trim() || null;
+
     if (data.docType !== undefined) patch.docType = data.docType;
 
     const row = await this.prisma.interiorProjectDocument.update({

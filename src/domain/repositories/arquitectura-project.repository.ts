@@ -65,6 +65,7 @@ export interface ArquitecturaProjectDocumentDto {
   docType: string;
   title: string;
   fileUrl: string | null;
+  archivoId: string | null;
 }
 
 export interface ArquitecturaProjectPaymentDto {
