@@ -15,7 +15,10 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { VentasConfigOperationsService } from '../../../application/services';
-import type { VentasPipelineStageInput } from '@domain/repositories/ventas-config.repository';
+import {
+  PipelineStagesDto,
+  ProjectNumberingDto,
+} from '../dtos/configuracion/module-config-requests.dto';
 
 @ApiTags('Ventas — Configuración')
 @Controller('ventas-config')
@@ -41,7 +44,7 @@ export class VentasConfigController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   async replacePipeline(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { stages: VentasPipelineStageInput[] },
+    @Body() body: PipelineStagesDto,
   ) {
     return this.ventasConfig.replacePipelineStages(applicationSlug, body);
   }
@@ -54,7 +57,7 @@ export class VentasConfigController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   async patchNumbering(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { prefix?: string; lastNumber?: number },
+    @Body() body: ProjectNumberingDto,
   ) {
     return this.ventasConfig.patchNumbering(applicationSlug, body);
   }

@@ -18,14 +18,14 @@ import {
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadSalesOperationsService } from '../../../application/services/contabilidad-sales-operations.service';
-import type {
-  CreateCustomerInput,
-  CreateSalesCollectionInput,
-  CreateSalesCreditNoteInput,
-  CreateSalesDebitNoteInput,
-  CreateSalesInvoiceInput,
-  UpdateCustomerInput,
-} from '@domain/repositories/contabilidad-sales.repository';
+import {
+  CreateCustomerDto,
+  CreateSalesCollectionDto,
+  CreateSalesCreditNoteDto,
+  CreateSalesDebitNoteDto,
+  CreateSalesInvoiceDto,
+  UpdateCustomerDto,
+} from '../dtos/contabilidad/contabilidad-sales.dto';
 
 @ApiTags('Contabilidad — Ventas')
 @Controller('contabilidad-sales')
@@ -53,7 +53,7 @@ export class ContabilidadSalesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createCustomer(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateCustomerInput,
+    @Body() body: CreateCustomerDto,
   ) {
     return this.sales.createCustomer(applicationSlug, body);
   }
@@ -64,7 +64,7 @@ export class ContabilidadSalesController {
   updateCustomer(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
-    @Body() body: UpdateCustomerInput,
+    @Body() body: UpdateCustomerDto,
   ) {
     return this.sales.updateCustomer(applicationSlug, id, body);
   }
@@ -104,7 +104,7 @@ export class ContabilidadSalesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createInvoice(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateSalesInvoiceInput,
+    @Body() body: CreateSalesInvoiceDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.sales.createInvoice(
@@ -145,7 +145,7 @@ export class ContabilidadSalesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createCreditNote(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateSalesCreditNoteInput,
+    @Body() body: CreateSalesCreditNoteDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.sales.createCreditNote(
@@ -176,7 +176,7 @@ export class ContabilidadSalesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createDebitNote(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateSalesDebitNoteInput,
+    @Body() body: CreateSalesDebitNoteDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.sales.createDebitNote(
@@ -207,7 +207,7 @@ export class ContabilidadSalesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createCollection(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateSalesCollectionInput,
+    @Body() body: CreateSalesCollectionDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.sales.createCollection(

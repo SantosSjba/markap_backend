@@ -115,7 +115,6 @@ export class VentasComplianceOperationsService {
         row.paymentEvidencePath,
       ),
     };
-
   }
 
   async upsertChecklist(
@@ -250,8 +249,13 @@ export class VentasComplianceOperationsService {
       archivoId: string;
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
-    await this.ensureOperationScope(applicationId, body.propertyId, body.buyerClientId);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
+    await this.ensureOperationScope(
+      applicationId,
+      body.propertyId,
+      body.buyerClientId,
+    );
     const row = (await this.compliance.upsertChecklist({
       applicationId,
       propertyId: body.propertyId,

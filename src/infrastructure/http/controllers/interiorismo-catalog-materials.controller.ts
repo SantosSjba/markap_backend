@@ -38,6 +38,7 @@ import { UpdateInteriorCatalogMaterialDto } from '../dtos/interiorismo-catalog-m
 import { GenArchivoService } from '../../../application/services/gen-archivo.service';
 import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
 import { randomUUID } from 'crypto';
+import { CatalogMaterialUploadDto } from '../dtos/uploads/upload-requests.dto';
 
 @ApiTags('Interiorismo — Materiales (catálogo)')
 @Controller('interiorismo-catalog-materials')
@@ -93,7 +94,10 @@ export class InteriorismoCatalogMaterialsController {
           enum: ['technical-sheet', 'image'],
           description: 'Default: image',
         },
-        materialId: { type: 'string', description: 'Opcional; agrupa archivos bajo el material' },
+        materialId: {
+          type: 'string',
+          description: 'Opcional; agrupa archivos bajo el material',
+        },
       },
     },
   })
@@ -101,7 +105,7 @@ export class InteriorismoCatalogMaterialsController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadAsset(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { kind?: string; materialId?: string },
+    @Body() body: CatalogMaterialUploadDto,
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {

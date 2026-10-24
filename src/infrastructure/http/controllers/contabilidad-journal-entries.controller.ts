@@ -19,11 +19,11 @@ import {
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadJournalOperationsService } from '../../../application/services/contabilidad-journal-operations.service';
-import type {
-  CreateContabilidadJournalEntryInput,
-  ListContabilidadJournalEntriesFilters,
-  UpdateContabilidadJournalEntryInput,
-} from '@domain/repositories/contabilidad-journal.repository';
+import type { ListContabilidadJournalEntriesFilters } from '@domain/repositories/contabilidad-journal.repository';
+import {
+  CreateContabilidadJournalEntryDto,
+  UpdateContabilidadJournalEntryDto,
+} from '../dtos/contabilidad/contabilidad-journal.dto';
 
 @ApiTags('Contabilidad — Asientos contables')
 @Controller('contabilidad-journal-entries')
@@ -82,7 +82,7 @@ export class ContabilidadJournalEntriesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   create(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateContabilidadJournalEntryInput,
+    @Body() body: CreateContabilidadJournalEntryDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.journal.create(applicationSlug, body, req.user?.sub ?? null);
@@ -94,7 +94,7 @@ export class ContabilidadJournalEntriesController {
   update(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
-    @Body() body: UpdateContabilidadJournalEntryInput,
+    @Body() body: UpdateContabilidadJournalEntryDto,
   ) {
     return this.journal.update(applicationSlug, id, body);
   }

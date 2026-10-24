@@ -1,7 +1,6 @@
 import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   BadRequestException,
-
   Body,
   Controller,
   Delete,
@@ -39,6 +38,7 @@ import { UpdateArquitecturaCatalogMaterialDto } from '../dtos/arquitectura-catal
 import { GenArchivoService } from '../../../application/services/gen-archivo.service';
 import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
 import { randomUUID } from 'crypto';
+import { CatalogMaterialUploadDto } from '../dtos/uploads/upload-requests.dto';
 
 @ApiTags('Arquitectura — Materiales (catálogo)')
 @Controller('arquitectura-catalog-materials')
@@ -94,7 +94,10 @@ export class ArquitecturaCatalogMaterialsController {
           enum: ['technical-sheet', 'image'],
           description: 'Default: image',
         },
-        materialId: { type: 'string', description: 'Opcional; agrupa archivos bajo el material' },
+        materialId: {
+          type: 'string',
+          description: 'Opcional; agrupa archivos bajo el material',
+        },
       },
     },
   })
@@ -102,7 +105,7 @@ export class ArquitecturaCatalogMaterialsController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadAsset(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { kind?: string; materialId?: string },
+    @Body() body: CatalogMaterialUploadDto,
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {

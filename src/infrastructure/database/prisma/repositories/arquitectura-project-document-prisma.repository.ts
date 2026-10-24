@@ -152,8 +152,10 @@ export class ArquitecturaProjectDocumentPrismaRepository implements Arquitectura
 
     const patch: Prisma.ArquitecturaProjectDocumentUncheckedUpdateInput = {};
     if (data.title !== undefined) patch.title = data.title.trim();
-    if (data.fileUrl !== undefined) patch.fileUrl = data.fileUrl?.trim() || null;
-    if (data.archivoId !== undefined) patch.archivoId = data.archivoId?.trim() || null;
+    if (data.fileUrl !== undefined)
+      patch.fileUrl = data.fileUrl?.trim() || null;
+    if (data.archivoId !== undefined)
+      patch.archivoId = data.archivoId?.trim() || null;
 
     if (data.docType !== undefined) patch.docType = data.docType;
 

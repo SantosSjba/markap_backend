@@ -19,7 +19,7 @@ import {
 import type { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadSolOperationsService } from '../../../application/services/contabilidad-sol-operations.service';
-import type { UpsertSolCredentialsInput } from '@domain/repositories/contabilidad-sol.repository';
+import { UpsertSolCredentialsDto } from '../dtos/contabilidad/contabilidad-electronic.dto';
 
 @ApiTags('Contabilidad — Declaraciones SUNAT (SOL)')
 @Controller('contabilidad-sol')
@@ -46,7 +46,7 @@ export class ContabilidadSolController {
   saveCredentials(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('legalEntityId') legalEntityId?: string,
-    @Body() body?: UpsertSolCredentialsInput,
+    @Body() body?: UpsertSolCredentialsDto,
   ) {
     return this.sol.saveCredentials(
       applicationSlug,

@@ -37,8 +37,14 @@ export class GenArchivosController {
     if (!objectKey?.trim()) {
       throw new BadRequestException('objectKey es obligatorio');
     }
-    const seconds = expiresIn ? Math.min(86400, Math.max(60, parseInt(expiresIn, 10))) : 3600;
-    const url = await this.genArchivo.resolveDownloadUrl(null, objectKey.trim(), seconds);
+    const seconds = expiresIn
+      ? Math.min(86400, Math.max(60, parseInt(expiresIn, 10)))
+      : 3600;
+    const url = await this.genArchivo.resolveDownloadUrl(
+      null,
+      objectKey.trim(),
+      seconds,
+    );
     if (!url) {
       throw new NotFoundException('Archivo no encontrado');
     }

@@ -23,7 +23,9 @@ export class PropertyPrismaMapper {
         o.kind === 'plan' ? 'plan' : o.kind === 'photo' ? 'photo' : null;
       if (!url || !kind) continue;
       const archivoId =
-        typeof o.archivoId === 'string' && o.archivoId.trim() ? o.archivoId.trim() : undefined;
+        typeof o.archivoId === 'string' && o.archivoId.trim()
+          ? o.archivoId.trim()
+          : undefined;
       out.push(archivoId ? { url, kind, archivoId } : { url, kind });
     }
     return out.length ? out : null;
@@ -46,7 +48,9 @@ export class PropertyPrismaMapper {
         const url = typeof m.url === 'string' ? m.url.trim() : '';
         const kind = m.kind === 'plan' ? 'plan' : 'photo';
         const archivoId =
-          typeof m.archivoId === 'string' && m.archivoId.trim() ? m.archivoId.trim() : undefined;
+          typeof m.archivoId === 'string' && m.archivoId.trim()
+            ? m.archivoId.trim()
+            : undefined;
         return archivoId ? { url, kind, archivoId } : { url, kind };
       })
       .filter((m) => m.url.length > 0);

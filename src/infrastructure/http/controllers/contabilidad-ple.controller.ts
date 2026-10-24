@@ -23,6 +23,7 @@ import {
   type AuthenticatedRequest,
 } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadPleOperationsService } from '../../../application/services/contabilidad-ple-operations.service';
+import { PleBookCodesDto } from '../dtos/contabilidad/contabilidad-ple.dto';
 
 @ApiTags('Contabilidad — PLE / Libros electrónicos')
 @Controller('contabilidad-ple')
@@ -82,7 +83,7 @@ export class ContabilidadPleController {
   generateBooks(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('periodId') periodId: string,
-    @Body() body: { bookCodes: string[] },
+    @Body() body: PleBookCodesDto,
     @Req() req: AuthenticatedRequest,
   ) {
     return this.ple.generateBooks(
@@ -102,7 +103,7 @@ export class ContabilidadPleController {
   async downloadZip(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('periodId') periodId: string,
-    @Body() body: { bookCodes: string[] },
+    @Body() body: PleBookCodesDto,
     @Req() req: AuthenticatedRequest,
     @Res() res: Response,
   ) {

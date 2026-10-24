@@ -11,7 +11,9 @@ export class PropertyMediaItemDto {
   @IsIn(['photo', 'plan'])
   kind: 'photo' | 'plan';
 
-  @ApiPropertyOptional({ description: 'ID GenArchivo cuando el media se subió a MinIO' })
+  @ApiPropertyOptional({
+    description: 'ID GenArchivo cuando el media se subió a MinIO',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(64)

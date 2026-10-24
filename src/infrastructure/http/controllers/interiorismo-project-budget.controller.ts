@@ -51,6 +51,7 @@ import {
   UpdateProjectBudgetLineItemDto,
   UpdateProjectBudgetSectionDto,
 } from '../dtos/interiorismo-project-budget/project-budget.dto';
+import { BudgetAttachmentDto } from '../dtos/uploads/upload-requests.dto';
 
 @ApiTags('Interiorismo — Presupuesto por proyecto')
 @Controller('interiorismo-projects')
@@ -214,7 +215,7 @@ export class InteriorismoProjectBudgetController {
   uploadAttachment(
     @Param('projectId') projectId: string,
     @UploadedFile() file: MulterUploadedFile | undefined,
-    @Body() body: { lineItemId?: string | null; title?: string },
+    @Body() body: BudgetAttachmentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     if (!file?.buffer?.length) {

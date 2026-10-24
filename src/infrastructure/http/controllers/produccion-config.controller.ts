@@ -16,12 +16,14 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ProduccionConfigOperationsService } from '../../../application/services/produccion-config-operations.service';
-import type {
-  ProduccionFurnitureCategoryInput,
-  ProduccionMaterialCategoryInput,
-  ProduccionProductionStageInput,
-  ProduccionUnitInput,
-} from '@domain/repositories/produccion-config.repository';
+import {
+  FurnitureCategoriesDto,
+  MaterialCategoriesDto,
+  ProduccionNumberingDto,
+  ProduccionSettingsDto,
+  ProduccionUnitsDto,
+  ProductionStagesDto,
+} from '../dtos/configuracion/produccion-config-requests.dto';
 
 @ApiTags('Producción — Configuración')
 @Controller('produccion-config')
@@ -50,11 +52,7 @@ export class ProduccionConfigController {
   updateSettings(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      igvPercent?: number;
-      woodWastePercent?: number;
-      quotationValidDays?: number;
-    },
+    body: ProduccionSettingsDto,
   ) {
     return this.produccionConfig.updateSettings(applicationSlug, body);
   }
@@ -62,7 +60,7 @@ export class ProduccionConfigController {
   @Put('furniture-categories')
   replaceCategories(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { categories: ProduccionFurnitureCategoryInput[] },
+    @Body() body: FurnitureCategoriesDto,
   ) {
     return this.produccionConfig.replaceFurnitureCategories(
       applicationSlug,
@@ -73,7 +71,7 @@ export class ProduccionConfigController {
   @Put('material-categories')
   replaceMaterialCategories(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { categories: ProduccionMaterialCategoryInput[] },
+    @Body() body: MaterialCategoriesDto,
   ) {
     return this.produccionConfig.replaceMaterialCategories(
       applicationSlug,
@@ -84,7 +82,7 @@ export class ProduccionConfigController {
   @Put('production-stages')
   replaceStages(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { stages: ProduccionProductionStageInput[] },
+    @Body() body: ProductionStagesDto,
   ) {
     return this.produccionConfig.replaceProductionStages(applicationSlug, body);
   }
@@ -92,7 +90,7 @@ export class ProduccionConfigController {
   @Put('units')
   replaceUnits(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { units: ProduccionUnitInput[] },
+    @Body() body: ProduccionUnitsDto,
   ) {
     return this.produccionConfig.replaceUnits(applicationSlug, body);
   }
@@ -106,12 +104,7 @@ export class ProduccionConfigController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('seriesKey') seriesKey: string,
     @Body()
-    body: {
-      prefix?: string;
-      lastNumber?: number;
-      padLength?: number;
-      includeYear?: boolean;
-    },
+    body: ProduccionNumberingDto,
   ) {
     return this.produccionConfig.patchNumbering(
       applicationSlug,

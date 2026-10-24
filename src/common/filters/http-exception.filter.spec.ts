@@ -77,6 +77,31 @@ describe('Mensajes comprensibles para el usuario', () => {
 });
 
 describe('Validación de datos en español', () => {
+  it('indica la fila de una lista anidada con nombres en español', () => {
+    const errors = [
+      {
+        property: 'lines',
+        children: [
+          {
+            property: '0',
+            children: [
+              {
+                property: 'debit',
+                constraints: { isAmount: 'debit must be an amount' },
+              },
+            ],
+          },
+        ],
+      },
+    ] as ValidationError[];
+    const response = validationExceptionFactory(errors).getResponse() as {
+      message: string[];
+    };
+    expect(response.message).toEqual([
+      'El campo «debe (fila 1 de líneas)» debe ser un importe numérico.',
+    ]);
+  });
+
   it('traduce los mensajes por defecto y conserva los personalizados', () => {
     const errors = [
       {
@@ -99,7 +124,7 @@ describe('Validación de datos en español', () => {
       message: string[];
     };
     expect(response.message).toEqual([
-      'El campo «amount» debe ser un número válido.',
+      'El campo «importe» debe ser un número válido.',
       'El campo «extra» no está permitido.',
       'El RUC debe tener 11 dígitos',
     ]);

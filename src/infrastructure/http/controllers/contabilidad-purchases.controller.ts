@@ -18,14 +18,14 @@ import {
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadPurchasesOperationsService } from '../../../application/services/contabilidad-purchases-operations.service';
-import type {
-  CreatePurchaseCreditNoteInput,
-  CreatePurchaseDebitNoteInput,
-  CreatePurchaseInvoiceInput,
-  CreatePurchasePaymentInput,
-  CreateSupplierInput,
-  UpdateSupplierInput,
-} from '@domain/repositories/contabilidad-purchases.repository';
+import {
+  CreatePurchaseCreditNoteDto,
+  CreatePurchaseDebitNoteDto,
+  CreatePurchaseInvoiceDto,
+  CreatePurchasePaymentDto,
+  CreateSupplierDto,
+  UpdateSupplierDto,
+} from '../dtos/contabilidad/contabilidad-purchases.dto';
 
 @ApiTags('Contabilidad — Compras')
 @Controller('contabilidad-purchases')
@@ -55,7 +55,7 @@ export class ContabilidadPurchasesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createSupplier(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateSupplierInput,
+    @Body() body: CreateSupplierDto,
   ) {
     return this.purchases.createSupplier(applicationSlug, body);
   }
@@ -66,7 +66,7 @@ export class ContabilidadPurchasesController {
   updateSupplier(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
-    @Body() body: UpdateSupplierInput,
+    @Body() body: UpdateSupplierDto,
   ) {
     return this.purchases.updateSupplier(applicationSlug, id, body);
   }
@@ -106,7 +106,7 @@ export class ContabilidadPurchasesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createInvoice(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreatePurchaseInvoiceInput,
+    @Body() body: CreatePurchaseInvoiceDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.purchases.createInvoice(
@@ -147,7 +147,7 @@ export class ContabilidadPurchasesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createCreditNote(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreatePurchaseCreditNoteInput,
+    @Body() body: CreatePurchaseCreditNoteDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.purchases.createCreditNote(
@@ -178,7 +178,7 @@ export class ContabilidadPurchasesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createDebitNote(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreatePurchaseDebitNoteInput,
+    @Body() body: CreatePurchaseDebitNoteDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.purchases.createDebitNote(
@@ -209,7 +209,7 @@ export class ContabilidadPurchasesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createPayment(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreatePurchasePaymentInput,
+    @Body() body: CreatePurchasePaymentDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.purchases.createPayment(

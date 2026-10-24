@@ -18,10 +18,10 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadPeriodOperationsService } from '../../../application/services/contabilidad-period-operations.service';
-import type {
-  CreateContabilidadCostCenterInput,
-  UpdateContabilidadCostCenterInput,
-} from '@domain/repositories/contabilidad-period.repository';
+import {
+  CreateContabilidadCostCenterDto,
+  UpdateContabilidadCostCenterDto,
+} from '../dtos/contabilidad/contabilidad-cost-centers.dto';
 
 @ApiTags('Contabilidad — Periodos y centros de costo')
 @Controller()
@@ -81,7 +81,7 @@ export class ContabilidadPeriodsController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createCostCenter(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateContabilidadCostCenterInput,
+    @Body() body: CreateContabilidadCostCenterDto,
   ) {
     return this.operations.createCostCenter(applicationSlug, body);
   }
@@ -92,7 +92,7 @@ export class ContabilidadPeriodsController {
   updateCostCenter(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
-    @Body() body: UpdateContabilidadCostCenterInput,
+    @Body() body: UpdateContabilidadCostCenterDto,
   ) {
     return this.operations.updateCostCenter(applicationSlug, id, body);
   }

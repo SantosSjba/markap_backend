@@ -17,10 +17,7 @@ import {
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadClosingOperationsService } from '../../../application/services/contabilidad-closing-operations.service';
-
-interface ClosePeriodBody {
-  postRegularization?: boolean;
-}
+import { ClosePeriodDto } from '../dtos/contabilidad/contabilidad-closing.dto';
 
 @ApiTags('Contabilidad — Cierre mensual')
 @Controller('contabilidad-closing')
@@ -45,7 +42,7 @@ export class ContabilidadClosingController {
   closePeriod(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('periodId') periodId: string,
-    @Body() body: ClosePeriodBody,
+    @Body() body: ClosePeriodDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.closing.closePeriod(applicationSlug, periodId, {

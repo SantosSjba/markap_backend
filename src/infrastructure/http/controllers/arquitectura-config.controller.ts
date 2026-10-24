@@ -15,7 +15,10 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ArquitecturaConfigOperationsService } from '../../../application/services/arquitectura-config-operations.service';
-import type { ArquitecturaProjectStageInput } from '@domain/repositories/arquitectura-config.repository';
+import {
+  ArquitecturaProjectStagesDto,
+  ProjectNumberingDto,
+} from '../dtos/configuracion/module-config-requests.dto';
 
 @ApiTags('Arquitectura — Configuración')
 @Controller('arquitectura-config')
@@ -43,7 +46,7 @@ export class ArquitecturaConfigController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   async replaceStages(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { stages: ArquitecturaProjectStageInput[] },
+    @Body() body: ArquitecturaProjectStagesDto,
   ) {
     return this.arquitecturaConfig.replaceProjectStages(applicationSlug, body);
   }
@@ -56,7 +59,7 @@ export class ArquitecturaConfigController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   async patchNumbering(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { prefix?: string; lastNumber?: number },
+    @Body() body: ProjectNumberingDto,
   ) {
     return this.arquitecturaConfig.patchArquitecturaProjectNumbering(
       applicationSlug,

@@ -39,6 +39,7 @@ import {
 } from '../../../application/use-cases/arquitectura-project-documents';
 import { CreateArquitecturaProjectDocumentDto } from '../dtos/arquitectura-documents/create-arquitectura-project-document.dto';
 import { UpdateArquitecturaProjectDocumentDto } from '../dtos/arquitectura-documents/update-arquitectura-project-document.dto';
+import { ProjectDocumentUploadDto } from '../dtos/uploads/upload-requests.dto';
 
 @ApiTags('Arquitectura - Documentos')
 @Controller('arquitectura-documents')
@@ -63,11 +64,14 @@ export class ArquitecturaDocumentsController {
     return v as ArquitecturaDocumentType;
   }
 
-  private async withDownloadUrl<T extends { archivoId: string | null; fileUrl: string | null }>(
-    row: T,
-  ): Promise<T & { downloadUrl: string | null }> {
+  private async withDownloadUrl<
+    T extends { archivoId: string | null; fileUrl: string | null },
+  >(row: T): Promise<T & { downloadUrl: string | null }> {
     if (row.archivoId) {
-      const downloadUrl = await this.genArchivo.resolveDownloadUrl(row.archivoId, null);
+      const downloadUrl = await this.genArchivo.resolveDownloadUrl(
+        row.archivoId,
+        null,
+      );
       return { ...row, downloadUrl };
     }
     const url = row.fileUrl?.trim() || null;
@@ -104,23 +108,23 @@ export class ArquitecturaDocumentsController {
     });
     return {
       ...result,
-      data: await Promise.all(result.data.map((row) => this.withDownloadUrl(row))),
+      data: await Promise.all(
+        result.data.map((row) => this.withDownloadUrl(row)),
+      ),
     };
   }
 
   @Post('upload')
-  @ApiOperation({ summary: 'Subir archivo y registrar documento en un proyecto' })
+  @ApiOperation({
+    summary: 'Subir archivo y registrar documento en un proyecto',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiQuery({ name: 'applicationSlug', required: false })
   @UseInterceptors(FileInterceptor('file'))
   async upload(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      projectId?: string;
-      docType?: string;
-      title?: string;
-    },
+    body: ProjectDocumentUploadDto,
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {
@@ -177,7 +181,11 @@ export class ArquitecturaDocumentsController {
     @Body() dto: UpdateArquitecturaProjectDocumentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    const row = await this.updateUc.execute(id, applicationSlug ?? 'arquitectura', dto);
+    const row = await this.updateUc.execute(
+      id,
+      applicationSlug ?? 'arquitectura',
+      dto,
+    );
     return this.withDownloadUrl(row);
   }
 

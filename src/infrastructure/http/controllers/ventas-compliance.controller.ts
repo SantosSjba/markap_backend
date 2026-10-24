@@ -15,7 +15,6 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
-
   ApiOperation,
   ApiQuery,
   ApiTags,
@@ -25,6 +24,13 @@ import { VentasComplianceOperationsService } from '../../../application/services
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
 import { GenArchivoService } from '../../../application/services/gen-archivo.service';
+import {
+  CreateComplianceDocumentDto,
+  UploadComplianceDocumentDto,
+  UploadPaymentEvidenceDto,
+  UpsertComplianceChecklistDto,
+} from '../dtos/ventas/ventas-compliance-requests.dto';
+import { DispatchComplianceAlertsDto } from '../dtos/ventas/ventas-compliance-requests.dto';
 
 @ApiTags('Ventas — Cumplimiento Legal')
 @Controller('ventas-compliance')
@@ -64,41 +70,7 @@ export class VentasComplianceController {
   async upsertChecklist(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      propertyId: string;
-      buyerClientId: string;
-      titleStudyChecked?: boolean;
-      criChecked?: boolean;
-      noLiensChecked?: boolean;
-      municipalTaxClearanceChecked?: boolean;
-      minutaSigned?: boolean;
-      publicDeedSigned?: boolean;
-      notarialPartSubmitted?: boolean;
-      sunarpStatus?: string;
-      sunarpSubmittedAt?: string | null;
-      sunarpObservedAt?: string | null;
-      sunarpRegisteredAt?: string | null;
-      sunarpObservationNotes?: string | null;
-      alcabalaApplicable?: boolean;
-      alcabalaAmount?: number | null;
-      alcabalaPaidAt?: string | null;
-      rent2Applicable?: boolean;
-      rent2Amount?: number | null;
-      rent2PaidAt?: string | null;
-      bankedPaymentRequired?: boolean;
-      bankedPaymentVerified?: boolean;
-      paymentMethod?: string | null;
-      bankOperationNumber?: string | null;
-      bankName?: string | null;
-      bankAccountHolder?: string | null;
-      paymentEvidencePath?: string | null;
-      paymentEvidenceArchivoId?: string | null;
-      fundsSourceDeclared?: boolean;
-      beneficialOwnerDeclared?: boolean;
-      kycRiskLevel?: string;
-      complianceNotes?: string | null;
-      nextActionAt?: string | null;
-    },
+    body: UpsertComplianceChecklistDto,
   ) {
     return this.compliance.upsertChecklist(applicationSlug, body);
   }
@@ -111,16 +83,7 @@ export class VentasComplianceController {
   async addDocument(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      propertyId: string;
-      buyerClientId: string;
-      docType: string;
-      filePath: string;
-      issuedAt?: string | null;
-      verifiedAt?: string | null;
-      verifiedBy?: string | null;
-      notes?: string | null;
-    },
+    body: CreateComplianceDocumentDto,
   ) {
     return this.compliance.addDocument(applicationSlug, body);
   }
@@ -193,7 +156,9 @@ export class VentasComplianceController {
   }
 
   @Post('checklist/payment-evidence')
-  @ApiOperation({ summary: 'Subir evidencia de pago bancarizado del checklist' })
+  @ApiOperation({
+    summary: 'Subir evidencia de pago bancarizado del checklist',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -211,17 +176,16 @@ export class VentasComplianceController {
   async uploadPaymentEvidence(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      propertyId: string;
-      buyerClientId: string;
-    },
+    body: UploadPaymentEvidenceDto,
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {
       throw new BadRequestException('Archivo requerido');
     }
     if (!body.propertyId || !body.buyerClientId) {
-      throw new BadRequestException('propertyId y buyerClientId son obligatorios');
+      throw new BadRequestException(
+        'propertyId y buyerClientId son obligatorios',
+      );
     }
     const slug = applicationSlug ?? 'ventas';
     const entityId = `${body.propertyId}_${body.buyerClientId}`;
@@ -244,23 +208,16 @@ export class VentasComplianceController {
   }
 
   @Post('documents/upload')
-  @ApiOperation({ summary: 'Subir archivo de cumplimiento y registrarlo en la operación' })
+  @ApiOperation({
+    summary: 'Subir archivo de cumplimiento y registrarlo en la operación',
+  })
   @ApiConsumes('multipart/form-data')
-
   @ApiQuery({ name: 'applicationSlug', required: false })
   @UseInterceptors(FileInterceptor('file'))
   async uploadDocument(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      propertyId: string;
-      buyerClientId: string;
-      docType: string;
-      issuedAt?: string | null;
-      verifiedAt?: string | null;
-      verifiedBy?: string | null;
-      notes?: string | null;
-    },
+    body: UploadComplianceDocumentDto,
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {
@@ -328,8 +285,7 @@ export class VentasComplianceController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   async dispatchAlerts(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body()
-    body?: { dryRun?: boolean; daysWithoutAlert?: number; maxItems?: number },
+    @Body() body?: DispatchComplianceAlertsDto,
   ) {
     return this.compliance.dispatchPendingAlerts(applicationSlug, body);
   }

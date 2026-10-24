@@ -20,11 +20,11 @@ import {
   type AuthenticatedRequest,
 } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadInventoryOperationsService } from '../../../application/services/contabilidad-inventory-operations.service';
-import type {
-  CreateInventoryItemInput,
-  CreateInventoryMovementInput,
-  UpdateInventoryItemInput,
-} from '@domain/repositories/contabilidad-inventory.repository';
+import {
+  CreateInventoryItemDto,
+  CreateInventoryMovementDto,
+  UpdateInventoryItemDto,
+} from '../dtos/contabilidad/contabilidad-inventory.dto';
 
 @ApiTags('Contabilidad — Inventario permanente')
 @Controller('contabilidad-inventory')
@@ -72,7 +72,7 @@ export class ContabilidadInventoryController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createItem(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateInventoryItemInput,
+    @Body() body: CreateInventoryItemDto,
   ) {
     return this.inventory.createItem(applicationSlug, body);
   }
@@ -83,7 +83,7 @@ export class ContabilidadInventoryController {
   updateItem(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
-    @Body() body: UpdateInventoryItemInput,
+    @Body() body: UpdateInventoryItemDto,
   ) {
     return this.inventory.updateItem(applicationSlug, id, body);
   }
@@ -109,7 +109,7 @@ export class ContabilidadInventoryController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createMovement(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateInventoryMovementInput,
+    @Body() body: CreateInventoryMovementDto,
     @Req() req: AuthenticatedRequest,
   ) {
     return this.inventory.createMovement(applicationSlug, body, req.user?.sub);

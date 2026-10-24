@@ -19,16 +19,17 @@ import {
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadTreasuryOperationsService } from '../../../application/services/contabilidad-treasury-operations.service';
-import type {
-  CreateBankAccountInput,
-  CreateCashBoxInput,
-  CreateTreasuryMovementInput,
-  CreateTreasuryTransferInput,
-  ListTreasuryMovementsFilters,
-  UpdateBankAccountInput,
-  UpdateCashBoxInput,
-  UpsertReconciliationInput,
-} from '@domain/repositories/contabilidad-treasury.repository';
+import type { ListTreasuryMovementsFilters } from '@domain/repositories/contabilidad-treasury.repository';
+import { ToggleReconciledDto } from '../dtos/contabilidad/contabilidad-reconciliation.dto';
+import {
+  CreateBankAccountDto,
+  CreateCashBoxDto,
+  CreateTreasuryMovementDto,
+  CreateTreasuryTransferDto,
+  UpdateBankAccountDto,
+  UpdateCashBoxDto,
+  UpsertReconciliationDto,
+} from '../dtos/contabilidad/contabilidad-treasury.dto';
 
 @ApiTags('Contabilidad — Tesorería')
 @Controller('contabilidad-treasury')
@@ -51,7 +52,7 @@ export class ContabilidadTreasuryController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createCashBox(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateCashBoxInput,
+    @Body() body: CreateCashBoxDto,
   ) {
     return this.treasury.createCashBox(applicationSlug, body);
   }
@@ -62,7 +63,7 @@ export class ContabilidadTreasuryController {
   updateCashBox(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
-    @Body() body: UpdateCashBoxInput,
+    @Body() body: UpdateCashBoxDto,
   ) {
     return this.treasury.updateCashBox(applicationSlug, id, body);
   }
@@ -79,7 +80,7 @@ export class ContabilidadTreasuryController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createBankAccount(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateBankAccountInput,
+    @Body() body: CreateBankAccountDto,
   ) {
     return this.treasury.createBankAccount(applicationSlug, body);
   }
@@ -90,7 +91,7 @@ export class ContabilidadTreasuryController {
   updateBankAccount(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
-    @Body() body: UpdateBankAccountInput,
+    @Body() body: UpdateBankAccountDto,
   ) {
     return this.treasury.updateBankAccount(applicationSlug, id, body);
   }
@@ -129,7 +130,7 @@ export class ContabilidadTreasuryController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createMovement(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateTreasuryMovementInput,
+    @Body() body: CreateTreasuryMovementDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.treasury.createMovement(
@@ -146,7 +147,7 @@ export class ContabilidadTreasuryController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createTransfer(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateTreasuryTransferInput,
+    @Body() body: CreateTreasuryTransferDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     return this.treasury.createTransfer(
@@ -176,7 +177,7 @@ export class ContabilidadTreasuryController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   upsertReconciliation(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: UpsertReconciliationInput,
+    @Body() body: UpsertReconciliationDto,
   ) {
     return this.treasury.upsertReconciliation(applicationSlug, body);
   }
@@ -198,7 +199,7 @@ export class ContabilidadTreasuryController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') reconciliationId: string,
     @Param('movementId') movementId: string,
-    @Body() body: { reconciled: boolean },
+    @Body() body: ToggleReconciledDto,
   ) {
     return this.treasury.toggleMovementReconciled(
       applicationSlug,

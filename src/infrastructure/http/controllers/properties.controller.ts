@@ -37,6 +37,10 @@ import { PrismaService } from '../../database/prisma/prisma.service';
 import { GenArchivoService } from '../../../application/services/gen-archivo.service';
 import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
 import type { PropertyMediaItem } from '@domain/entities/property.entity';
+import {
+  PropertyMediaDeleteDto,
+  PropertyMediaUploadDto,
+} from '../dtos/uploads/upload-requests.dto';
 
 @ApiTags('Properties')
 @Controller('properties')
@@ -222,7 +226,9 @@ export class PropertiesController {
   }
 
   @Post(':id/media')
-  @ApiOperation({ summary: 'Subir foto/plano a MinIO y agregarlo a mediaItems' })
+  @ApiOperation({
+    summary: 'Subir foto/plano a MinIO y agregarlo a mediaItems',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -240,7 +246,7 @@ export class PropertiesController {
   async uploadMedia(
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { kind?: string },
+    @Body() body: PropertyMediaUploadDto,
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {
@@ -292,13 +298,15 @@ export class PropertiesController {
   }
 
   @Delete(':id/media')
-  @ApiOperation({ summary: 'Quitar un ítem de mediaItems por url (y opcionalmente archivoId)' })
+  @ApiOperation({
+    summary: 'Quitar un ítem de mediaItems por url (y opcionalmente archivoId)',
+  })
   @ApiParam({ name: 'id' })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async removeMedia(
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { url: string; archivoId?: string },
+    @Body() body: PropertyMediaDeleteDto,
   ) {
     if (!body?.url?.trim()) {
       throw new BadRequestException('url es obligatorio');

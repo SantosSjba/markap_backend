@@ -18,13 +18,13 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadExtensionsOperationsService } from '../../../application/services/contabilidad-extensions-operations.service';
-import type {
-  CreateElectronicDocumentLogInput,
-  CreateJournalTemplateInput,
-  UpdateJournalTemplateInput,
-  UpsertExchangeRateInput,
-  UpsertIncomeTaxPeriodInput,
-} from '@domain/repositories/contabilidad-extensions.repository';
+import {
+  CreateElectronicDocumentLogDto,
+  CreateJournalTemplateDto,
+  UpdateJournalTemplateDto,
+  UpsertExchangeRateDto,
+  UpsertIncomeTaxPeriodDto,
+} from '../dtos/contabilidad/contabilidad-extensions.dto';
 
 @ApiTags('Contabilidad — Extensiones')
 @Controller('contabilidad-extensions')
@@ -56,7 +56,7 @@ export class ContabilidadExtensionsController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   upsertExchangeRate(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: UpsertExchangeRateInput,
+    @Body() body: UpsertExchangeRateDto,
   ) {
     return this.extensions.upsertExchangeRate(applicationSlug, body);
   }
@@ -83,7 +83,7 @@ export class ContabilidadExtensionsController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createJournalTemplate(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateJournalTemplateInput,
+    @Body() body: CreateJournalTemplateDto,
   ) {
     return this.extensions.createJournalTemplate(applicationSlug, body);
   }
@@ -94,7 +94,7 @@ export class ContabilidadExtensionsController {
   updateJournalTemplate(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
-    @Body() body: UpdateJournalTemplateInput,
+    @Body() body: UpdateJournalTemplateDto,
   ) {
     return this.extensions.updateJournalTemplate(applicationSlug, id, body);
   }
@@ -171,7 +171,7 @@ export class ContabilidadExtensionsController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createElectronicDocumentLog(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateElectronicDocumentLogInput,
+    @Body() body: CreateElectronicDocumentLogDto,
   ) {
     return this.extensions.createElectronicDocumentLog(applicationSlug, body);
   }
@@ -212,7 +212,7 @@ export class ContabilidadExtensionsController {
   upsertIncomeTaxPeriod(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Query('periodId') periodId: string,
-    @Body() body: UpsertIncomeTaxPeriodInput,
+    @Body() body: UpsertIncomeTaxPeriodDto,
   ) {
     return this.extensions.upsertIncomeTaxPeriod(
       applicationSlug,

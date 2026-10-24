@@ -17,12 +17,12 @@ import {
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadTaxesOperationsService } from '../../../application/services/contabilidad-taxes-operations.service';
-import type {
-  CreateDetraccionInput,
-  CreatePerceptionInput,
-  CreateRetentionInput,
-  PayDetraccionInput,
-} from '@domain/repositories/contabilidad-taxes.repository';
+import {
+  CreateDetraccionDto,
+  CreatePerceptionDto,
+  CreateRetentionDto,
+  PayDetraccionDto,
+} from '../dtos/contabilidad/contabilidad-taxes.dto';
 
 @ApiTags('Contabilidad — Tributos')
 @Controller('contabilidad-taxes')
@@ -88,7 +88,7 @@ export class ContabilidadTaxesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createDetraccion(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateDetraccionInput,
+    @Body() body: CreateDetraccionDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     const userId = req.user?.sub ?? undefined;
@@ -101,7 +101,7 @@ export class ContabilidadTaxesController {
   payDetraccion(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
-    @Body() body: PayDetraccionInput,
+    @Body() body: PayDetraccionDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     const userId = req.user?.sub ?? undefined;
@@ -124,7 +124,7 @@ export class ContabilidadTaxesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createRetention(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateRetentionInput,
+    @Body() body: CreateRetentionDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     const userId = req.user?.sub ?? undefined;
@@ -148,7 +148,7 @@ export class ContabilidadTaxesController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   createPerception(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreatePerceptionInput,
+    @Body() body: CreatePerceptionDto,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
     const userId = req.user?.sub ?? undefined;

@@ -15,7 +15,10 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { InteriorismoConfigOperationsService } from '../../../application/services/interiorismo-config-operations.service';
-import type { InteriorismoProjectStageInput } from '@domain/repositories/interiorismo-config.repository';
+import {
+  InteriorismoProjectStagesDto,
+  ProjectNumberingDto,
+} from '../dtos/configuracion/module-config-requests.dto';
 
 @ApiTags('Interiorismo — Configuración')
 @Controller('interiorismo-config')
@@ -43,7 +46,7 @@ export class InteriorismoConfigController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   async replaceStages(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { stages: InteriorismoProjectStageInput[] },
+    @Body() body: InteriorismoProjectStagesDto,
   ) {
     return this.interiorismoConfig.replaceProjectStages(applicationSlug, body);
   }
@@ -56,7 +59,7 @@ export class InteriorismoConfigController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   async patchNumbering(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { prefix?: string; lastNumber?: number },
+    @Body() body: ProjectNumberingDto,
   ) {
     return this.interiorismoConfig.patchInteriorProjectNumbering(
       applicationSlug,

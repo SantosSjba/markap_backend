@@ -48,6 +48,7 @@ import { CreateArquitecturaExecutionIncidentDto } from '../dtos/arquitectura-exe
 import { UpdateArquitecturaExecutionIncidentDto } from '../dtos/arquitectura-execution/update-execution-incident.dto';
 import { CreateArquitecturaExecutionActualCostDto } from '../dtos/arquitectura-execution/create-execution-actual-cost.dto';
 import { PatchArquitecturaExecutionProgressDto } from '../dtos/arquitectura-execution/patch-execution-progress.dto';
+import { EvidenceUploadDto } from '../dtos/uploads/upload-requests.dto';
 
 function parseIsoDate(s?: string | null): Date | null | undefined {
   if (s === undefined) return undefined;
@@ -80,7 +81,10 @@ export class ArquitecturaExecutionController {
     T extends { archivoId: string | null; fileUrl: string },
   >(row: T): Promise<T & { downloadUrl: string | null }> {
     if (row.archivoId) {
-      const downloadUrl = await this.genArchivo.resolveDownloadUrl(row.archivoId, null);
+      const downloadUrl = await this.genArchivo.resolveDownloadUrl(
+        row.archivoId,
+        null,
+      );
       return { ...row, downloadUrl };
     }
     const url = row.fileUrl?.trim() || null;
@@ -91,8 +95,10 @@ export class ArquitecturaExecutionController {
   }
 
   @Get('projects/:projectId/overview')
-  @ApiOperation({ summary: 'Tablero ejecución: tareas, costos reales, evidencias, incidencias, vs presupuesto' })
-
+  @ApiOperation({
+    summary:
+      'Tablero ejecución: tareas, costos reales, evidencias, incidencias, vs presupuesto',
+  })
   @ApiParam({ name: 'projectId' })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async overview(
@@ -106,7 +112,9 @@ export class ArquitecturaExecutionController {
     if (!row) throw new NotFoundException('Proyecto no encontrado');
     return {
       ...row,
-      evidences: await Promise.all(row.evidences.map((e) => this.withEvidenceDownloadUrl(e))),
+      evidences: await Promise.all(
+        row.evidences.map((e) => this.withEvidenceDownloadUrl(e)),
+      ),
     };
   }
 
@@ -202,12 +210,7 @@ export class ArquitecturaExecutionController {
     @Param('projectId') projectId: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      taskId?: string;
-      kind?: string;
-      title?: string;
-      capturedAt?: string;
-    },
+    body: EvidenceUploadDto,
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {
@@ -217,7 +220,9 @@ export class ArquitecturaExecutionController {
     const title = body.title?.trim();
     const capturedAtRaw = body.capturedAt?.trim();
     if (!kind || !title || !capturedAtRaw) {
-      throw new BadRequestException('kind, title y capturedAt son obligatorios');
+      throw new BadRequestException(
+        'kind, title y capturedAt son obligatorios',
+      );
     }
     const capturedAt = new Date(capturedAtRaw);
     if (Number.isNaN(capturedAt.getTime())) {
@@ -253,15 +258,18 @@ export class ArquitecturaExecutionController {
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     const capturedAt = new Date(dto.capturedAt);
-    const row = await this.createEvidenceUc.execute(projectId, applicationSlug ?? 'arquitectura', {
-      taskId: dto.taskId ?? null,
-      kind: dto.kind,
-      title: dto.title,
-      fileUrl: dto.fileUrl,
-      capturedAt,
-    });
+    const row = await this.createEvidenceUc.execute(
+      projectId,
+      applicationSlug ?? 'arquitectura',
+      {
+        taskId: dto.taskId ?? null,
+        kind: dto.kind,
+        title: dto.title,
+        fileUrl: dto.fileUrl,
+        capturedAt,
+      },
+    );
     return this.withEvidenceDownloadUrl(row);
-
   }
 
   @Delete('projects/:projectId/evidences/:evidenceId')

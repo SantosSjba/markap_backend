@@ -18,6 +18,12 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { VentasFinanzasOperationsService } from '../../../application/services';
+import {
+  CreateBuyerPaymentDto,
+  CreateDocumentationCostDto,
+  UpsertAgentCommissionProfileDto,
+} from '../dtos/ventas/ventas-finanzas-requests.dto';
+import { MarkPaidDto } from '../dtos/ventas/ventas-finanzas-requests.dto';
 
 @ApiTags('Ventas — Finanzas')
 @Controller('ventas-finanzas')
@@ -68,14 +74,7 @@ export class VentasFinanzasController {
   async createBuyerPayment(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      saleClosingId: string;
-      kind: string;
-      amount: number;
-      currency?: string;
-      dueDate: string;
-      notes?: string | null;
-    },
+    body: CreateBuyerPaymentDto,
   ) {
     return this.finanzas.createBuyerPayment(applicationSlug, body);
   }
@@ -86,7 +85,7 @@ export class VentasFinanzasController {
   async markBuyerPaymentPaid(
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body?: { paidAt?: string | null },
+    @Body() body?: MarkPaidDto,
   ) {
     return this.finanzas.markBuyerPaymentPaid(id, applicationSlug, body);
   }
@@ -124,7 +123,7 @@ export class VentasFinanzasController {
   async markCommissionPaid(
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body?: { paidAt?: string | null },
+    @Body() body?: MarkPaidDto,
   ) {
     return this.finanzas.markCommissionPaid(id, applicationSlug, body);
   }
@@ -137,7 +136,7 @@ export class VentasFinanzasController {
   async markCommissionPaymentPartPaid(
     @Param('partId') partId: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body?: { paidAt?: string | null },
+    @Body() body?: MarkPaidDto,
   ) {
     return this.finanzas.markCommissionPaymentPartPaid(
       partId,
@@ -170,7 +169,7 @@ export class VentasFinanzasController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   async upsertProfile(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { agentId: string; commissionPercent: number },
+    @Body() body: UpsertAgentCommissionProfileDto,
   ) {
     return this.finanzas.upsertAgentCommissionProfile(applicationSlug, body);
   }
@@ -206,14 +205,7 @@ export class VentasFinanzasController {
   async createDocCost(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      saleClosingId: string;
-      costType: string;
-      amount: number;
-      currency?: string;
-      description?: string | null;
-      expenseDate?: string | null;
-    },
+    body: CreateDocumentationCostDto,
   ) {
     return this.finanzas.createDocumentationCost(applicationSlug, body);
   }

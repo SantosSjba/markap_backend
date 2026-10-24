@@ -48,6 +48,7 @@ import { CreateInteriorExecutionIncidentDto } from '../dtos/interiorismo-executi
 import { UpdateInteriorExecutionIncidentDto } from '../dtos/interiorismo-execution/update-execution-incident.dto';
 import { CreateInteriorExecutionActualCostDto } from '../dtos/interiorismo-execution/create-execution-actual-cost.dto';
 import { PatchInteriorExecutionProgressDto } from '../dtos/interiorismo-execution/patch-execution-progress.dto';
+import { EvidenceUploadDto } from '../dtos/uploads/upload-requests.dto';
 
 function parseIsoDate(s?: string | null): Date | null | undefined {
   if (s === undefined) return undefined;
@@ -80,7 +81,10 @@ export class InteriorismoExecutionController {
     T extends { archivoId: string | null; fileUrl: string },
   >(row: T): Promise<T & { downloadUrl: string | null }> {
     if (row.archivoId) {
-      const downloadUrl = await this.genArchivo.resolveDownloadUrl(row.archivoId, null);
+      const downloadUrl = await this.genArchivo.resolveDownloadUrl(
+        row.archivoId,
+        null,
+      );
       return { ...row, downloadUrl };
     }
     const url = row.fileUrl?.trim() || null;
@@ -108,7 +112,9 @@ export class InteriorismoExecutionController {
     if (!row) throw new NotFoundException('Proyecto no encontrado');
     return {
       ...row,
-      evidences: await Promise.all(row.evidences.map((e) => this.withEvidenceDownloadUrl(e))),
+      evidences: await Promise.all(
+        row.evidences.map((e) => this.withEvidenceDownloadUrl(e)),
+      ),
     };
   }
 
@@ -204,12 +210,7 @@ export class InteriorismoExecutionController {
     @Param('projectId') projectId: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      taskId?: string;
-      kind?: string;
-      title?: string;
-      capturedAt?: string;
-    },
+    body: EvidenceUploadDto,
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {
@@ -219,7 +220,9 @@ export class InteriorismoExecutionController {
     const title = body.title?.trim();
     const capturedAtRaw = body.capturedAt?.trim();
     if (!kind || !title || !capturedAtRaw) {
-      throw new BadRequestException('kind, title y capturedAt son obligatorios');
+      throw new BadRequestException(
+        'kind, title y capturedAt son obligatorios',
+      );
     }
     const capturedAt = new Date(capturedAtRaw);
     if (Number.isNaN(capturedAt.getTime())) {
@@ -255,15 +258,18 @@ export class InteriorismoExecutionController {
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     const capturedAt = new Date(dto.capturedAt);
-    const row = await this.createEvidenceUc.execute(projectId, applicationSlug ?? 'interiorismo', {
-      taskId: dto.taskId ?? null,
-      kind: dto.kind,
-      title: dto.title,
-      fileUrl: dto.fileUrl,
-      capturedAt,
-    });
+    const row = await this.createEvidenceUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+      {
+        taskId: dto.taskId ?? null,
+        kind: dto.kind,
+        title: dto.title,
+        fileUrl: dto.fileUrl,
+        capturedAt,
+      },
+    );
     return this.withEvidenceDownloadUrl(row);
-
   }
 
   @Delete('projects/:projectId/evidences/:evidenceId')

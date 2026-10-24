@@ -51,6 +51,7 @@ import {
   UpdateProjectBudgetLineItemDto,
   UpdateProjectBudgetSectionDto,
 } from '../dtos/arquitectura-project-budget/project-budget.dto';
+import { BudgetAttachmentDto } from '../dtos/uploads/upload-requests.dto';
 
 @ApiTags('Arquitectura — Presupuesto por proyecto')
 @Controller('arquitectura-projects')
@@ -214,7 +215,7 @@ export class ArquitecturaProjectBudgetController {
   uploadAttachment(
     @Param('projectId') projectId: string,
     @UploadedFile() file: MulterUploadedFile | undefined,
-    @Body() body: { lineItemId?: string | null; title?: string },
+    @Body() body: BudgetAttachmentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     if (!file?.buffer?.length) {

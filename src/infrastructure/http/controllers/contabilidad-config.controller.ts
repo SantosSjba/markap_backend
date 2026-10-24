@@ -16,7 +16,11 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadConfigOperationsService } from '../../../application/services/contabilidad-config-operations.service';
-import type { ContabilidadCompanyProfileDto } from '@domain/repositories/contabilidad-config.repository';
+import {
+  PatchDocumentSeriesDto,
+  UpdateCompanyProfileDto,
+  UpdateContabilidadSettingsDto,
+} from '../dtos/contabilidad/contabilidad-config.dto';
 
 @ApiTags('Contabilidad — Configuración')
 @Controller('contabilidad-config')
@@ -61,7 +65,7 @@ export class ContabilidadConfigController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   updateCompany(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: Partial<ContabilidadCompanyProfileDto>,
+    @Body() body: UpdateCompanyProfileDto,
   ) {
     return this.contabilidadConfig.updateCompanyProfile(applicationSlug, body);
   }
@@ -73,17 +77,7 @@ export class ContabilidadConfigController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   updateSettings(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body()
-    body: {
-      taxRegime?: string;
-      isDetractionAgent?: boolean;
-      isRetentionAgent?: boolean;
-      isPerceptionAgent?: boolean;
-      igvPercent?: number;
-      currencyCode?: string;
-      fiscalYearStartMonth?: number;
-      amountDecimals?: number;
-    },
+    @Body() body: UpdateContabilidadSettingsDto,
   ) {
     return this.contabilidadConfig.updateSettings(applicationSlug, body);
   }
@@ -96,13 +90,7 @@ export class ContabilidadConfigController {
   patchDocumentSeries(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('seriesKey') seriesKey: string,
-    @Body()
-    body: {
-      sunatSeries?: string;
-      lastNumber?: number;
-      padLength?: number;
-      isActive?: boolean;
-    },
+    @Body() body: PatchDocumentSeriesDto,
   ) {
     return this.contabilidadConfig.patchDocumentSeries(
       applicationSlug,

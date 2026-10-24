@@ -20,10 +20,10 @@ import {
   type AuthenticatedRequest,
 } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadAccountOperationsService } from '../../../application/services/contabilidad-account-operations.service';
-import type {
-  CreateContabilidadAccountInput,
-  UpdateContabilidadAccountInput,
-} from '@domain/repositories/contabilidad-account.repository';
+import {
+  CreateContabilidadAccountDto,
+  UpdateContabilidadAccountDto,
+} from '../dtos/contabilidad/contabilidad-accounts.dto';
 
 @ApiTags('Contabilidad — Plan de cuentas')
 @Controller('contabilidad-accounts')
@@ -85,7 +85,7 @@ export class ContabilidadAccountsController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   create(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: CreateContabilidadAccountInput,
+    @Body() body: CreateContabilidadAccountDto,
     @Req() req: AuthenticatedRequest,
   ) {
     return this.accounts.create(applicationSlug, body, req?.user?.sub ?? null);
@@ -97,7 +97,7 @@ export class ContabilidadAccountsController {
   update(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('id') id: string,
-    @Body() body: UpdateContabilidadAccountInput,
+    @Body() body: UpdateContabilidadAccountDto,
     @Req() req: AuthenticatedRequest,
   ) {
     return this.accounts.update(

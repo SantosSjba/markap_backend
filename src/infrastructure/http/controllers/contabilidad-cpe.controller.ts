@@ -19,7 +19,7 @@ import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadCpeOperationsService } from '../../../application/services/contabilidad-cpe-operations.service';
 import { CONTABILIDAD_CPE_PROVIDER } from '@domain/constants/contabilidad-cpe.defaults';
-import type { UpsertCpeProviderConfigInput } from '@domain/repositories/contabilidad-cpe.repository';
+import { UpsertCpeProviderConfigDto } from '../dtos/contabilidad/contabilidad-electronic.dto';
 
 @ApiTags('Contabilidad — Facturación electrónica CPE')
 @Controller('contabilidad-cpe')
@@ -46,7 +46,7 @@ export class ContabilidadCpeController {
   saveProviderConfig(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('legalEntityId') legalEntityId?: string,
-    @Body() body?: UpsertCpeProviderConfigInput,
+    @Body() body?: UpsertCpeProviderConfigDto,
   ) {
     return this.cpe.saveProviderConfig(
       applicationSlug,

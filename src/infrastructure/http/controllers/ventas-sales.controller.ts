@@ -25,6 +25,16 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { VentasSalesOperationsService } from '../../../application/services';
 import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
 import { GenArchivoService } from '../../../application/services/gen-archivo.service';
+import {
+  AddSaleProcessActivityDto,
+  AddSaleProcessNoteDto,
+  AddSaleProcessReminderDto,
+  CreateSaleClosingDto,
+  CreateSaleProcessDto,
+  CreateSaleSeparationDto,
+  UpdateSaleProcessDto,
+  UpdateSaleSeparationDto,
+} from '../dtos/ventas/ventas-sales-requests.dto';
 
 @ApiTags('Ventas — CRM')
 @Controller('ventas-sales')
@@ -80,33 +90,7 @@ export class VentasSalesController {
   async createProcess(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      buyerClientId: string;
-      buyerClientIds?: string[];
-      propertyId: string;
-      ownerClientIds?: string[];
-      agentId?: string | null;
-      title?: string | null;
-      pipelineStage?: string;
-      financingChannelId?: string | null;
-      commissions?: {
-        agentId: string;
-        calculationType: 'PERCENT' | 'FIXED';
-        percent?: number | null;
-        fixedAmount?: number | null;
-        paymentParts?: {
-          label?: string | null;
-          amount?: number | null;
-          percentOfNet?: number | null;
-          dueDate?: string | null;
-        }[];
-        deductibles?: {
-          deductibleType: string;
-          description?: string | null;
-          amount: number;
-        }[];
-      }[];
-    },
+    body: CreateSaleProcessDto,
   ) {
     return this.ventasSales.createProcess(applicationSlug, body);
   }
@@ -130,15 +114,7 @@ export class VentasSalesController {
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      pipelineStage?: string;
-      status?: 'ACTIVE' | 'WON' | 'LOST';
-      agentId?: string | null;
-      title?: string | null;
-      financingChannelId?: string | null;
-      /** Obligatorio si status = LOST (venta caída) */
-      lostReason?: string | null;
-    },
+    body: UpdateSaleProcessDto,
   ) {
     return this.ventasSales.updateProcess(id, applicationSlug, body);
   }
@@ -149,7 +125,7 @@ export class VentasSalesController {
   async addNote(
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { text: string; createdBy?: string | null },
+    @Body() body: AddSaleProcessNoteDto,
   ) {
     return this.ventasSales.addNote(id, applicationSlug, body);
   }
@@ -161,13 +137,7 @@ export class VentasSalesController {
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      activityType: string;
-      title: string;
-      description?: string | null;
-      scheduledAt?: string | null;
-      completedAt?: string | null;
-    },
+    body: AddSaleProcessActivityDto,
   ) {
     return this.ventasSales.addActivity(id, applicationSlug, body);
   }
@@ -178,7 +148,7 @@ export class VentasSalesController {
   async addReminder(
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { title: string; dueAt: string },
+    @Body() body: AddSaleProcessReminderDto,
   ) {
     return this.ventasSales.addReminder(id, applicationSlug, body);
   }
@@ -221,16 +191,7 @@ export class VentasSalesController {
   async createSeparation(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      propertyId: string;
-      buyerClientId: string;
-      saleProcessId?: string | null;
-      amount: number;
-      currency?: string;
-      separationDate: string;
-      expiresAt?: string | null;
-      notes?: string | null;
-    },
+    body: CreateSaleSeparationDto,
   ) {
     return this.ventasSales.createSeparation(applicationSlug, body);
   }
@@ -244,11 +205,7 @@ export class VentasSalesController {
     @Param('id') id: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      status?: 'ACTIVE' | 'EXPIRED' | 'CLOSED';
-      notes?: string | null;
-      expiresAt?: string | null;
-    },
+    body: UpdateSaleSeparationDto,
   ) {
     return this.ventasSales.patchSeparation(id, applicationSlug, body);
   }
@@ -315,20 +272,7 @@ export class VentasSalesController {
   async createClosing(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      propertyId: string;
-      buyerClientId: string;
-      saleProcessId?: string | null;
-      saleSeparationId?: string | null;
-      agentId?: string | null;
-      finalPrice: number;
-      paymentType: string;
-      notes?: string | null;
-      commissionAgentId?: string | null;
-      commissionAmount?: number;
-      commissionPercent?: number | null;
-      commissionAutoFromProfile?: boolean;
-    },
+    body: CreateSaleClosingDto,
   ) {
     return this.ventasSales.createClosing(applicationSlug, body);
   }

@@ -39,6 +39,7 @@ import {
 } from '../../../application/use-cases/interior-project-documents';
 import { CreateInteriorProjectDocumentDto } from '../dtos/interiorismo-documents/create-interior-project-document.dto';
 import { UpdateInteriorProjectDocumentDto } from '../dtos/interiorismo-documents/update-interior-project-document.dto';
+import { ProjectDocumentUploadDto } from '../dtos/uploads/upload-requests.dto';
 
 @ApiTags('Interiorismo — Documentos')
 @Controller('interiorismo-documents')
@@ -63,11 +64,14 @@ export class InteriorismoDocumentsController {
     return v as InteriorDocumentType;
   }
 
-  private async withDownloadUrl<T extends { archivoId: string | null; fileUrl: string | null }>(
-    row: T,
-  ): Promise<T & { downloadUrl: string | null }> {
+  private async withDownloadUrl<
+    T extends { archivoId: string | null; fileUrl: string | null },
+  >(row: T): Promise<T & { downloadUrl: string | null }> {
     if (row.archivoId) {
-      const downloadUrl = await this.genArchivo.resolveDownloadUrl(row.archivoId, null);
+      const downloadUrl = await this.genArchivo.resolveDownloadUrl(
+        row.archivoId,
+        null,
+      );
       return { ...row, downloadUrl };
     }
     const url = row.fileUrl?.trim() || null;
@@ -104,23 +108,23 @@ export class InteriorismoDocumentsController {
     });
     return {
       ...result,
-      data: await Promise.all(result.data.map((row) => this.withDownloadUrl(row))),
+      data: await Promise.all(
+        result.data.map((row) => this.withDownloadUrl(row)),
+      ),
     };
   }
 
   @Post('upload')
-  @ApiOperation({ summary: 'Subir archivo y registrar documento en un proyecto' })
+  @ApiOperation({
+    summary: 'Subir archivo y registrar documento en un proyecto',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiQuery({ name: 'applicationSlug', required: false })
   @UseInterceptors(FileInterceptor('file'))
   async upload(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body()
-    body: {
-      projectId?: string;
-      docType?: string;
-      title?: string;
-    },
+    body: ProjectDocumentUploadDto,
     @UploadedFile() file?: MulterUploadedFile,
   ) {
     if (!file?.buffer?.length) {
@@ -177,7 +181,11 @@ export class InteriorismoDocumentsController {
     @Body() dto: UpdateInteriorProjectDocumentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    const row = await this.updateUc.execute(id, applicationSlug ?? 'interiorismo', dto);
+    const row = await this.updateUc.execute(
+      id,
+      applicationSlug ?? 'interiorismo',
+      dto,
+    );
     return this.withDownloadUrl(row);
   }
 
