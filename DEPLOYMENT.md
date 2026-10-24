@@ -12,3 +12,12 @@ Para futuros cambios de esquema, añadir una migración SQL versionada en `prism
 Crear un respaldo antes de migrar. Los cambios que requieran transformar datos necesitan una migración revisada específicamente.
 
 El frontend se compila desde `SantosSjba/markap_frontend`, rama `main`, en `front-markap`. La URL de API se define como argumento de compilación en su Dockerfile.
+
+## Flujo habitual
+
+1. Integrar los cambios y las migraciones necesarias en `main`.
+2. Ejecutar las pruebas y subir con `git push origin main`.
+3. GitHub notifica a Coolify, que compila una imagen nueva y verifica `/api/health`.
+4. Consultar Deployments en `api-markap` para comprobar el resultado.
+
+La activación inicial se validó el 24/10/2026 restaurando un respaldo en una base local independiente: 164 tablas y 2.869 filas de negocio conservaron sus huellas antes y después del registro de la baseline. La misma comprobación en producción tampoco detectó diferencias. El único registro nuevo corresponde al historial técnico `_prisma_migrations`.
