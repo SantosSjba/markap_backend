@@ -39,13 +39,19 @@ export const CONTABILIDAD_PURCHASE_STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Anulada',
 };
 
-export const CONTABILIDAD_PURCHASE_TAX_AFFECTATION_LABELS: Record<string, string> = {
+export const CONTABILIDAD_PURCHASE_TAX_AFFECTATION_LABELS: Record<
+  string,
+  string
+> = {
   TAXABLE: 'Gravada',
   EXEMPT: 'Exonerada',
   NON_TAXABLE: 'Inafecta',
 };
 
-export const CONTABILIDAD_PURCHASE_DOCUMENT_TYPE_LABELS: Record<string, string> = {
+export const CONTABILIDAD_PURCHASE_DOCUMENT_TYPE_LABELS: Record<
+  string,
+  string
+> = {
   FACTURA: 'Factura',
   BOLETA: 'Boleta',
   RECIBO_HONORARIOS: 'Recibo por honorarios',

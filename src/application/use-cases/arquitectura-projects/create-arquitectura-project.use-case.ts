@@ -58,7 +58,9 @@ export class CreateArquitecturaProjectUseCase {
     expectedMargin?: number | null;
     progressPct?: number | null;
   }) {
-    const app = await this.applicationRepository.findBySlug(input.applicationSlug);
+    const app = await this.applicationRepository.findBySlug(
+      input.applicationSlug,
+    );
     if (!app || app.slug !== 'arquitectura') {
       throw new BadRequestException(
         'Los proyectos de arquitectura solo se crean con applicationSlug arquitectura',
@@ -67,7 +69,10 @@ export class CreateArquitecturaProjectUseCase {
 
     const code = input.code?.trim()
       ? input.code.trim()
-      : await this.configRepository.allocateNextCode(app.id, ARQUITECTURA_PROJECT_SERIES_KEY);
+      : await this.configRepository.allocateNextCode(
+          app.id,
+          ARQUITECTURA_PROJECT_SERIES_KEY,
+        );
 
     const dup = await this.prisma.arquitecturaProject.findFirst({
       where: {
@@ -77,7 +82,9 @@ export class CreateArquitecturaProjectUseCase {
       },
     });
     if (dup) {
-      throw new BadRequestException('Ya existe un proyecto con ese código en esta aplicación');
+      throw new BadRequestException(
+        'Ya existe un proyecto con ese código en esta aplicación',
+      );
     }
 
     const client = await this.prisma.client.findFirst({

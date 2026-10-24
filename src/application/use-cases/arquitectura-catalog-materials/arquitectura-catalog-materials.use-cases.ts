@@ -20,7 +20,9 @@ const SLUG = 'arquitectura';
 
 function assertArquitectura(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug arquitectura');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug arquitectura',
+    );
   }
 }
 
@@ -43,7 +45,10 @@ export class GetArquitecturaCatalogMaterialByIdUseCase {
     private readonly repo: ArquitecturaCatalogMaterialRepository,
   ) {}
 
-  async execute(id: string, applicationSlug?: string): Promise<ArquitecturaCatalogMaterialDetail> {
+  async execute(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ArquitecturaCatalogMaterialDetail> {
     const row = await this.repo.findById(id, applicationSlug ?? SLUG);
     if (!row) throw new NotFoundException('Material no encontrado');
     return row;
@@ -60,15 +65,20 @@ export class CreateArquitecturaCatalogMaterialUseCase {
     private readonly prisma: PrismaService,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateArquitecturaCatalogMaterialPayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateArquitecturaCatalogMaterialPayload,
+  ) {
     assertArquitectura(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación arquitectura no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación arquitectura no encontrada');
 
     const dup = await this.prisma.arquitecturaCatalogMaterial.findFirst({
       where: { applicationId: app.id, code: payload.code.trim() },
     });
-    if (dup) throw new BadRequestException('Ya existe un material con ese código');
+    if (dup)
+      throw new BadRequestException('Ya existe un material con ese código');
 
     return this.repo.create(app.id, payload);
   }
@@ -81,7 +91,11 @@ export class UpdateArquitecturaCatalogMaterialUseCase {
     private readonly repo: ArquitecturaCatalogMaterialRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateArquitecturaCatalogMaterialPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateArquitecturaCatalogMaterialPayload,
+  ) {
     assertArquitectura(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Material no encontrado');

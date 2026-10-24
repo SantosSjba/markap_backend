@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { REPORT_REPOSITORY } from '@common/constants/injection-tokens';
-import type { ReportRepository, ActiveClientReportItem } from '@domain/repositories/report.repository';
+import type {
+  ReportRepository,
+  ActiveClientReportItem,
+} from '@domain/repositories/report.repository';
 
 @Injectable()
 export class GetActiveClientsReportUseCase {
@@ -9,9 +12,7 @@ export class GetActiveClientsReportUseCase {
     private readonly reportRepository: ReportRepository,
   ) {}
 
-  async execute(
-    applicationSlug: string,
-  ): Promise<ActiveClientReportItem[]> {
+  async execute(applicationSlug: string): Promise<ActiveClientReportItem[]> {
     return this.reportRepository.getActiveClients(applicationSlug);
   }
 }

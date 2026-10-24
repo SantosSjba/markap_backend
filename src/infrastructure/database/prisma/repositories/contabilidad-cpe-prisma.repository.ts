@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  CONTABILIDAD_CPE_DOCUMENT_KIND,
-  CONTABILIDAD_CPE_SOURCE_TYPE,
-} from '@domain/constants/contabilidad-cpe.defaults';
+import { CONTABILIDAD_CPE_SOURCE_TYPE } from '@domain/constants/contabilidad-cpe.defaults';
 import { CONTABILIDAD_SALES_STATUS } from '@domain/constants/contabilidad-sales.defaults';
 import type {
   ContabilidadCpeDocumentArtifactDto,
@@ -54,11 +51,6 @@ function mapProviderConfig(row: {
   };
 }
 
-function documentKindFromType(documentType: string): string {
-  if (documentType === 'BOLETA') return CONTABILIDAD_CPE_DOCUMENT_KIND.BOLETA;
-  return CONTABILIDAD_CPE_DOCUMENT_KIND.FACTURA;
-}
-
 @Injectable()
 export class ContabilidadCpePrismaRepository implements ContabilidadCpeRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -86,7 +78,10 @@ export class ContabilidadCpePrismaRepository implements ContabilidadCpeRepositor
     const tokenData =
       input.apiToken !== undefined
         ? input.apiToken?.trim()
-          ? { apiTokenHint: maskToken(input.apiToken), apiTokenEnc: encodeToken(input.apiToken) }
+          ? {
+              apiTokenHint: maskToken(input.apiToken),
+              apiTokenEnc: encodeToken(input.apiToken),
+            }
           : { apiTokenHint: null, apiTokenEnc: null }
         : {};
 
@@ -95,9 +90,14 @@ export class ContabilidadCpePrismaRepository implements ContabilidadCpeRepositor
           where: { id: existing.id },
           data: {
             providerCode: input.providerCode?.trim() || existing.providerCode,
-            apiBaseUrl: input.apiBaseUrl !== undefined ? input.apiBaseUrl?.trim() || null : undefined,
+            apiBaseUrl:
+              input.apiBaseUrl !== undefined
+                ? input.apiBaseUrl?.trim() || null
+                : undefined,
             certificateHint:
-              input.certificateHint !== undefined ? input.certificateHint?.trim() || null : undefined,
+              input.certificateHint !== undefined
+                ? input.certificateHint?.trim() || null
+                : undefined,
             useSandbox: input.useSandbox ?? undefined,
             isActive: input.isActive ?? undefined,
             ...tokenData,
@@ -259,7 +259,6 @@ export class ContabilidadCpePrismaRepository implements ContabilidadCpeRepositor
     const content = kind === 'xml' ? row.xmlContent : row.cdrContent;
     if (!content) return null;
 
-    const ext = kind === 'xml' ? 'xml' : 'xml';
     const safeRef = row.documentRef.replace(/[^a-zA-Z0-9-]/g, '_');
 
     return {

@@ -112,12 +112,17 @@ export const CONTABILIDAD_PLE_BOOK_CODE_SET = new Set<string>(
   CONTABILIDAD_PLE_BOOKS.map((b) => b.code),
 );
 
-export function isValidPleBookCode(code: string): code is ContabilidadPleBookCode {
+export function isValidPleBookCode(
+  code: string,
+): code is ContabilidadPleBookCode {
   return CONTABILIDAD_PLE_BOOK_CODE_SET.has(code);
 }
 
 /** Libros obligatorios de referencia según régimen tributario configurado. */
-export const CONTABILIDAD_PLE_MANDATORY_BY_TAX_REGIME: Record<string, string[]> = {
+export const CONTABILIDAD_PLE_MANDATORY_BY_TAX_REGIME: Record<
+  string,
+  string[]
+> = {
   GENERAL: [
     CONTABILIDAD_PLE_BOOK_CODE.LIBRO_DIARIO,
     CONTABILIDAD_PLE_BOOK_CODE.PLAN_CUENTAS,

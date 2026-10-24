@@ -6,7 +6,10 @@ import type {
   ContabilidadSalesInvoiceDto,
 } from '@domain/repositories/contabilidad-sales.repository';
 import { formatPenAmount } from '@domain/utils/contabilidad-journal-amounts';
-import { formatExchangeRate, FUNCTIONAL_CURRENCY } from '@domain/utils/contabilidad-multicurrency.util';
+import {
+  formatExchangeRate,
+  FUNCTIONAL_CURRENCY,
+} from '@domain/utils/contabilidad-multicurrency.util';
 import { toIsoDate } from '@domain/utils/peru-date.util';
 
 function fullDocNumber(series: string, number: string): string {
@@ -88,9 +91,14 @@ export const ContabilidadSalesPrismaMapper = {
       dueDate: row.dueDate ? toIsoDate(row.dueDate) : null,
       taxAffectation: row.taxAffectation,
       currencyCode: row.currencyCode ?? FUNCTIONAL_CURRENCY,
-      exchangeRate: row.exchangeRate != null ? formatExchangeRate(Number(row.exchangeRate)) : null,
+      exchangeRate:
+        row.exchangeRate != null
+          ? formatExchangeRate(Number(row.exchangeRate))
+          : null,
       foreignTaxableBase:
-        row.foreignTaxableBase != null ? formatPenAmount(Number(row.foreignTaxableBase)) : null,
+        row.foreignTaxableBase != null
+          ? formatPenAmount(Number(row.foreignTaxableBase))
+          : null,
       incomeAccountId: row.incomeAccountId,
       incomeAccountCode: row.incomeAccount.code,
       incomeAccountName: row.incomeAccount.name,
@@ -133,7 +141,9 @@ export const ContabilidadSalesPrismaMapper = {
       customerRuc: row.customer.ruc,
       customerName: row.customer.businessName,
       invoiceId: row.invoiceId,
-      invoiceFullNumber: row.invoice ? fullDocNumber(row.invoice.series, row.invoice.number) : null,
+      invoiceFullNumber: row.invoice
+        ? fullDocNumber(row.invoice.series, row.invoice.number)
+        : null,
       periodId: row.periodId,
       series: row.series,
       number: row.number,
@@ -173,7 +183,9 @@ export const ContabilidadSalesPrismaMapper = {
       customerRuc: row.customer.ruc,
       customerName: row.customer.businessName,
       invoiceId: row.invoiceId,
-      invoiceFullNumber: row.invoice ? fullDocNumber(row.invoice.series, row.invoice.number) : null,
+      invoiceFullNumber: row.invoice
+        ? fullDocNumber(row.invoice.series, row.invoice.number)
+        : null,
       periodId: row.periodId,
       series: row.series,
       number: row.number,

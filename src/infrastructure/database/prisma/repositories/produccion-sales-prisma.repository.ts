@@ -38,7 +38,12 @@ function roundMoney(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-type LineInput = { furnitureId: string; quantity: number; unitPrice: number; notes?: string | null };
+type LineInput = {
+  furnitureId: string;
+  quantity: number;
+  unitPrice: number;
+  notes?: string | null;
+};
 
 @Injectable()
 export class ProduccionQuotationPrismaRepository implements ProduccionQuotationRepository {
@@ -73,14 +78,19 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
   }
 
   private validateLines(lines: LineInput[]) {
-    if (!lines.length) throw new BadRequestException('Debe incluir al menos una línea');
+    if (!lines.length)
+      throw new BadRequestException('Debe incluir al menos una línea');
     for (const l of lines) {
-      if (l.quantity <= 0) throw new BadRequestException('Cantidad debe ser positiva');
-      if (l.unitPrice < 0) throw new BadRequestException('Precio unitario inválido');
+      if (l.quantity <= 0)
+        throw new BadRequestException('Cantidad debe ser positiva');
+      if (l.unitPrice < 0)
+        throw new BadRequestException('Precio unitario inválido');
     }
   }
 
-  private async loadDetail(id: string): Promise<ProduccionQuotationDetail | null> {
+  private async loadDetail(
+    id: string,
+  ): Promise<ProduccionQuotationDetail | null> {
     const row = await this.prisma.produccionQuotation.findUnique({
       where: { id },
       include: {
@@ -113,13 +123,18 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
     };
   }
 
-  async list(filters: ListProduccionQuotationsFilters): Promise<ListProduccionQuotationsResult> {
+  async list(
+    filters: ListProduccionQuotationsFilters,
+  ): Promise<ListProduccionQuotationsResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
-    const andParts: Prisma.ProduccionQuotationWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.ProduccionQuotationWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.status) andParts.push({ status: filters.status });
     if (filters.clientId) andParts.push({ clientId: filters.clientId });
     if (filters.search?.trim()) {
@@ -172,17 +187,27 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ProduccionQuotationDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionQuotationDetail | null> {
     const row = await this.prisma.produccionQuotation.findUnique({
       where: { id },
       include: { application: { select: { slug: true } } },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
     return this.loadDetail(id);
   }
 
-  async create(applicationId: string, payload: CreateProduccionQuotationPayload) {
+  async create(
+    applicationId: string,
+    payload: CreateProduccionQuotationPayload,
+  ) {
     this.validateLines(payload.lines);
 
     const client = await this.prisma.client.findFirst({
@@ -228,10 +253,14 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
   }
 
   async update(id: string, payload: UpdateProduccionQuotationPayload) {
-    const q = await this.prisma.produccionQuotation.findUnique({ where: { id } });
+    const q = await this.prisma.produccionQuotation.findUnique({
+      where: { id },
+    });
     if (!q) throw new BadRequestException('Cotización no encontrada');
     if (q.status !== 'DRAFT') {
-      throw new BadRequestException('Solo se pueden editar cotizaciones en borrador');
+      throw new BadRequestException(
+        'Solo se pueden editar cotizaciones en borrador',
+      );
     }
     if (payload.lines) this.validateLines(payload.lines);
 
@@ -246,13 +275,18 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
       const patch: Prisma.ProduccionQuotationUncheckedUpdateInput = {};
       if (payload.clientId !== undefined) patch.clientId = payload.clientId;
       if (payload.validUntil !== undefined) {
-        patch.validUntil = payload.validUntil ? new Date(payload.validUntil) : null;
+        patch.validUntil = payload.validUntil
+          ? new Date(payload.validUntil)
+          : null;
       }
-      if (payload.notes !== undefined) patch.notes = payload.notes?.trim() || null;
+      if (payload.notes !== undefined)
+        patch.notes = payload.notes?.trim() || null;
       await tx.produccionQuotation.update({ where: { id }, data: patch });
 
       if (payload.lines) {
-        await tx.produccionQuotationLine.deleteMany({ where: { quotationId: id } });
+        await tx.produccionQuotationLine.deleteMany({
+          where: { quotationId: id },
+        });
         await tx.produccionQuotationLine.createMany({
           data: payload.lines.map((l) => ({
             quotationId: id,
@@ -266,14 +300,18 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
     });
 
     const detail = await this.loadDetail(id);
-    if (!detail) throw new BadRequestException('Error al actualizar cotización');
+    if (!detail)
+      throw new BadRequestException('Error al actualizar cotización');
     return detail;
   }
 
   async send(id: string) {
-    const q = await this.prisma.produccionQuotation.findUnique({ where: { id } });
+    const q = await this.prisma.produccionQuotation.findUnique({
+      where: { id },
+    });
     if (!q) throw new BadRequestException('Cotización no encontrada');
-    if (q.status !== 'DRAFT') throw new BadRequestException('Solo borradores pueden enviarse');
+    if (q.status !== 'DRAFT')
+      throw new BadRequestException('Solo borradores pueden enviarse');
 
     await this.prisma.produccionQuotation.update({
       where: { id },
@@ -286,9 +324,14 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
   }
 
   async accept(id: string) {
-    const q = await this.prisma.produccionQuotation.findUnique({ where: { id } });
+    const q = await this.prisma.produccionQuotation.findUnique({
+      where: { id },
+    });
     if (!q) throw new BadRequestException('Cotización no encontrada');
-    if (q.status !== 'SENT') throw new BadRequestException('Solo cotizaciones enviadas pueden aceptarse');
+    if (q.status !== 'SENT')
+      throw new BadRequestException(
+        'Solo cotizaciones enviadas pueden aceptarse',
+      );
 
     await this.prisma.produccionQuotation.update({
       where: { id },
@@ -301,9 +344,14 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
   }
 
   async reject(id: string) {
-    const q = await this.prisma.produccionQuotation.findUnique({ where: { id } });
+    const q = await this.prisma.produccionQuotation.findUnique({
+      where: { id },
+    });
     if (!q) throw new BadRequestException('Cotización no encontrada');
-    if (q.status !== 'SENT') throw new BadRequestException('Solo cotizaciones enviadas pueden rechazarse');
+    if (q.status !== 'SENT')
+      throw new BadRequestException(
+        'Solo cotizaciones enviadas pueden rechazarse',
+      );
 
     await this.prisma.produccionQuotation.update({
       where: { id },
@@ -325,9 +373,12 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
     });
     if (!q) throw new BadRequestException('Cotización no encontrada');
     if (q.status !== 'ACCEPTED') {
-      throw new BadRequestException('Solo cotizaciones aceptadas generan pedido');
+      throw new BadRequestException(
+        'Solo cotizaciones aceptadas generan pedido',
+      );
     }
-    if (q.order) throw new BadRequestException('Ya existe un pedido para esta cotización');
+    if (q.order)
+      throw new BadRequestException('Ya existe un pedido para esta cotización');
 
     return this.orderRepo.createFromQuotation({
       id: q.id,
@@ -344,7 +395,9 @@ export class ProduccionQuotationPrismaRepository implements ProduccionQuotationR
   }
 
   async delete(id: string) {
-    const q = await this.prisma.produccionQuotation.findUnique({ where: { id } });
+    const q = await this.prisma.produccionQuotation.findUnique({
+      where: { id },
+    });
     if (!q) return;
     if (q.status !== 'DRAFT') {
       throw new BadRequestException('Solo se pueden eliminar borradores');
@@ -476,13 +529,18 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
     return detail;
   }
 
-  async list(filters: ListProduccionOrdersFilters): Promise<ListProduccionOrdersResult> {
+  async list(
+    filters: ListProduccionOrdersFilters,
+  ): Promise<ListProduccionOrdersResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
-    const andParts: Prisma.ProduccionOrderWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.ProduccionOrderWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.status) andParts.push({ status: filters.status });
     if (filters.clientId) andParts.push({ clientId: filters.clientId });
     if (filters.search?.trim()) {
@@ -538,18 +596,26 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ProduccionOrderDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionOrderDetail | null> {
     const row = await this.prisma.produccionOrder.findUnique({
       where: { id },
       include: { application: { select: { slug: true } } },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
     return this.loadDetail(id);
   }
 
   async create(applicationId: string, payload: CreateProduccionOrderPayload) {
-    if (!payload.lines.length) throw new BadRequestException('Debe incluir al menos una línea');
+    if (!payload.lines.length)
+      throw new BadRequestException('Debe incluir al menos una línea');
 
     const client = await this.prisma.client.findFirst({
       where: { id: payload.clientId, applicationId },
@@ -587,7 +653,9 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
   }
 
   async update(id: string, payload: UpdateProduccionOrderPayload) {
-    const order = await this.prisma.produccionOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('Pedido no encontrado');
     if (['DELIVERED', 'CANCELLED'].includes(order.status)) {
       throw new BadRequestException('Pedido no editable en este estado');
@@ -604,10 +672,14 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
   }
 
   async confirm(id: string) {
-    const order = await this.prisma.produccionOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('Pedido no encontrado');
     if (order.status !== 'PENDING') {
-      throw new BadRequestException('Solo pedidos pendientes pueden confirmarse');
+      throw new BadRequestException(
+        'Solo pedidos pendientes pueden confirmarse',
+      );
     }
 
     await this.prisma.produccionOrder.update({
@@ -621,12 +693,17 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
   }
 
   async linkWorkOrder(id: string, workOrderId: string) {
-    const order = await this.prisma.produccionOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('Pedido no encontrado');
     if (!['PENDING', 'CONFIRMED'].includes(order.status)) {
-      throw new BadRequestException('El pedido no puede vincularse a producción en este estado');
+      throw new BadRequestException(
+        'El pedido no puede vincularse a producción en este estado',
+      );
     }
-    if (order.workOrderId) throw new BadRequestException('El pedido ya tiene una OT');
+    if (order.workOrderId)
+      throw new BadRequestException('El pedido ya tiene una OT');
 
     const wo = await this.prisma.produccionWorkOrder.findFirst({
       where: { id: workOrderId, applicationId: order.applicationId },
@@ -644,10 +721,14 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
   }
 
   async markReady(id: string) {
-    const order = await this.prisma.produccionOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('Pedido no encontrado');
     if (order.status !== 'IN_PRODUCTION') {
-      throw new BadRequestException('Solo pedidos en producción pueden marcarse listos');
+      throw new BadRequestException(
+        'Solo pedidos en producción pueden marcarse listos',
+      );
     }
 
     await this.prisma.produccionOrder.update({
@@ -661,7 +742,9 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
   }
 
   async cancel(id: string) {
-    const order = await this.prisma.produccionOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('Pedido no encontrado');
     if (['DELIVERED', 'CANCELLED'].includes(order.status)) {
       throw new BadRequestException('Pedido no cancelable');
@@ -678,10 +761,14 @@ export class ProduccionOrderPrismaRepository implements ProduccionOrderRepositor
   }
 
   async delete(id: string) {
-    const order = await this.prisma.produccionOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionOrder.findUnique({
+      where: { id },
+    });
     if (!order) return;
     if (order.status !== 'PENDING') {
-      throw new BadRequestException('Solo pedidos pendientes pueden eliminarse');
+      throw new BadRequestException(
+        'Solo pedidos pendientes pueden eliminarse',
+      );
     }
     await this.prisma.produccionOrder.delete({ where: { id } });
   }
@@ -695,7 +782,9 @@ export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRep
     private readonly configRepo: ProduccionConfigRepository,
   ) {}
 
-  private async loadDetail(id: string): Promise<ProduccionDeliveryDetail | null> {
+  private async loadDetail(
+    id: string,
+  ): Promise<ProduccionDeliveryDetail | null> {
     const row = await this.prisma.produccionDelivery.findUnique({
       where: { id },
       include: {
@@ -723,13 +812,18 @@ export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRep
     };
   }
 
-  async list(filters: ListProduccionDeliveriesFilters): Promise<ListProduccionDeliveriesResult> {
+  async list(
+    filters: ListProduccionDeliveriesFilters,
+  ): Promise<ListProduccionDeliveriesResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
-    const andParts: Prisma.ProduccionDeliveryWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.ProduccionDeliveryWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.status) andParts.push({ status: filters.status });
     if (filters.orderId) andParts.push({ orderId: filters.orderId });
     if (filters.search?.trim()) {
@@ -739,7 +833,11 @@ export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRep
           { code: { contains: q, mode: 'insensitive' } },
           { recipientName: { contains: q, mode: 'insensitive' } },
           { order: { code: { contains: q, mode: 'insensitive' } } },
-          { order: { client: { fullName: { contains: q, mode: 'insensitive' } } } },
+          {
+            order: {
+              client: { fullName: { contains: q, mode: 'insensitive' } },
+            },
+          },
         ],
       });
     }
@@ -779,17 +877,27 @@ export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRep
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ProduccionDeliveryDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionDeliveryDetail | null> {
     const row = await this.prisma.produccionDelivery.findUnique({
       where: { id },
       include: { application: { select: { slug: true } } },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
     return this.loadDetail(id);
   }
 
-  async create(applicationId: string, payload: CreateProduccionDeliveryPayload) {
+  async create(
+    applicationId: string,
+    payload: CreateProduccionDeliveryPayload,
+  ) {
     const order = await this.prisma.produccionOrder.findFirst({
       where: { id: payload.orderId, applicationId },
     });
@@ -822,10 +930,14 @@ export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRep
   }
 
   async update(id: string, payload: UpdateProduccionDeliveryPayload) {
-    const d = await this.prisma.produccionDelivery.findUnique({ where: { id } });
+    const d = await this.prisma.produccionDelivery.findUnique({
+      where: { id },
+    });
     if (!d) throw new BadRequestException('Entrega no encontrada');
     if (d.status !== 'SCHEDULED') {
-      throw new BadRequestException('Solo entregas programadas pueden editarse');
+      throw new BadRequestException(
+        'Solo entregas programadas pueden editarse',
+      );
     }
 
     await this.prisma.produccionDelivery.update({
@@ -837,10 +949,18 @@ export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRep
               ? new Date(payload.scheduledAt)
               : null
             : undefined,
-        address: payload.address !== undefined ? payload.address?.trim() || null : undefined,
+        address:
+          payload.address !== undefined
+            ? payload.address?.trim() || null
+            : undefined,
         recipientName:
-          payload.recipientName !== undefined ? payload.recipientName?.trim() || null : undefined,
-        notes: payload.notes !== undefined ? payload.notes?.trim() || null : undefined,
+          payload.recipientName !== undefined
+            ? payload.recipientName?.trim() || null
+            : undefined,
+        notes:
+          payload.notes !== undefined
+            ? payload.notes?.trim() || null
+            : undefined,
       },
     });
 
@@ -850,10 +970,14 @@ export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRep
   }
 
   async complete(id: string) {
-    const d = await this.prisma.produccionDelivery.findUnique({ where: { id } });
+    const d = await this.prisma.produccionDelivery.findUnique({
+      where: { id },
+    });
     if (!d) throw new BadRequestException('Entrega no encontrada');
     if (d.status !== 'SCHEDULED') {
-      throw new BadRequestException('Solo entregas programadas pueden completarse');
+      throw new BadRequestException(
+        'Solo entregas programadas pueden completarse',
+      );
     }
 
     await this.prisma.$transaction([
@@ -873,10 +997,14 @@ export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRep
   }
 
   async cancel(id: string) {
-    const d = await this.prisma.produccionDelivery.findUnique({ where: { id } });
+    const d = await this.prisma.produccionDelivery.findUnique({
+      where: { id },
+    });
     if (!d) throw new BadRequestException('Entrega no encontrada');
     if (d.status !== 'SCHEDULED') {
-      throw new BadRequestException('Solo entregas programadas pueden cancelarse');
+      throw new BadRequestException(
+        'Solo entregas programadas pueden cancelarse',
+      );
     }
 
     await this.prisma.produccionDelivery.update({
@@ -890,10 +1018,14 @@ export class ProduccionDeliveryPrismaRepository implements ProduccionDeliveryRep
   }
 
   async delete(id: string) {
-    const d = await this.prisma.produccionDelivery.findUnique({ where: { id } });
+    const d = await this.prisma.produccionDelivery.findUnique({
+      where: { id },
+    });
     if (!d) return;
     if (d.status !== 'SCHEDULED') {
-      throw new BadRequestException('Solo entregas programadas pueden eliminarse');
+      throw new BadRequestException(
+        'Solo entregas programadas pueden eliminarse',
+      );
     }
     await this.prisma.produccionDelivery.delete({ where: { id } });
   }

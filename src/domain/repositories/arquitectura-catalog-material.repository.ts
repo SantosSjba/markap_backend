@@ -1,4 +1,6 @@
-﻿export const ARQUITECTURA_CATALOG_MATERIAL_REPOSITORY = Symbol('ArquitecturaCatalogMaterialRepository');
+﻿export const ARQUITECTURA_CATALOG_MATERIAL_REPOSITORY = Symbol(
+  'ArquitecturaCatalogMaterialRepository',
+);
 
 export interface ArquitecturaCatalogMaterialImageDto {
   id: string;
@@ -73,12 +75,20 @@ export interface ListArquitecturaCatalogMaterialsResult {
 }
 
 export interface ArquitecturaCatalogMaterialRepository {
-  list(filters: ListArquitecturaCatalogMaterialsFilters): Promise<ListArquitecturaCatalogMaterialsResult>;
-  findById(id: string, applicationSlug?: string): Promise<ArquitecturaCatalogMaterialDetail | null>;
+  list(
+    filters: ListArquitecturaCatalogMaterialsFilters,
+  ): Promise<ListArquitecturaCatalogMaterialsResult>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ArquitecturaCatalogMaterialDetail | null>;
   create(
     applicationId: string,
     payload: CreateArquitecturaCatalogMaterialPayload,
   ): Promise<ArquitecturaCatalogMaterialDetail>;
-  update(id: string, payload: UpdateArquitecturaCatalogMaterialPayload): Promise<ArquitecturaCatalogMaterialDetail>;
+  update(
+    id: string,
+    payload: UpdateArquitecturaCatalogMaterialPayload,
+  ): Promise<ArquitecturaCatalogMaterialDetail>;
   delete(id: string): Promise<void>;
 }

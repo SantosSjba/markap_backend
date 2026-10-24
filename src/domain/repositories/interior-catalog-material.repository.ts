@@ -1,4 +1,6 @@
-export const INTERIOR_CATALOG_MATERIAL_REPOSITORY = Symbol('InteriorCatalogMaterialRepository');
+export const INTERIOR_CATALOG_MATERIAL_REPOSITORY = Symbol(
+  'InteriorCatalogMaterialRepository',
+);
 
 export interface InteriorCatalogMaterialImageDto {
   id: string;
@@ -73,12 +75,20 @@ export interface ListInteriorCatalogMaterialsResult {
 }
 
 export interface InteriorCatalogMaterialRepository {
-  list(filters: ListInteriorCatalogMaterialsFilters): Promise<ListInteriorCatalogMaterialsResult>;
-  findById(id: string, applicationSlug?: string): Promise<InteriorCatalogMaterialDetail | null>;
+  list(
+    filters: ListInteriorCatalogMaterialsFilters,
+  ): Promise<ListInteriorCatalogMaterialsResult>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<InteriorCatalogMaterialDetail | null>;
   create(
     applicationId: string,
     payload: CreateInteriorCatalogMaterialPayload,
   ): Promise<InteriorCatalogMaterialDetail>;
-  update(id: string, payload: UpdateInteriorCatalogMaterialPayload): Promise<InteriorCatalogMaterialDetail>;
+  update(
+    id: string,
+    payload: UpdateInteriorCatalogMaterialPayload,
+  ): Promise<InteriorCatalogMaterialDetail>;
   delete(id: string): Promise<void>;
 }

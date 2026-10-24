@@ -1,5 +1,20 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadSalesOperationsService } from '../../../application/services/contabilidad-sales-operations.service';
@@ -27,7 +42,10 @@ export class ContabilidadSalesController {
     @Query('search') search?: string,
     @Query('activeOnly') activeOnly?: string,
   ) {
-    return this.sales.listCustomers(applicationSlug, { search, activeOnly: activeOnly !== 'false' });
+    return this.sales.listCustomers(applicationSlug, {
+      search,
+      activeOnly: activeOnly !== 'false',
+    });
   }
 
   @Post('customers')
@@ -74,7 +92,10 @@ export class ContabilidadSalesController {
   @Get('invoices/:id')
   @ApiOperation({ summary: 'Detalle de comprobante de venta' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  getInvoice(@Query('applicationSlug') applicationSlug: string | undefined, @Param('id') id: string) {
+  getInvoice(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('id') id: string,
+  ) {
     return this.sales.getInvoice(applicationSlug, id);
   }
 
@@ -86,13 +107,20 @@ export class ContabilidadSalesController {
     @Body() body: CreateSalesInvoiceInput,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.sales.createInvoice(applicationSlug, body, req.user?.sub ?? null);
+    return this.sales.createInvoice(
+      applicationSlug,
+      body,
+      req.user?.sub ?? null,
+    );
   }
 
   @Post('invoices/:id/cancel')
   @ApiOperation({ summary: 'Anular comprobante (sin cobros)' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  cancelInvoice(@Query('applicationSlug') applicationSlug: string | undefined, @Param('id') id: string) {
+  cancelInvoice(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('id') id: string,
+  ) {
     return this.sales.cancelInvoice(applicationSlug, id);
   }
 
@@ -105,7 +133,11 @@ export class ContabilidadSalesController {
     @Query('customerId') customerId?: string,
     @Query('search') search?: string,
   ) {
-    return this.sales.listCreditNotes(applicationSlug, { periodId, customerId, search });
+    return this.sales.listCreditNotes(applicationSlug, {
+      periodId,
+      customerId,
+      search,
+    });
   }
 
   @Post('credit-notes')
@@ -116,7 +148,11 @@ export class ContabilidadSalesController {
     @Body() body: CreateSalesCreditNoteInput,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.sales.createCreditNote(applicationSlug, body, req.user?.sub ?? null);
+    return this.sales.createCreditNote(
+      applicationSlug,
+      body,
+      req.user?.sub ?? null,
+    );
   }
 
   @Get('debit-notes')
@@ -128,7 +164,11 @@ export class ContabilidadSalesController {
     @Query('customerId') customerId?: string,
     @Query('search') search?: string,
   ) {
-    return this.sales.listDebitNotes(applicationSlug, { periodId, customerId, search });
+    return this.sales.listDebitNotes(applicationSlug, {
+      periodId,
+      customerId,
+      search,
+    });
   }
 
   @Post('debit-notes')
@@ -139,7 +179,11 @@ export class ContabilidadSalesController {
     @Body() body: CreateSalesDebitNoteInput,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.sales.createDebitNote(applicationSlug, body, req.user?.sub ?? null);
+    return this.sales.createDebitNote(
+      applicationSlug,
+      body,
+      req.user?.sub ?? null,
+    );
   }
 
   @Get('collections')
@@ -151,7 +195,11 @@ export class ContabilidadSalesController {
     @Query('customerId') customerId?: string,
     @Query('invoiceId') invoiceId?: string,
   ) {
-    return this.sales.listCollections(applicationSlug, { periodId, customerId, invoiceId });
+    return this.sales.listCollections(applicationSlug, {
+      periodId,
+      customerId,
+      invoiceId,
+    });
   }
 
   @Post('collections')
@@ -162,6 +210,10 @@ export class ContabilidadSalesController {
     @Body() body: CreateSalesCollectionInput,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.sales.createCollection(applicationSlug, body, req.user?.sub ?? null);
+    return this.sales.createCollection(
+      applicationSlug,
+      body,
+      req.user?.sub ?? null,
+    );
   }
 }

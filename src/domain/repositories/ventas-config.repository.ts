@@ -23,7 +23,10 @@ export const VENTAS_CONFIG_REPOSITORY = Symbol('VentasConfigRepository');
 export interface VentasConfigRepository {
   listPipelineStages(applicationId: string): Promise<VentasPipelineStage[]>;
 
-  replacePipelineStages(applicationId: string, stages: VentasPipelineStageInput[]): Promise<void>;
+  replacePipelineStages(
+    applicationId: string,
+    stages: VentasPipelineStageInput[],
+  ): Promise<void>;
 
   getNumberingSeries(
     applicationId: string,

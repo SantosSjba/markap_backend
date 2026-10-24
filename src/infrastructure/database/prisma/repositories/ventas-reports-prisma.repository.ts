@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { periodLabel } from '../mappers/ventas-reports-prisma.mapper';
 import type { VentasReportsRepository } from '@domain/repositories/ventas-reports.repository';
-import type { VentasReportsDateRange, VentasReportsGranularity } from '@domain/entities/ventas-reports.entity';
+import type {
+  VentasReportsDateRange,
+  VentasReportsGranularity,
+} from '@domain/entities/ventas-reports.entity';
 import {
   AgentPerformanceRow,
   ConversionReport,
@@ -27,7 +30,10 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
       orderBy: { closedAt: 'asc' },
     });
 
-    const map = new Map<string, { closingsCount: number; totalAmount: number }>();
+    const map = new Map<
+      string,
+      { closingsCount: number; totalAmount: number }
+    >();
     for (const r of rows) {
       const key = periodLabel(r.closedAt, granularity);
       const cur = map.get(key) ?? { closingsCount: 0, totalAmount: 0 };
@@ -48,7 +54,9 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
       );
   }
 
-  async getAgentPerformance(range: VentasReportsDateRange): Promise<AgentPerformanceRow[]> {
+  async getAgentPerformance(
+    range: VentasReportsDateRange,
+  ): Promise<AgentPerformanceRow[]> {
     const grouped = await this.prisma.saleClosing.groupBy({
       by: ['agentId'],
       where: {
@@ -60,7 +68,9 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
       _sum: { finalPrice: true },
     });
 
-    const agentIds = grouped.map((g) => g.agentId).filter((id): id is string => id != null);
+    const agentIds = grouped
+      .map((g) => g.agentId)
+      .filter((id): id is string => id != null);
     if (agentIds.length === 0) return [];
 
     const agents = await this.prisma.agent.findMany({
@@ -92,13 +102,16 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
             nameById.get(g.agentId as string) ?? '—',
             g._count._all,
             Math.round((g._sum.finalPrice ?? 0) * 100) / 100,
-            Math.round((commissionSum.get(g.agentId as string) ?? 0) * 100) / 100,
+            Math.round((commissionSum.get(g.agentId as string) ?? 0) * 100) /
+              100,
           ),
       )
       .sort((a, b) => b.totalSales - a.totalSales);
   }
 
-  async getConversion(range: VentasReportsDateRange): Promise<ConversionReport> {
+  async getConversion(
+    range: VentasReportsDateRange,
+  ): Promise<ConversionReport> {
     const applicationId = range.applicationId;
 
     const [
@@ -172,7 +185,9 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
     );
   }
 
-  async getFinancialFlow(range: VentasReportsDateRange): Promise<FinancialFlowReport> {
+  async getFinancialFlow(
+    range: VentasReportsDateRange,
+  ): Promise<FinancialFlowReport> {
     const applicationId = range.applicationId;
 
     const [collectedAgg, pendingAgg, docsAgg, commGroups] = await Promise.all([
@@ -227,7 +242,10 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
 
     const estimatedNetAfterCosts =
       Math.round(
-        (buyerPaymentsCollected - documentationCostsTotal - commissionsPaidAmount) * 100,
+        (buyerPaymentsCollected -
+          documentationCostsTotal -
+          commissionsPaidAmount) *
+          100,
       ) / 100;
 
     return new FinancialFlowReport(

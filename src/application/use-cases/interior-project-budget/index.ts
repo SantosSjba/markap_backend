@@ -25,10 +25,13 @@ export class GetInteriorProjectSettlementUseCase {
   ) {}
 
   execute(projectId: string, applicationSlug = 'interiorismo') {
-    return this.repo.getSettlement(projectId, applicationSlug).then((settlement) => {
-      if (!settlement) throw new NotFoundException('Liquidación no disponible');
-      return settlement;
-    });
+    return this.repo
+      .getSettlement(projectId, applicationSlug)
+      .then((settlement) => {
+        if (!settlement)
+          throw new NotFoundException('Liquidación no disponible');
+        return settlement;
+      });
   }
 }
 
@@ -61,7 +64,12 @@ export class UpdateInteriorProjectBudgetSectionUseCase {
     payload: { name?: string; sortOrder?: number },
     applicationSlug = 'interiorismo',
   ) {
-    return this.repo.updateSection(projectId, sectionId, payload, applicationSlug);
+    return this.repo.updateSection(
+      projectId,
+      sectionId,
+      payload,
+      applicationSlug,
+    );
   }
 }
 
@@ -72,7 +80,11 @@ export class DeleteInteriorProjectBudgetSectionUseCase {
     private readonly repo: InteriorProjectBudgetRepository,
   ) {}
 
-  execute(projectId: string, sectionId: string, applicationSlug = 'interiorismo') {
+  execute(
+    projectId: string,
+    sectionId: string,
+    applicationSlug = 'interiorismo',
+  ) {
     return this.repo.deleteSection(projectId, sectionId, applicationSlug);
   }
 }
@@ -123,7 +135,12 @@ export class UpdateInteriorProjectBudgetLineItemUseCase {
     },
     applicationSlug = 'interiorismo',
   ) {
-    return this.repo.updateLineItem(projectId, lineItemId, payload, applicationSlug);
+    return this.repo.updateLineItem(
+      projectId,
+      lineItemId,
+      payload,
+      applicationSlug,
+    );
   }
 }
 
@@ -134,7 +151,11 @@ export class DeleteInteriorProjectBudgetLineItemUseCase {
     private readonly repo: InteriorProjectBudgetRepository,
   ) {}
 
-  execute(projectId: string, lineItemId: string, applicationSlug = 'interiorismo') {
+  execute(
+    projectId: string,
+    lineItemId: string,
+    applicationSlug = 'interiorismo',
+  ) {
     return this.repo.deleteLineItem(projectId, lineItemId, applicationSlug);
   }
 }
@@ -148,7 +169,12 @@ export class CreateInteriorLineItemSupplierPaymentUseCase {
 
   execute(
     projectId: string,
-    payload: { lineItemId: string; paymentNumber: number; amount: number; paidAt: Date },
+    payload: {
+      lineItemId: string;
+      paymentNumber: number;
+      amount: number;
+      paidAt: Date;
+    },
     applicationSlug = 'interiorismo',
   ) {
     return this.repo.createSupplierPayment(projectId, payload, applicationSlug);
@@ -162,8 +188,16 @@ export class DeleteInteriorLineItemSupplierPaymentUseCase {
     private readonly repo: InteriorProjectBudgetRepository,
   ) {}
 
-  execute(projectId: string, paymentId: string, applicationSlug = 'interiorismo') {
-    return this.repo.deleteSupplierPayment(projectId, paymentId, applicationSlug);
+  execute(
+    projectId: string,
+    paymentId: string,
+    applicationSlug = 'interiorismo',
+  ) {
+    return this.repo.deleteSupplierPayment(
+      projectId,
+      paymentId,
+      applicationSlug,
+    );
   }
 }
 

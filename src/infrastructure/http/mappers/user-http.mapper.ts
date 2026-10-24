@@ -1,10 +1,7 @@
 import { User } from '@domain/entities/user.entity';
 import { Role } from '@domain/entities/role.entity';
 import type { UserWithRolesListItem } from '@domain/repositories/user.repository';
-import {
-  UserResponseDto,
-  UserRoleDto,
-} from '../dtos/auth/auth-response.dto';
+import { UserResponseDto, UserRoleDto } from '../dtos/auth/auth-response.dto';
 
 /**
  * User HTTP Mapper
@@ -36,7 +33,10 @@ export class UserHttpMapper {
   }
 
   /** Perfil / login: usuario + roles como entidades de dominio. */
-  static toResponseWithRoleEntities(user: User, roles: Role[]): UserResponseDto {
+  static toResponseWithRoleEntities(
+    user: User,
+    roles: Role[],
+  ): UserResponseDto {
     return {
       ...UserHttpMapper.toResponse(user),
       roles: UserHttpMapper.roleEntitiesToDtos(roles),

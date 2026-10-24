@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type { RentalRepository } from '@domain/repositories/rental.repository';
-import type { Rental, UpdateRentalData } from '@domain/repositories/rental.repository';
+import type {
+  Rental,
+  UpdateRentalData,
+} from '@domain/repositories/rental.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { parseDateOnly } from '@domain/utils/peru-date.util';
 
@@ -34,11 +37,13 @@ export class UpdateRentalUseCase {
       throw new EntityNotFoundException('Rental', input.id);
     }
     const data: UpdateRentalData = {};
-    if (input.startDate != null) data.startDate = parseDateOnly(input.startDate);
+    if (input.startDate != null)
+      data.startDate = parseDateOnly(input.startDate);
     if (input.endDate != null) data.endDate = parseDateOnly(input.endDate);
     if (input.currency != null) data.currency = input.currency;
     if (input.monthlyAmount != null) data.monthlyAmount = input.monthlyAmount;
-    if (input.securityDeposit !== undefined) data.securityDeposit = input.securityDeposit;
+    if (input.securityDeposit !== undefined)
+      data.securityDeposit = input.securityDeposit;
     if (input.paymentDueDay != null) data.paymentDueDay = input.paymentDueDay;
     if (input.notes !== undefined) data.notes = input.notes;
     if (input.status != null) data.status = input.status;

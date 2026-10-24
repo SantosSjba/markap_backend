@@ -1,5 +1,21 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { VentasFinanzasOperationsService } from '../../../application/services';
 
@@ -11,12 +27,18 @@ export class VentasFinanzasController {
   constructor(private readonly finanzas: VentasFinanzasOperationsService) {}
 
   @Get('buyer-payments')
-  @ApiOperation({ summary: 'Pagos del comprador (inicial / cuotas) por cierre' })
+  @ApiOperation({
+    summary: 'Pagos del comprador (inicial / cuotas) por cierre',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'buyerClientId', required: false })
-  @ApiQuery({ name: 'kind', required: false, enum: ['DOWN_PAYMENT', 'INSTALLMENT'] })
+  @ApiQuery({
+    name: 'kind',
+    required: false,
+    enum: ['DOWN_PAYMENT', 'INSTALLMENT'],
+  })
   @ApiQuery({
     name: 'displayStatus',
     required: false,
@@ -32,8 +54,8 @@ export class VentasFinanzasController {
   ) {
     return this.finanzas.listBuyerPayments({
       applicationSlug: applicationSlug ?? 'ventas',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(100, Math.max(1, parseInt(limit ?? '20', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       buyerClientId: buyerClientId?.trim() || undefined,
       kind: kind as never,
       displayStatus,
@@ -74,7 +96,11 @@ export class VentasFinanzasController {
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
-  @ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'PARTIAL', 'PAID'] })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['PENDING', 'PARTIAL', 'PAID'],
+  })
   @ApiQuery({ name: 'agentId', required: false })
   async listCommissions(
     @Query('applicationSlug') applicationSlug?: string,
@@ -85,8 +111,8 @@ export class VentasFinanzasController {
   ) {
     return this.finanzas.listCommissions({
       applicationSlug: applicationSlug ?? 'ventas',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(100, Math.max(1, parseInt(limit ?? '20', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       status,
       agentId: agentId?.trim() || undefined,
     });
@@ -104,18 +130,26 @@ export class VentasFinanzasController {
   }
 
   @Patch('commission-payment-parts/:partId/mark-paid')
-  @ApiOperation({ summary: 'Marcar una parte del pago de comisión como pagada' })
+  @ApiOperation({
+    summary: 'Marcar una parte del pago de comisión como pagada',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async markCommissionPaymentPartPaid(
     @Param('partId') partId: string,
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body() body?: { paidAt?: string | null },
   ) {
-    return this.finanzas.markCommissionPaymentPartPaid(partId, applicationSlug, body);
+    return this.finanzas.markCommissionPaymentPartPaid(
+      partId,
+      applicationSlug,
+      body,
+    );
   }
 
   @Post('commissions/:id/recalculate-from-profile')
-  @ApiOperation({ summary: 'Recalcular monto según % configurado del asesor y precio final' })
+  @ApiOperation({
+    summary: 'Recalcular monto según % configurado del asesor y precio final',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async recalculateCommission(
     @Param('id') id: string,
@@ -142,7 +176,9 @@ export class VentasFinanzasController {
   }
 
   @Get('documentation-costs')
-  @ApiOperation({ summary: 'Costos de documentación (notaría, registros, etc.)' })
+  @ApiOperation({
+    summary: 'Costos de documentación (notaría, registros, etc.)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
@@ -157,8 +193,8 @@ export class VentasFinanzasController {
   ) {
     return this.finanzas.listDocumentationCosts({
       applicationSlug: applicationSlug ?? 'ventas',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(100, Math.max(1, parseInt(limit ?? '20', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       saleClosingId: saleClosingId?.trim() || undefined,
       buyerClientId: buyerClientId?.trim() || undefined,
     });
@@ -183,7 +219,9 @@ export class VentasFinanzasController {
   }
 
   @Get('closings/:closingId/profitability')
-  @ApiOperation({ summary: 'Resumen de rentabilidad (precio − gastos docs − comisión)' })
+  @ApiOperation({
+    summary: 'Resumen de rentabilidad (precio − gastos docs − comisión)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async profitability(
     @Param('closingId') closingId: string,

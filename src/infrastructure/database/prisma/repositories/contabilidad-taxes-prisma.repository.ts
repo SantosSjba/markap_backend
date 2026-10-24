@@ -13,9 +13,18 @@ import {
   CONTABILIDAD_RETENTION_ACCOUNT_CODE,
   CONTABILIDAD_TAX_RECORD_STATUS,
 } from '@domain/constants/contabilidad-taxes.defaults';
-import { CONTABILIDAD_PURCHASE_CREDIT_NOTE_STATUS, CONTABILIDAD_PURCHASE_STATUS } from '@domain/constants/contabilidad-purchases.defaults';
-import { CONTABILIDAD_SALES_CREDIT_NOTE_STATUS, CONTABILIDAD_SALES_STATUS } from '@domain/constants/contabilidad-sales.defaults';
-import { CONTABILIDAD_TREASURY_MOVEMENT_TYPE, CONTABILIDAD_TREASURY_SOURCE_TYPE } from '@domain/constants/contabilidad-treasury.defaults';
+import {
+  CONTABILIDAD_PURCHASE_CREDIT_NOTE_STATUS,
+  CONTABILIDAD_PURCHASE_STATUS,
+} from '@domain/constants/contabilidad-purchases.defaults';
+import {
+  CONTABILIDAD_SALES_CREDIT_NOTE_STATUS,
+  CONTABILIDAD_SALES_STATUS,
+} from '@domain/constants/contabilidad-sales.defaults';
+import {
+  CONTABILIDAD_TREASURY_MOVEMENT_TYPE,
+  CONTABILIDAD_TREASURY_SOURCE_TYPE,
+} from '@domain/constants/contabilidad-treasury.defaults';
 import type { ContabilidadAccountRepository } from '@domain/repositories/contabilidad-account.repository';
 import type { ContabilidadJournalRepository } from '@domain/repositories/contabilidad-journal.repository';
 import type {
@@ -32,9 +41,12 @@ import type {
   PayDetraccionInput,
 } from '@domain/repositories/contabilidad-taxes.repository';
 import type { ContabilidadTreasuryRepository } from '@domain/repositories/contabilidad-treasury.repository';
-import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import {
+  parsePenAmount,
+  roundPenAmount,
+} from '@domain/utils/contabilidad-journal-amounts';
 import { parseDateOnly } from '@domain/utils/peru-date.util';
-import { PrismaService } from '../prisma.service';
+import { Atomic, PrismaService } from '../prisma.service';
 import { ContabilidadTaxesPrismaMapper } from '../mappers/contabilidad-taxes-prisma.mapper';
 
 const detraccionInclude = {
@@ -46,7 +58,12 @@ const perceptionInclude = {
   salesInvoice: { select: { series: true, number: true } },
 } as const;
 
-function sumDecimal(rows: { _sum: { amount?: { toString(): string } | number | null; igvAmount?: { toString(): string } | number | null } }) {
+function sumDecimal(rows: {
+  _sum: {
+    amount?: { toString(): string } | number | null;
+    igvAmount?: { toString(): string } | number | null;
+  };
+}) {
   const val = rows._sum.amount ?? rows._sum.igvAmount ?? 0;
   return Number(val);
 }
@@ -63,7 +80,10 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
     private readonly treasury: ContabilidadTreasuryRepository,
   ) {}
 
-  private async resolveAccountId(applicationId: string, code: string): Promise<string> {
+  private async resolveAccountId(
+    applicationId: string,
+    code: string,
+  ): Promise<string> {
     const account = await this.accounts.findByCode(applicationId, code);
     if (!account?.isActive || !account.isMovement) {
       throw new Error(`Cuenta PCGE ${code} no disponible`);
@@ -72,7 +92,9 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
   }
 
   async ensureDefaults(applicationId: string): Promise<void> {
-    const existing = await this.prisma.contabilidadDetraccionRate.count({ where: { applicationId } });
+    const existing = await this.prisma.contabilidadDetraccionRate.count({
+      where: { applicationId },
+    });
     if (existing > 0) return;
     await this.prisma.contabilidadDetraccionRate.createMany({
       data: CONTABILIDAD_DEFAULT_DETRACTION_RATES.map((r) => ({
@@ -85,13 +107,24 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
     });
   }
 
-  async getIgvSummary(applicationId: string, periodId: string, igvPercent: number): Promise<ContabilidadIgvSummaryDto> {
+  async getIgvSummary(
+    applicationId: string,
+    periodId: string,
+    igvPercent: number,
+  ): Promise<ContabilidadIgvSummaryDto> {
     const period = await this.prisma.contabilidadPeriod.findFirst({
       where: { id: periodId, applicationId },
     });
     if (!period) throw new Error('Periodo no encontrado');
 
-    const [purchaseIgv, purchaseNcIgv, salesIgv, salesNcIgv, retentions, perceptions] = await Promise.all([
+    const [
+      purchaseIgv,
+      purchaseNcIgv,
+      salesIgv,
+      salesNcIgv,
+      retentions,
+      perceptions,
+    ] = await Promise.all([
       this.prisma.contabilidadPurchaseInvoice.aggregate({
         where: {
           applicationId,
@@ -101,7 +134,11 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
         _sum: { igvAmount: true },
       }),
       this.prisma.contabilidadPurchaseCreditNote.aggregate({
-        where: { applicationId, periodId, status: CONTABILIDAD_PURCHASE_CREDIT_NOTE_STATUS.ACTIVE },
+        where: {
+          applicationId,
+          periodId,
+          status: CONTABILIDAD_PURCHASE_CREDIT_NOTE_STATUS.ACTIVE,
+        },
         _sum: { igvAmount: true },
       }),
       this.prisma.contabilidadSalesInvoice.aggregate({
@@ -113,7 +150,11 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
         _sum: { igvAmount: true },
       }),
       this.prisma.contabilidadSalesCreditNote.aggregate({
-        where: { applicationId, periodId, status: CONTABILIDAD_SALES_CREDIT_NOTE_STATUS.ACTIVE },
+        where: {
+          applicationId,
+          periodId,
+          status: CONTABILIDAD_SALES_CREDIT_NOTE_STATUS.ACTIVE,
+        },
         _sum: { igvAmount: true },
       }),
       this.prisma.contabilidadRetention.aggregate({
@@ -126,7 +167,11 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
         _sum: { amount: true },
       }),
       this.prisma.contabilidadPerception.aggregate({
-        where: { applicationId, periodId, status: CONTABILIDAD_TAX_RECORD_STATUS.ACTIVE },
+        where: {
+          applicationId,
+          periodId,
+          status: CONTABILIDAD_TAX_RECORD_STATUS.ACTIVE,
+        },
         _sum: { amount: true },
       }),
     ]);
@@ -138,8 +183,12 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
     const retentionsIgv = roundPenAmount(sumDecimal(retentions));
     const perceptionsIgv = roundPenAmount(sumDecimal(perceptions));
 
-    const netCreditIgv = roundPenAmount(purchaseCreditIgv - purchaseCreditNoteIgv + retentionsIgv);
-    const netDebitIgv = roundPenAmount(salesDebitIgv - salesCreditNoteIgv + perceptionsIgv);
+    const netCreditIgv = roundPenAmount(
+      purchaseCreditIgv - purchaseCreditNoteIgv + retentionsIgv,
+    );
+    const netDebitIgv = roundPenAmount(
+      salesDebitIgv - salesCreditNoteIgv + perceptionsIgv,
+    );
     const balance = roundPenAmount(netDebitIgv - netCreditIgv);
 
     return {
@@ -166,18 +215,34 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
     company: { ruc: string; legalName: string },
     igvPercent: number,
   ): Promise<ContabilidadPdt621ExportDto> {
-    const igvSummary = await this.getIgvSummary(applicationId, periodId, igvPercent);
+    const igvSummary = await this.getIgvSummary(
+      applicationId,
+      periodId,
+      igvPercent,
+    );
     const [detracciones, retenciones, percepciones] = await Promise.all([
       this.prisma.contabilidadDetraccion.aggregate({
-        where: { applicationId, periodId, status: CONTABILIDAD_DETRACTION_STATUS.PAID },
+        where: {
+          applicationId,
+          periodId,
+          status: CONTABILIDAD_DETRACTION_STATUS.PAID,
+        },
         _sum: { amount: true },
       }),
       this.prisma.contabilidadRetention.aggregate({
-        where: { applicationId, periodId, status: CONTABILIDAD_TAX_RECORD_STATUS.ACTIVE },
+        where: {
+          applicationId,
+          periodId,
+          status: CONTABILIDAD_TAX_RECORD_STATUS.ACTIVE,
+        },
         _sum: { amount: true },
       }),
       this.prisma.contabilidadPerception.aggregate({
-        where: { applicationId, periodId, status: CONTABILIDAD_TAX_RECORD_STATUS.ACTIVE },
+        where: {
+          applicationId,
+          periodId,
+          status: CONTABILIDAD_TAX_RECORD_STATUS.ACTIVE,
+        },
         _sum: { amount: true },
       }),
     ]);
@@ -196,13 +261,17 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
     };
   }
 
-  async listDetraccionRates(applicationId: string): Promise<ContabilidadDetraccionRateDto[]> {
+  async listDetraccionRates(
+    applicationId: string,
+  ): Promise<ContabilidadDetraccionRateDto[]> {
     await this.ensureDefaults(applicationId);
     const rows = await this.prisma.contabilidadDetraccionRate.findMany({
       where: { applicationId, isActive: true },
       orderBy: { sunatCode: 'asc' },
     });
-    return rows.map(ContabilidadTaxesPrismaMapper.toDetraccionRate);
+    return rows.map((row) =>
+      ContabilidadTaxesPrismaMapper.toDetraccionRate(row),
+    );
   }
 
   async listDetracciones(
@@ -218,16 +287,18 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
       include: detraccionInclude,
       orderBy: { operationDate: 'desc' },
     });
-    return rows.map(ContabilidadTaxesPrismaMapper.toDetraccion);
+    return rows.map((row) => ContabilidadTaxesPrismaMapper.toDetraccion(row));
   }
 
+  @Atomic()
   async createDetraccion(
     applicationId: string,
     input: CreateDetraccionInput,
     createdBy?: string | null,
   ): Promise<ContabilidadDetraccionDto> {
     const base = roundPenAmount(parsePenAmount(input.baseAmount));
-    let ratePercent = input.ratePercent !== undefined ? Number(input.ratePercent) : 0;
+    let ratePercent =
+      input.ratePercent !== undefined ? Number(input.ratePercent) : 0;
     if (input.rateId) {
       const rate = await this.prisma.contabilidadDetraccionRate.findFirst({
         where: { id: input.rateId, applicationId },
@@ -241,8 +312,14 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
         : roundPenAmount((base * ratePercent) / 100);
     if (amount <= 0) throw new Error('Importe de detracción inválido');
 
-    const payableId = await this.resolveAccountId(applicationId, CONTABILIDAD_PAYABLE_ACCOUNT_CODE);
-    const detraccionAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_DETRACTION_ACCOUNT_CODE);
+    const payableId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_PAYABLE_ACCOUNT_CODE,
+    );
+    const detraccionAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_DETRACTION_ACCOUNT_CODE,
+    );
 
     const journal = await this.journal.createAndPost(
       applicationId,
@@ -251,7 +328,11 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
         entryDate: input.operationDate,
         description: `Detracción SPOT ${input.certificateNumber} — ${input.supplierName}`,
         lines: [
-          { accountId: payableId, debit: amount, auxiliaryRuc: input.supplierRuc },
+          {
+            accountId: payableId,
+            debit: amount,
+            auxiliaryRuc: input.supplierRuc,
+          },
           { accountId: detraccionAccountId, credit: amount },
         ],
       },
@@ -279,27 +360,40 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
     return ContabilidadTaxesPrismaMapper.toDetraccion(row);
   }
 
+  @Atomic()
   async payDetraccion(
     applicationId: string,
     id: string,
     input: PayDetraccionInput,
     createdBy?: string | null,
   ): Promise<ContabilidadDetraccionDto> {
+    await this.prisma
+      .$queryRaw`SELECT id FROM contabilidad_detracciones WHERE id = ${id} FOR UPDATE`;
     const existing = await this.prisma.contabilidadDetraccion.findFirst({
       where: { id, applicationId },
     });
     if (!existing) throw new Error('Detracción no encontrada');
-    if (existing.status === CONTABILIDAD_DETRACTION_STATUS.PAID) throw new Error('Detracción ya pagada');
+    if (existing.status === CONTABILIDAD_DETRACTION_STATUS.PAID)
+      throw new Error('Detracción ya pagada');
 
-    const detraccionAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_DETRACTION_ACCOUNT_CODE);
+    const detraccionAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_DETRACTION_ACCOUNT_CODE,
+    );
     const movement = await this.treasury.createMovementWithJournal(
       applicationId,
       {
         periodId: existing.periodId,
         movementType: CONTABILIDAD_TREASURY_MOVEMENT_TYPE.OUT,
         sourceType: input.sourceType,
-        cashBoxId: input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH ? input.cashBoxId : null,
-        bankAccountId: input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK ? input.bankAccountId : null,
+        cashBoxId:
+          input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH
+            ? input.cashBoxId
+            : null,
+        bankAccountId:
+          input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK
+            ? input.bankAccountId
+            : null,
         offsetAccountId: detraccionAccountId,
         amount: Number(existing.amount),
         movementDate: input.paymentDate,
@@ -333,24 +427,32 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
       },
       orderBy: { issueDate: 'desc' },
     });
-    return rows.map(ContabilidadTaxesPrismaMapper.toRetention);
+    return rows.map((row) => ContabilidadTaxesPrismaMapper.toRetention(row));
   }
 
+  @Atomic()
   async createRetention(
     applicationId: string,
     input: CreateRetentionInput,
     createdBy?: string | null,
   ): Promise<ContabilidadRetentionDto> {
     const base = roundPenAmount(parsePenAmount(input.taxableBase));
-    const ratePercent = input.ratePercent !== undefined ? Number(input.ratePercent) : 0;
+    const ratePercent =
+      input.ratePercent !== undefined ? Number(input.ratePercent) : 0;
     const amount =
       input.amount !== undefined && input.amount !== ''
         ? roundPenAmount(parsePenAmount(input.amount))
         : roundPenAmount((base * ratePercent) / 100);
     if (amount <= 0) throw new Error('Importe de retención inválido');
 
-    const payableId = await this.resolveAccountId(applicationId, CONTABILIDAD_PAYABLE_ACCOUNT_CODE);
-    const retentionAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_RETENTION_ACCOUNT_CODE);
+    const payableId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_PAYABLE_ACCOUNT_CODE,
+    );
+    const retentionAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_RETENTION_ACCOUNT_CODE,
+    );
 
     const journal = await this.journal.createAndPost(
       applicationId,
@@ -359,7 +461,11 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
         entryDate: input.issueDate,
         description: `Retención ${input.retentionType} — ${input.counterpartyName}`,
         lines: [
-          { accountId: payableId, debit: amount, auxiliaryRuc: input.counterpartyRuc },
+          {
+            accountId: payableId,
+            debit: amount,
+            auxiliaryRuc: input.counterpartyRuc,
+          },
           { accountId: retentionAccountId, credit: amount },
         ],
       },
@@ -401,31 +507,42 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
       include: perceptionInclude,
       orderBy: { issueDate: 'desc' },
     });
-    return rows.map(ContabilidadTaxesPrismaMapper.toPerception);
+    return rows.map((row) => ContabilidadTaxesPrismaMapper.toPerception(row));
   }
 
+  @Atomic()
   async createPerception(
     applicationId: string,
     input: CreatePerceptionInput,
     createdBy?: string | null,
   ): Promise<ContabilidadPerceptionDto> {
     const base = roundPenAmount(parsePenAmount(input.taxableBase));
-    const ratePercent = input.ratePercent !== undefined ? Number(input.ratePercent) : 0;
+    const ratePercent =
+      input.ratePercent !== undefined ? Number(input.ratePercent) : 0;
     const amount =
       input.amount !== undefined && input.amount !== ''
         ? roundPenAmount(parsePenAmount(input.amount))
         : roundPenAmount((base * ratePercent) / 100);
     if (amount <= 0) throw new Error('Importe de percepción inválido');
 
-    const igvAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_IGV_ACCOUNT_CODE);
+    const igvAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_IGV_ACCOUNT_CODE,
+    );
     const movement = await this.treasury.createMovementWithJournal(
       applicationId,
       {
         periodId: input.periodId,
         movementType: CONTABILIDAD_TREASURY_MOVEMENT_TYPE.IN,
         sourceType: input.sourceType,
-        cashBoxId: input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH ? input.cashBoxId : null,
-        bankAccountId: input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK ? input.bankAccountId : null,
+        cashBoxId:
+          input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH
+            ? input.cashBoxId
+            : null,
+        bankAccountId:
+          input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK
+            ? input.bankAccountId
+            : null,
         offsetAccountId: igvAccountId,
         amount,
         movementDate: input.issueDate,

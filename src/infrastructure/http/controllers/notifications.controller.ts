@@ -1,3 +1,4 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   Controller,
   Get,
@@ -9,7 +10,13 @@ import {
   Request,
   ForbiddenException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
 import { NotificationsService } from '../../../application/services';
@@ -37,8 +44,8 @@ export class NotificationsController {
     return this.notificationsService.listByUserId(
       userId,
       unreadOnly === 'true',
-      limit ? parseInt(limit, 10) : undefined,
-      offset ? parseInt(offset, 10) : undefined,
+      limit ? parseIntegerQuery(limit, 20, 1, 100) : undefined,
+      offset ? parseIntegerQuery(offset, 0, 0, 1000000) : undefined,
     );
   }
 
@@ -54,13 +61,17 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Marcar notificación como leída' })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 404 })
-  async markAsRead(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+  async markAsRead(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
     return this.notificationsService.markAsRead(id, req.user.sub);
   }
 
   @Post('run-rental-alerts')
   @ApiOperation({
-    summary: 'Ejecutar alertas de alquileres manualmente (solo NODE_ENV !== production)',
+    summary:
+      'Ejecutar alertas de alquileres manualmente (solo NODE_ENV !== production)',
   })
   @ApiResponse({ status: 200 })
   async runRentalAlerts() {

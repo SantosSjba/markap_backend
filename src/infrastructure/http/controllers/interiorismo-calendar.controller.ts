@@ -75,7 +75,10 @@ export class InteriorismoCalendarController {
   }
 
   @Post('events')
-  @ApiOperation({ summary: 'Crear reunión, visita, instalación agendada, fecha límite o bloque de equipo' })
+  @ApiOperation({
+    summary:
+      'Crear reunión, visita, instalación agendada, fecha límite o bloque de equipo',
+  })
   async create(
     @Body() dto: CreateInteriorCalendarEventDto,
     @Query('applicationSlug') applicationSlug?: string,
@@ -121,7 +124,10 @@ export class InteriorismoCalendarController {
   @Delete('events/:eventId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Eliminar evento manual' })
-  async delete(@Param('eventId') eventId: string, @Query('applicationSlug') applicationSlug?: string) {
+  async delete(
+    @Param('eventId') eventId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     await this.deleteUc.execute(eventId, applicationSlug ?? 'interiorismo');
   }
 }

@@ -7,7 +7,9 @@ export interface CreatePasswordResetCodeData {
 }
 
 export abstract class PasswordResetCodeRepository {
-  abstract create(data: CreatePasswordResetCodeData): Promise<PasswordResetCode>;
+  abstract create(
+    data: CreatePasswordResetCodeData,
+  ): Promise<PasswordResetCode>;
 
   abstract findValidByCodeAndUserId(
     code: string,

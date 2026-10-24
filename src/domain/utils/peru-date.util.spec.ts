@@ -27,7 +27,9 @@ describe('peru-date.util', () => {
 
   it('diffCalendarDays is inclusive of civil days', () => {
     expect(diffCalendarDays('2026-06-14', '2027-06-13')).toBe(364);
-    expect(diffCalendarDays(startOfDayLima('2026-06-14'), '2026-06-14')).toBe(0);
+    expect(diffCalendarDays(startOfDayLima('2026-06-14'), '2026-06-14')).toBe(
+      0,
+    );
   });
 
   it('todayDateOnlyLima returns YYYY-MM-DD', () => {

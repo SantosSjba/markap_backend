@@ -1,8 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY, RENTAL_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  RENTAL_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import type { RentalRepository } from '@domain/repositories/rental.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import type { PropertyRepository } from '@domain/repositories/property.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { Money } from '@domain/value-objects';
 import { parseDateOnly } from '@domain/utils/peru-date.util';
@@ -30,8 +32,6 @@ export class CreateRentalUseCase {
     private readonly rentalRepository: RentalRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
-    @Inject(PROPERTY_REPOSITORY)
-    private readonly propertyRepository: PropertyRepository,
   ) {}
 
   async execute(input: CreateRentalInput) {
@@ -41,10 +41,7 @@ export class CreateRentalUseCase {
         input.applicationSlug,
       );
       if (!app) {
-        throw new EntityNotFoundException(
-          'Application',
-          input.applicationSlug,
-        );
+        throw new EntityNotFoundException('Application', input.applicationSlug);
       }
       applicationId = app.id;
     }
@@ -70,10 +67,6 @@ export class CreateRentalUseCase {
       notes: input.notes?.trim() || null,
       enableExpirationAlerts: input.enableExpirationAlerts ?? true,
       enableCollectionAlerts: input.enableCollectionAlerts ?? true,
-    });
-    await this.propertyRepository.update({
-      id: input.propertyId,
-      listingStatus: 'RENTED',
     });
     return rental;
   }

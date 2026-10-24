@@ -74,7 +74,8 @@ export class CreateRentalDto {
   notes?: string;
 
   @ApiPropertyOptional({
-    description: 'Alertas de vencimiento de contrato (30/60/90 días y registro)',
+    description:
+      'Alertas de vencimiento de contrato (30/60/90 días y registro)',
     default: true,
   })
   @IsOptional()

@@ -21,7 +21,10 @@ export function computeTaxableBase(
   return roundPenAmount(base);
 }
 
-export function computeEstimatedIncomeTax(taxableBase: number, ratePercent = CONTABILIDAD_DEFAULT_INCOME_TAX_RATE_PERCENT): number {
+export function computeEstimatedIncomeTax(
+  taxableBase: number,
+  ratePercent = CONTABILIDAD_DEFAULT_INCOME_TAX_RATE_PERCENT,
+): number {
   if (taxableBase <= 0) return 0;
   return roundPenAmount(taxableBase * (ratePercent / 100));
 }
@@ -31,5 +34,7 @@ export function computeNetTaxBalance(
   retentionsTotal: number,
   advancePaymentsTotal: number,
 ): number {
-  return roundPenAmount(Math.max(0, estimatedTax - retentionsTotal - advancePaymentsTotal));
+  return roundPenAmount(
+    Math.max(0, estimatedTax - retentionsTotal - advancePaymentsTotal),
+  );
 }

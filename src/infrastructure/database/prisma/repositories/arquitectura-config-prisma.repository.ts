@@ -6,7 +6,10 @@ import {
   type ArquitecturaConfigRepository,
   type ArquitecturaProjectStageInput,
 } from '@domain/repositories/arquitectura-config.repository';
-import type { ArquitecturaNumberingSeries, ArquitecturaProjectStage } from '@domain/entities/arquitectura-config.entity';
+import type {
+  ArquitecturaNumberingSeries,
+  ArquitecturaProjectStage,
+} from '@domain/entities/arquitectura-config.entity';
 import {
   ARQUITECTURA_PROJECT_LEGACY_STAGE_CODES,
   ARQUITECTURA_PROJECT_LIFECYCLE_CODE_SET,
@@ -17,7 +20,9 @@ import {
 export class ArquitecturaConfigPrismaRepository implements ArquitecturaConfigRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listProjectStages(applicationId: string): Promise<ArquitecturaProjectStage[]> {
+  async listProjectStages(
+    applicationId: string,
+  ): Promise<ArquitecturaProjectStage[]> {
     const rows = await this.prisma.arquitecturaProjectStageConfig.findMany({
       where: { applicationId },
       orderBy: { sortOrder: 'asc' },
@@ -25,9 +30,14 @@ export class ArquitecturaConfigPrismaRepository implements ArquitecturaConfigRep
     return rows.map((r) => ArquitecturaConfigPrismaMapper.toProjectStage(r));
   }
 
-  async replaceProjectStages(applicationId: string, stages: ArquitecturaProjectStageInput[]): Promise<void> {
+  async replaceProjectStages(
+    applicationId: string,
+    stages: ArquitecturaProjectStageInput[],
+  ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      await tx.arquitecturaProjectStageConfig.deleteMany({ where: { applicationId } });
+      await tx.arquitecturaProjectStageConfig.deleteMany({
+        where: { applicationId },
+      });
       await tx.arquitecturaProjectStageConfig.createMany({
         data: stages.map((s) => ({
           applicationId,
@@ -40,7 +50,10 @@ export class ArquitecturaConfigPrismaRepository implements ArquitecturaConfigRep
     });
   }
 
-  async getNumberingSeries(applicationId: string, seriesKey: string): Promise<ArquitecturaNumberingSeries | null> {
+  async getNumberingSeries(
+    applicationId: string,
+    seriesKey: string,
+  ): Promise<ArquitecturaNumberingSeries | null> {
     const row = await this.prisma.arquitecturaNumberingSeries.findUnique({
       where: { applicationId_seriesKey: { applicationId, seriesKey } },
     });
@@ -70,20 +83,25 @@ export class ArquitecturaConfigPrismaRepository implements ArquitecturaConfigRep
       select: { code: true },
     });
     const existingCodes = new Set(existing.map((r) => r.code));
-    const hasLegacy = ARQUITECTURA_PROJECT_LEGACY_STAGE_CODES.some((c) => existingCodes.has(c));
+    const hasLegacy = ARQUITECTURA_PROJECT_LEGACY_STAGE_CODES.some((c) =>
+      existingCodes.has(c),
+    );
     const hasExactLifecycle =
       existing.length === ARQUITECTURA_PROJECT_LIFECYCLE_STAGES.length &&
-      [...ARQUITECTURA_PROJECT_LIFECYCLE_CODE_SET].every((c) => existingCodes.has(c));
+      [...ARQUITECTURA_PROJECT_LIFECYCLE_CODE_SET].every((c) =>
+        existingCodes.has(c),
+      );
 
     if (existing.length === 0 || hasLegacy || !hasExactLifecycle) {
-      await this.replaceProjectStages(applicationId, ARQUITECTURA_PROJECT_LIFECYCLE_STAGES);
+      await this.replaceProjectStages(
+        applicationId,
+        ARQUITECTURA_PROJECT_LIFECYCLE_STAGES,
+      );
     } else {
       for (const stage of ARQUITECTURA_PROJECT_LIFECYCLE_STAGES) {
         await this.prisma.arquitecturaProjectStageConfig.updateMany({
           where: { applicationId, code: stage.code },
           data: {
-            label: stage.label,
-            sortOrder: stage.sortOrder,
             isActive: true,
           },
         });
@@ -103,7 +121,9 @@ export class ArquitecturaConfigPrismaRepository implements ArquitecturaConfigRep
       where: { applicationId, seriesKey: ARQUITECTURA_PROJECT_SERIES_KEY },
     });
     if (nSeries === 0) {
-      const projectCount = await this.prisma.arquitecturaProject.count({ where: { applicationId } });
+      const projectCount = await this.prisma.arquitecturaProject.count({
+        where: { applicationId },
+      });
       await this.prisma.arquitecturaNumberingSeries.create({
         data: {
           applicationId,
@@ -119,7 +139,10 @@ export class ArquitecturaConfigPrismaRepository implements ArquitecturaConfigRep
     return `${row.prefix}-${String(row.lastNumber).padStart(4, '0')}`;
   }
 
-  async allocateNextCode(applicationId: string, seriesKey: string): Promise<string> {
+  async allocateNextCode(
+    applicationId: string,
+    seriesKey: string,
+  ): Promise<string> {
     await this.ensureDefaults(applicationId);
     const row = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.arquitecturaNumberingSeries.update({

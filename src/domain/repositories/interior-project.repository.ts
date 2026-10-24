@@ -12,7 +12,9 @@ export type InteriorProjectLifecycleStatus =
   | 'FINISHED';
 
 /** Ciclo comercial + cancelación administrativa. */
-export type InteriorProjectStatus = InteriorProjectLifecycleStatus | 'CANCELLED';
+export type InteriorProjectStatus =
+  | InteriorProjectLifecycleStatus
+  | 'CANCELLED';
 
 export interface InteriorProjectAgentRef {
   id: string;
@@ -181,10 +183,18 @@ export interface ListInteriorProjectsResult {
 }
 
 export interface InteriorProjectRepository {
-  findMany(filters: ListInteriorProjectsFilters): Promise<ListInteriorProjectsResult>;
-  findById(id: string, applicationSlug?: string): Promise<InteriorProjectDetail | null>;
+  findMany(
+    filters: ListInteriorProjectsFilters,
+  ): Promise<ListInteriorProjectsResult>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<InteriorProjectDetail | null>;
   create(data: CreateInteriorProjectData): Promise<InteriorProjectDetail>;
-  update(id: string, data: UpdateInteriorProjectData): Promise<InteriorProjectDetail>;
+  update(
+    id: string,
+    data: UpdateInteriorProjectData,
+  ): Promise<InteriorProjectDetail>;
 }
 
 export const INTERIOR_PROJECT_REPOSITORY = Symbol('InteriorProjectRepository');

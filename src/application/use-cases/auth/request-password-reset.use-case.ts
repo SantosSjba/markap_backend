@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -19,7 +20,7 @@ function generateNumericCode(length: number): string {
   const digits = '0123456789';
   let code = '';
   for (let i = 0; i < length; i++) {
-    code += digits[Math.floor(Math.random() * digits.length)];
+    code += digits[randomInt(digits.length)];
   }
   return code;
 }
@@ -54,9 +55,8 @@ export class RequestPasswordResetUseCase {
     const codeLength =
       this.configService.get<number>('passwordReset.codeLength') || 6;
     const expiresInMinutes =
-      this.configService.get<number>(
-        'passwordReset.codeExpiresInMinutes',
-      ) || 15;
+      this.configService.get<number>('passwordReset.codeExpiresInMinutes') ||
+      15;
 
     const code = generateNumericCode(codeLength);
     const expiresAt = new Date();
@@ -134,7 +134,10 @@ export class RequestPasswordResetUseCase {
 
     await this.mailService.sendMail({
       to: gerenciaEmail,
-      subject: 'Recuperación de contraseña - MARKAP (solicitado por ' + user.email + ')',
+      subject:
+        'Recuperación de contraseña - MARKAP (solicitado por ' +
+        user.email +
+        ')',
       html,
     });
   }

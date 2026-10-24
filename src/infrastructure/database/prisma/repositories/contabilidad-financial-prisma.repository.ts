@@ -22,7 +22,10 @@ import type {
   FinancialStatementLineDto,
   IncomeStatementDto,
 } from '@domain/repositories/contabilidad-financial.repository';
-import { formatPenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import {
+  formatPenAmount,
+  roundPenAmount,
+} from '@domain/utils/contabilidad-journal-amounts';
 import { PrismaService } from '../prisma.service';
 
 interface PeriodRow {
@@ -51,7 +54,11 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
     private readonly journal: ContabilidadJournalRepository,
   ) {}
 
-  async findPriorPeriodId(applicationId: string, year: number, month: number): Promise<string | null> {
+  async findPriorPeriodId(
+    applicationId: string,
+    year: number,
+    month: number,
+  ): Promise<string | null> {
     if (month <= 1) {
       const prior = await this.prisma.contabilidadPeriod.findFirst({
         where: { applicationId, year: year - 1, month: 12 },
@@ -77,7 +84,11 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
         ? await this.findPriorPeriodId(applicationId, period.year, period.month)
         : priorPeriodId;
 
-    const currentBalances = await this.aggregateBalancesThrough(applicationId, period.year, period.month);
+    const currentBalances = await this.aggregateBalancesThrough(
+      applicationId,
+      period.year,
+      period.month,
+    );
     const priorBalances =
       priorId != null
         ? await this.aggregateBalancesThrough(
@@ -86,7 +97,11 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
           )
         : new Map<string, AccountBalanceRow>();
 
-    const incomeCurrent = await this.netIncomeThrough(applicationId, period.year, period.month);
+    const incomeCurrent = await this.netIncomeThrough(
+      applicationId,
+      period.year,
+      period.month,
+    );
     const incomePrior =
       priorId != null
         ? await this.netIncomeThrough(
@@ -125,7 +140,10 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
     };
 
     const equityLines = [...equityAccounts.lines];
-    if (Math.abs(incomeCurrent) >= 0.005 || (incomePrior != null && Math.abs(incomePrior) >= 0.005)) {
+    if (
+      Math.abs(incomeCurrent) >= 0.005 ||
+      (incomePrior != null && Math.abs(incomePrior) >= 0.005)
+    ) {
       equityLines.push(netIncomeLine);
     }
     const equityTotal = roundPenAmount(
@@ -168,7 +186,10 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
         ? await this.findPriorPeriodId(applicationId, period.year, period.month)
         : priorPeriodId;
 
-    const current = await this.aggregateBalancesForPeriod(applicationId, periodId);
+    const current = await this.aggregateBalancesForPeriod(
+      applicationId,
+      periodId,
+    );
     const prior =
       priorId != null
         ? await this.aggregateBalancesForPeriod(applicationId, priorId)
@@ -187,11 +208,23 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
       true,
     );
 
-    const netIncome = roundPenAmount(Number(income.total) - Number(expenses.total));
+    const netIncome = roundPenAmount(
+      Number(income.total) - Number(expenses.total),
+    );
     let priorNet: number | null = null;
     if (priorId != null) {
-      const pIncome = this.buildSection(prior, new Map(), [CONTABILIDAD_ACCOUNT_TYPES.INCOME], true);
-      const pExp = this.buildSection(prior, new Map(), [CONTABILIDAD_ACCOUNT_TYPES.EXPENSE], true);
+      const pIncome = this.buildSection(
+        prior,
+        new Map(),
+        [CONTABILIDAD_ACCOUNT_TYPES.INCOME],
+        true,
+      );
+      const pExp = this.buildSection(
+        prior,
+        new Map(),
+        [CONTABILIDAD_ACCOUNT_TYPES.EXPENSE],
+        true,
+      );
       priorNet = roundPenAmount(Number(pIncome.total) - Number(pExp.total));
     }
 
@@ -218,11 +251,22 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
         ? await this.findPriorPeriodId(applicationId, period.year, period.month)
         : priorPeriodId;
 
-    const incomeStmt = await this.getIncomeStatement(applicationId, periodId, priorId);
+    const incomeStmt = await this.getIncomeStatement(
+      applicationId,
+      periodId,
+      priorId,
+    );
     const netIncome = Number(incomeStmt.netIncome);
-    const priorNet = incomeStmt.priorNetIncome != null ? Number(incomeStmt.priorNetIncome) : null;
+    const priorNet =
+      incomeStmt.priorNetIncome != null
+        ? Number(incomeStmt.priorNetIncome)
+        : null;
 
-    const currentThrough = await this.aggregateBalancesThrough(applicationId, period.year, period.month);
+    const currentThrough = await this.aggregateBalancesThrough(
+      applicationId,
+      period.year,
+      period.month,
+    );
     let priorThrough = new Map<string, AccountBalanceRow>();
     let priorPriorThrough = new Map<string, AccountBalanceRow>();
     if (priorId != null) {
@@ -230,15 +274,38 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
       priorThrough = await this.aggregateBalancesThrough(applicationId, py, pm);
       const priorPriorId = await this.findPriorPeriodId(applicationId, py, pm);
       if (priorPriorId != null) {
-        const [ppy, ppm] = await this.periodYearMonth(applicationId, priorPriorId);
-        priorPriorThrough = await this.aggregateBalancesThrough(applicationId, ppy, ppm);
+        const [ppy, ppm] = await this.periodYearMonth(
+          applicationId,
+          priorPriorId,
+        );
+        priorPriorThrough = await this.aggregateBalancesThrough(
+          applicationId,
+          ppy,
+          ppm,
+        );
       }
     }
 
-    const receivableChange = this.balanceChangeByCodePrefix(currentThrough, priorThrough, '104');
-    const payableChange = this.balanceChangeByCodePrefix(currentThrough, priorThrough, '42');
-    const fixedAssetChange = this.balanceChangeByCodePrefix(currentThrough, priorThrough, '33');
-    const loanChange = this.balanceChangeByCodePrefix(currentThrough, priorThrough, '45');
+    const receivableChange = this.balanceChangeByCodePrefix(
+      currentThrough,
+      priorThrough,
+      '104',
+    );
+    const payableChange = this.balanceChangeByCodePrefix(
+      currentThrough,
+      priorThrough,
+      '42',
+    );
+    const fixedAssetChange = this.balanceChangeByCodePrefix(
+      currentThrough,
+      priorThrough,
+      '33',
+    );
+    const loanChange = this.balanceChangeByCodePrefix(
+      currentThrough,
+      priorThrough,
+      '45',
+    );
 
     const priorReceivableChange =
       priorThrough.size > 0
@@ -258,36 +325,54 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
         : null;
 
     const operating = [
-      { label: 'Utilidad neta', amount: formatPenAmount(netIncome), priorAmount: priorNet != null ? formatPenAmount(priorNet) : null },
+      {
+        label: 'Utilidad neta',
+        amount: formatPenAmount(netIncome),
+        priorAmount: priorNet != null ? formatPenAmount(priorNet) : null,
+      },
       {
         label: 'Variación cuentas por cobrar',
         amount: formatPenAmount(-receivableChange),
-        priorAmount: priorReceivableChange != null ? formatPenAmount(-priorReceivableChange) : null,
+        priorAmount:
+          priorReceivableChange != null
+            ? formatPenAmount(-priorReceivableChange)
+            : null,
       },
       {
         label: 'Variación cuentas por pagar',
         amount: formatPenAmount(payableChange),
-        priorAmount: priorPayableChange != null ? formatPenAmount(priorPayableChange) : null,
+        priorAmount:
+          priorPayableChange != null
+            ? formatPenAmount(priorPayableChange)
+            : null,
       },
     ];
     const operatingTotal = roundPenAmount(
       netIncome - receivableChange + payableChange,
     );
     const priorOperatingTotal =
-      priorNet != null && priorReceivableChange != null && priorPayableChange != null
+      priorNet != null &&
+      priorReceivableChange != null &&
+      priorPayableChange != null
         ? roundPenAmount(priorNet - priorReceivableChange + priorPayableChange)
         : null;
     operating.push({
       label: 'Flujo neto operativo',
       amount: formatPenAmount(operatingTotal),
-      priorAmount: priorOperatingTotal != null ? formatPenAmount(priorOperatingTotal) : null,
+      priorAmount:
+        priorOperatingTotal != null
+          ? formatPenAmount(priorOperatingTotal)
+          : null,
     });
 
     const investing = [
       {
         label: 'Variación activos fijos (clase 33)',
         amount: formatPenAmount(-fixedAssetChange),
-        priorAmount: priorFixedAssetChange != null ? formatPenAmount(-priorFixedAssetChange) : null,
+        priorAmount:
+          priorFixedAssetChange != null
+            ? formatPenAmount(-priorFixedAssetChange)
+            : null,
       },
     ];
     const investingTotal = -fixedAssetChange;
@@ -296,16 +381,21 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
       {
         label: 'Variación préstamos (clase 45)',
         amount: formatPenAmount(loanChange),
-        priorAmount: priorLoanChange != null ? formatPenAmount(priorLoanChange) : null,
+        priorAmount:
+          priorLoanChange != null ? formatPenAmount(priorLoanChange) : null,
       },
     ];
     const financingTotal = loanChange;
 
-    const netCashChange = roundPenAmount(operatingTotal + investingTotal + financingTotal);
+    const netCashChange = roundPenAmount(
+      operatingTotal + investingTotal + financingTotal,
+    );
 
     const treasury = await this.treasuryTotals(applicationId, periodId);
     const priorTreasury =
-      priorId != null ? await this.treasuryTotals(applicationId, priorId) : null;
+      priorId != null
+        ? await this.treasuryTotals(applicationId, priorId)
+        : null;
 
     return {
       periodId,
@@ -326,7 +416,10 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
     };
   }
 
-  async getClosingPreview(applicationId: string, periodId: string): Promise<ClosingPreviewDto> {
+  async getClosingPreview(
+    applicationId: string,
+    periodId: string,
+  ): Promise<ClosingPreviewDto> {
     const period = await this.requirePeriod(applicationId, periodId);
     const checklist: ClosingChecklistItemDto[] = [];
 
@@ -347,7 +440,11 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
     }
 
     const draftCount = await this.prisma.contabilidadJournalEntry.count({
-      where: { applicationId, periodId, status: CONTABILIDAD_JOURNAL_STATUS.DRAFT },
+      where: {
+        applicationId,
+        periodId,
+        status: CONTABILIDAD_JOURNAL_STATUS.DRAFT,
+      },
     });
     checklist.push({
       id: CLOSING_CHECK_IDS.NO_DRAFT_ENTRIES,
@@ -365,7 +462,12 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
         periodId,
         status: CONTABILIDAD_JOURNAL_STATUS.POSTED,
       },
-      select: { id: true, totalDebit: true, totalCredit: true, entryNumber: true },
+      select: {
+        id: true,
+        totalDebit: true,
+        totalCredit: true,
+        entryNumber: true,
+      },
     });
     const unbalancedCount = unbalanced.filter(
       (e) => Math.abs(Number(e.totalDebit) - Number(e.totalCredit)) >= 0.01,
@@ -420,7 +522,10 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
     });
 
     const balanceSheet = await this.getBalanceSheet(applicationId, periodId);
-    const incomeStatement = await this.getIncomeStatement(applicationId, periodId);
+    const incomeStatement = await this.getIncomeStatement(
+      applicationId,
+      periodId,
+    );
 
     const canClose =
       period.status === CONTABILIDAD_PERIOD_STATUS.OPEN &&
@@ -455,7 +560,10 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
       throw new Error('El periodo debe estar abierto para regularizar.');
     }
 
-    const balances = await this.aggregateBalancesForPeriod(applicationId, periodId);
+    const balances = await this.aggregateBalancesForPeriod(
+      applicationId,
+      periodId,
+    );
     const lines: {
       accountId: string;
       debit?: number;
@@ -467,7 +575,11 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
     let totalExpense = 0;
 
     for (const row of balances.values()) {
-      const bal = accountBalanceFromTotals(row.accountType, row.totalDebit, row.totalCredit);
+      const bal = accountBalanceFromTotals(
+        row.accountType,
+        row.totalDebit,
+        row.totalCredit,
+      );
       if (Math.abs(bal) < 0.005) continue;
 
       if (row.accountType === CONTABILIDAD_ACCOUNT_TYPES.INCOME) {
@@ -489,15 +601,24 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
 
     const netIncome = roundPenAmount(totalIncome - totalExpense);
     if (lines.length === 0 && Math.abs(netIncome) < 0.005) {
-      throw new Error('No hay cuentas de ingreso o gasto con saldo para regularizar.');
+      throw new Error(
+        'No hay cuentas de ingreso o gasto con saldo para regularizar.',
+      );
     }
 
     const profitCode = netIncome >= 0 ? '591' : '592';
     const profitAccount = await this.prisma.contabilidadAccount.findFirst({
-      where: { applicationId, code: profitCode, isActive: true, isMovement: true },
+      where: {
+        applicationId,
+        code: profitCode,
+        isActive: true,
+        isMovement: true,
+      },
     });
     if (!profitAccount) {
-      throw new Error(`Cuenta ${profitCode} no disponible para el asiento de cierre.`);
+      throw new Error(
+        `Cuenta ${profitCode} no disponible para el asiento de cierre.`,
+      );
     }
 
     const offsetAmount = roundPenAmount(Math.abs(netIncome));
@@ -517,7 +638,9 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
       }
     }
 
-    const lastDay = new Date(Date.UTC(period.year, period.month, 0)).getUTCDate();
+    const lastDay = new Date(
+      Date.UTC(period.year, period.month, 0),
+    ).getUTCDate();
     const entryDate = `${period.year}-${String(period.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
     const description = `Regularización de cierre ${CONTABILIDAD_MONTH_LABELS[period.month]} ${period.year}`;
 
@@ -536,7 +659,10 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
     };
   }
 
-  private async requirePeriod(applicationId: string, periodId: string): Promise<PeriodRow> {
+  private async requirePeriod(
+    applicationId: string,
+    periodId: string,
+  ): Promise<PeriodRow> {
     const period = await this.prisma.contabilidadPeriod.findFirst({
       where: { applicationId, id: periodId },
       select: { id: true, year: true, month: true, status: true },
@@ -545,12 +671,19 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
     return period;
   }
 
-  private async periodYearMonth(applicationId: string, periodId: string): Promise<[number, number]> {
+  private async periodYearMonth(
+    applicationId: string,
+    periodId: string,
+  ): Promise<[number, number]> {
     const p = await this.requirePeriod(applicationId, periodId);
     return [p.year, p.month];
   }
 
-  private async periodIdsThrough(applicationId: string, year: number, month: number): Promise<string[]> {
+  private async periodIdsThrough(
+    applicationId: string,
+    year: number,
+    month: number,
+  ): Promise<string[]> {
     const rows = await this.prisma.contabilidadPeriod.findMany({
       where: {
         applicationId,
@@ -645,10 +778,18 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
       const meta = cur ?? prv;
       if (!meta || !types.includes(meta.accountType)) continue;
       const amount = cur
-        ? accountBalanceFromTotals(cur.accountType, cur.totalDebit, cur.totalCredit)
+        ? accountBalanceFromTotals(
+            cur.accountType,
+            cur.totalDebit,
+            cur.totalCredit,
+          )
         : 0;
       const priorAmount = prv
-        ? accountBalanceFromTotals(prv.accountType, prv.totalDebit, prv.totalCredit)
+        ? accountBalanceFromTotals(
+            prv.accountType,
+            prv.totalDebit,
+            prv.totalCredit,
+          )
         : null;
       if (periodOnly && Math.abs(amount) < 0.005) continue;
       if (
@@ -674,12 +815,22 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
     return { lines, total: formatPenAmount(roundPenAmount(total)) };
   }
 
-  private async netIncomeForPeriod(applicationId: string, periodId: string): Promise<number> {
-    const balances = await this.aggregateBalancesForPeriod(applicationId, periodId);
+  private async netIncomeForPeriod(
+    applicationId: string,
+    periodId: string,
+  ): Promise<number> {
+    const balances = await this.aggregateBalancesForPeriod(
+      applicationId,
+      periodId,
+    );
     return this.netIncomeFromBalances(balances);
   }
 
-  private async netIncomeThrough(applicationId: string, year: number, month: number): Promise<number> {
+  private async netIncomeThrough(
+    applicationId: string,
+    year: number,
+    month: number,
+  ): Promise<number> {
     const periodIds = await this.prisma.contabilidadPeriod.findMany({
       where: { applicationId, year, month: { lte: month } },
       select: { id: true },
@@ -691,13 +842,20 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
     return this.netIncomeFromBalances(balances);
   }
 
-  private netIncomeFromBalances(balances: Map<string, AccountBalanceRow>): number {
+  private netIncomeFromBalances(
+    balances: Map<string, AccountBalanceRow>,
+  ): number {
     let income = 0;
     let expense = 0;
     for (const row of balances.values()) {
-      const bal = accountBalanceFromTotals(row.accountType, row.totalDebit, row.totalCredit);
+      const bal = accountBalanceFromTotals(
+        row.accountType,
+        row.totalDebit,
+        row.totalCredit,
+      );
       if (row.accountType === CONTABILIDAD_ACCOUNT_TYPES.INCOME) income += bal;
-      if (row.accountType === CONTABILIDAD_ACCOUNT_TYPES.EXPENSE) expense += bal;
+      if (row.accountType === CONTABILIDAD_ACCOUNT_TYPES.EXPENSE)
+        expense += bal;
     }
     return roundPenAmount(income - expense);
   }
@@ -711,7 +869,11 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
       let t = 0;
       for (const row of map.values()) {
         if (!row.accountCode.startsWith(prefix)) continue;
-        t += accountBalanceFromTotals(row.accountType, row.totalDebit, row.totalCredit);
+        t += accountBalanceFromTotals(
+          row.accountType,
+          row.totalDebit,
+          row.totalCredit,
+        );
       }
       return roundPenAmount(t);
     };
@@ -737,6 +899,9 @@ export class ContabilidadFinancialPrismaRepository implements ContabilidadFinanc
         outTotal += amt;
       }
     }
-    return { inTotal: roundPenAmount(inTotal), outTotal: roundPenAmount(outTotal) };
+    return {
+      inTotal: roundPenAmount(inTotal),
+      outTotal: roundPenAmount(outTotal),
+    };
   }
 }

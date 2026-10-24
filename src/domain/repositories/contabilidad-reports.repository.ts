@@ -1,4 +1,6 @@
-export const CONTABILIDAD_REPORTS_REPOSITORY = Symbol('ContabilidadReportsRepository');
+export const CONTABILIDAD_REPORTS_REPOSITORY = Symbol(
+  'ContabilidadReportsRepository',
+);
 
 export interface ContabilidadDashboardKpiDto {
   key: string;
@@ -84,8 +86,22 @@ export interface CashFlowTreasuryDto {
 }
 
 export interface ContabilidadReportsRepository {
-  getDashboard(applicationId: string, periodId: string, igvPercent: number): Promise<ContabilidadDashboardDto>;
-  getTrialBalance(applicationId: string, periodId: string, costCenterId?: string | null): Promise<TrialBalanceDto>;
-  getFinancialAnalysis(applicationId: string, periodId: string): Promise<FinancialAnalysisDto>;
-  getCashFlowTreasury(applicationId: string, periodId: string): Promise<CashFlowTreasuryDto>;
+  getDashboard(
+    applicationId: string,
+    periodId: string,
+    igvPercent: number,
+  ): Promise<ContabilidadDashboardDto>;
+  getTrialBalance(
+    applicationId: string,
+    periodId: string,
+    costCenterId?: string | null,
+  ): Promise<TrialBalanceDto>;
+  getFinancialAnalysis(
+    applicationId: string,
+    periodId: string,
+  ): Promise<FinancialAnalysisDto>;
+  getCashFlowTreasury(
+    applicationId: string,
+    periodId: string,
+  ): Promise<CashFlowTreasuryDto>;
 }

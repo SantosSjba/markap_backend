@@ -43,11 +43,7 @@ export class ClientPortImpl implements ClientPort {
     return this.getByIdUc.execute(id, applicationSlug);
   }
 
-  updateClient(
-    id: string,
-    data: UpdateClientData,
-    applicationSlug?: string,
-  ) {
+  updateClient(id: string, data: UpdateClientData, applicationSlug?: string) {
     return this.updateUc.execute(id, data, applicationSlug);
   }
 

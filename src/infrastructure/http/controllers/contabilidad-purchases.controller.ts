@@ -1,5 +1,20 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadPurchasesOperationsService } from '../../../application/services/contabilidad-purchases-operations.service';
@@ -17,7 +32,9 @@ import type {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class ContabilidadPurchasesController {
-  constructor(private readonly purchases: ContabilidadPurchasesOperationsService) {}
+  constructor(
+    private readonly purchases: ContabilidadPurchasesOperationsService,
+  ) {}
 
   @Get('suppliers')
   @ApiOperation({ summary: 'Listar proveedores con saldo CxP' })
@@ -64,31 +81,48 @@ export class ContabilidadPurchasesController {
     @Query('status') status?: string,
     @Query('search') search?: string,
   ) {
-    return this.purchases.listInvoices(applicationSlug, { periodId, supplierId, status, search });
+    return this.purchases.listInvoices(applicationSlug, {
+      periodId,
+      supplierId,
+      status,
+      search,
+    });
   }
 
   @Get('invoices/:id')
   @ApiOperation({ summary: 'Detalle de factura de compra' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  getInvoice(@Query('applicationSlug') applicationSlug: string | undefined, @Param('id') id: string) {
+  getInvoice(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('id') id: string,
+  ) {
     return this.purchases.getInvoice(applicationSlug, id);
   }
 
   @Post('invoices')
-  @ApiOperation({ summary: 'Registrar factura de compra con asiento automático' })
+  @ApiOperation({
+    summary: 'Registrar factura de compra con asiento automático',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   createInvoice(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body() body: CreatePurchaseInvoiceInput,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.purchases.createInvoice(applicationSlug, body, req.user?.sub ?? null);
+    return this.purchases.createInvoice(
+      applicationSlug,
+      body,
+      req.user?.sub ?? null,
+    );
   }
 
   @Post('invoices/:id/cancel')
   @ApiOperation({ summary: 'Anular factura de compra (sin pagos)' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  cancelInvoice(@Query('applicationSlug') applicationSlug: string | undefined, @Param('id') id: string) {
+  cancelInvoice(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('id') id: string,
+  ) {
     return this.purchases.cancelInvoice(applicationSlug, id);
   }
 
@@ -101,7 +135,11 @@ export class ContabilidadPurchasesController {
     @Query('supplierId') supplierId?: string,
     @Query('search') search?: string,
   ) {
-    return this.purchases.listCreditNotes(applicationSlug, { periodId, supplierId, search });
+    return this.purchases.listCreditNotes(applicationSlug, {
+      periodId,
+      supplierId,
+      search,
+    });
   }
 
   @Post('credit-notes')
@@ -112,7 +150,11 @@ export class ContabilidadPurchasesController {
     @Body() body: CreatePurchaseCreditNoteInput,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.purchases.createCreditNote(applicationSlug, body, req.user?.sub ?? null);
+    return this.purchases.createCreditNote(
+      applicationSlug,
+      body,
+      req.user?.sub ?? null,
+    );
   }
 
   @Get('debit-notes')
@@ -124,7 +166,11 @@ export class ContabilidadPurchasesController {
     @Query('supplierId') supplierId?: string,
     @Query('search') search?: string,
   ) {
-    return this.purchases.listDebitNotes(applicationSlug, { periodId, supplierId, search });
+    return this.purchases.listDebitNotes(applicationSlug, {
+      periodId,
+      supplierId,
+      search,
+    });
   }
 
   @Post('debit-notes')
@@ -135,7 +181,11 @@ export class ContabilidadPurchasesController {
     @Body() body: CreatePurchaseDebitNoteInput,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.purchases.createDebitNote(applicationSlug, body, req.user?.sub ?? null);
+    return this.purchases.createDebitNote(
+      applicationSlug,
+      body,
+      req.user?.sub ?? null,
+    );
   }
 
   @Get('payments')
@@ -147,7 +197,11 @@ export class ContabilidadPurchasesController {
     @Query('supplierId') supplierId?: string,
     @Query('invoiceId') invoiceId?: string,
   ) {
-    return this.purchases.listPayments(applicationSlug, { periodId, supplierId, invoiceId });
+    return this.purchases.listPayments(applicationSlug, {
+      periodId,
+      supplierId,
+      invoiceId,
+    });
   }
 
   @Post('payments')
@@ -158,6 +212,10 @@ export class ContabilidadPurchasesController {
     @Body() body: CreatePurchasePaymentInput,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.purchases.createPayment(applicationSlug, body, req.user?.sub ?? null);
+    return this.purchases.createPayment(
+      applicationSlug,
+      body,
+      req.user?.sub ?? null,
+    );
   }
 }

@@ -33,12 +33,16 @@ export class ProduccionSupplierPrismaRepository implements ProduccionSupplierRep
     };
   }
 
-  private async loadDetail(id: string): Promise<ProduccionSupplierDetail | null> {
+  private async loadDetail(
+    id: string,
+  ): Promise<ProduccionSupplierDetail | null> {
     const row = await this.prisma.produccionSupplier.findUnique({
       where: { id },
       include: {
         materialLinks: {
-          include: { material: { select: { code: true, name: true, category: true } } },
+          include: {
+            material: { select: { code: true, name: true, category: true } },
+          },
           orderBy: { id: 'asc' },
         },
       },
@@ -58,14 +62,20 @@ export class ProduccionSupplierPrismaRepository implements ProduccionSupplierRep
     };
   }
 
-  async list(filters: ListProduccionSuppliersFilters): Promise<ListProduccionSuppliersResult> {
+  async list(
+    filters: ListProduccionSuppliersFilters,
+  ): Promise<ListProduccionSuppliersResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
-    const andParts: Prisma.ProduccionSupplierWhereInput[] = [{ applicationId: app.id }];
-    if (filters.isActive !== undefined) andParts.push({ isActive: filters.isActive });
+    const andParts: Prisma.ProduccionSupplierWhereInput[] = [
+      { applicationId: app.id },
+    ];
+    if (filters.isActive !== undefined)
+      andParts.push({ isActive: filters.isActive });
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       andParts.push({
@@ -108,21 +118,32 @@ export class ProduccionSupplierPrismaRepository implements ProduccionSupplierRep
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ProduccionSupplierDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionSupplierDetail | null> {
     const row = await this.prisma.produccionSupplier.findUnique({
       where: { id },
       include: { application: { select: { slug: true } } },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
     return this.loadDetail(id);
   }
 
-  async create(applicationId: string, payload: CreateProduccionSupplierPayload) {
+  async create(
+    applicationId: string,
+    payload: CreateProduccionSupplierPayload,
+  ) {
     const dup = await this.prisma.produccionSupplier.findFirst({
       where: { applicationId, ruc: payload.ruc.trim() },
     });
-    if (dup) throw new BadRequestException('Ya existe un proveedor con ese RUC');
+    if (dup)
+      throw new BadRequestException('Ya existe un proveedor con ese RUC');
 
     const row = await this.prisma.produccionSupplier.create({
       data: {
@@ -142,24 +163,36 @@ export class ProduccionSupplierPrismaRepository implements ProduccionSupplierRep
   }
 
   async update(id: string, payload: UpdateProduccionSupplierPayload) {
-    const current = await this.prisma.produccionSupplier.findUnique({ where: { id } });
+    const current = await this.prisma.produccionSupplier.findUnique({
+      where: { id },
+    });
     if (!current) throw new BadRequestException('Proveedor no encontrado');
 
     if (payload.ruc !== undefined) {
       const dup = await this.prisma.produccionSupplier.findFirst({
-        where: { applicationId: current.applicationId, ruc: payload.ruc.trim(), NOT: { id } },
+        where: {
+          applicationId: current.applicationId,
+          ruc: payload.ruc.trim(),
+          NOT: { id },
+        },
       });
-      if (dup) throw new BadRequestException('Ya existe un proveedor con ese RUC');
+      if (dup)
+        throw new BadRequestException('Ya existe un proveedor con ese RUC');
     }
 
     const patch: Prisma.ProduccionSupplierUncheckedUpdateInput = {};
-    if (payload.companyName !== undefined) patch.companyName = payload.companyName.trim();
+    if (payload.companyName !== undefined)
+      patch.companyName = payload.companyName.trim();
     if (payload.ruc !== undefined) patch.ruc = payload.ruc.trim();
-    if (payload.contactName !== undefined) patch.contactName = payload.contactName?.trim() || null;
-    if (payload.phone !== undefined) patch.phone = payload.phone?.trim() || null;
-    if (payload.email !== undefined) patch.email = payload.email?.trim() || null;
+    if (payload.contactName !== undefined)
+      patch.contactName = payload.contactName?.trim() || null;
+    if (payload.phone !== undefined)
+      patch.phone = payload.phone?.trim() || null;
+    if (payload.email !== undefined)
+      patch.email = payload.email?.trim() || null;
     if (payload.isActive !== undefined) patch.isActive = payload.isActive;
-    if (payload.notes !== undefined) patch.notes = payload.notes?.trim() || null;
+    if (payload.notes !== undefined)
+      patch.notes = payload.notes?.trim() || null;
 
     await this.prisma.produccionSupplier.update({ where: { id }, data: patch });
     const detail = await this.loadDetail(id);
@@ -168,9 +201,13 @@ export class ProduccionSupplierPrismaRepository implements ProduccionSupplierRep
   }
 
   async delete(id: string): Promise<void> {
-    const orders = await this.prisma.produccionPurchaseOrder.count({ where: { supplierId: id } });
+    const orders = await this.prisma.produccionPurchaseOrder.count({
+      where: { supplierId: id },
+    });
     if (orders > 0) {
-      throw new BadRequestException('No se puede eliminar: el proveedor tiene órdenes de compra');
+      throw new BadRequestException(
+        'No se puede eliminar: el proveedor tiene órdenes de compra',
+      );
     }
     await this.prisma.produccionSupplier.delete({ where: { id } });
   }
@@ -187,7 +224,9 @@ export class ProduccionSupplierPrismaRepository implements ProduccionSupplierRep
     });
     if (!supplier) throw new BadRequestException('Proveedor no encontrado');
 
-    const material = await this.prisma.produccionMaterial.findUnique({ where: { id: materialId } });
+    const material = await this.prisma.produccionMaterial.findUnique({
+      where: { id: materialId },
+    });
     if (!material || material.applicationId !== supplier.applicationId) {
       throw new BadRequestException('Material inválido para este proveedor');
     }
@@ -212,6 +251,8 @@ export class ProduccionSupplierPrismaRepository implements ProduccionSupplierRep
   }
 
   async unlinkMaterial(linkId: string): Promise<void> {
-    await this.prisma.produccionSupplierMaterialLink.delete({ where: { id: linkId } });
+    await this.prisma.produccionSupplierMaterialLink.delete({
+      where: { id: linkId },
+    });
   }
 }

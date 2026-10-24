@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PAYMENT_REPOSITORY } from '@common/constants/injection-tokens';
-import type { PaymentRepository, PaymentStats } from '@domain/repositories/payment.repository';
+import type {
+  PaymentRepository,
+  PaymentStats,
+} from '@domain/repositories/payment.repository';
 
 @Injectable()
 export class GetPaymentStatsUseCase {

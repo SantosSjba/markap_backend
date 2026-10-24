@@ -5,7 +5,12 @@ import type { ApplicationRepository } from '@domain/repositories/application.rep
 import type { PropertyRepository } from '@domain/repositories/property.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 
-import { APPLICATION_REPOSITORY, CLIENT_REPOSITORY, PROPERTY_REPOSITORY, RENTAL_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  CLIENT_REPOSITORY,
+  PROPERTY_REPOSITORY,
+  RENTAL_REPOSITORY,
+} from '@common/constants/injection-tokens';
 
 @Injectable()
 export class DeleteClientUseCase {
@@ -39,7 +44,10 @@ export class DeleteClientUseCase {
 
     const isVentasApp = app?.slug === 'ventas';
     if (isVentasApp && client.clientType === 'OWNER') {
-      const props = await this.propertyRepository.countActiveByOwnerId(id, client.applicationId);
+      const props = await this.propertyRepository.countActiveByOwnerId(
+        id,
+        client.applicationId,
+      );
       if (props > 0) {
         throw new BadRequestException(
           'No se puede eliminar el propietario mientras tenga propiedades en inventario.',
@@ -47,10 +55,11 @@ export class DeleteClientUseCase {
       }
     }
     if (!isVentasApp) {
-      const activeRentals = await this.rentalRepository.countActiveInvolvingClient(
-        id,
-        client.applicationId,
-      );
+      const activeRentals =
+        await this.rentalRepository.countActiveInvolvingClient(
+          id,
+          client.applicationId,
+        );
       if (activeRentals > 0) {
         throw new BadRequestException(
           'No se puede eliminar el cliente mientras sea inquilino o propietario en un contrato de alquiler vigente.',

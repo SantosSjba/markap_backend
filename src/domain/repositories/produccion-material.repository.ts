@@ -1,4 +1,6 @@
-export const PRODUCCION_MATERIAL_REPOSITORY = Symbol('ProduccionMaterialRepository');
+export const PRODUCCION_MATERIAL_REPOSITORY = Symbol(
+  'ProduccionMaterialRepository',
+);
 
 export type ProduccionStockMovementType = 'IN' | 'OUT' | 'ADJUST';
 
@@ -105,13 +107,26 @@ export interface ListProduccionStockMovementsResult {
 }
 
 export interface ProduccionMaterialRepository {
-  list(filters: ListProduccionMaterialsFilters): Promise<ListProduccionMaterialsResult>;
+  list(
+    filters: ListProduccionMaterialsFilters,
+  ): Promise<ListProduccionMaterialsResult>;
   getStats(applicationSlug: string): Promise<ProduccionInventoryStats>;
-  findById(id: string, applicationSlug?: string): Promise<ProduccionMaterialDetail | null>;
-  create(applicationId: string, payload: CreateProduccionMaterialPayload): Promise<ProduccionMaterialDetail>;
-  update(id: string, payload: UpdateProduccionMaterialPayload): Promise<ProduccionMaterialDetail>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionMaterialDetail | null>;
+  create(
+    applicationId: string,
+    payload: CreateProduccionMaterialPayload,
+  ): Promise<ProduccionMaterialDetail>;
+  update(
+    id: string,
+    payload: UpdateProduccionMaterialPayload,
+  ): Promise<ProduccionMaterialDetail>;
   delete(id: string): Promise<void>;
-  listMovements(filters: ListProduccionStockMovementsFilters): Promise<ListProduccionStockMovementsResult>;
+  listMovements(
+    filters: ListProduccionStockMovementsFilters,
+  ): Promise<ListProduccionStockMovementsResult>;
   createMovement(
     applicationSlug: string,
     payload: CreateProduccionStockMovementPayload,

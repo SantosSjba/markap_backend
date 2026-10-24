@@ -22,7 +22,7 @@ import {
   roundPenAmount,
 } from '@domain/utils/contabilidad-journal-amounts';
 import { formatDateOnly, parseDateOnly } from '@domain/utils/peru-date.util';
-import { PrismaService } from '../prisma.service';
+import { Atomic, PrismaService } from '../prisma.service';
 import { ContabilidadJournalPrismaMapper } from '../mappers/contabilidad-journal-prisma.mapper';
 
 const lineInclude = {
@@ -97,7 +97,10 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return rows.map((row) => ContabilidadJournalPrismaMapper.toListItem(row));
   }
 
-  async findById(applicationId: string, id: string): Promise<ContabilidadJournalEntryDetailDto | null> {
+  async findById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadJournalEntryDetailDto | null> {
     const row = await this.prisma.contabilidadJournalEntry.findFirst({
       where: { applicationId, id },
       include: detailInclude,
@@ -105,15 +108,26 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return row ? ContabilidadJournalPrismaMapper.toDetail(row) : null;
   }
 
+  @Atomic()
   async createDraft(
     applicationId: string,
     input: CreateContabilidadJournalEntryInput,
     createdBy?: string | null,
   ): Promise<ContabilidadJournalEntryDetailDto> {
-    const normalized = await this.normalizeLines(applicationId, input.lines, input.entryDate);
+    const normalized = await this.normalizeLines(
+      applicationId,
+      input.lines,
+      input.entryDate,
+    );
     const totals = this.computeTotals(normalized);
-    const legalEntityId = await this.resolvePeriodLegalEntityId(applicationId, input.periodId);
-    const entryNumber = await this.nextEntryNumber(legalEntityId, input.periodId);
+    const legalEntityId = await this.resolvePeriodLegalEntityId(
+      applicationId,
+      input.periodId,
+    );
+    const entryNumber = await this.nextEntryNumber(
+      legalEntityId,
+      input.periodId,
+    );
     const entryDate = this.parseEntryDate(input.entryDate);
 
     const row = await this.prisma.contabilidadJournalEntry.create({
@@ -150,11 +164,13 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return ContabilidadJournalPrismaMapper.toDetail(row);
   }
 
+  @Atomic()
   async updateDraft(
     applicationId: string,
     id: string,
     input: UpdateContabilidadJournalEntryInput,
   ): Promise<ContabilidadJournalEntryDetailDto> {
+    await this.lockEntry(id);
     const existing = await this.prisma.contabilidadJournalEntry.findFirst({
       where: { applicationId, id },
     });
@@ -174,13 +190,17 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
 
     const row = await this.prisma.$transaction(async (tx) => {
       if (normalized) {
-        await tx.contabilidadJournalEntryLine.deleteMany({ where: { journalEntryId: id } });
+        await tx.contabilidadJournalEntryLine.deleteMany({
+          where: { journalEntryId: id },
+        });
       }
 
       return tx.contabilidadJournalEntry.update({
         where: { id },
         data: {
-          entryDate: input.entryDate ? this.parseEntryDate(input.entryDate) : undefined,
+          entryDate: input.entryDate
+            ? this.parseEntryDate(input.entryDate)
+            : undefined,
           description: input.description?.trim(),
           totalDebit: totals ? totals.debit : undefined,
           totalCredit: totals ? totals.credit : undefined,
@@ -209,7 +229,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return ContabilidadJournalPrismaMapper.toDetail(row);
   }
 
+  @Atomic()
   async deleteDraft(applicationId: string, id: string): Promise<void> {
+    await this.lockEntry(id);
     const existing = await this.prisma.contabilidadJournalEntry.findFirst({
       where: { applicationId, id },
     });
@@ -220,11 +242,15 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     await this.prisma.contabilidadJournalEntry.delete({ where: { id } });
   }
 
+  @Atomic()
   async post(
     applicationId: string,
     id: string,
     postedBy?: string | null,
   ): Promise<ContabilidadJournalEntryDetailDto> {
+    await this.prisma
+      .$queryRaw`SELECT p.id FROM contabilidad_periods p JOIN contabilidad_journal_entries e ON e.period_id = p.id WHERE e.id = ${id} FOR SHARE OF p`;
+    await this.lockEntry(id);
     const existing = await this.prisma.contabilidadJournalEntry.findFirst({
       where: { applicationId, id },
       include: { lines: true, period: true },
@@ -236,7 +262,8 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     if (existing.period.status !== 'OPEN') {
       throw new Error('Period is closed');
     }
-    if (existing.lines.length < 2) throw new Error('At least two lines are required');
+    if (existing.lines.length < 2)
+      throw new Error('At least two lines are required');
 
     const totalDebit = roundPenAmount(Number(existing.totalDebit));
     const totalCredit = roundPenAmount(Number(existing.totalCredit));
@@ -267,11 +294,15 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return ContabilidadJournalPrismaMapper.toDetail(row);
   }
 
+  @Atomic()
   async reverse(
     applicationId: string,
     id: string,
     postedBy?: string | null,
   ): Promise<ContabilidadJournalEntryDetailDto> {
+    await this.prisma
+      .$queryRaw`SELECT p.id FROM contabilidad_periods p JOIN contabilidad_journal_entries e ON e.period_id = p.id WHERE e.id = ${id} FOR SHARE OF p`;
+    await this.lockEntry(id);
     const original = await this.prisma.contabilidadJournalEntry.findFirst({
       where: { applicationId, id },
       include: { lines: { orderBy: { lineNumber: 'asc' } }, period: true },
@@ -284,7 +315,10 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       throw new Error('Period is closed');
     }
 
-    const entryNumber = await this.nextEntryNumber(original.legalEntityId, original.periodId);
+    const entryNumber = await this.nextEntryNumber(
+      original.legalEntityId,
+      original.periodId,
+    );
 
     const row = await this.prisma.$transaction(async (tx) => {
       await tx.contabilidadJournalEntry.update({
@@ -319,7 +353,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
               costCenterId: line.costCenterId,
               auxiliaryRuc: line.auxiliaryRuc,
               auxiliaryDoc: line.auxiliaryDoc,
-              description: line.description ? `Reversa: ${line.description}` : 'Reversa',
+              description: line.description
+                ? `Reversa: ${line.description}`
+                : 'Reversa',
             })),
           },
         },
@@ -338,25 +374,35 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return ContabilidadJournalPrismaMapper.toDetail(row);
   }
 
+  @Atomic()
   async createAndPost(
     applicationId: string,
     input: CreateContabilidadJournalEntryInput,
     postedBy?: string | null,
   ): Promise<ContabilidadJournalEntryDetailDto> {
-    const normalized = await this.normalizeLines(applicationId, input.lines, input.entryDate);
-    if (normalized.length < 2) throw new Error('At least two lines are required');
+    const normalized = await this.normalizeLines(
+      applicationId,
+      input.lines,
+      input.entryDate,
+    );
+    if (normalized.length < 2)
+      throw new Error('At least two lines are required');
     const totals = this.computeTotals(normalized);
     if (!amountsBalanced(totals.debit, totals.credit) || totals.debit <= 0) {
       throw new Error('Entry is not balanced');
     }
 
+    await this.lockPeriod(input.periodId);
     const period = await this.prisma.contabilidadPeriod.findFirst({
       where: { applicationId, id: input.periodId },
     });
     if (!period) throw new Error('Period not found');
     if (period.status !== 'OPEN') throw new Error('Period is closed');
 
-    const entryNumber = await this.nextEntryNumber(period.legalEntityId, input.periodId);
+    const entryNumber = await this.nextEntryNumber(
+      period.legalEntityId,
+      input.periodId,
+    );
     const entryDate = this.parseEntryDate(input.entryDate);
 
     const row = await this.prisma.$transaction(async (tx) => {
@@ -408,7 +454,10 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return ContabilidadJournalPrismaMapper.toDetail(row);
   }
 
-  private async resolvePeriodLegalEntityId(applicationId: string, periodId: string): Promise<string> {
+  private async resolvePeriodLegalEntityId(
+    applicationId: string,
+    periodId: string,
+  ): Promise<string> {
     const period = await this.prisma.contabilidadPeriod.findFirst({
       where: { applicationId, id: periodId },
       select: { legalEntityId: true },
@@ -417,7 +466,25 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     return period.legalEntityId;
   }
 
-  private async nextEntryNumber(legalEntityId: string, periodId: string): Promise<number> {
+  /** Bloquea el asiento hasta el final de la transacción en curso. */
+  private async lockEntry(id: string): Promise<void> {
+    await this.prisma
+      .$queryRaw`SELECT id FROM contabilidad_journal_entries WHERE id = ${id} FOR UPDATE`;
+  }
+
+  /** Impide cerrar el periodo mientras se registra un asiento en él. */
+  private async lockPeriod(periodId: string): Promise<void> {
+    await this.prisma
+      .$queryRaw`SELECT id FROM contabilidad_periods WHERE id = ${periodId} FOR SHARE`;
+  }
+
+  /** Debe llamarse dentro de una transacción: serializa la numeración por periodo. */
+  private async nextEntryNumber(
+    legalEntityId: string,
+    periodId: string,
+  ): Promise<number> {
+    await this.prisma
+      .$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`journal:${legalEntityId}:${periodId}`}))`;
     const last = await this.prisma.contabilidadJournalEntry.findFirst({
       where: { legalEntityId, periodId },
       orderBy: { entryNumber: 'desc' },
@@ -433,8 +500,12 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
   }
 
   private computeTotals(lines: NormalizedLine[]) {
-    const debit = roundPenAmount(lines.reduce((sum, line) => sum + line.debit, 0));
-    const credit = roundPenAmount(lines.reduce((sum, line) => sum + line.credit, 0));
+    const debit = roundPenAmount(
+      lines.reduce((sum, line) => sum + line.debit, 0),
+    );
+    const credit = roundPenAmount(
+      lines.reduce((sum, line) => sum + line.credit, 0),
+    );
     return { debit, credit };
   }
 
@@ -453,7 +524,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       },
     });
     if (!row) {
-      throw new Error(`No hay tipo de cambio registrado para ${currencyCode} en ${rateDate}`);
+      throw new Error(
+        `No hay tipo de cambio registrado para ${currencyCode} en ${rateDate}`,
+      );
     }
     return parseExchangeRate(Number(row.sellRate));
   }
@@ -473,7 +546,8 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       if (Number.isNaN(debit) || Number.isNaN(credit)) {
         throw new Error('Invalid amount');
       }
-      if (debit > 0 && credit > 0) throw new Error('Line cannot have both debit and credit');
+      if (debit > 0 && credit > 0)
+        throw new Error('Line cannot have both debit and credit');
 
       const foreignCurrencyInput = line.foreignCurrency?.trim()
         ? normalizeCurrencyCode(line.foreignCurrency)
@@ -494,7 +568,11 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       ) {
         let rate = parseExchangeRate(line.exchangeRate);
         if (!Number.isFinite(rate)) {
-          rate = await this.lookupExchangeRate(applicationId, foreignCurrencyInput, entryDate);
+          rate = await this.lookupExchangeRate(
+            applicationId,
+            foreignCurrencyInput,
+            entryDate,
+          );
         }
         const penFromForeign = convertForeignToPen(foreignAmountRaw, rate);
         if (debit > 0) {
@@ -502,7 +580,9 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
         } else if (credit > 0) {
           credit = penFromForeign;
         } else {
-          throw new Error('Indique debe o haber para la línea en moneda extranjera');
+          throw new Error(
+            'Indique debe o haber para la línea en moneda extranjera',
+          );
         }
         storedForeignCurrency = foreignCurrencyInput;
         storedForeignAmount = foreignAmountRaw;
@@ -510,7 +590,8 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
       } else if (
         foreignCurrencyInput &&
         foreignCurrencyInput !== FUNCTIONAL_CURRENCY &&
-        (line.foreignAmount != null && line.foreignAmount !== '')
+        line.foreignAmount != null &&
+        line.foreignAmount !== ''
       ) {
         throw new Error('Importe en moneda extranjera no válido');
       }
@@ -519,7 +600,8 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
         where: { applicationId, id: line.accountId },
       });
       if (!account || !account.isActive) throw new Error('Account not found');
-      if (!account.isMovement) throw new Error('Account must be a movement account');
+      if (!account.isMovement)
+        throw new Error('Account must be a movement account');
 
       if (line.costCenterId) {
         const cc = await this.prisma.contabilidadCostCenter.findFirst({

@@ -1,5 +1,21 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadSolOperationsService } from '../../../application/services/contabilidad-sol-operations.service';
@@ -32,7 +48,11 @@ export class ContabilidadSolController {
     @Query('legalEntityId') legalEntityId?: string,
     @Body() body?: UpsertSolCredentialsInput,
   ) {
-    return this.sol.saveCredentials(applicationSlug, legalEntityId, body ?? { solUser: '' });
+    return this.sol.saveCredentials(
+      applicationSlug,
+      legalEntityId,
+      body ?? { solUser: '' },
+    );
   }
 
   @Get('declarations')
@@ -45,7 +65,12 @@ export class ContabilidadSolController {
     @Query('periodId') periodId?: string,
     @Query('declarationType') declarationType?: string,
   ) {
-    return this.sol.listDeclarations(applicationSlug, legalEntityId, periodId, declarationType);
+    return this.sol.listDeclarations(
+      applicationSlug,
+      legalEntityId,
+      periodId,
+      declarationType,
+    );
   }
 
   @Post('pdt621/prepare')
@@ -58,7 +83,12 @@ export class ContabilidadSolController {
     @Query('periodId') periodId?: string,
     @Req() req?: Request & { user?: { sub?: string } },
   ) {
-    return this.sol.preparePdt621(applicationSlug, legalEntityId, periodId ?? '', req?.user?.sub ?? null);
+    return this.sol.preparePdt621(
+      applicationSlug,
+      legalEntityId,
+      periodId ?? '',
+      req?.user?.sub ?? null,
+    );
   }
 
   @Post('pdt621/:logId/manual-pending')
@@ -72,11 +102,18 @@ export class ContabilidadSolController {
     @Query('legalEntityId') legalEntityId?: string,
     @Query('periodId') periodId?: string,
   ) {
-    return this.sol.markPdt621ManualPending(applicationSlug, legalEntityId, periodId ?? '', logId);
+    return this.sol.markPdt621ManualPending(
+      applicationSlug,
+      legalEntityId,
+      periodId ?? '',
+      logId,
+    );
   }
 
   @Post('pdt621/:logId/submit')
-  @ApiOperation({ summary: 'Enviar PDT 621 (sandbox MOCK o error si producción)' })
+  @ApiOperation({
+    summary: 'Enviar PDT 621 (sandbox MOCK o error si producción)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'legalEntityId', required: false })
   @ApiQuery({ name: 'periodId', required: true })
@@ -106,7 +143,12 @@ export class ContabilidadSolController {
     @Query('periodId') periodId?: string,
     @Req() req?: Request & { user?: { sub?: string } },
   ) {
-    return this.sol.preparePlameDraft(applicationSlug, legalEntityId, periodId ?? '', req?.user?.sub ?? null);
+    return this.sol.preparePlameDraft(
+      applicationSlug,
+      legalEntityId,
+      periodId ?? '',
+      req?.user?.sub ?? null,
+    );
   }
 
   @Get('declarations/:logId/package')
@@ -119,7 +161,10 @@ export class ContabilidadSolController {
   ) {
     const artifact = await this.sol.downloadPackage(applicationSlug, logId);
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="${artifact.filename}"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${artifact.filename}"`,
+    );
     res.send(artifact.content);
   }
 }

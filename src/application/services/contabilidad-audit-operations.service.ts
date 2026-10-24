@@ -28,8 +28,12 @@ export class ContabilidadAuditOperationsService {
     legalEntityId: string | undefined,
     filters: ListContabilidadAuditLogsFilters,
   ) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const resolvedEntityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const resolvedEntityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
     const logs = await this.audit.list(applicationId, {
       ...filters,
       legalEntityId: resolvedEntityId,

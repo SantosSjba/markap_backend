@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { containsI } from '@common/utils/prisma-contains-insensitive.util';
 import { GenArchivoService } from '@application/services/gen-archivo.service';
 import { PrismaService } from '../prisma.service';
@@ -10,7 +15,11 @@ import type {
   ListRentalsResult,
   UpdateRentalData,
 } from '@domain/repositories/rental.repository';
-import { RentalAttachment, RentalDetail, RentalStats } from '@domain/entities/rental.entity';
+import {
+  RentalAttachment,
+  RentalDetail,
+  RentalStats,
+} from '@domain/entities/rental.entity';
 import type { Rental } from '@domain/entities/rental.entity';
 import { dateOnlyYear, startOfTodayLima } from '@domain/utils/peru-date.util';
 
@@ -40,9 +49,58 @@ export class RentalPrismaRepository implements RentalRepository {
   ) {}
 
   async create(data: CreateRentalData): Promise<Rental> {
+    if (!data.tenantIds.length)
+      throw new BadRequestException('Debe indicar al menos un inquilino');
+    if (
+      !Number.isFinite(data.startDate.getTime()) ||
+      !Number.isFinite(data.endDate.getTime()) ||
+      data.endDate < data.startDate
+    )
+      throw new BadRequestException(
+        'El rango de fechas del contrato no es válido',
+      );
     const primaryTenantId = data.tenantIds[0];
     const rental = await this.prisma.$transaction(async (tx) => {
-      const created = await (tx as any).rental.create({
+      await tx.$queryRaw`SELECT id FROM properties WHERE id = ${data.propertyId} FOR UPDATE`;
+      const property = await tx.property.findFirst({
+        where: {
+          id: data.propertyId,
+          applicationId: data.applicationId,
+          deletedAt: null,
+          isActive: true,
+        },
+      });
+      if (!property)
+        throw new BadRequestException(
+          'La propiedad no pertenece a la aplicación o no está disponible',
+        );
+      const tenantCount = await tx.client.count({
+        where: {
+          id: { in: data.tenantIds },
+          applicationId: data.applicationId,
+          clientType: 'TENANT',
+          deletedAt: null,
+          isActive: true,
+        },
+      });
+      if (tenantCount !== new Set(data.tenantIds).size)
+        throw new BadRequestException(
+          'Uno o más inquilinos no pertenecen a la aplicación',
+        );
+      const overlap = await tx.rental.findFirst({
+        where: {
+          propertyId: data.propertyId,
+          deletedAt: null,
+          status: 'ACTIVE',
+          startDate: { lte: data.endDate },
+          endDate: { gte: data.startDate },
+        },
+      });
+      if (overlap)
+        throw new BadRequestException(
+          'La propiedad ya tiene un contrato activo en ese rango de fechas',
+        );
+      const created = await tx.rental.create({
         data: {
           applicationId: data.applicationId,
           propertyId: data.propertyId,
@@ -72,6 +130,10 @@ export class RentalPrismaRepository implements RentalRepository {
           baseAmount: data.monthlyAmount,
         },
       });
+      await tx.property.update({
+        where: { id: data.propertyId },
+        data: { listingStatus: 'RENTED' },
+      });
       return created;
     });
     return RentalPrismaMapper.toDomain(rental);
@@ -85,7 +147,7 @@ export class RentalPrismaRepository implements RentalRepository {
       return { data: [], total: 0, page: filters.page, limit: filters.limit };
     }
 
-    const where: any = {
+    const where: Prisma.RentalWhereInput = {
       applicationId: app.id,
       deletedAt: null,
     };
@@ -108,10 +170,18 @@ export class RentalPrismaRepository implements RentalRepository {
     }
 
     const [data, total] = await Promise.all([
-      (this.prisma as any).rental.findMany({
+      this.prisma.rental.findMany({
         where,
         include: {
-          property: { select: { id: true, code: true, addressLine: true, ownerId: true, owner: { select: { id: true, fullName: true } } } },
+          property: {
+            select: {
+              id: true,
+              code: true,
+              addressLine: true,
+              ownerId: true,
+              owner: { select: { id: true, fullName: true } },
+            },
+          },
           tenant: { select: { id: true, fullName: true } },
           ...rentalTenantsInclude,
           attachments: { where: { type: 'CONTRACT' }, select: { id: true } },
@@ -120,11 +190,11 @@ export class RentalPrismaRepository implements RentalRepository {
         skip: (filters.page - 1) * filters.limit,
         take: filters.limit,
       }),
-      (this.prisma as any).rental.count({ where }),
+      this.prisma.rental.count({ where }),
     ]);
 
     return {
-      data: data.map((r: any) => RentalPrismaMapper.toListItem(r)),
+      data: data.map((r) => RentalPrismaMapper.toListItem(r)),
       total,
       page: filters.page,
       limit: filters.limit,
@@ -146,8 +216,8 @@ export class RentalPrismaRepository implements RentalRepository {
     const baseWhere = { applicationId: app.id, deletedAt: null };
 
     const [total, vigentes, porVencer, vencidos] = await Promise.all([
-      (this.prisma as any).rental.count({ where: baseWhere }),
-      (this.prisma as any).rental.count({
+      this.prisma.rental.count({ where: baseWhere }),
+      this.prisma.rental.count({
         where: {
           ...baseWhere,
           status: 'ACTIVE',
@@ -155,14 +225,14 @@ export class RentalPrismaRepository implements RentalRepository {
           endDate: { gte: today },
         },
       }),
-      (this.prisma as any).rental.count({
+      this.prisma.rental.count({
         where: {
           ...baseWhere,
           status: 'ACTIVE',
           endDate: { gte: today, lte: in30Days },
         },
       }),
-      (this.prisma as any).rental.count({
+      this.prisma.rental.count({
         where: {
           ...baseWhere,
           OR: [{ endDate: { lt: today } }, { status: 'EXPIRED' }],
@@ -174,10 +244,18 @@ export class RentalPrismaRepository implements RentalRepository {
   }
 
   async findById(id: string): Promise<RentalDetail | null> {
-    const r = await (this.prisma as any).rental.findFirst({
+    const r = await this.prisma.rental.findFirst({
       where: { id, deletedAt: null },
       include: {
-        property: { select: { id: true, code: true, addressLine: true, ownerId: true, owner: { select: { id: true, fullName: true } } } },
+        property: {
+          select: {
+            id: true,
+            code: true,
+            addressLine: true,
+            ownerId: true,
+            owner: { select: { id: true, fullName: true } },
+          },
+        },
         tenant: { select: { id: true, fullName: true } },
         ...rentalTenantsInclude,
         attachments: {
@@ -203,8 +281,12 @@ export class RentalPrismaRepository implements RentalRepository {
       filePath: string;
       originalFileName: string;
     }> = r.attachments || [];
-    const contractCount = attachmentRows.filter((a) => a.type === 'CONTRACT').length;
-    const deliveryCount = attachmentRows.filter((a) => a.type === 'DELIVERY_ACT').length;
+    const contractCount = attachmentRows.filter(
+      (a) => a.type === 'CONTRACT',
+    ).length;
+    const deliveryCount = attachmentRows.filter(
+      (a) => a.type === 'DELIVERY_ACT',
+    ).length;
     const attachments = await Promise.all(
       attachmentRows.map(async (a) => {
         const downloadUrl = await this.genArchivo.resolveDownloadUrl(
@@ -242,7 +324,7 @@ export class RentalPrismaRepository implements RentalRepository {
 
   async countActiveByPropertyId(propertyId: string): Promise<number> {
     const today = startOfTodayLima();
-    return (this.prisma as any).rental.count({
+    return this.prisma.rental.count({
       where: {
         propertyId,
         status: 'ACTIVE',
@@ -252,7 +334,10 @@ export class RentalPrismaRepository implements RentalRepository {
     });
   }
 
-  async countActiveInvolvingClient(clientId: string, applicationId: string): Promise<number> {
+  async countActiveInvolvingClient(
+    clientId: string,
+    applicationId: string,
+  ): Promise<number> {
     const today = startOfTodayLima();
     const activeRental = {
       status: 'ACTIVE',
@@ -260,7 +345,7 @@ export class RentalPrismaRepository implements RentalRepository {
       deletedAt: null,
       applicationId,
     };
-    return (this.prisma as any).rental.count({
+    return this.prisma.rental.count({
       where: {
         ...activeRental,
         OR: [
@@ -284,7 +369,9 @@ export class RentalPrismaRepository implements RentalRepository {
       ...(data.endDate != null && { endDate: data.endDate }),
       ...(data.currency != null && { currency: data.currency }),
       ...(data.monthlyAmount != null && { monthlyAmount: data.monthlyAmount }),
-      ...(data.securityDeposit !== undefined && { securityDeposit: data.securityDeposit }),
+      ...(data.securityDeposit !== undefined && {
+        securityDeposit: data.securityDeposit,
+      }),
       ...(data.paymentDueDay != null && { paymentDueDay: data.paymentDueDay }),
       ...(data.notes !== undefined && { notes: data.notes?.trim() || null }),
       ...(data.status != null && { status: data.status }),
@@ -302,7 +389,7 @@ export class RentalPrismaRepository implements RentalRepository {
 
     const r = await this.prisma.$transaction(async (tx) => {
       if (data.tenantIds?.length) {
-        await (tx as any).rentalTenant.deleteMany({ where: { rentalId: id } });
+        await tx.rentalTenant.deleteMany({ where: { rentalId: id } });
         patch.tenants = {
           create: data.tenantIds.map((clientId, sortOrder) => ({
             clientId,
@@ -310,18 +397,79 @@ export class RentalPrismaRepository implements RentalRepository {
           })),
         };
       }
-      return (tx as any).rental.update({
-        where: { id },
-        data: patch,
-      });
+      const current = await tx.rental.findUnique({ where: { id } });
+      if (!current) throw new NotFoundException('Contrato no encontrado');
+      const startDate = data.startDate ?? current.startDate;
+      const endDate = data.endDate ?? current.endDate;
+      if (endDate < startDate)
+        throw new BadRequestException(
+          'La fecha final no puede ser anterior al inicio',
+        );
+      if (data.tenantIds?.length) {
+        const count = await tx.client.count({
+          where: {
+            id: { in: data.tenantIds },
+            applicationId: current.applicationId,
+            clientType: 'TENANT',
+            deletedAt: null,
+            isActive: true,
+          },
+        });
+        if (count !== new Set(data.tenantIds).size)
+          throw new BadRequestException(
+            'Inquilinos no válidos para este contrato',
+          );
+      }
+      const updated = await tx.rental.update({ where: { id }, data: patch });
+      await this.syncPropertyStatus(tx, current.propertyId);
+      return updated;
     });
     return RentalPrismaMapper.toDomain(r);
   }
 
+  private async syncPropertyStatus(
+    tx: Prisma.TransactionClient,
+    propertyId: string,
+  ): Promise<void> {
+    await tx.$queryRaw`SELECT id FROM properties WHERE id = ${propertyId} FOR UPDATE`;
+    const property = await tx.property.findUnique({
+      where: { id: propertyId },
+    });
+    if (!property) return;
+    const active = await tx.rental.count({
+      where: {
+        propertyId,
+        deletedAt: null,
+        status: 'ACTIVE',
+        endDate: { gte: startOfTodayLima() },
+      },
+    });
+    if (
+      active > 0 &&
+      (!property.listingStatus || property.listingStatus === 'AVAILABLE')
+    ) {
+      await tx.property.update({
+        where: { id: propertyId },
+        data: { listingStatus: 'RENTED' },
+      });
+    } else if (
+      active === 0 &&
+      ['RENTED', 'EXPIRING'].includes(property.listingStatus ?? '')
+    ) {
+      await tx.property.update({
+        where: { id: propertyId },
+        data: { listingStatus: 'AVAILABLE' },
+      });
+    }
+  }
+
   async cancel(id: string): Promise<void> {
-    await this.prisma.rental.update({
-      where: { id },
-      data: { status: 'CANCELLED', deletedAt: new Date() },
+    await this.prisma.$transaction(async (tx) => {
+      const rental = await tx.rental.update({
+        where: { id },
+        data: { status: 'CANCELLED', deletedAt: new Date() },
+      });
+      await this.syncPropertyStatus(tx, rental.propertyId);
     });
   }
 }

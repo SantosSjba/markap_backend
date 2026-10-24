@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { User } from '@domain/entities/user.entity';
 import type { TokenResult } from '@domain/services/token.service';
-import { HashService, TokenService, UserRepository } from '@common/constants/injection-tokens';
+import {
+  HashService,
+  TokenService,
+  UserRepository,
+} from '@common/constants/injection-tokens';
 import {
   InvalidCredentialsException,
   UserInactiveException,

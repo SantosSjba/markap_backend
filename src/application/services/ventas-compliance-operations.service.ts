@@ -1,3 +1,4 @@
+import { scalarText } from '@common/utils/scalar-text.util';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import type { ClientRepository } from '@domain/repositories/client.repository';
@@ -14,7 +15,12 @@ import { NotificationsService } from './notifications.service';
 import { GenArchivoService } from './gen-archivo.service';
 
 const VENTAS_SLUG = 'ventas';
-const ALLOWED_SUNARP_STATUS = new Set(['PENDING', 'SUBMITTED', 'OBSERVED', 'REGISTERED']);
+const ALLOWED_SUNARP_STATUS = new Set([
+  'PENDING',
+  'SUBMITTED',
+  'OBSERVED',
+  'REGISTERED',
+]);
 const ALLOWED_KYC_LEVEL = new Set(['PENDING', 'LOW', 'MEDIUM', 'HIGH']);
 
 function assertVentasApp(slug: string | undefined | null): void {
@@ -29,7 +35,8 @@ function parseDateOrNull(value?: string | null): Date | null | undefined {
   if (value === undefined) return undefined;
   if (value === null || value === '') return null;
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) throw new BadRequestException('Fecha inválida.');
+  if (Number.isNaN(d.getTime()))
+    throw new BadRequestException('Fecha inválida.');
   return d;
 }
 
@@ -52,7 +59,9 @@ export class VentasComplianceOperationsService {
     private readonly genArchivo: GenArchivoService,
   ) {}
 
-  private async resolveVentasApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveVentasApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertVentasApp(applicationSlug ?? VENTAS_SLUG);
     const app = await this.applicationRepository.findBySlug(VENTAS_SLUG);
     if (!app) throw new EntityNotFoundException('Application', VENTAS_SLUG);
@@ -87,9 +96,14 @@ export class VentasComplianceOperationsService {
     propertyId: string,
     buyerClientId: string,
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     await this.ensureOperationScope(applicationId, propertyId, buyerClientId);
-    return this.compliance.getChecklist(applicationId, propertyId, buyerClientId);
+    return this.compliance.getChecklist(
+      applicationId,
+      propertyId,
+      buyerClientId,
+    );
   }
 
   async upsertChecklist(
@@ -129,17 +143,26 @@ export class VentasComplianceOperationsService {
       nextActionAt?: string | null;
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
-    await this.ensureOperationScope(applicationId, body.propertyId, body.buyerClientId);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
+    await this.ensureOperationScope(
+      applicationId,
+      body.propertyId,
+      body.buyerClientId,
+    );
 
     const sunarpStatus = body.sunarpStatus?.trim().toUpperCase();
     if (sunarpStatus && !ALLOWED_SUNARP_STATUS.has(sunarpStatus)) {
-      throw new BadRequestException('sunarpStatus inválido. Use: PENDING, SUBMITTED, OBSERVED, REGISTERED.');
+      throw new BadRequestException(
+        'sunarpStatus inválido. Use: PENDING, SUBMITTED, OBSERVED, REGISTERED.',
+      );
     }
 
     const kycRiskLevel = body.kycRiskLevel?.trim().toUpperCase();
     if (kycRiskLevel && !ALLOWED_KYC_LEVEL.has(kycRiskLevel)) {
-      throw new BadRequestException('kycRiskLevel inválido. Use: PENDING, LOW, MEDIUM, HIGH.');
+      throw new BadRequestException(
+        'kycRiskLevel inválido. Use: PENDING, LOW, MEDIUM, HIGH.',
+      );
     }
 
     const sunarpSubmittedAt = parseDateOrNull(body.sunarpSubmittedAt);
@@ -147,16 +170,24 @@ export class VentasComplianceOperationsService {
     const sunarpRegisteredAt = parseDateOrNull(body.sunarpRegisteredAt);
 
     if (sunarpStatus === 'SUBMITTED' && !sunarpSubmittedAt) {
-      throw new BadRequestException('Para estado SUBMITTED registre sunarpSubmittedAt.');
+      throw new BadRequestException(
+        'Para estado SUBMITTED registre sunarpSubmittedAt.',
+      );
     }
     if (sunarpStatus === 'OBSERVED' && !sunarpObservedAt) {
-      throw new BadRequestException('Para estado OBSERVED registre sunarpObservedAt.');
+      throw new BadRequestException(
+        'Para estado OBSERVED registre sunarpObservedAt.',
+      );
     }
     if (sunarpStatus === 'OBSERVED' && !body.sunarpObservationNotes?.trim()) {
-      throw new BadRequestException('Para estado OBSERVED registre sunarpObservationNotes.');
+      throw new BadRequestException(
+        'Para estado OBSERVED registre sunarpObservationNotes.',
+      );
     }
     if (sunarpStatus === 'REGISTERED' && !sunarpRegisteredAt) {
-      throw new BadRequestException('Para estado REGISTERED registre sunarpRegisteredAt.');
+      throw new BadRequestException(
+        'Para estado REGISTERED registre sunarpRegisteredAt.',
+      );
     }
 
     return this.compliance.upsertChecklist({
@@ -210,8 +241,13 @@ export class VentasComplianceOperationsService {
       notes?: string | null;
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
-    await this.ensureOperationScope(applicationId, body.propertyId, body.buyerClientId);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
+    await this.ensureOperationScope(
+      applicationId,
+      body.propertyId,
+      body.buyerClientId,
+    );
 
     if (!body.docType?.trim()) {
       throw new BadRequestException('docType es obligatorio.');
@@ -239,7 +275,8 @@ export class VentasComplianceOperationsService {
     propertyId: string,
     buyerClientId: string,
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     await this.ensureOperationScope(applicationId, propertyId, buyerClientId);
     const rows = (await this.compliance.listDocuments(
       applicationId,
@@ -271,9 +308,14 @@ export class VentasComplianceOperationsService {
     propertyId: string,
     buyerClientId: string,
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     await this.ensureOperationScope(applicationId, propertyId, buyerClientId);
-    return this.compliance.getClosingReadiness(applicationId, propertyId, buyerClientId);
+    return this.compliance.getClosingReadiness(
+      applicationId,
+      propertyId,
+      buyerClientId,
+    );
   }
 
   getTaxPreview(body: {
@@ -288,12 +330,17 @@ export class VentasComplianceOperationsService {
     }
     const uit = body.uit && body.uit > 0 ? body.uit : 5500;
     const salePrice = body.salePrice;
-    const acquisitionCost = body.acquisitionCost && body.acquisitionCost > 0 ? body.acquisitionCost : 0;
+    const acquisitionCost =
+      body.acquisitionCost && body.acquisitionCost > 0
+        ? body.acquisitionCost
+        : 0;
     const alcabalaApplicable = body.alcabalaApplicable !== false;
     const rent2Applicable = body.rent2Applicable === true;
 
     const alcabalaTaxableBase = Math.max(0, salePrice - uit * 10);
-    const alcabalaAmount = alcabalaApplicable ? round2(alcabalaTaxableBase * 0.03) : 0;
+    const alcabalaAmount = alcabalaApplicable
+      ? round2(alcabalaTaxableBase * 0.03)
+      : 0;
 
     const capitalGain = Math.max(0, salePrice - acquisitionCost);
     const rent2Amount = rent2Applicable ? round2(capitalGain * 0.05) : 0;
@@ -319,9 +366,15 @@ export class VentasComplianceOperationsService {
 
   async listPendingBoard(
     applicationSlug: string | undefined,
-    query?: { limit?: number; offset?: number; sunarpStatus?: string; onlyOverdue?: boolean },
+    query?: {
+      limit?: number;
+      offset?: number;
+      sunarpStatus?: string;
+      onlyOverdue?: boolean;
+    },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     const rows = (await this.compliance.listChecklistRows(applicationId, {
       limit: query?.limit,
       offset: query?.offset,
@@ -337,8 +390,9 @@ export class VentasComplianceOperationsService {
           String(r.buyerClientId),
         );
         const missing = readiness.missing;
-        const kycHigh = String(r.kycRiskLevel ?? '').toUpperCase() === 'HIGH';
-        const observed = String(r.sunarpStatus ?? '').toUpperCase() === 'OBSERVED';
+        const kycHigh = scalarText(r.kycRiskLevel).toUpperCase() === 'HIGH';
+        const observed =
+          scalarText(r.sunarpStatus).toUpperCase() === 'OBSERVED';
         const severity =
           kycHigh || observed || missing.length >= 4
             ? 'HIGH'
@@ -360,10 +414,16 @@ export class VentasComplianceOperationsService {
 
     data.sort((a, b) => {
       const rank = { HIGH: 3, MEDIUM: 2, LOW: 1 } as const;
-      const r = rank[b.severity as keyof typeof rank] - rank[a.severity as keyof typeof rank];
+      const r =
+        rank[b.severity as keyof typeof rank] -
+        rank[a.severity as keyof typeof rank];
       if (r !== 0) return r;
-      const at = a.nextActionAt ? new Date(String(a.nextActionAt)).getTime() : Number.MAX_SAFE_INTEGER;
-      const bt = b.nextActionAt ? new Date(String(b.nextActionAt)).getTime() : Number.MAX_SAFE_INTEGER;
+      const at = a.nextActionAt
+        ? new Date(scalarText(a.nextActionAt)).getTime()
+        : Number.MAX_SAFE_INTEGER;
+      const bt = b.nextActionAt
+        ? new Date(scalarText(b.nextActionAt)).getTime()
+        : Number.MAX_SAFE_INTEGER;
       return at - bt;
     });
 
@@ -374,15 +434,22 @@ export class VentasComplianceOperationsService {
     applicationSlug: string | undefined,
     body?: { dryRun?: boolean; daysWithoutAlert?: number; maxItems?: number },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     const daysWithoutAlert = Math.max(0, body?.daysWithoutAlert ?? 1);
     const maxItems = Math.min(200, Math.max(1, body?.maxItems ?? 50));
-    const cutoff = new Date(Date.now() - daysWithoutAlert * 24 * 60 * 60 * 1000);
-    const board = await this.listPendingBoard(applicationSlug, { limit: maxItems });
+    const cutoff = new Date(
+      Date.now() - daysWithoutAlert * 24 * 60 * 60 * 1000,
+    );
+    const board = await this.listPendingBoard(applicationSlug, {
+      limit: maxItems,
+    });
     const candidates = board.data.filter((x) => {
-      if ((x.missing as string[]).length === 0) return false;
+      if (x.missing.length === 0) return false;
       if (!x.lastAlertSentAt) return true;
-      return new Date(String(x.lastAlertSentAt)).getTime() < cutoff.getTime();
+      return (
+        new Date(scalarText(x.lastAlertSentAt)).getTime() < cutoff.getTime()
+      );
     });
 
     const roleUsers = await this.notificationsService.getUserIdsByRoleCodes([
@@ -391,11 +458,20 @@ export class VentasComplianceOperationsService {
       'GERENTE',
     ]);
     if (roleUsers.length === 0) {
-      return { dryRun: body?.dryRun === true, dispatched: 0, candidates: candidates.length };
+      return {
+        dryRun: body?.dryRun === true,
+        dispatched: 0,
+        candidates: candidates.length,
+      };
     }
 
     if (body?.dryRun) {
-      return { dryRun: true, dispatched: 0, candidates: candidates.length, sample: candidates.slice(0, 5) };
+      return {
+        dryRun: true,
+        dispatched: 0,
+        candidates: candidates.length,
+        sample: candidates.slice(0, 5),
+      };
     }
 
     let dispatched = 0;
@@ -404,7 +480,7 @@ export class VentasComplianceOperationsService {
         roleUsers,
         'VENTAS_COMPLIANCE_PENDING',
         'Pendiente legal/compliance en cierre de venta',
-        `Propiedad ${String(item.propertyId)} · Comprador ${String(item.buyerClientId)} · Pendientes: ${(item.missing as string[]).slice(0, 3).join(', ')}`,
+        `Propiedad ${String(item.propertyId)} · Comprador ${String(item.buyerClientId)} · Pendientes: ${item.missing.slice(0, 3).join(', ')}`,
         {
           checklistId: item.checklistId,
           propertyId: item.propertyId,

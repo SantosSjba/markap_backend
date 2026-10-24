@@ -8,7 +8,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
   CreateProduccionFurnitureCostingSnapshotUseCase,
@@ -67,7 +72,11 @@ export class ProduccionFurnitureCostingController {
     @Body() dto: CreateCostingSnapshotDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.snapshotUc.execute(furnitureId, applicationSlug ?? 'produccion', dto);
+    return this.snapshotUc.execute(
+      furnitureId,
+      applicationSlug ?? 'produccion',
+      dto,
+    );
   }
 
   @Get(':furnitureId/snapshots')
@@ -76,6 +85,9 @@ export class ProduccionFurnitureCostingController {
     @Param('furnitureId') furnitureId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.listSnapshotsUc.execute(furnitureId, applicationSlug ?? 'produccion');
+    return this.listSnapshotsUc.execute(
+      furnitureId,
+      applicationSlug ?? 'produccion',
+    );
   }
 }

@@ -79,7 +79,14 @@ export interface ContabilidadLibroMayorAccountSummaryDto {
 }
 
 export interface ContabilidadPleRepository {
-  listBooks(): { books: { code: string; name: string; description: string; sunatStructure: string }[] };
+  listBooks(): {
+    books: {
+      code: string;
+      name: string;
+      description: string;
+      sunatStructure: string;
+    }[];
+  };
 
   getMandatoryProfile(
     applicationId: string,
@@ -101,7 +108,9 @@ export interface ContabilidadPleRepository {
     options?: { userId?: string | null; persistLog?: boolean },
   ): Promise<ContabilidadPleGenerateResult>;
 
-  buildZipBuffer(files: ContabilidadPleGeneratedFile[]): Promise<{ buffer: Buffer; hash: string }>;
+  buildZipBuffer(
+    files: ContabilidadPleGeneratedFile[],
+  ): Promise<{ buffer: Buffer; hash: string }>;
 
   listExportLogs(
     applicationId: string,

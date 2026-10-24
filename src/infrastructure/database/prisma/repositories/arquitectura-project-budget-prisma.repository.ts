@@ -1,4 +1,8 @@
-﻿import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+﻿import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import {
@@ -40,8 +44,13 @@ function numOrNull(v: unknown): number | null {
 export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaProjectBudgetRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async assertProject(projectId: string, applicationSlug = 'arquitectura') {
-    const app = await this.prisma.application.findUnique({ where: { slug: applicationSlug } });
+  private async assertProject(
+    projectId: string,
+    applicationSlug = 'arquitectura',
+  ) {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: applicationSlug },
+    });
     if (!app) throw new NotFoundException('Aplicación no encontrada');
     const project = await this.prisma.arquitecturaProject.findFirst({
       where: { id: projectId, applicationId: app.id, deletedAt: null },
@@ -79,7 +88,9 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     });
     const purchase = computeLineItemPurchase({
       actualPurchaseCost: numOrNull(row.actualPurchaseCost),
-      supplierPayments: row.supplierPayments.map((p) => ({ amount: num(p.amount) })),
+      supplierPayments: row.supplierPayments.map((p) => ({
+        amount: num(p.amount),
+      })),
     });
     return {
       id: row.id,
@@ -110,7 +121,10 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     };
   }
 
-  private async loadBudget(projectId: string, applicationSlug?: string): Promise<ProjectBudgetDetailDto | null> {
+  private async loadBudget(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<ProjectBudgetDetailDto | null> {
     const project = await this.assertProject(projectId, applicationSlug);
     const utilityPct = num(project.defaultUtilityPct);
     const igvPct = num(project.defaultIgvPct);
@@ -132,26 +146,32 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     let priceTotal = 0;
     let actualPurchaseCostTotal = 0;
 
-    const mappedSections: ProjectBudgetSectionDto[] = sections.map((section) => {
-      const lineItems = section.lineItems.map((item) =>
-        this.mapLineItem(item, utilityPct, igvPct),
-      );
-      const sectionTotal = lineItems.reduce((sum, item) => sum + item.price, 0);
-      for (const item of lineItems) {
-        budgetedCostTotal += item.budgetedCost;
-        utilityTotal += item.utilityAmount;
-        igvTotal += item.igvAmount;
-        priceTotal += item.price;
-        if (item.actualPurchaseCost != null) actualPurchaseCostTotal += item.actualPurchaseCost;
-      }
-      return {
-        id: section.id,
-        name: section.name,
-        sortOrder: section.sortOrder,
-        lineItems,
-        sectionTotal: Math.round(sectionTotal * 100) / 100,
-      };
-    });
+    const mappedSections: ProjectBudgetSectionDto[] = sections.map(
+      (section) => {
+        const lineItems = section.lineItems.map((item) =>
+          this.mapLineItem(item, utilityPct, igvPct),
+        );
+        const sectionTotal = lineItems.reduce(
+          (sum, item) => sum + item.price,
+          0,
+        );
+        for (const item of lineItems) {
+          budgetedCostTotal += item.budgetedCost;
+          utilityTotal += item.utilityAmount;
+          igvTotal += item.igvAmount;
+          priceTotal += item.price;
+          if (item.actualPurchaseCost != null)
+            actualPurchaseCostTotal += item.actualPurchaseCost;
+        }
+        return {
+          id: section.id,
+          name: section.name,
+          sortOrder: section.sortOrder,
+          lineItems,
+          sectionTotal: Math.round(sectionTotal * 100) / 100,
+        };
+      },
+    );
 
     return {
       projectId: project.id,
@@ -169,16 +189,23 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
         utilityTotal: Math.round(utilityTotal * 100) / 100,
         igvTotal: Math.round(igvTotal * 100) / 100,
         priceTotal: Math.round(priceTotal * 100) / 100,
-        actualPurchaseCostTotal: Math.round(actualPurchaseCostTotal * 100) / 100,
+        actualPurchaseCostTotal:
+          Math.round(actualPurchaseCostTotal * 100) / 100,
       },
     };
   }
 
-  async getBudget(projectId: string, applicationSlug?: string): Promise<ProjectBudgetDetailDto | null> {
+  async getBudget(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<ProjectBudgetDetailDto | null> {
     return this.loadBudget(projectId, applicationSlug);
   }
 
-  async getSettlement(projectId: string, applicationSlug?: string): Promise<ProjectSettlementDto | null> {
+  async getSettlement(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<ProjectSettlementDto | null> {
     const budget = await this.loadBudget(projectId, applicationSlug);
     if (!budget) return null;
 
@@ -187,7 +214,9 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
       orderBy: { paidAt: 'asc' },
     });
 
-    const lineItemPrices = budget.sections.flatMap((s) => s.lineItems.map((i) => i.price));
+    const lineItemPrices = budget.sections.flatMap((s) =>
+      s.lineItems.map((i) => i.price),
+    );
     const lineItemActualCosts = budget.sections.flatMap((s) =>
       s.lineItems.map((i) => i.actualPurchaseCost),
     );
@@ -252,7 +281,10 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     const section = await this.prisma.arquitecturaProjectSection.findFirst({
       where: { id: sectionId, projectId },
       include: {
-        lineItems: { include: { supplierPayments: true }, orderBy: { sortOrder: 'asc' } },
+        lineItems: {
+          include: { supplierPayments: true },
+          orderBy: { sortOrder: 'asc' },
+        },
       },
     });
     if (!section) throw new NotFoundException('Sección no encontrada');
@@ -261,7 +293,9 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
       where: { id: sectionId },
       data: {
         ...(payload.name !== undefined ? { name: payload.name.trim() } : {}),
-        ...(payload.sortOrder !== undefined ? { sortOrder: payload.sortOrder } : {}),
+        ...(payload.sortOrder !== undefined
+          ? { sortOrder: payload.sortOrder }
+          : {}),
       },
       include: {
         lineItems: {
@@ -273,23 +307,32 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
 
     const utilityPct = num(project.defaultUtilityPct);
     const igvPct = num(project.defaultIgvPct);
-    const lineItems = updated.lineItems.map((item) => this.mapLineItem(item, utilityPct, igvPct));
+    const lineItems = updated.lineItems.map((item) =>
+      this.mapLineItem(item, utilityPct, igvPct),
+    );
     return {
       id: updated.id,
       name: updated.name,
       sortOrder: updated.sortOrder,
       lineItems,
-      sectionTotal: Math.round(lineItems.reduce((s, i) => s + i.price, 0) * 100) / 100,
+      sectionTotal:
+        Math.round(lineItems.reduce((s, i) => s + i.price, 0) * 100) / 100,
     };
   }
 
-  async deleteSection(projectId: string, sectionId: string, applicationSlug?: string): Promise<void> {
+  async deleteSection(
+    projectId: string,
+    sectionId: string,
+    applicationSlug?: string,
+  ): Promise<void> {
     await this.assertProject(projectId, applicationSlug);
     const section = await this.prisma.arquitecturaProjectSection.findFirst({
       where: { id: sectionId, projectId },
     });
     if (!section) throw new NotFoundException('Sección no encontrada');
-    await this.prisma.arquitecturaProjectSection.delete({ where: { id: sectionId } });
+    await this.prisma.arquitecturaProjectSection.delete({
+      where: { id: sectionId },
+    });
   }
 
   async createLineItem(
@@ -325,7 +368,11 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
       include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
     });
 
-    return this.mapLineItem(row, num(project.defaultUtilityPct), num(project.defaultIgvPct));
+    return this.mapLineItem(
+      row,
+      num(project.defaultUtilityPct),
+      num(project.defaultIgvPct),
+    );
   }
 
   async updateLineItem(
@@ -344,11 +391,14 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     if (payload.supplierId !== undefined) {
       if (payload.supplierId === null) {
         resolvedSupplierName =
-          payload.supplierName !== undefined ? payload.supplierName?.trim() || null : undefined;
+          payload.supplierName !== undefined
+            ? payload.supplierName?.trim() || null
+            : undefined;
       } else {
-        const supplier = await this.prisma.arquitecturaMaterialSupplier.findUnique({
-          where: { id: payload.supplierId },
-        });
+        const supplier =
+          await this.prisma.arquitecturaMaterialSupplier.findUnique({
+            where: { id: payload.supplierId },
+          });
         if (!supplier) throw new NotFoundException('Proveedor no encontrado');
         resolvedSupplierName = supplier.companyName;
       }
@@ -359,8 +409,12 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     const row = await this.prisma.arquitecturaProjectLineItem.update({
       where: { id: lineItemId },
       data: {
-        ...(payload.description !== undefined ? { description: payload.description.trim() } : {}),
-        ...(payload.sortOrder !== undefined ? { sortOrder: payload.sortOrder } : {}),
+        ...(payload.description !== undefined
+          ? { description: payload.description.trim() }
+          : {}),
+        ...(payload.sortOrder !== undefined
+          ? { sortOrder: payload.sortOrder }
+          : {}),
         ...(payload.budgetedCost !== undefined
           ? { budgetedCost: new Prisma.Decimal(payload.budgetedCost) }
           : {}),
@@ -378,12 +432,18 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
           : payload.supplierName !== undefined
             ? { supplierName: payload.supplierName?.trim() || null }
             : {}),
-        ...(payload.supplierId !== undefined ? { supplierId: payload.supplierId } : {}),
+        ...(payload.supplierId !== undefined
+          ? { supplierId: payload.supplierId }
+          : {}),
       },
       include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
     });
 
-    return this.mapLineItem(row, num(project.defaultUtilityPct), num(project.defaultIgvPct));
+    return this.mapLineItem(
+      row,
+      num(project.defaultUtilityPct),
+      num(project.defaultIgvPct),
+    );
   }
 
   async deleteLineItem(
@@ -396,7 +456,9 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
       where: { id: lineItemId, section: { projectId } },
     });
     if (!existing) throw new NotFoundException('Partida no encontrada');
-    await this.prisma.arquitecturaProjectLineItem.delete({ where: { id: lineItemId } });
+    await this.prisma.arquitecturaProjectLineItem.delete({
+      where: { id: lineItemId },
+    });
   }
 
   async createSupplierPayment(
@@ -429,11 +491,17 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
       },
     });
 
-    const row = await this.prisma.arquitecturaProjectLineItem.findUniqueOrThrow({
-      where: { id: payload.lineItemId },
-      include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
-    });
-    return this.mapLineItem(row, num(project.defaultUtilityPct), num(project.defaultIgvPct));
+    const row = await this.prisma.arquitecturaProjectLineItem.findUniqueOrThrow(
+      {
+        where: { id: payload.lineItemId },
+        include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
+      },
+    );
+    return this.mapLineItem(
+      row,
+      num(project.defaultUtilityPct),
+      num(project.defaultIgvPct),
+    );
   }
 
   async deleteSupplierPayment(
@@ -442,11 +510,14 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     applicationSlug?: string,
   ): Promise<void> {
     await this.assertProject(projectId, applicationSlug);
-    const payment = await this.prisma.arquitecturaLineItemSupplierPayment.findFirst({
-      where: { id: paymentId, lineItem: { section: { projectId } } },
-    });
+    const payment =
+      await this.prisma.arquitecturaLineItemSupplierPayment.findFirst({
+        where: { id: paymentId, lineItem: { section: { projectId } } },
+      });
     if (!payment) throw new NotFoundException('Abono no encontrado');
-    await this.prisma.arquitecturaLineItemSupplierPayment.delete({ where: { id: paymentId } });
+    await this.prisma.arquitecturaLineItemSupplierPayment.delete({
+      where: { id: paymentId },
+    });
   }
 
   async duplicateBudgetSnapshot(projectId: string, applicationSlug?: string) {
@@ -504,7 +575,10 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     };
   }
 
-  async syncActualCostsFromExecution(projectId: string, applicationSlug?: string) {
+  async syncActualCostsFromExecution(
+    projectId: string,
+    applicationSlug?: string,
+  ) {
     await this.assertProject(projectId, applicationSlug);
 
     const costs = await this.prisma.arquitecturaExecutionActualCost.findMany({
@@ -519,8 +593,12 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     for (const cost of costs) {
       const key = cost.concept.trim().toLowerCase();
       if (!key) continue;
-      amountByConcept.set(key, (amountByConcept.get(key) ?? 0) + num(cost.amount));
-      if (!displayByConcept.has(key)) displayByConcept.set(key, cost.concept.trim());
+      amountByConcept.set(
+        key,
+        (amountByConcept.get(key) ?? 0) + num(cost.amount),
+      );
+      if (!displayByConcept.has(key))
+        displayByConcept.set(key, cost.concept.trim());
     }
 
     const lineItems = await this.prisma.arquitecturaProjectLineItem.findMany({
@@ -555,7 +633,10 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     return { updatedLineItems, unmatchedConcepts, budget };
   }
 
-  async assertProjectExists(projectId: string, applicationSlug?: string): Promise<void> {
+  async assertProjectExists(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<void> {
     await this.assertProject(projectId, applicationSlug);
   }
 
@@ -575,7 +656,11 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     projectId: string,
     sections: Array<{
       name: string;
-      lineItems: Array<{ description: string; budgetedCost: number; hasIgv?: boolean }>;
+      lineItems: Array<{
+        description: string;
+        budgetedCost: number;
+        hasIgv?: boolean;
+      }>;
     }>,
     replace: boolean,
     applicationSlug?: string,
@@ -583,7 +668,9 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
     await this.assertProject(projectId, applicationSlug);
 
     if (replace) {
-      await this.prisma.arquitecturaProjectSection.deleteMany({ where: { projectId } });
+      await this.prisma.arquitecturaProjectSection.deleteMany({
+        where: { projectId },
+      });
     }
 
     const maxOrder = await this.prisma.arquitecturaProjectSection.aggregate({
@@ -667,7 +754,9 @@ export class ArquitecturaProjectBudgetPrismaRepository implements ArquitecturaPr
       this.prisma.arquitecturaProject.findMany({
         where,
         include: {
-          client: { select: { id: true, fullName: true, documentNumber: true } },
+          client: {
+            select: { id: true, fullName: true, documentNumber: true },
+          },
           budgetSections: {
             select: {
               updatedAt: true,

@@ -11,12 +11,16 @@ export const CONTABILIDAD_SOL_DECLARATION_STATUS = {
   REJECTED: 'REJECTED',
 } as const;
 
-export const CONTABILIDAD_SOL_DECLARATION_TYPE_LABELS: Record<string, string> = {
-  PDT_621: 'PDT 621 — IGV mensual',
-  PLAME: 'PLAME — Planilla',
-};
+export const CONTABILIDAD_SOL_DECLARATION_TYPE_LABELS: Record<string, string> =
+  {
+    PDT_621: 'PDT 621 — IGV mensual',
+    PLAME: 'PLAME — Planilla',
+  };
 
-export const CONTABILIDAD_SOL_DECLARATION_STATUS_LABELS: Record<string, string> = {
+export const CONTABILIDAD_SOL_DECLARATION_STATUS_LABELS: Record<
+  string,
+  string
+> = {
   PREPARED: 'Paquete preparado',
   MANUAL_PENDING: 'Pendiente carga manual SOL',
   SUBMITTED: 'Enviado',

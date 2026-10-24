@@ -1,3 +1,4 @@
+import { lockProduccionMaterials } from './lock-produccion-materials';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PRODUCCION_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
@@ -21,9 +22,16 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function computeStatus(lines: { quantityOrdered: Prisma.Decimal; quantityReceived: Prisma.Decimal }[]): ProduccionPurchaseOrderStatus {
+function computeStatus(
+  lines: {
+    quantityOrdered: Prisma.Decimal;
+    quantityReceived: Prisma.Decimal;
+  }[],
+): ProduccionPurchaseOrderStatus {
   if (lines.length === 0) return 'DRAFT';
-  const allReceived = lines.every((l) => num(l.quantityReceived) >= num(l.quantityOrdered));
+  const allReceived = lines.every(
+    (l) => num(l.quantityReceived) >= num(l.quantityOrdered),
+  );
   const anyReceived = lines.some((l) => num(l.quantityReceived) > 0);
   if (allReceived) return 'RECEIVED';
   if (anyReceived) return 'PARTIAL';
@@ -63,13 +71,17 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
     };
   }
 
-  private async loadDetail(id: string): Promise<ProduccionPurchaseOrderDetail | null> {
+  private async loadDetail(
+    id: string,
+  ): Promise<ProduccionPurchaseOrderDetail | null> {
     const row = await this.prisma.produccionPurchaseOrder.findUnique({
       where: { id },
       include: {
         supplier: { select: { companyName: true, ruc: true } },
         lines: {
-          include: { material: { select: { code: true, name: true, unit: true } } },
+          include: {
+            material: { select: { code: true, name: true, unit: true } },
+          },
           orderBy: { id: 'asc' },
         },
       },
@@ -95,21 +107,31 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
     };
   }
 
-  private validateLines(lines: { materialId: string; quantityOrdered: number; unitPrice: number }[]) {
-    if (!lines.length) throw new BadRequestException('La orden debe tener al menos una línea');
+  private validateLines(
+    lines: { materialId: string; quantityOrdered: number; unitPrice: number }[],
+  ) {
+    if (!lines.length)
+      throw new BadRequestException('La orden debe tener al menos una línea');
     for (const l of lines) {
-      if (l.quantityOrdered <= 0) throw new BadRequestException('Cantidad ordenada debe ser positiva');
-      if (l.unitPrice < 0) throw new BadRequestException('Precio unitario inválido');
+      if (l.quantityOrdered <= 0)
+        throw new BadRequestException('Cantidad ordenada debe ser positiva');
+      if (l.unitPrice < 0)
+        throw new BadRequestException('Precio unitario inválido');
     }
   }
 
-  async list(filters: ListProduccionPurchaseOrdersFilters): Promise<ListProduccionPurchaseOrdersResult> {
+  async list(
+    filters: ListProduccionPurchaseOrdersFilters,
+  ): Promise<ListProduccionPurchaseOrdersResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
-    const andParts: Prisma.ProduccionPurchaseOrderWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.ProduccionPurchaseOrderWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.status) andParts.push({ status: filters.status });
     if (filters.supplierId) andParts.push({ supplierId: filters.supplierId });
     if (filters.search?.trim()) {
@@ -163,17 +185,27 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ProduccionPurchaseOrderDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionPurchaseOrderDetail | null> {
     const row = await this.prisma.produccionPurchaseOrder.findUnique({
       where: { id },
       include: { application: { select: { slug: true } } },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
     return this.loadDetail(id);
   }
 
-  async create(applicationId: string, payload: CreateProduccionPurchaseOrderPayload) {
+  async create(
+    applicationId: string,
+    payload: CreateProduccionPurchaseOrderPayload,
+  ) {
     this.validateLines(payload.lines);
 
     const supplier = await this.prisma.produccionSupplier.findFirst({
@@ -194,7 +226,9 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
       applicationId,
       PRODUCCION_NUMBERING_SERIES_KEYS.PURCHASE_ORDER,
     );
-    const orderedAt = payload.orderedAt ? new Date(payload.orderedAt) : new Date();
+    const orderedAt = payload.orderedAt
+      ? new Date(payload.orderedAt)
+      : new Date();
 
     const row = await this.prisma.produccionPurchaseOrder.create({
       data: {
@@ -222,10 +256,14 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
   }
 
   async update(id: string, payload: UpdateProduccionPurchaseOrderPayload) {
-    const order = await this.prisma.produccionPurchaseOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionPurchaseOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('Orden no encontrada');
     if (order.status !== 'DRAFT') {
-      throw new BadRequestException('Solo se pueden editar órdenes en borrador');
+      throw new BadRequestException(
+        'Solo se pueden editar órdenes en borrador',
+      );
     }
 
     if (payload.lines) this.validateLines(payload.lines);
@@ -239,17 +277,24 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
 
     await this.prisma.$transaction(async (tx) => {
       const patch: Prisma.ProduccionPurchaseOrderUncheckedUpdateInput = {};
-      if (payload.supplierId !== undefined) patch.supplierId = payload.supplierId;
-      if (payload.orderedAt !== undefined) patch.orderedAt = new Date(payload.orderedAt);
+      if (payload.supplierId !== undefined)
+        patch.supplierId = payload.supplierId;
+      if (payload.orderedAt !== undefined)
+        patch.orderedAt = new Date(payload.orderedAt);
       if (payload.expectedAt !== undefined) {
-        patch.expectedAt = payload.expectedAt ? new Date(payload.expectedAt) : null;
+        patch.expectedAt = payload.expectedAt
+          ? new Date(payload.expectedAt)
+          : null;
       }
-      if (payload.notes !== undefined) patch.notes = payload.notes?.trim() || null;
+      if (payload.notes !== undefined)
+        patch.notes = payload.notes?.trim() || null;
 
       await tx.produccionPurchaseOrder.update({ where: { id }, data: patch });
 
       if (payload.lines) {
-        await tx.produccionPurchaseOrderLine.deleteMany({ where: { purchaseOrderId: id } });
+        await tx.produccionPurchaseOrderLine.deleteMany({
+          where: { purchaseOrderId: id },
+        });
         await tx.produccionPurchaseOrderLine.createMany({
           data: payload.lines.map((l) => ({
             purchaseOrderId: id,
@@ -273,8 +318,12 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
       include: { lines: true },
     });
     if (!order) throw new BadRequestException('Orden no encontrada');
-    if (order.status !== 'DRAFT') throw new BadRequestException('Solo se pueden enviar órdenes en borrador');
-    if (!order.lines.length) throw new BadRequestException('La orden no tiene líneas');
+    if (order.status !== 'DRAFT')
+      throw new BadRequestException(
+        'Solo se pueden enviar órdenes en borrador',
+      );
+    if (!order.lines.length)
+      throw new BadRequestException('La orden no tiene líneas');
 
     await this.prisma.produccionPurchaseOrder.update({
       where: { id },
@@ -287,9 +336,18 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
   }
 
   async receive(id: string, payload: ReceiveProduccionPurchaseOrderPayload) {
-    if (!payload.lines?.length) throw new BadRequestException('Indique las líneas a recibir');
+    if (!payload.lines?.length)
+      throw new BadRequestException('Indique las líneas a recibir');
+
+    if (
+      new Set(payload.lines.map((line) => line.lineId)).size !==
+      payload.lines.length
+    ) {
+      throw new BadRequestException('No repita líneas en una misma recepción');
+    }
 
     await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM produccion_purchase_orders WHERE id = ${id} FOR UPDATE`;
       const order = await tx.produccionPurchaseOrder.findUnique({
         where: { id },
         include: {
@@ -298,15 +356,23 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
       });
       if (!order) throw new BadRequestException('Orden no encontrada');
       if (!['SENT', 'PARTIAL'].includes(order.status)) {
-        throw new BadRequestException('La orden no está pendiente de recepción');
+        throw new BadRequestException(
+          'La orden no está pendiente de recepción',
+        );
       }
 
+      await lockProduccionMaterials(
+        tx,
+        order.lines.map((line) => line.materialId),
+      );
       const lineById = new Map(order.lines.map((l) => [l.id, l]));
 
       for (const item of payload.lines) {
         const line = lineById.get(item.lineId);
-        if (!line) throw new BadRequestException(`Línea ${item.lineId} no encontrada`);
-        if (item.quantity <= 0) throw new BadRequestException('Cantidad a recibir debe ser positiva');
+        if (!line)
+          throw new BadRequestException(`Línea ${item.lineId} no encontrada`);
+        if (item.quantity <= 0)
+          throw new BadRequestException('Cantidad a recibir debe ser positiva');
 
         const pending = num(line.quantityOrdered) - num(line.quantityReceived);
         if (item.quantity > pending + 0.0001) {
@@ -321,7 +387,9 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
           data: { quantityReceived: new Prisma.Decimal(newReceived) },
         });
 
-        const material = line.material;
+        const material = await tx.produccionMaterial.findUniqueOrThrow({
+          where: { id: line.materialId },
+        });
         const current = num(material.currentStock);
         const balanceAfter = current + item.quantity;
 
@@ -362,7 +430,9 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
   }
 
   async cancel(id: string) {
-    const order = await this.prisma.produccionPurchaseOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionPurchaseOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('Orden no encontrada');
     if (!['DRAFT', 'SENT'].includes(order.status)) {
       throw new BadRequestException('No se puede cancelar esta orden');
@@ -379,10 +449,14 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
   }
 
   async delete(id: string): Promise<void> {
-    const order = await this.prisma.produccionPurchaseOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionPurchaseOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('Orden no encontrada');
     if (order.status !== 'DRAFT') {
-      throw new BadRequestException('Solo se pueden eliminar órdenes en borrador');
+      throw new BadRequestException(
+        'Solo se pueden eliminar órdenes en borrador',
+      );
     }
     await this.prisma.produccionPurchaseOrder.delete({ where: { id } });
   }

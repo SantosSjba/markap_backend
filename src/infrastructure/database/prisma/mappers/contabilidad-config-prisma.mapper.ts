@@ -61,7 +61,10 @@ export const ContabilidadConfigPrismaMapper = {
     padLength: number;
     isActive: boolean;
   }): ContabilidadDocumentSeriesDto {
-    const nextPreview = formatContabilidadDocumentNumber({ ...row, lastNumber: row.lastNumber + 1 });
+    const nextPreview = formatContabilidadDocumentNumber({
+      ...row,
+      lastNumber: row.lastNumber + 1,
+    });
     return {
       seriesKey: row.seriesKey,
       sunatSeries: row.sunatSeries,

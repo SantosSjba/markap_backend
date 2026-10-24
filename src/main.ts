@@ -91,11 +91,14 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT ?? 3000;
-  await app.listen(port);
+  await app.listen(port, process.env.HOST || '0.0.0.0');
 
   console.log(`🚀 Application is running on: http://localhost:${port}/api`);
   console.log(`📚 API Documentation (Scalar): http://localhost:${port}/docs`);
   console.log(`📄 Swagger UI: http://localhost:${port}/api-docs`);
 }
 
-bootstrap();
+bootstrap().catch((error: unknown) => {
+  console.error('No se pudo iniciar la API', error);
+  process.exit(1);
+});

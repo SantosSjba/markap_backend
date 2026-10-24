@@ -44,8 +44,12 @@ export class ContabilidadSolOperationsService {
   ) {}
 
   async getCredentials(applicationSlug?: string, legalEntityId?: string) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const entityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
     let credentials = await this.sol.getCredentials(applicationId, entityId);
     if (!credentials) {
       const entity = await this.legalEntities.findById(applicationId, entityId);
@@ -68,9 +72,17 @@ export class ContabilidadSolOperationsService {
     legalEntityId: string | undefined,
     body: UpsertSolCredentialsInput,
   ) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
-    const credentials = await this.sol.upsertCredentials(applicationId, entityId, body);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const entityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
+    const credentials = await this.sol.upsertCredentials(
+      applicationId,
+      entityId,
+      body,
+    );
     return { credentials };
   }
 
@@ -80,8 +92,12 @@ export class ContabilidadSolOperationsService {
     periodId?: string,
     declarationType?: string,
   ) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const entityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
     const logs = await this.sol.listDeclarations(applicationId, entityId, {
       periodId,
       declarationType,
@@ -94,7 +110,7 @@ export class ContabilidadSolOperationsService {
           periodId,
           declarationType ?? CONTABILIDAD_SOL_DECLARATION_TYPE.PDT_621,
         )
-      : logs[0] ?? null;
+      : (logs[0] ?? null);
     return {
       logs,
       latest,
@@ -109,12 +125,21 @@ export class ContabilidadSolOperationsService {
     periodId: string,
     userId?: string | null,
   ) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
-    const periodCtx = await this.sol.getPeriodLegalEntity(applicationId, periodId);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const entityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
+    const periodCtx = await this.sol.getPeriodLegalEntity(
+      applicationId,
+      periodId,
+    );
     if (!periodCtx) throw new EntityNotFoundException('Period', periodId);
     if (periodCtx.legalEntityId !== entityId) {
-      throw new BadRequestException('El periodo no pertenece a la entidad legal activa.');
+      throw new BadRequestException(
+        'El periodo no pertenece a la entidad legal activa.',
+      );
     }
 
     const settings = await this.config.getSettings(applicationId);
@@ -150,7 +175,8 @@ export class ContabilidadSolOperationsService {
       packageHash,
       createdBy: userId ?? null,
       existingLogId:
-        existing && existing.status !== CONTABILIDAD_SOL_DECLARATION_STATUS.ACCEPTED
+        existing &&
+        existing.status !== CONTABILIDAD_SOL_DECLARATION_STATUS.ACCEPTED
           ? existing.id
           : null,
     });
@@ -171,8 +197,12 @@ export class ContabilidadSolOperationsService {
     periodId: string,
     logId: string,
   ) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const entityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
     const latest = await this.sol.findLatestDeclaration(
       applicationId,
       entityId,
@@ -180,7 +210,10 @@ export class ContabilidadSolOperationsService {
       CONTABILIDAD_SOL_DECLARATION_TYPE.PDT_621,
     );
     if (!latest || latest.id !== logId) {
-      throw new EntityNotFoundException('ContabilidadSunatDeclarationLog', logId);
+      throw new EntityNotFoundException(
+        'ContabilidadSunatDeclarationLog',
+        logId,
+      );
     }
 
     const content = await this.sol.getPackageContent(applicationId, logId);
@@ -205,14 +238,22 @@ export class ContabilidadSolOperationsService {
     logId: string,
     userId?: string | null,
   ) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const entityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
     const credentials = await this.sol.getCredentials(applicationId, entityId);
     if (!credentials?.isActive) {
-      throw new BadRequestException('Configure credenciales SOL activas antes de enviar.');
+      throw new BadRequestException(
+        'Configure credenciales SOL activas antes de enviar.',
+      );
     }
     if (!credentials.hasSolPassword || !credentials.solUser.trim()) {
-      throw new BadRequestException('Usuario y clave SOL son requeridos para envío automático.');
+      throw new BadRequestException(
+        'Usuario y clave SOL son requeridos para envío automático.',
+      );
     }
 
     const latest = await this.sol.findLatestDeclaration(
@@ -222,7 +263,10 @@ export class ContabilidadSolOperationsService {
       CONTABILIDAD_SOL_DECLARATION_TYPE.PDT_621,
     );
     if (!latest || latest.id !== logId) {
-      throw new EntityNotFoundException('ContabilidadSunatDeclarationLog', logId);
+      throw new EntityNotFoundException(
+        'ContabilidadSunatDeclarationLog',
+        logId,
+      );
     }
 
     if (!credentials.useSandbox) {
@@ -259,9 +303,16 @@ export class ContabilidadSolOperationsService {
     periodId: string,
     userId?: string | null,
   ) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
-    const periodCtx = await this.sol.getPeriodLegalEntity(applicationId, periodId);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const entityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
+    const periodCtx = await this.sol.getPeriodLegalEntity(
+      applicationId,
+      periodId,
+    );
     if (!periodCtx) throw new EntityNotFoundException('Period', periodId);
 
     const packageObj = buildPlameDraftPackage({
@@ -302,12 +353,21 @@ export class ContabilidadSolOperationsService {
   }
 
   async downloadPackage(applicationSlug: string | undefined, logId: string) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
     const content = await this.sol.getPackageContent(applicationId, logId);
-    if (!content) throw new EntityNotFoundException('ContabilidadSunatDeclarationLog', logId);
+    if (!content)
+      throw new EntityNotFoundException(
+        'ContabilidadSunatDeclarationLog',
+        logId,
+      );
 
     const match = await this.sol.findDeclarationById(applicationId, logId);
-    if (!match) throw new EntityNotFoundException('ContabilidadSunatDeclarationLog', logId);
+    if (!match)
+      throw new EntityNotFoundException(
+        'ContabilidadSunatDeclarationLog',
+        logId,
+      );
 
     const filename = `${match.declarationType}_${match.periodYear}-${String(match.periodMonth).padStart(2, '0')}_${match.legalEntityRuc}.json`;
     return { filename, content };

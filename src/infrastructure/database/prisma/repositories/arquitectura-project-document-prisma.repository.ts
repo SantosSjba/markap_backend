@@ -15,7 +15,14 @@ export class ArquitecturaProjectDocumentPrismaRepository implements Arquitectura
   constructor(private readonly prisma: PrismaService) {}
 
   private mapRow(
-    doc: { id: string; projectId: string; docType: string; title: string; fileUrl: string | null; createdAt: Date },
+    doc: {
+      id: string;
+      projectId: string;
+      docType: string;
+      title: string;
+      fileUrl: string | null;
+      createdAt: Date;
+    },
     project: { code: string; name: string },
   ): ArquitecturaProjectDocumentListItem {
     return {
@@ -30,7 +37,9 @@ export class ArquitecturaProjectDocumentPrismaRepository implements Arquitectura
     };
   }
 
-  async findMany(filters: ListArquitecturaProjectDocumentsFilters): Promise<ListArquitecturaProjectDocumentsResult> {
+  async findMany(
+    filters: ListArquitecturaProjectDocumentsFilters,
+  ): Promise<ListArquitecturaProjectDocumentsResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug },
     });
@@ -63,7 +72,9 @@ export class ArquitecturaProjectDocumentPrismaRepository implements Arquitectura
       });
     }
 
-    const where: Prisma.ArquitecturaProjectDocumentWhereInput = { AND: andParts };
+    const where: Prisma.ArquitecturaProjectDocumentWhereInput = {
+      AND: andParts,
+    };
 
     const [rows, total] = await Promise.all([
       this.prisma.arquitecturaProjectDocument.findMany({
@@ -86,7 +97,9 @@ export class ArquitecturaProjectDocumentPrismaRepository implements Arquitectura
     };
   }
 
-  async create(data: CreateArquitecturaProjectDocumentData): Promise<ArquitecturaProjectDocumentListItem | null> {
+  async create(
+    data: CreateArquitecturaProjectDocumentData,
+  ): Promise<ArquitecturaProjectDocumentListItem | null> {
     const app = await this.prisma.application.findUnique({
       where: { slug: data.applicationSlug },
     });
@@ -135,7 +148,8 @@ export class ArquitecturaProjectDocumentPrismaRepository implements Arquitectura
 
     const patch: Prisma.ArquitecturaProjectDocumentUncheckedUpdateInput = {};
     if (data.title !== undefined) patch.title = data.title.trim();
-    if (data.fileUrl !== undefined) patch.fileUrl = data.fileUrl?.trim() || null;
+    if (data.fileUrl !== undefined)
+      patch.fileUrl = data.fileUrl?.trim() || null;
     if (data.docType !== undefined) patch.docType = data.docType;
 
     const row = await this.prisma.arquitecturaProjectDocument.update({

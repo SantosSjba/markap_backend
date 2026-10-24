@@ -1,6 +1,24 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard, type AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
+  JwtAuthGuard,
+  type AuthenticatedRequest,
+} from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadAccountOperationsService } from '../../../application/services/contabilidad-account-operations.service';
 import type {
   CreateContabilidadAccountInput,
@@ -12,10 +30,14 @@ import type {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class ContabilidadAccountsController {
-  constructor(private readonly accounts: ContabilidadAccountOperationsService) {}
+  constructor(
+    private readonly accounts: ContabilidadAccountOperationsService,
+  ) {}
 
   @Get('tree')
-  @ApiOperation({ summary: 'Plan de cuentas PCGE en árbol (con seed automático)' })
+  @ApiOperation({
+    summary: 'Plan de cuentas PCGE en árbol (con seed automático)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'search', required: false })
   listTree(
@@ -32,9 +54,15 @@ export class ContabilidadAccountsController {
   }
 
   @Post('import-pcge')
-  @ApiOperation({ summary: 'Importar cuentas PCGE por clase (merge idempotente)' })
+  @ApiOperation({
+    summary: 'Importar cuentas PCGE por clase (merge idempotente)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  @ApiQuery({ name: 'classes', required: false, description: 'Clases separadas por coma, ej. 1,2,3' })
+  @ApiQuery({
+    name: 'classes',
+    required: false,
+    description: 'Clases separadas por coma, ej. 1,2,3',
+  })
   importPcge(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Query('classes') classes?: string,
@@ -45,7 +73,10 @@ export class ContabilidadAccountsController {
   @Get(':id')
   @ApiOperation({ summary: 'Obtener cuenta por ID' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  getById(@Query('applicationSlug') applicationSlug: string | undefined, @Param('id') id: string) {
+  getById(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('id') id: string,
+  ) {
     return this.accounts.getById(applicationSlug, id);
   }
 
@@ -69,7 +100,12 @@ export class ContabilidadAccountsController {
     @Body() body: UpdateContabilidadAccountInput,
     @Req() req: AuthenticatedRequest,
   ) {
-    return this.accounts.update(applicationSlug, id, body, req?.user?.sub ?? null);
+    return this.accounts.update(
+      applicationSlug,
+      id,
+      body,
+      req?.user?.sub ?? null,
+    );
   }
 
   @Patch(':id/deactivate')
@@ -80,6 +116,10 @@ export class ContabilidadAccountsController {
     @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
   ) {
-    return this.accounts.deactivate(applicationSlug, id, req?.user?.sub ?? null);
+    return this.accounts.deactivate(
+      applicationSlug,
+      id,
+      req?.user?.sub ?? null,
+    );
   }
 }

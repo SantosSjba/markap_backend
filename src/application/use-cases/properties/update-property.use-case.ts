@@ -1,12 +1,23 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import type { PropertyRepository } from '@domain/repositories/property.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import type { Property, UpdatePropertyData } from '@domain/repositories/property.repository';
+import type {
+  Property,
+  UpdatePropertyData,
+} from '@domain/repositories/property.repository';
 import { assertClientAddressLocation } from '@application/validators/client-address-location.validator';
 import { assertActiveSaleCurrency } from '@application/validators/sale-currency.validator';
 import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
 
-import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  PROPERTY_REPOSITORY,
+} from '@common/constants/injection-tokens';
 
 const VENTAS_LISTING = new Set(['AVAILABLE', 'RESERVED', 'SOLD']);
 const ALQUILERES_LISTING = new Set([
@@ -39,7 +50,9 @@ export class UpdatePropertyUseCase {
         existing.applicationId,
       );
       if (!app || app.slug !== expectedApplicationSlug.trim()) {
-        throw new NotFoundException(`Propiedad con id ${data.id} no encontrada`);
+        throw new NotFoundException(
+          `Propiedad con id ${data.id} no encontrada`,
+        );
       }
     }
     if (data.listingStatus !== undefined && data.listingStatus !== null) {
@@ -65,18 +78,29 @@ export class UpdatePropertyUseCase {
       data.locationCustom !== undefined
         ? data.locationCustom
         : existing.locationCustom;
-    const locationCustom = assertClientAddressLocation(districtId, locationInput);
+    const locationCustom = assertClientAddressLocation(
+      districtId,
+      locationInput,
+    );
 
     let saleCurrency: string | undefined;
     if (data.saleCurrency !== undefined) {
-      saleCurrency = await assertActiveSaleCurrency(this.prisma, data.saleCurrency);
+      saleCurrency = await assertActiveSaleCurrency(
+        this.prisma,
+        data.saleCurrency,
+      );
     }
 
     let ownerPatch: Pick<UpdatePropertyData, 'ownerId' | 'ownerClientIds'> = {};
     if (data.ownerClientIds !== undefined || data.ownerId !== undefined) {
       const primary = data.ownerId ?? existing.ownerId;
       const ownerClientIds = Array.from(
-        new Set([primary, ...(data.ownerClientIds ?? existing.owners.map((o) => o.id))].filter(Boolean)),
+        new Set(
+          [
+            primary,
+            ...(data.ownerClientIds ?? existing.owners.map((o) => o.id)),
+          ].filter(Boolean),
+        ),
       );
       if (!ownerClientIds.length) {
         throw new BadRequestException('Debe indicar al menos un propietario.');

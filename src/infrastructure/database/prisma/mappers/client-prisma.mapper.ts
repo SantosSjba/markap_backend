@@ -1,5 +1,12 @@
-import { Client, ClientDetail, ClientListItem } from '@domain/entities/client.entity';
-import type { ClientType, SalesPipelineStatus } from '@domain/entities/client.entity';
+import {
+  Client,
+  ClientDetail,
+  ClientListItem,
+} from '@domain/entities/client.entity';
+import type {
+  ClientType,
+  SalesPipelineStatus,
+} from '@domain/entities/client.entity';
 
 type ClientRow = {
   id: string;

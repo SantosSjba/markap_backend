@@ -1,3 +1,4 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   BadRequestException,
   Body,
@@ -36,7 +37,9 @@ export class VentasSalesController {
   ) {}
 
   @Get('financing-channels')
-  @ApiOperation({ summary: 'Catálogo de bancos y medios de pago (proceso de venta)' })
+  @ApiOperation({
+    summary: 'Catálogo de bancos y medios de pago (proceso de venta)',
+  })
   listFinancingChannels() {
     return this.ventasSales.listFinancingChannels();
   }
@@ -48,7 +51,11 @@ export class VentasSalesController {
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'pipelineStage', required: false })
-  @ApiQuery({ name: 'status', required: false, enum: ['ACTIVE', 'WON', 'LOST'] })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['ACTIVE', 'WON', 'LOST'],
+  })
   async listProcesses(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('page') page?: string,
@@ -59,8 +66,8 @@ export class VentasSalesController {
   ) {
     return this.ventasSales.listProcesses({
       applicationSlug: applicationSlug ?? 'ventas',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(500, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(500, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
       pipelineStage: pipelineStage as never,
       status,
@@ -105,7 +112,9 @@ export class VentasSalesController {
   }
 
   @Get('processes/:id')
-  @ApiOperation({ summary: 'Detalle proceso (notas, actividades, recordatorios)' })
+  @ApiOperation({
+    summary: 'Detalle proceso (notas, actividades, recordatorios)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async getProcess(
     @Param('id') id: string,
@@ -198,14 +207,16 @@ export class VentasSalesController {
   ) {
     return this.ventasSales.listSeparations({
       applicationSlug: applicationSlug ?? 'ventas',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       status: status as never,
     });
   }
 
   @Post('separations')
-  @ApiOperation({ summary: 'Registrar separación (bloquea propiedad como RESERVED)' })
+  @ApiOperation({
+    summary: 'Registrar separación (bloquea propiedad como RESERVED)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async createSeparation(
     @Query('applicationSlug') applicationSlug: string | undefined,
@@ -225,7 +236,9 @@ export class VentasSalesController {
   }
 
   @Patch('separations/:id')
-  @ApiOperation({ summary: 'Actualizar separación (estado, notas, vencimiento)' })
+  @ApiOperation({
+    summary: 'Actualizar separación (estado, notas, vencimiento)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async patchSeparation(
     @Param('id') id: string,
@@ -288,14 +301,15 @@ export class VentasSalesController {
   ) {
     return this.ventasSales.listClosings({
       applicationSlug: applicationSlug ?? 'ventas',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
     });
   }
 
   @Post('closings')
   @ApiOperation({
-    summary: 'Registrar cierre — vende propiedad, cierra separación, gana proceso, comisión PENDING',
+    summary:
+      'Registrar cierre — vende propiedad, cierra separación, gana proceso, comisión PENDING',
   })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async createClosing(

@@ -1,4 +1,6 @@
-export const INTERIOR_EXECUTION_REPOSITORY = Symbol('InteriorExecutionRepository');
+export const INTERIOR_EXECUTION_REPOSITORY = Symbol(
+  'InteriorExecutionRepository',
+);
 
 export interface InteriorExecutionMilestoneDto {
   id: string;
@@ -138,7 +140,10 @@ export interface CreateInteriorExecutionActualCostPayload {
 }
 
 export interface InteriorExecutionRepository {
-  ensureProjectScope(projectId: string, applicationSlug?: string): Promise<boolean>;
+  ensureProjectScope(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<boolean>;
   getOverview(
     projectId: string,
     applicationSlug?: string,

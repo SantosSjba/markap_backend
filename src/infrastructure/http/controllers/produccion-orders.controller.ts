@@ -1,3 +1,4 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   Body,
   Controller,
@@ -11,7 +12,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
   CancelProduccionOrderUseCase,
@@ -66,8 +72,8 @@ export class ProduccionOrdersController {
     ] as const;
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'produccion',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(100, Math.max(1, parseInt(limit ?? '20', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       search: search?.trim() || undefined,
       status: validStatuses.includes(status as ProduccionOrderStatus)
         ? (status as ProduccionOrderStatus)
@@ -85,7 +91,10 @@ export class ProduccionOrdersController {
   }
 
   @Get(':id')
-  getById(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  getById(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.getByIdUc.execute(id, applicationSlug ?? 'produccion');
   }
 
@@ -100,31 +109,46 @@ export class ProduccionOrdersController {
 
   @Post(':id/confirm')
   @ApiOperation({ summary: 'Confirmar pedido' })
-  confirm(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  confirm(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.confirmUc.execute(id, applicationSlug ?? 'produccion');
   }
 
   @Post(':id/create-work-order')
   @ApiOperation({ summary: 'Generar orden de trabajo desde pedido' })
-  createWorkOrder(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  createWorkOrder(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.createWorkOrderUc.execute(id, applicationSlug ?? 'produccion');
   }
 
   @Post(':id/mark-ready')
   @ApiOperation({ summary: 'Marcar pedido listo para entrega' })
-  markReady(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  markReady(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.markReadyUc.execute(id, applicationSlug ?? 'produccion');
   }
 
   @Post(':id/cancel')
-  cancel(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  cancel(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.cancelUc.execute(id, applicationSlug ?? 'produccion');
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiResponse({ status: 204 })
-  delete(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  delete(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.deleteUc.execute(id, applicationSlug ?? 'produccion');
   }
 }

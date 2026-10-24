@@ -24,7 +24,9 @@ export const NOTIFICATION_REPOSITORY = Symbol('NotificationRepository');
 
 export interface NotificationRepository {
   create(data: CreateNotificationData): Promise<Notification>;
-  findManyByUserId(filters: ListNotificationsFilters): Promise<ListNotificationsResult>;
+  findManyByUserId(
+    filters: ListNotificationsFilters,
+  ): Promise<ListNotificationsResult>;
   findById(id: string): Promise<Notification | null>;
   markAsRead(id: string, userId: string): Promise<Notification | null>;
   countUnreadByUserId(userId: string): Promise<number>;

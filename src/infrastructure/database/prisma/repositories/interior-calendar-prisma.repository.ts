@@ -71,7 +71,10 @@ export class InteriorCalendarPrismaRepository implements InteriorCalendarReposit
     return app?.id ?? null;
   }
 
-  async ensureManualEventScope(eventId: string, applicationSlug: string): Promise<boolean> {
+  async ensureManualEventScope(
+    eventId: string,
+    applicationSlug: string,
+  ): Promise<boolean> {
     const app = await this.prisma.application.findFirst({
       where: { slug: applicationSlug.trim(), deletedAt: null },
       select: { id: true },
@@ -83,7 +86,9 @@ export class InteriorCalendarPrismaRepository implements InteriorCalendarReposit
     return n > 0;
   }
 
-  async getFeed(filters: InteriorCalendarFeedFilters): Promise<InteriorCalendarFeedItemDto[]> {
+  async getFeed(
+    filters: InteriorCalendarFeedFilters,
+  ): Promise<InteriorCalendarFeedItemDto[]> {
     const slug = filters.applicationSlug.trim() || 'interiorismo';
     const app = await this.prisma.application.findFirst({
       where: { slug, deletedAt: null },
@@ -110,8 +115,12 @@ export class InteriorCalendarPrismaRepository implements InteriorCalendarReposit
     const manualWhere: Prisma.InteriorCalendarEventWhereInput = {
       applicationId: app.id,
       startsAt: { gte: from, lte: to },
-      ...(filters.projectId?.trim() ? { projectId: filters.projectId.trim() } : {}),
-      ...(filters.agentId?.trim() ? { assignedAgentId: filters.agentId.trim() } : {}),
+      ...(filters.projectId?.trim()
+        ? { projectId: filters.projectId.trim() }
+        : {}),
+      ...(filters.agentId?.trim()
+        ? { assignedAgentId: filters.agentId.trim() }
+        : {}),
     };
 
     const [manualRows, milestones, tasks, financeRows] = await Promise.all([
@@ -136,7 +145,10 @@ export class InteriorCalendarPrismaRepository implements InteriorCalendarReposit
         : this.prisma.interiorExecutionTask.findMany({
             where: {
               projectId: { in: projectIds },
-              OR: [{ plannedStart: { not: null } }, { plannedEnd: { not: null } }],
+              OR: [
+                { plannedStart: { not: null } },
+                { plannedEnd: { not: null } },
+              ],
             },
           }),
       projectIds.length === 0
@@ -202,7 +214,8 @@ export class InteriorCalendarPrismaRepository implements InteriorCalendarReposit
                 ? 'TASK_PRODUCTION'
                 : 'TASK_OTHER';
 
-      const overlaps = start.getTime() <= to.getTime() && end.getTime() >= from.getTime();
+      const overlaps =
+        start.getTime() <= to.getTime() && end.getTime() >= from.getTime();
       if (!overlaps) continue;
 
       out.push({
@@ -251,7 +264,9 @@ export class InteriorCalendarPrismaRepository implements InteriorCalendarReposit
     return out;
   }
 
-  async createEvent(payload: CreateInteriorCalendarEventPayload): Promise<InteriorCalendarFeedItemDto> {
+  async createEvent(
+    payload: CreateInteriorCalendarEventPayload,
+  ): Promise<InteriorCalendarFeedItemDto> {
     const row = await this.prisma.interiorCalendarEvent.create({
       data: {
         applicationId: payload.applicationId,
@@ -291,10 +306,13 @@ export class InteriorCalendarPrismaRepository implements InteriorCalendarReposit
         ? { connect: { id: payload.projectId.trim() } }
         : { disconnect: true };
     }
-    if (payload.eventType !== undefined) patch.eventType = payload.eventType.trim();
+    if (payload.eventType !== undefined)
+      patch.eventType = payload.eventType.trim();
     if (payload.title !== undefined) patch.title = payload.title.trim();
-    if (payload.description !== undefined) patch.description = payload.description?.trim() || null;
-    if (payload.location !== undefined) patch.location = payload.location?.trim() || null;
+    if (payload.description !== undefined)
+      patch.description = payload.description?.trim() || null;
+    if (payload.location !== undefined)
+      patch.location = payload.location?.trim() || null;
     if (payload.startsAt !== undefined) patch.startsAt = payload.startsAt;
     if (payload.endsAt !== undefined) patch.endsAt = payload.endsAt ?? null;
     if (payload.allDay !== undefined) patch.allDay = payload.allDay;

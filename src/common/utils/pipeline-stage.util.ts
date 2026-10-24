@@ -1,4 +1,7 @@
-import { VENTAS_PIPELINE_STAGES, type VentasPipelineStage } from '@domain/repositories/ventas-sales.repository';
+import {
+  VENTAS_PIPELINE_STAGES,
+  type VentasPipelineStage,
+} from '@domain/repositories/ventas-sales.repository';
 
 export function pipelineStageOrder(
   orderedStages?: readonly string[],
@@ -23,7 +26,10 @@ export function isForwardPipelineStage(
   orderedStages?: readonly string[],
 ): boolean {
   if (fromStage === toStage) return true;
-  return pipelineStageIndex(toStage, orderedStages) >= pipelineStageIndex(fromStage, orderedStages);
+  return (
+    pipelineStageIndex(toStage, orderedStages) >=
+    pipelineStageIndex(fromStage, orderedStages)
+  );
 }
 
 export function assertForwardPipelineStage(

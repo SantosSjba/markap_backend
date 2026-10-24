@@ -1,3 +1,4 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   BadRequestException,
   Body,
@@ -10,7 +11,12 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { VentasComplianceOperationsService } from '../../../application/services/ventas-compliance-operations.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -28,7 +34,10 @@ export class VentasComplianceController {
   ) {}
 
   @Get('checklist')
-  @ApiOperation({ summary: 'Obtener checklist legal/operativo de una operación (propiedad + comprador)' })
+  @ApiOperation({
+    summary:
+      'Obtener checklist legal/operativo de una operación (propiedad + comprador)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'propertyId', required: true })
   @ApiQuery({ name: 'buyerClientId', required: true })
@@ -37,11 +46,17 @@ export class VentasComplianceController {
     @Query('propertyId') propertyId: string,
     @Query('buyerClientId') buyerClientId: string,
   ) {
-    return this.compliance.getChecklist(applicationSlug, propertyId, buyerClientId);
+    return this.compliance.getChecklist(
+      applicationSlug,
+      propertyId,
+      buyerClientId,
+    );
   }
 
   @Put('checklist')
-  @ApiOperation({ summary: 'Crear/actualizar checklist legal/operativo de una operación' })
+  @ApiOperation({
+    summary: 'Crear/actualizar checklist legal/operativo de una operación',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async upsertChecklist(
     @Query('applicationSlug') applicationSlug: string | undefined,
@@ -85,7 +100,9 @@ export class VentasComplianceController {
   }
 
   @Post('documents')
-  @ApiOperation({ summary: 'Adjuntar documento legal/tributario/compliance a una operación' })
+  @ApiOperation({
+    summary: 'Adjuntar documento legal/tributario/compliance a una operación',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async addDocument(
     @Query('applicationSlug') applicationSlug: string | undefined,
@@ -114,11 +131,17 @@ export class VentasComplianceController {
     @Query('propertyId') propertyId: string,
     @Query('buyerClientId') buyerClientId: string,
   ) {
-    return this.compliance.listDocuments(applicationSlug, propertyId, buyerClientId);
+    return this.compliance.listDocuments(
+      applicationSlug,
+      propertyId,
+      buyerClientId,
+    );
   }
 
   @Get('closing-readiness')
-  @ApiOperation({ summary: 'Validar si la operación está lista para cierre de venta' })
+  @ApiOperation({
+    summary: 'Validar si la operación está lista para cierre de venta',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'propertyId', required: true })
   @ApiQuery({ name: 'buyerClientId', required: true })
@@ -127,11 +150,18 @@ export class VentasComplianceController {
     @Query('propertyId') propertyId: string,
     @Query('buyerClientId') buyerClientId: string,
   ) {
-    return this.compliance.getClosingReadiness(applicationSlug, propertyId, buyerClientId);
+    return this.compliance.getClosingReadiness(
+      applicationSlug,
+      propertyId,
+      buyerClientId,
+    );
   }
 
   @Get('tax-preview')
-  @ApiOperation({ summary: 'Cálculo referencial de alcabala y renta 2da para operación de cierre' })
+  @ApiOperation({
+    summary:
+      'Cálculo referencial de alcabala y renta 2da para operación de cierre',
+  })
   @ApiQuery({ name: 'salePrice', required: true })
   @ApiQuery({ name: 'acquisitionCost', required: false })
   @ApiQuery({ name: 'alcabalaApplicable', required: false })
@@ -146,9 +176,12 @@ export class VentasComplianceController {
   ) {
     return this.compliance.getTaxPreview({
       salePrice: Number(salePrice),
-      acquisitionCost: acquisitionCost !== undefined ? Number(acquisitionCost) : undefined,
+      acquisitionCost:
+        acquisitionCost !== undefined ? Number(acquisitionCost) : undefined,
       alcabalaApplicable:
-        alcabalaApplicable !== undefined ? alcabalaApplicable === 'true' : undefined,
+        alcabalaApplicable !== undefined
+          ? alcabalaApplicable === 'true'
+          : undefined,
       rent2Applicable:
         rent2Applicable !== undefined ? rent2Applicable === 'true' : undefined,
       uit: uit !== undefined ? Number(uit) : undefined,
@@ -156,7 +189,9 @@ export class VentasComplianceController {
   }
 
   @Post('documents/upload')
-  @ApiOperation({ summary: 'Subir archivo de cumplimiento y registrarlo en la operación' })
+  @ApiOperation({
+    summary: 'Subir archivo de cumplimiento y registrarlo en la operación',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @UseInterceptors(FileInterceptor('file'))
   async uploadDocument(
@@ -177,7 +212,9 @@ export class VentasComplianceController {
       throw new BadRequestException('Archivo requerido');
     }
     if (!body.propertyId || !body.buyerClientId || !body.docType) {
-      throw new BadRequestException('propertyId, buyerClientId y docType son obligatorios');
+      throw new BadRequestException(
+        'propertyId, buyerClientId y docType son obligatorios',
+      );
     }
     const slug = applicationSlug ?? 'ventas';
     const entityId = `${body.propertyId}_${body.buyerClientId}`;
@@ -205,7 +242,9 @@ export class VentasComplianceController {
   }
 
   @Get('pending-board')
-  @ApiOperation({ summary: 'Tablero de pendientes legales/compliance de ventas' })
+  @ApiOperation({
+    summary: 'Tablero de pendientes legales/compliance de ventas',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'offset', required: false })
@@ -219,19 +258,23 @@ export class VentasComplianceController {
     @Query('onlyOverdue') onlyOverdue?: string,
   ) {
     return this.compliance.listPendingBoard(applicationSlug, {
-      limit: limit ? parseInt(limit, 10) : undefined,
-      offset: offset ? parseInt(offset, 10) : undefined,
+      limit: limit ? parseIntegerQuery(limit, 20, 1, 100) : undefined,
+      offset: offset ? parseIntegerQuery(offset, 0, 0, 1000000) : undefined,
       sunarpStatus: sunarpStatus?.trim() || undefined,
       onlyOverdue: onlyOverdue === 'true',
     });
   }
 
   @Post('dispatch-alerts')
-  @ApiOperation({ summary: 'Generar notificaciones internas para pendientes legales/compliance' })
+  @ApiOperation({
+    summary:
+      'Generar notificaciones internas para pendientes legales/compliance',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async dispatchAlerts(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body?: { dryRun?: boolean; daysWithoutAlert?: number; maxItems?: number },
+    @Body()
+    body?: { dryRun?: boolean; daysWithoutAlert?: number; maxItems?: number },
   ) {
     return this.compliance.dispatchPendingAlerts(applicationSlug, body);
   }

@@ -32,7 +32,9 @@ const commissionListInclude = {
       id: true,
       code: true,
       status: true,
-      property: { select: { id: true, code: true, addressLine: true, salePrice: true } },
+      property: {
+        select: { id: true, code: true, addressLine: true, salePrice: true },
+      },
       buyer: { select: { id: true, fullName: true } },
     },
   },
@@ -41,13 +43,19 @@ const commissionListInclude = {
   deductibles: { orderBy: { createdAt: 'asc' as const } },
 };
 
-function enrichCommissionRow(row: Record<string, unknown>): Record<string, unknown> {
+function enrichCommissionRow(
+  row: Record<string, unknown>,
+): Record<string, unknown> {
   const amount = Number(row.amount);
-  const deductibles = ((row.deductibles as { amount: number }[]) ?? []).map((d) => ({
-    ...d,
-    amount: Number(d.amount),
-  }));
-  const paymentParts = ((row.paymentParts as Record<string, unknown>[]) ?? []).map((p) => ({
+  const deductibles = ((row.deductibles as { amount: number }[]) ?? []).map(
+    (d) => ({
+      ...d,
+      amount: Number(d.amount),
+    }),
+  );
+  const paymentParts = (
+    (row.paymentParts as Record<string, unknown>[]) ?? []
+  ).map((p) => ({
     ...p,
     amount: Number(p.amount),
   }));
@@ -63,7 +71,10 @@ function enrichCommissionRow(row: Record<string, unknown>): Record<string, unkno
 export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAgentCommissionPercent(applicationId: string, agentId: string): Promise<number | null> {
+  async getAgentCommissionPercent(
+    applicationId: string,
+    agentId: string,
+  ): Promise<number | null> {
     const row = await this.prisma.ventasAgentCommissionProfile.findUnique({
       where: {
         applicationId_agentId: { applicationId, agentId },
@@ -105,7 +116,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       },
       orderBy: { updatedAt: 'desc' },
     });
-    return rows as unknown[];
+    return rows;
   }
 
   async listBuyerPayments(
@@ -166,7 +177,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       displayStatus: deriveBuyerPaymentDisplayStatus(r),
     }));
 
-    return { data: data as unknown[], total };
+    return { data: data, total };
   }
 
   async createBuyerPayment(data: {
@@ -197,7 +208,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
     id: string,
     applicationId: string,
     paidAt?: Date,
-  ): Promise<unknown | null> {
+  ): Promise<unknown> {
     const existing = await this.prisma.saleBuyerPayment.findFirst({
       where: {
         id,
@@ -268,7 +279,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
     id: string,
     applicationId: string,
     paidAt?: Date,
-  ): Promise<unknown | null> {
+  ): Promise<unknown> {
     const row = await this.prisma.saleCommission.findFirst({
       where: { id, applicationId },
       include: { saleProcess: { select: { status: true } } },
@@ -285,10 +296,14 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       );
     }
     if (row.status === 'PAID') {
-      return this.prisma.saleCommission.findFirst({
-        where: { id },
-        include: commissionListInclude,
-      }).then((r) => (r ? enrichCommissionRow(r as Record<string, unknown>) : null));
+      return this.prisma.saleCommission
+        .findFirst({
+          where: { id },
+          include: commissionListInclude,
+        })
+        .then((r) =>
+          r ? enrichCommissionRow(r as Record<string, unknown>) : null,
+        );
     }
 
     const when = paidAt ?? new Date();
@@ -298,20 +313,29 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
         data: { status: 'PAID', paidAt: when },
       });
       await syncSaleCommissionStatus(tx, id);
+      const partCount = await tx.saleCommissionPaymentPart.count({
+        where: { saleCommissionId: id },
+      });
+      if (partCount === 0) {
+        await tx.saleCommission.update({
+          where: { id },
+          data: { status: 'PAID', paidAt: when },
+        });
+      }
     });
 
     const updated = await this.prisma.saleCommission.findFirst({
       where: { id },
       include: commissionListInclude,
     });
-    return updated ? enrichCommissionRow(updated as Record<string, unknown>) : null;
+    return updated ? enrichCommissionRow(updated) : null;
   }
 
   async markCommissionPaymentPartPaid(
     partId: string,
     applicationId: string,
     paidAt?: Date,
-  ): Promise<unknown | null> {
+  ): Promise<unknown> {
     const part = await this.prisma.saleCommissionPaymentPart.findFirst({
       where: { id: partId, saleCommission: { applicationId } },
       include: {
@@ -332,10 +356,14 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       );
     }
     if (part.status === 'PAID') {
-      return this.prisma.saleCommission.findFirst({
-        where: { id: part.saleCommissionId },
-        include: commissionListInclude,
-      }).then((r) => (r ? enrichCommissionRow(r as Record<string, unknown>) : null));
+      return this.prisma.saleCommission
+        .findFirst({
+          where: { id: part.saleCommissionId },
+          include: commissionListInclude,
+        })
+        .then((r) =>
+          r ? enrichCommissionRow(r as Record<string, unknown>) : null,
+        );
     }
 
     const when = paidAt ?? new Date();
@@ -351,13 +379,13 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       where: { id: part.saleCommissionId },
       include: commissionListInclude,
     });
-    return updated ? enrichCommissionRow(updated as Record<string, unknown>) : null;
+    return updated ? enrichCommissionRow(updated) : null;
   }
 
   async recalculateCommissionFromProfile(
     commissionId: string,
     applicationId: string,
-  ): Promise<unknown | null> {
+  ): Promise<unknown> {
     const row = await this.prisma.saleCommission.findFirst({
       where: { id: commissionId, applicationId },
       include: {
@@ -371,10 +399,14 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
     });
     if (!row) return null;
     if (row.status === 'CANCELLED') {
-      throw new BadRequestException('No se puede recalcular una comisión anulada.');
+      throw new BadRequestException(
+        'No se puede recalcular una comisión anulada.',
+      );
     }
     if (row.saleProcess?.status === 'LOST') {
-      throw new BadRequestException('La venta está caída; la comisión ya no aplica.');
+      throw new BadRequestException(
+        'La venta está caída; la comisión ya no aplica.',
+      );
     }
 
     const profile = await this.prisma.ventasAgentCommissionProfile.findUnique({
@@ -397,10 +429,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
         : null);
     if (basePrice == null || basePrice <= 0) return null;
 
-    const pct =
-      row.percentApplied ??
-      profile?.commissionPercent ??
-      null;
+    const pct = row.percentApplied ?? profile?.commissionPercent ?? null;
     if (pct == null) return null;
 
     const amount = Math.round(basePrice * (pct / 100) * 100) / 100;
@@ -418,7 +447,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       where: { id: commissionId },
       include: commissionListInclude,
     });
-    return updated ? enrichCommissionRow(updated as Record<string, unknown>) : null;
+    return updated ? enrichCommissionRow(updated) : null;
   }
 
   async listDocumentationCosts(
@@ -455,7 +484,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       this.prisma.saleDocumentationCost.count({ where }),
     ]);
 
-    return { data: rows as unknown[], total };
+    return { data: rows, total };
   }
 
   async createDocumentationCost(data: {
@@ -485,7 +514,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
   async getClosingProfitability(
     closingId: string,
     applicationId: string,
-  ): Promise<unknown | null> {
+  ): Promise<unknown> {
     const closing = await this.prisma.saleClosing.findFirst({
       where: { id: closingId, applicationId },
       include: {
@@ -496,13 +525,18 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
     });
     if (!closing) return null;
 
-    const activeCommissions = closing.commissions.filter((c) => c.status !== 'CANCELLED');
+    const activeCommissions = closing.commissions.filter(
+      (c) => c.status !== 'CANCELLED',
+    );
     const commissionGross = activeCommissions.reduce((s, c) => s + c.amount, 0);
     const commissionDeductiblesTotal = activeCommissions.reduce(
       (s, c) => s + c.deductibles.reduce((ds, d) => ds + d.amount, 0),
       0,
     );
-    const commissionNetPayable = Math.max(0, commissionGross - commissionDeductiblesTotal);
+    const commissionNetPayable = Math.max(
+      0,
+      commissionGross - commissionDeductiblesTotal,
+    );
     const netEstimated = closing.finalPrice - commissionNetPayable;
     const allPaid =
       activeCommissions.length > 0 &&

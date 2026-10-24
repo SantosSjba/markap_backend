@@ -1,3 +1,4 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   Controller,
   Get,
@@ -28,22 +29,29 @@ import { CreateAgentDto, UpdateAgentDto } from '../dtos/agents';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class AgentsController {
-  constructor(
-    @Inject(AGENT_PORT) private readonly agent: AgentPort,
-  ) {}
+  constructor(@Inject(AGENT_PORT) private readonly agent: AgentPort) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar agentes (paginado)' })
   @ApiQuery({
     name: 'applicationSlug',
     required: false,
-    description: 'Slug de la aplicación (ej. alquileres, ventas). Por defecto: alquileres',
+    description:
+      'Slug de la aplicación (ej. alquileres, ventas). Por defecto: alquileres',
   })
   @ApiQuery({ name: 'page', required: false, description: 'Página (1-based)' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items por página' })
-  @ApiQuery({ name: 'search', required: false, description: 'Buscar por nombre, email, teléfono' })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Buscar por nombre, email, teléfono',
+  })
   @ApiQuery({ name: 'type', required: false, enum: ['INTERNAL', 'EXTERNAL'] })
-  @ApiQuery({ name: 'isActive', required: false, description: 'Filtrar por activos (true/false)' })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    description: 'Filtrar por activos (true/false)',
+  })
   @ApiResponse({ status: 200 })
   async list(
     @Query('applicationSlug') applicationSlug?: string,
@@ -55,8 +63,8 @@ export class AgentsController {
   ) {
     return this.agent.listAgents({
       applicationSlug: applicationSlug ?? 'alquileres',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
       type,
       isActive:

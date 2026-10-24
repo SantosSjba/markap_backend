@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class LinkSupplierCatalogMaterialDto {
   @ApiProperty()

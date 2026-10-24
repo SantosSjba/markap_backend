@@ -15,7 +15,10 @@ import type {
 import { ContabilidadContextService } from './contabilidad-context.service';
 import { ContabilidadCpeEmitterService } from './contabilidad-cpe-emitter.service';
 import { ContabilidadCpeUblService } from './contabilidad-cpe-ubl.service';
-import { hashXmlContent, cpeDocumentKindFromSalesType } from '@domain/utils/contabilidad-cpe.util';
+import {
+  hashXmlContent,
+  cpeDocumentKindFromSalesType,
+} from '@domain/utils/contabilidad-cpe.util';
 
 @Injectable()
 export class ContabilidadCpeOperationsService {
@@ -28,8 +31,12 @@ export class ContabilidadCpeOperationsService {
   ) {}
 
   async getProviderConfig(applicationSlug?: string, legalEntityId?: string) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const entityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
     let config = await this.cpe.getProviderConfig(applicationId, entityId);
     if (!config) {
       config = await this.cpe.upsertProviderConfig(applicationId, entityId, {
@@ -50,9 +57,17 @@ export class ContabilidadCpeOperationsService {
     legalEntityId: string | undefined,
     body: UpsertCpeProviderConfigInput,
   ) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
-    const config = await this.cpe.upsertProviderConfig(applicationId, entityId, body);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const entityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
+    const config = await this.cpe.upsertProviderConfig(
+      applicationId,
+      entityId,
+      body,
+    );
     return { config, providerLabels: CONTABILIDAD_CPE_PROVIDER_LABELS };
   }
 
@@ -61,32 +76,54 @@ export class ContabilidadCpeOperationsService {
     legalEntityId: string | undefined,
     invoiceId: string,
   ) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const ctx = await this.cpe.getSalesInvoiceEmitContext(applicationId, invoiceId);
-    if (!ctx) throw new EntityNotFoundException('ContabilidadSalesInvoice', invoiceId);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const ctx = await this.cpe.getSalesInvoiceEmitContext(
+      applicationId,
+      invoiceId,
+    );
+    if (!ctx)
+      throw new EntityNotFoundException('ContabilidadSalesInvoice', invoiceId);
 
-    const resolvedEntityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
+    const resolvedEntityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
     if (ctx.legalEntityId !== resolvedEntityId) {
-      throw new BadRequestException('El comprobante no pertenece a la entidad legal activa.');
+      throw new BadRequestException(
+        'El comprobante no pertenece a la entidad legal activa.',
+      );
     }
 
-    if (ctx.currentElectronicStatus === CONTABILIDAD_CPE_ELECTRONIC_STATUS.ACCEPTED) {
-      throw new BadRequestException('El comprobante ya fue aceptado por SUNAT.');
+    if (
+      ctx.currentElectronicStatus ===
+      CONTABILIDAD_CPE_ELECTRONIC_STATUS.ACCEPTED
+    ) {
+      throw new BadRequestException(
+        'El comprobante ya fue aceptado por SUNAT.',
+      );
     }
 
-    let config = await this.cpe.getProviderConfig(applicationId, ctx.legalEntityId);
+    let config = await this.cpe.getProviderConfig(
+      applicationId,
+      ctx.legalEntityId,
+    );
     if (!config) {
-      config = await this.cpe.upsertProviderConfig(applicationId, ctx.legalEntityId, {
-        providerCode: CONTABILIDAD_CPE_PROVIDER.MOCK,
-        useSandbox: true,
-        isActive: true,
-      });
+      config = await this.cpe.upsertProviderConfig(
+        applicationId,
+        ctx.legalEntityId,
+        {
+          providerCode: CONTABILIDAD_CPE_PROVIDER.MOCK,
+          useSandbox: true,
+          isActive: true,
+        },
+      );
     }
 
     const { xml } = this.ubl.buildSalesInvoiceXml(ctx);
     const xmlHash = hashXmlContent(xml);
 
-    const emitResult = await this.emitter.emit({
+    const emitResult = this.emitter.emit({
       xml,
       documentRef: ctx.fullNumber,
       config,
@@ -118,9 +155,18 @@ export class ContabilidadCpeOperationsService {
     logId: string,
     kind: 'xml' | 'cdr',
   ) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
-    const artifact = await this.cpe.getDocumentArtifact(applicationId, logId, kind);
-    if (!artifact) throw new EntityNotFoundException('ContabilidadElectronicDocumentLog', logId);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
+    const artifact = await this.cpe.getDocumentArtifact(
+      applicationId,
+      logId,
+      kind,
+    );
+    if (!artifact)
+      throw new EntityNotFoundException(
+        'ContabilidadElectronicDocumentLog',
+        logId,
+      );
     return artifact;
   }
 }

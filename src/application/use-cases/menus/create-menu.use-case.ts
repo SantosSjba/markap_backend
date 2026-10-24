@@ -3,7 +3,10 @@ import type { ApplicationRepository } from '@domain/repositories/application.rep
 import type { CreateMenuData } from '@domain/repositories/menu.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 
-import { APPLICATION_REPOSITORY, MenuRepository } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  MenuRepository,
+} from '@common/constants/injection-tokens';
 
 export interface CreateMenuInput {
   applicationId?: string;
@@ -31,10 +34,7 @@ export class CreateMenuUseCase {
         input.applicationSlug,
       );
       if (!app) {
-        throw new EntityNotFoundException(
-          'Application',
-          input.applicationSlug,
-        );
+        throw new EntityNotFoundException('Application', input.applicationSlug);
       }
       applicationId = app.id;
     }
@@ -52,9 +52,7 @@ export class CreateMenuUseCase {
         throw new EntityNotFoundException('Menu', parentId);
       }
       if (parentMenu.applicationId !== applicationId) {
-        throw new Error(
-          'El menú padre debe pertenecer a la misma aplicación',
-        );
+        throw new Error('El menú padre debe pertenecer a la misma aplicación');
       }
     }
 

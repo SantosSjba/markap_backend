@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import {
   APPLICATION_REPOSITORY,
   CONTABILIDAD_CONFIG_REPOSITORY,
@@ -14,12 +20,21 @@ const CONTABILIDAD_SLUG = 'contabilidad';
 
 function assertContabilidadSlug(slug: string | undefined | null) {
   if (slug?.trim() !== CONTABILIDAD_SLUG) {
-    throw new BadRequestException('Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).');
+    throw new BadRequestException(
+      'Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).',
+    );
   }
 }
 
 function mapRepoError(error: unknown): never {
-  const message = error instanceof Error ? error.message : 'Operación no válida.';
+  // Conflictos de base de datos y errores HTTP los traduce el filtro global.
+  if (
+    error instanceof HttpException ||
+    error instanceof Prisma.PrismaClientKnownRequestError
+  )
+    throw error;
+  const message =
+    error instanceof Error ? error.message : 'Operación no válida.';
   throw new BadRequestException(message);
 }
 
@@ -34,17 +49,22 @@ export class ContabilidadPleOperationsService {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertContabilidadSlug(applicationSlug ?? CONTABILIDAD_SLUG);
     const app = await this.applications.findBySlug(CONTABILIDAD_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
+    if (!app)
+      throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
     return app.id;
   }
 
   private async resolveCompany(applicationId: string) {
     const profile = await this.config.getCompanyProfile(applicationId);
     if (!profile.ruc?.trim()) {
-      throw new BadRequestException('Configure el RUC de la empresa en Configuración contable.');
+      throw new BadRequestException(
+        'Configure el RUC de la empresa en Configuración contable.',
+      );
     }
     return { ruc: profile.ruc.trim(), legalName: profile.legalName.trim() };
   }
@@ -60,20 +80,35 @@ export class ContabilidadPleOperationsService {
     return this.ple.getMandatoryProfile(applicationId, settings.taxRegime);
   }
 
-  async listExportLogs(applicationSlug: string | undefined, periodId?: string, limit?: number) {
+  async listExportLogs(
+    applicationSlug: string | undefined,
+    periodId?: string,
+    limit?: number,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     return this.ple.listExportLogs(applicationId, periodId, limit);
   }
 
-  async generateBook(applicationSlug: string | undefined, periodId: string, bookCode: string) {
+  async generateBook(
+    applicationSlug: string | undefined,
+    periodId: string,
+    bookCode: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     if (!periodId) throw new BadRequestException('periodId requerido');
     if (!isValidPleBookCode(bookCode)) {
-      throw new BadRequestException(`Código de libro PLE inválido: ${bookCode}`);
+      throw new BadRequestException(
+        `Código de libro PLE inválido: ${bookCode}`,
+      );
     }
     const company = await this.resolveCompany(applicationId);
     try {
-      return await this.ple.generateBook(applicationId, periodId, bookCode, company);
+      return await this.ple.generateBook(
+        applicationId,
+        periodId,
+        bookCode,
+        company,
+      );
     } catch (e) {
       return mapRepoError(e);
     }
@@ -87,13 +122,20 @@ export class ContabilidadPleOperationsService {
   ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     if (!periodId) throw new BadRequestException('periodId requerido');
-    if (!bookCodes?.length) throw new BadRequestException('Seleccione al menos un libro');
+    if (!bookCodes?.length)
+      throw new BadRequestException('Seleccione al menos un libro');
     const company = await this.resolveCompany(applicationId);
     try {
-      return await this.ple.generateBooks(applicationId, periodId, bookCodes, company, {
-        userId: userId ?? null,
-        persistLog: true,
-      });
+      return await this.ple.generateBooks(
+        applicationId,
+        periodId,
+        bookCodes,
+        company,
+        {
+          userId: userId ?? null,
+          persistLog: true,
+        },
+      );
     } catch (e) {
       return mapRepoError(e);
     }
@@ -105,10 +147,16 @@ export class ContabilidadPleOperationsService {
     bookCodes: string[],
     userId?: string | null,
   ) {
-    const result = await this.generateBooks(applicationSlug, periodId, bookCodes, userId);
+    const result = await this.generateBooks(
+      applicationSlug,
+      periodId,
+      bookCodes,
+      userId,
+    );
     if (result.blocked) {
       throw new BadRequestException({
-        message: 'La exportación PLE está bloqueada por errores críticos de validación.',
+        message:
+          'La exportación PLE está bloqueada por errores críticos de validación.',
         errors: result.errors,
         warnings: result.warnings,
         exportLogId: result.exportLogId,
@@ -126,11 +174,19 @@ export class ContabilidadPleOperationsService {
     };
   }
 
-  async getLibroMayor(applicationSlug?: string, periodId?: string, accountId?: string) {
+  async getLibroMayor(
+    applicationSlug?: string,
+    periodId?: string,
+    accountId?: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     if (!periodId) throw new BadRequestException('periodId requerido');
     try {
-      const accounts = await this.ple.getLibroMayor(applicationId, periodId, accountId);
+      const accounts = await this.ple.getLibroMayor(
+        applicationId,
+        periodId,
+        accountId,
+      );
       return { accounts };
     } catch (e) {
       return mapRepoError(e);

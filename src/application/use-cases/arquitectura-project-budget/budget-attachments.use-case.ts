@@ -24,11 +24,20 @@ export class ListArquitecturaProjectBudgetAttachmentsUseCase {
     private readonly genArchivo: GenArchivoService,
   ) {}
 
-  async execute(projectId: string, lineItemId?: string | null, applicationSlug = 'arquitectura') {
+  async execute(
+    projectId: string,
+    lineItemId?: string | null,
+    applicationSlug = 'arquitectura',
+  ) {
     await this.repo.assertProjectExists(projectId, applicationSlug);
-    const rows = await this.genArchivo.listByEntity(MODULE, ENTITY_TYPE, projectId, {
-      category: lineItemId ? lineItemId : undefined,
-    });
+    const rows = await this.genArchivo.listByEntity(
+      MODULE,
+      ENTITY_TYPE,
+      projectId,
+      {
+        category: lineItemId ? lineItemId : undefined,
+      },
+    );
     return rows.map(mapAttachment);
   }
 }
@@ -49,7 +58,11 @@ export class UploadArquitecturaProjectBudgetAttachmentUseCase {
   ) {
     await this.repo.assertProjectExists(projectId, applicationSlug);
     if (payload.lineItemId) {
-      await this.repo.assertLineItemBelongsToProject(projectId, payload.lineItemId, applicationSlug);
+      await this.repo.assertLineItemBelongsToProject(
+        projectId,
+        payload.lineItemId,
+        applicationSlug,
+      );
     }
 
     const row = await this.genArchivo.upload(
@@ -106,7 +119,8 @@ function mapAttachment(row: {
   sizeBytes: number | null;
   createdAt: Date;
 }): BudgetAttachmentDto {
-  const lineItemId = row.category && row.category !== 'project' ? row.category : null;
+  const lineItemId =
+    row.category && row.category !== 'project' ? row.category : null;
   return {
     id: row.id,
     lineItemId,

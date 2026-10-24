@@ -46,7 +46,9 @@ function mapParticipantClient(client: OwnerClientShape, isPrimary?: boolean) {
   };
 }
 
-function ownersFromPropertyRecord(property: Record<string, unknown>): ReturnType<typeof mapParticipantClient>[] {
+function ownersFromPropertyRecord(
+  property: Record<string, unknown>,
+): ReturnType<typeof mapParticipantClient>[] {
   const seen = new Set<string>();
   const out: ReturnType<typeof mapParticipantClient>[] = [];
 
@@ -68,8 +70,10 @@ function ownersFromPropertyRecord(property: Record<string, unknown>): ReturnType
 
 function mapCommissionRow(c: Record<string, unknown>) {
   const amount = prismaAmountToNumber(c.amount);
-  const deductiblesRaw = (c.deductibles as Record<string, unknown>[] | undefined) ?? [];
-  const paymentPartsRaw = (c.paymentParts as Record<string, unknown>[] | undefined) ?? [];
+  const deductiblesRaw =
+    (c.deductibles as Record<string, unknown>[] | undefined) ?? [];
+  const paymentPartsRaw =
+    (c.paymentParts as Record<string, unknown>[] | undefined) ?? [];
   const deductibles = deductiblesRaw.map((d) => ({
     id: d.id,
     deductibleType: d.deductibleType,
@@ -95,8 +99,7 @@ function mapCommissionRow(c: Record<string, unknown>) {
     amount,
     ...enrichment,
     calculationType: c.calculationType as string,
-    percentApplied:
-      c.percentApplied != null ? Number(c.percentApplied) : null,
+    percentApplied: c.percentApplied != null ? Number(c.percentApplied) : null,
     status: c.status,
     paidAt: c.paidAt,
     saleClosingId: c.saleClosingId ?? null,
@@ -107,9 +110,14 @@ function mapCommissionRow(c: Record<string, unknown>) {
 }
 
 /** Normaliza detalle de proceso para la API (participantes planos, montos numéricos). */
-export function mapSaleProcessDetail(row: Record<string, unknown>): Record<string, unknown> {
+export function mapSaleProcessDetail(
+  row: Record<string, unknown>,
+): Record<string, unknown> {
   const property = row.property as Record<string, unknown> | null;
-  const financingChannel = row.financingChannel as Record<string, unknown> | null;
+  const financingChannel = row.financingChannel as Record<
+    string,
+    unknown
+  > | null;
 
   const buyersRaw = (row.buyers as BuyerLink[] | undefined) ?? [];
   const ownersRaw = (row.owners as OwnerLink[] | undefined) ?? [];
@@ -176,9 +184,10 @@ export function mapSaleProcessDetail(row: Record<string, unknown>): Record<strin
     property: property
       ? {
           ...property,
-          salePrice: prismaAmountToNumber(property.salePrice as unknown),
+          salePrice: prismaAmountToNumber(property.salePrice),
           propertyTypeName:
-            (property.propertyType as { name?: string } | null | undefined)?.name ?? null,
+            (property.propertyType as { name?: string } | null | undefined)
+              ?.name ?? null,
           locationLabel: locationParts.length ? locationParts.join(', ') : null,
           primaryOwner,
         }

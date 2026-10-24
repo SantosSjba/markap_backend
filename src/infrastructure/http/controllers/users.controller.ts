@@ -1,3 +1,5 @@
+import { AUTH_PORT, type AuthPort } from '../../../application/ports';
+import { AdminGuard } from '../../../common/guards/admin.guard';
 import {
   Controller,
   Get,
@@ -8,6 +10,7 @@ import {
   Body,
   UseGuards,
   Request,
+  Inject,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,10 +31,11 @@ import { UserHttpMapper } from '../mappers/user-http.mapper';
 
 @ApiTags('Users')
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AdminGuard)
 @ApiBearerAuth('JWT-auth')
 export class UsersController {
   constructor(
+    @Inject(AUTH_PORT) private readonly auth: AuthPort,
     private readonly getAllUsersUseCase: GetAllUsersUseCase,
     private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly toggleUserActiveUseCase: ToggleUserActiveUseCase,
@@ -67,7 +71,21 @@ export class UsersController {
       await this.assignUserRoleUseCase.execute(user.id, roleId, req.user.sub);
     }
 
-    return UserHttpMapper.toResponseWithRoleEntities(user, []);
+    const profile = await this.auth.getProfileWithRoles(user.id);
+    return UserHttpMapper.toResponseWithRoleEntities(
+      profile.user,
+      profile.roles,
+    );
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener un usuario con sus roles actuales' })
+  async getById(@Param('id') id: string) {
+    const profile = await this.auth.getProfileWithRoles(id);
+    return UserHttpMapper.toResponseWithRoleEntities(
+      profile.user,
+      profile.roles,
+    );
   }
 
   @Patch(':id')

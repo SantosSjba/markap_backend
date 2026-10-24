@@ -1,13 +1,16 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY, VENTAS_REPORTS_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  VENTAS_REPORTS_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import {
   type VentasReportsRepository,
   VENTAS_REPORTS_GRANULARITY,
   type VentasReportsGranularity,
 } from '@domain/repositories/ventas-reports.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
-import { formatDateOnly, parseDateOnly, todayDateOnlyLima } from '@domain/utils/peru-date.util';
+import { parseDateOnly, todayDateOnlyLima } from '@domain/utils/peru-date.util';
 
 const VENTAS_SLUG = 'ventas';
 
@@ -23,7 +26,10 @@ function isGranularity(v: string): v is VentasReportsGranularity {
   return (VENTAS_REPORTS_GRANULARITY as readonly string[]).includes(v);
 }
 
-function parseRange(startDate?: string, endDate?: string): { start: Date; end: Date } {
+function parseRange(
+  startDate?: string,
+  endDate?: string,
+): { start: Date; end: Date } {
   let end: Date;
   if (endDate?.trim()) {
     try {
@@ -52,7 +58,9 @@ function parseRange(startDate?: string, endDate?: string): { start: Date; end: D
   }
 
   if (start.getTime() > end.getTime()) {
-    throw new BadRequestException('startDate no puede ser posterior a endDate.');
+    throw new BadRequestException(
+      'startDate no puede ser posterior a endDate.',
+    );
   }
 
   return { start, end };
@@ -67,7 +75,9 @@ export class VentasReportsOperationsService {
     private readonly applicationRepository: ApplicationRepository,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertVentasSlug(applicationSlug ?? VENTAS_SLUG);
     const app = await this.applicationRepository.findBySlug(VENTAS_SLUG);
     if (!app) throw new EntityNotFoundException('Application', VENTAS_SLUG);
@@ -82,7 +92,8 @@ export class VentasReportsOperationsService {
   ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const { start, end } = parseRange(startDate, endDate);
-    const g: VentasReportsGranularity = granularity && isGranularity(granularity) ? granularity : 'month';
+    const g: VentasReportsGranularity =
+      granularity && isGranularity(granularity) ? granularity : 'month';
     return this.reports.getSalesByPeriod(
       { applicationId, startDate: start, endDate: end },
       g,
@@ -103,7 +114,11 @@ export class VentasReportsOperationsService {
     });
   }
 
-  async conversion(applicationSlug: string | undefined, startDate?: string, endDate?: string) {
+  async conversion(
+    applicationSlug: string | undefined,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const { start, end } = parseRange(startDate, endDate);
     return this.reports.getConversion({
@@ -113,7 +128,11 @@ export class VentasReportsOperationsService {
     });
   }
 
-  async financialFlow(applicationSlug: string | undefined, startDate?: string, endDate?: string) {
+  async financialFlow(
+    applicationSlug: string | undefined,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const { start, end } = parseRange(startDate, endDate);
     return this.reports.getFinancialFlow({

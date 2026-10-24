@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PAYMENT_REPOSITORY } from '@common/constants/injection-tokens';
-import type { PaymentRepository, ListPaymentHistoryResult } from '@domain/repositories/payment.repository';
+import type {
+  PaymentRepository,
+  ListPaymentHistoryResult,
+} from '@domain/repositories/payment.repository';
 
 export interface ListPaymentHistoryInput {
   applicationSlug: string;
@@ -19,7 +22,9 @@ export class ListPaymentHistoryUseCase {
     private readonly paymentRepository: PaymentRepository,
   ) {}
 
-  async execute(input: ListPaymentHistoryInput): Promise<ListPaymentHistoryResult> {
+  async execute(
+    input: ListPaymentHistoryInput,
+  ): Promise<ListPaymentHistoryResult> {
     return this.paymentRepository.listHistory({
       applicationSlug: input.applicationSlug,
       search: input.search,

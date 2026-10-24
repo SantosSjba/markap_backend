@@ -1,4 +1,6 @@
-export const PRODUCCION_FURNITURE_COSTING_REPOSITORY = Symbol('ProduccionFurnitureCostingRepository');
+export const PRODUCCION_FURNITURE_COSTING_REPOSITORY = Symbol(
+  'ProduccionFurnitureCostingRepository',
+);
 
 export interface CostingMaterialLineDto {
   id: string;
@@ -90,7 +92,10 @@ export interface CreateCostingSnapshotPayload {
 }
 
 export interface ProduccionFurnitureCostingRepository {
-  getCosting(furnitureId: string, applicationSlug: string): Promise<FurnitureCostingDetail | null>;
+  getCosting(
+    furnitureId: string,
+    applicationSlug: string,
+  ): Promise<FurnitureCostingDetail | null>;
   updateCosting(
     furnitureId: string,
     applicationSlug: string,
@@ -101,5 +106,8 @@ export interface ProduccionFurnitureCostingRepository {
     applicationSlug: string,
     payload: CreateCostingSnapshotPayload,
   ): Promise<CostingSnapshotDto>;
-  listSnapshots(furnitureId: string, applicationSlug: string): Promise<CostingSnapshotDto[]>;
+  listSnapshots(
+    furnitureId: string,
+    applicationSlug: string,
+  ): Promise<CostingSnapshotDto[]>;
 }

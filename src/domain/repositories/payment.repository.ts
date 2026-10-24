@@ -59,13 +59,23 @@ export interface ListPaymentHistoryResult {
 export interface PaymentRepository {
   generateMonthlyPending(applicationSlug: string): Promise<number>;
 
-  listPending(filters: ListPendingPaymentsFilters): Promise<PendingPaymentItem[]>;
+  listPending(
+    filters: ListPendingPaymentsFilters,
+  ): Promise<PendingPaymentItem[]>;
 
-  registerPayment(paymentId: string, data: RegisterPaymentData): Promise<Payment>;
+  registerPayment(
+    paymentId: string,
+    data: RegisterPaymentData,
+  ): Promise<Payment>;
 
-  listHistory(filters: ListPaymentHistoryFilters): Promise<ListPaymentHistoryResult>;
+  listHistory(
+    filters: ListPaymentHistoryFilters,
+  ): Promise<ListPaymentHistoryResult>;
 
-  listOverdue(applicationSlug: string, search?: string): Promise<OverduePaymentItem[]>;
+  listOverdue(
+    applicationSlug: string,
+    search?: string,
+  ): Promise<OverduePaymentItem[]>;
 
   getStats(applicationSlug: string): Promise<PaymentStats>;
 

@@ -8,7 +8,12 @@ import { EntityNotFoundException } from '@domain/exceptions';
 import { assertClientAddressLocation } from '@application/validators/client-address-location.validator';
 import { Email } from '@domain/value-objects';
 
-import { AGENT_REPOSITORY, APPLICATION_REPOSITORY, CLIENT_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  AGENT_REPOSITORY,
+  APPLICATION_REPOSITORY,
+  CLIENT_REPOSITORY,
+  PROPERTY_REPOSITORY,
+} from '@common/constants/injection-tokens';
 
 @Injectable()
 export class UpdateClientUseCase {
@@ -50,7 +55,9 @@ export class UpdateClientUseCase {
       }
     }
 
-    const app = await this.applicationRepository.findById(existing.applicationId);
+    const app = await this.applicationRepository.findById(
+      existing.applicationId,
+    );
     const isVentas = app?.slug === 'ventas';
     if (
       isVentas &&

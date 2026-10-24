@@ -12,8 +12,8 @@ import { StorageModule } from './infrastructure/storage/storage.module';
       load: [envConfig],
       validationSchema: envValidationSchema,
       validationOptions: {
-        allowUnknown: true,  // ignore vars not declared in the schema
-        abortEarly: false,   // report ALL missing vars at once, not just the first
+        allowUnknown: true, // ignore vars not declared in the schema
+        abortEarly: false, // report ALL missing vars at once, not just the first
       },
     }),
 

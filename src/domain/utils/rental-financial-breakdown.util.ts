@@ -19,8 +19,12 @@ export interface RentalFinancialBreakdownCalc {
   utility: number;
 }
 
-export function computeLineAmount(type: string, value: number, base: number): number {
-  if (type === 'PERCENT') return Math.round((base * value) / 100 * 100) / 100;
+export function computeLineAmount(
+  type: string,
+  value: number,
+  base: number,
+): number {
+  if (type === 'PERCENT') return Math.round(((base * value) / 100) * 100) / 100;
   return Math.round(Number(value) * 100) / 100;
 }
 
@@ -40,13 +44,24 @@ export function computeRentalFinancialBreakdown(
       : monthlyAmount;
 
   const expense = config
-    ? computeLineAmount(config.expenseType ?? 'FIXED', Number(config.expenseValue ?? 0), base)
+    ? computeLineAmount(
+        config.expenseType ?? 'FIXED',
+        Number(config.expenseValue ?? 0),
+        base,
+      )
     : 0;
   const tax = config
-    ? computeLineAmount(config.taxType ?? 'FIXED', Number(config.taxValue ?? 0), base)
+    ? computeLineAmount(
+        config.taxType ?? 'FIXED',
+        Number(config.taxValue ?? 0),
+        base,
+      )
     : 0;
 
-  const commissionBase = Math.max(0, Math.round((base - expense - tax) * 100) / 100);
+  const commissionBase = Math.max(
+    0,
+    Math.round((base - expense - tax) * 100) / 100,
+  );
 
   const externalAgentCommission = config
     ? computeLineAmount(
@@ -63,9 +78,15 @@ export function computeRentalFinancialBreakdown(
       )
     : 0;
 
-  const utility = Math.round(
-    (base - expense - tax - externalAgentCommission - internalAgentCommission) * 100,
-  ) / 100;
+  const utility =
+    Math.round(
+      (base -
+        expense -
+        tax -
+        externalAgentCommission -
+        internalAgentCommission) *
+        100,
+    ) / 100;
 
   return {
     base,

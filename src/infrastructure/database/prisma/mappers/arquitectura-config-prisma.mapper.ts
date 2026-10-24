@@ -10,7 +10,12 @@ export class ArquitecturaConfigPrismaMapper {
     sortOrder: number;
     isActive: boolean;
   }): ArquitecturaProjectStage {
-    return new ArquitecturaProjectStage(r.code, r.label, r.sortOrder, r.isActive);
+    return new ArquitecturaProjectStage(
+      r.code,
+      r.label,
+      r.sortOrder,
+      r.isActive,
+    );
   }
 
   static toNumberingSeries(r: {

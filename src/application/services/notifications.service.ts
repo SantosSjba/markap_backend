@@ -7,7 +7,10 @@ import { NotificationsGateway } from '@infrastructure/http/gateways/notification
 import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
 import { startOfDayLima, startOfTodayLima } from '@domain/utils/peru-date.util';
 
-import { ALERT_CONFIG_REPOSITORY, NOTIFICATION_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  ALERT_CONFIG_REPOSITORY,
+  NOTIFICATION_REPOSITORY,
+} from '@common/constants/injection-tokens';
 
 export const RENTAL_NOTIFICATION_ROLE_CODES = ['ADMIN', 'MANAGER'] as const;
 
@@ -33,13 +36,13 @@ export class NotificationsService {
 
   async getUserIdsByRoleCodes(roleCodes: string[]): Promise<string[]> {
     if (roleCodes.length === 0) return [];
-    const roles = await (this.prisma as any).role.findMany({
+    const roles = await this.prisma.role.findMany({
       where: { code: { in: roleCodes }, isActive: true },
       select: { id: true },
     });
     const roleIds = roles.map((r: { id: string }) => r.id);
     if (roleIds.length === 0) return [];
-    const userRoles = await (this.prisma as any).userRole.findMany({
+    const userRoles = await this.prisma.userRole.findMany({
       where: { roleId: { in: roleIds }, isActive: true, revokedAt: null },
       select: { userId: true },
       distinct: ['userId'],
@@ -56,19 +59,28 @@ export class NotificationsService {
     applicationId: string,
     alertType: AlertType,
   ): Promise<boolean> {
-    const config = await this.alertConfigRepository.findByUserAndApp(userId, applicationId);
+    const config = await this.alertConfigRepository.findByUserAndApp(
+      userId,
+      applicationId,
+    );
     if (!config) {
       // Defaults: RENTAL_CREATED siempre, expiring 90 días no, el resto sí
       if (alertType === 'RENTAL_EXPIRING_90') return false;
       return true;
     }
     switch (alertType) {
-      case 'RENTAL_EXPIRING_30': return config.alert30Days;
-      case 'RENTAL_EXPIRING_60': return config.alert60Days;
-      case 'RENTAL_EXPIRING_90': return config.alert90Days;
-      case 'PAYMENT_PENDING':    return config.alertPendingPayment;
-      case 'PAYMENT_OVERDUE':    return config.alertOverduePayment;
-      default:                   return config.channelInApp;
+      case 'RENTAL_EXPIRING_30':
+        return config.alert30Days;
+      case 'RENTAL_EXPIRING_60':
+        return config.alert60Days;
+      case 'RENTAL_EXPIRING_90':
+        return config.alert90Days;
+      case 'PAYMENT_PENDING':
+        return config.alertPendingPayment;
+      case 'PAYMENT_OVERDUE':
+        return config.alertOverduePayment;
+      default:
+        return config.channelInApp;
     }
   }
 
@@ -120,13 +132,15 @@ export class NotificationsService {
     propertyAddress: string,
   ): Promise<void> {
     // Verificar si el alquiler tiene habilitadas las alertas
-    const rental = await (this.prisma as any).rental.findUnique({
+    const rental = await this.prisma.rental.findUnique({
       where: { id: rentalId },
       select: { enableExpirationAlerts: true, applicationId: true },
     });
     if (!rental || !rental.enableExpirationAlerts) return;
 
-    const userIds = await this.getUserIdsByRoleCodes([...RENTAL_NOTIFICATION_ROLE_CODES]);
+    const userIds = await this.getUserIdsByRoleCodes([
+      ...RENTAL_NOTIFICATION_ROLE_CODES,
+    ]);
     if (userIds.length === 0) return;
 
     // Filtrar solo los que tienen channelInApp activo
@@ -161,20 +175,29 @@ export class NotificationsService {
     tenantName: string,
     propertyAddress: string,
     daysLeft: number,
-    alertType: 'RENTAL_EXPIRING_30' | 'RENTAL_EXPIRING_60' | 'RENTAL_EXPIRING_90',
+    alertType:
+      | 'RENTAL_EXPIRING_30'
+      | 'RENTAL_EXPIRING_60'
+      | 'RENTAL_EXPIRING_90',
   ): Promise<void> {
-    const rental = await (this.prisma as any).rental.findUnique({
+    const rental = await this.prisma.rental.findUnique({
       where: { id: rentalId },
       select: { enableExpirationAlerts: true },
     });
     if (!rental || !rental.enableExpirationAlerts) return;
 
-    const userIds = await this.getUserIdsByRoleCodes([...RENTAL_NOTIFICATION_ROLE_CODES]);
+    const userIds = await this.getUserIdsByRoleCodes([
+      ...RENTAL_NOTIFICATION_ROLE_CODES,
+    ]);
     if (userIds.length === 0) return;
 
     const eligibleUserIds: string[] = [];
     for (const userId of userIds) {
-      const enabled = await this.isAlertEnabledForUser(userId, applicationId, alertType);
+      const enabled = await this.isAlertEnabledForUser(
+        userId,
+        applicationId,
+        alertType,
+      );
       if (enabled) eligibleUserIds.push(userId);
     }
     if (eligibleUserIds.length === 0) return;
@@ -199,25 +222,32 @@ export class NotificationsService {
     tenantName: string,
     alertType: 'PAYMENT_PENDING' | 'PAYMENT_OVERDUE',
   ): Promise<void> {
-    const rental = await (this.prisma as any).rental.findUnique({
+    const rental = await this.prisma.rental.findUnique({
       where: { id: rentalId },
       select: { enableCollectionAlerts: true },
     });
     if (!rental || !rental.enableCollectionAlerts) return;
 
-    const userIds = await this.getUserIdsByRoleCodes([...RENTAL_NOTIFICATION_ROLE_CODES]);
+    const userIds = await this.getUserIdsByRoleCodes([
+      ...RENTAL_NOTIFICATION_ROLE_CODES,
+    ]);
     if (userIds.length === 0) return;
 
     const eligibleUserIds: string[] = [];
     for (const userId of userIds) {
-      const enabled = await this.isAlertEnabledForUser(userId, applicationId, alertType);
+      const enabled = await this.isAlertEnabledForUser(
+        userId,
+        applicationId,
+        alertType,
+      );
       if (enabled) eligibleUserIds.push(userId);
     }
     if (eligibleUserIds.length === 0) return;
 
-    const title = alertType === 'PAYMENT_PENDING'
-      ? 'Pago próximo a vencer'
-      : 'Pago atrasado';
+    const title =
+      alertType === 'PAYMENT_PENDING'
+        ? 'Pago próximo a vencer'
+        : 'Pago atrasado';
 
     await this.createForUserIds(
       eligibleUserIds,
@@ -261,7 +291,7 @@ export class NotificationsService {
     const stats = { expiring: 0, pendingPayments: 0, overduePayments: 0 };
     const today = startOfTodayLima();
 
-    const rentals = await (this.prisma as any).rental.findMany({
+    const rentals = await this.prisma.rental.findMany({
       where: { deletedAt: null, status: 'ACTIVE' },
       include: {
         application: { select: { id: true, slug: true } },
@@ -275,22 +305,29 @@ export class NotificationsService {
     });
 
     for (const rental of rentals) {
-      const applicationId = rental.applicationId as string;
+      const applicationId = rental.applicationId;
       const applicationSlug = rental.application?.slug ?? 'alquileres';
       const tenantName = this.formatTenantNames(rental);
       const propertyAddress = rental.property?.addressLine ?? '—';
 
       if (rental.enableExpirationAlerts) {
         const end = startOfDayLima(rental.endDate);
-        const daysLeft = Math.round((end.getTime() - today.getTime()) / 86_400_000);
-        const expiringMap: Record<number, 'RENTAL_EXPIRING_30' | 'RENTAL_EXPIRING_60' | 'RENTAL_EXPIRING_90'> = {
+        const daysLeft = Math.round(
+          (end.getTime() - today.getTime()) / 86_400_000,
+        );
+        const expiringMap: Record<
+          number,
+          'RENTAL_EXPIRING_30' | 'RENTAL_EXPIRING_60' | 'RENTAL_EXPIRING_90'
+        > = {
           30: 'RENTAL_EXPIRING_30',
           60: 'RENTAL_EXPIRING_60',
           90: 'RENTAL_EXPIRING_90',
         };
         const alertType = expiringMap[daysLeft];
         if (alertType) {
-          const sent = await this.wasAlertSentRecently(alertType, rental.id, { daysLeft });
+          const sent = await this.wasAlertSentRecently(alertType, rental.id, {
+            daysLeft,
+          });
           if (!sent) {
             await this.notifyRentalExpiring(
               rental.id,
@@ -307,11 +344,12 @@ export class NotificationsService {
       }
     }
 
-    const pendingWindowDays = Number(process.env.RENTAL_ALERT_PENDING_DAYS) || 3;
+    const pendingWindowDays =
+      Number(process.env.RENTAL_ALERT_PENDING_DAYS) || 3;
     const pendingUntil = new Date(today);
     pendingUntil.setDate(pendingUntil.getDate() + pendingWindowDays);
 
-    const payments = await (this.prisma as any).payment.findMany({
+    const payments = await this.prisma.payment.findMany({
       where: {
         status: 'PENDING',
         rental: { deletedAt: null, status: 'ACTIVE' },
@@ -335,14 +373,18 @@ export class NotificationsService {
       if (!rental?.enableCollectionAlerts) continue;
 
       const due = startOfDayLima(payment.dueDate);
-      const applicationId = rental.applicationId as string;
+      const applicationId = rental.applicationId;
       const applicationSlug = rental.application?.slug ?? 'alquileres';
       const tenantName = this.formatTenantNames(rental);
 
       if (due.getTime() < today.getTime()) {
-        const sent = await this.wasAlertSentRecently('PAYMENT_OVERDUE', rental.id, {
-          paymentId: payment.id,
-        });
+        const sent = await this.wasAlertSentRecently(
+          'PAYMENT_OVERDUE',
+          rental.id,
+          {
+            paymentId: payment.id,
+          },
+        );
         if (!sent) {
           await this.notifyPaymentAlert(
             payment.id,
@@ -358,9 +400,13 @@ export class NotificationsService {
       }
 
       if (due.getTime() <= pendingUntil.getTime()) {
-        const sent = await this.wasAlertSentRecently('PAYMENT_PENDING', rental.id, {
-          paymentId: payment.id,
-        });
+        const sent = await this.wasAlertSentRecently(
+          'PAYMENT_PENDING',
+          rental.id,
+          {
+            paymentId: payment.id,
+          },
+        );
         if (!sent) {
           await this.notifyPaymentAlert(
             payment.id,
@@ -384,7 +430,7 @@ export class NotificationsService {
   }): string {
     const fromJoin = (rental.tenants ?? [])
       .map((t) => t.client?.fullName)
-      .filter(Boolean) as string[];
+      .filter(Boolean);
     if (fromJoin.length) return fromJoin.join(', ');
     return rental.tenant?.fullName ?? '—';
   }
@@ -398,7 +444,7 @@ export class NotificationsService {
     const since = new Date();
     since.setHours(since.getHours() - 20);
 
-    const rows = await (this.prisma as any).notification.findMany({
+    const rows = await this.prisma.notification.findMany({
       where: { type, createdAt: { gte: since } },
       select: { data: true },
       take: 200,
@@ -407,8 +453,10 @@ export class NotificationsService {
     return rows.some((row: { data: unknown }) => {
       const data = row.data as Record<string, unknown> | null;
       if (!data || data.rentalId !== rentalId) return false;
-      if (extra?.daysLeft != null && data.daysLeft !== extra.daysLeft) return false;
-      if (extra?.paymentId != null && data.paymentId !== extra.paymentId) return false;
+      if (extra?.daysLeft != null && data.daysLeft !== extra.daysLeft)
+        return false;
+      if (extra?.paymentId != null && data.paymentId !== extra.paymentId)
+        return false;
       return true;
     });
   }

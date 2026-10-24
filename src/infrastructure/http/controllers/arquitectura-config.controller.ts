@@ -1,5 +1,18 @@
-import { Body, Controller, Get, Put, Patch, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Put,
+  Patch,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ArquitecturaConfigOperationsService } from '../../../application/services/arquitectura-config-operations.service';
 import type { ArquitecturaProjectStageInput } from '@domain/repositories/arquitectura-config.repository';
@@ -9,11 +22,14 @@ import type { ArquitecturaProjectStageInput } from '@domain/repositories/arquite
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class ArquitecturaConfigController {
-  constructor(private readonly arquitecturaConfig: ArquitecturaConfigOperationsService) {}
+  constructor(
+    private readonly arquitecturaConfig: ArquitecturaConfigOperationsService,
+  ) {}
 
   @Get('bootstrap')
   @ApiOperation({
-    summary: 'Parametrización Arquitectura: etapas de proyecto, numeración de códigos de proyecto',
+    summary:
+      'Parametrización Arquitectura: etapas de proyecto, numeración de códigos de proyecto',
   })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async bootstrap(@Query('applicationSlug') applicationSlug?: string) {
@@ -21,7 +37,9 @@ export class ArquitecturaConfigController {
   }
 
   @Put('project-stages')
-  @ApiOperation({ summary: 'Reemplazar etiquetas y orden de etapas del ciclo de proyecto' })
+  @ApiOperation({
+    summary: 'Reemplazar etiquetas y orden de etapas del ciclo de proyecto',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async replaceStages(
     @Query('applicationSlug') applicationSlug: string | undefined,
@@ -31,12 +49,18 @@ export class ArquitecturaConfigController {
   }
 
   @Patch('numbering/arquitectura-project')
-  @ApiOperation({ summary: 'Ajustar prefijo y/o último correlativo de códigos de proyecto (ARQ-PRY-####)' })
+  @ApiOperation({
+    summary:
+      'Ajustar prefijo y/o último correlativo de códigos de proyecto (ARQ-PRY-####)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async patchNumbering(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body() body: { prefix?: string; lastNumber?: number },
   ) {
-    return this.arquitecturaConfig.patchArquitecturaProjectNumbering(applicationSlug, body);
+    return this.arquitecturaConfig.patchArquitecturaProjectNumbering(
+      applicationSlug,
+      body,
+    );
   }
 }

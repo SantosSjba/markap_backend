@@ -83,7 +83,9 @@ export class InteriorismoProjectBudgetController {
   }
 
   @Get(':projectId/budget/pdf')
-  @ApiOperation({ summary: 'Vista imprimible HTML del presupuesto cliente (exportar a PDF)' })
+  @ApiOperation({
+    summary: 'Vista imprimible HTML del presupuesto cliente (exportar a PDF)',
+  })
   @ApiProduces('text/html')
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiResponse({ status: 200 })
@@ -92,19 +94,27 @@ export class InteriorismoProjectBudgetController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Res() res: Response,
   ) {
-    const html = await this.renderPdfHtmlUc.execute(projectId, applicationSlug ?? 'interiorismo');
+    const html = await this.renderPdfHtmlUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+    );
     res.type('html').send(html);
   }
 
   @Get(':projectId/budget')
-  @ApiOperation({ summary: 'Presupuesto del proyecto (secciones + partidas + totales)' })
+  @ApiOperation({
+    summary: 'Presupuesto del proyecto (secciones + partidas + totales)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiResponse({ status: 200 })
   getBudget(
     @Param('projectId') projectId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.getBudgetUc.execute(projectId, applicationSlug ?? 'interiorismo');
+    return this.getBudgetUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Get(':projectId/settlement')
@@ -115,35 +125,54 @@ export class InteriorismoProjectBudgetController {
     @Param('projectId') projectId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.getSettlementUc.execute(projectId, applicationSlug ?? 'interiorismo');
+    return this.getSettlementUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Post(':projectId/budget/duplicate-snapshot')
-  @ApiOperation({ summary: 'Duplicar presupuesto como snapshot (solo partidas cliente, sin compras)' })
+  @ApiOperation({
+    summary:
+      'Duplicar presupuesto como snapshot (solo partidas cliente, sin compras)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiResponse({ status: 201 })
   duplicateSnapshot(
     @Param('projectId') projectId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.duplicateSnapshotUc.execute(projectId, applicationSlug ?? 'interiorismo');
+    return this.duplicateSnapshotUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Post(':projectId/budget/sync-from-execution')
-  @ApiOperation({ summary: 'Sincronizar costo real de partidas desde costos de ejecución (por concepto)' })
+  @ApiOperation({
+    summary:
+      'Sincronizar costo real de partidas desde costos de ejecución (por concepto)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiResponse({ status: 200 })
   syncFromExecution(
     @Param('projectId') projectId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.syncFromExecutionUc.execute(projectId, applicationSlug ?? 'interiorismo');
+    return this.syncFromExecutionUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Post(':projectId/budget/import-excel')
   @ApiOperation({ summary: 'Importar presupuesto desde Excel (.xlsx)' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  @ApiQuery({ name: 'replace', required: false, description: 'true = reemplaza secciones existentes' })
+  @ApiQuery({
+    name: 'replace',
+    required: false,
+    description: 'true = reemplaza secciones existentes',
+  })
   @UseInterceptors(FileInterceptor('file'))
   importExcel(
     @Param('projectId') projectId: string,
@@ -222,7 +251,11 @@ export class InteriorismoProjectBudgetController {
     @Body() dto: CreateProjectBudgetSectionDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createSectionUc.execute(projectId, dto, applicationSlug ?? 'interiorismo');
+    return this.createSectionUc.execute(
+      projectId,
+      dto,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Patch(':projectId/budget/sections/:sectionId')
@@ -234,7 +267,12 @@ export class InteriorismoProjectBudgetController {
     @Body() dto: UpdateProjectBudgetSectionDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateSectionUc.execute(projectId, sectionId, dto, applicationSlug ?? 'interiorismo');
+    return this.updateSectionUc.execute(
+      projectId,
+      sectionId,
+      dto,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Delete(':projectId/budget/sections/:sectionId')
@@ -245,7 +283,11 @@ export class InteriorismoProjectBudgetController {
     @Param('sectionId') sectionId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.deleteSectionUc.execute(projectId, sectionId, applicationSlug ?? 'interiorismo');
+    return this.deleteSectionUc.execute(
+      projectId,
+      sectionId,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Post(':projectId/budget/line-items')
@@ -256,7 +298,11 @@ export class InteriorismoProjectBudgetController {
     @Body() dto: CreateProjectBudgetLineItemDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createLineItemUc.execute(projectId, dto, applicationSlug ?? 'interiorismo');
+    return this.createLineItemUc.execute(
+      projectId,
+      dto,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Patch(':projectId/budget/line-items/:lineItemId')
@@ -284,7 +330,11 @@ export class InteriorismoProjectBudgetController {
     @Param('lineItemId') lineItemId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.deleteLineItemUc.execute(projectId, lineItemId, applicationSlug ?? 'interiorismo');
+    return this.deleteLineItemUc.execute(
+      projectId,
+      lineItemId,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Post(':projectId/budget/supplier-payments')

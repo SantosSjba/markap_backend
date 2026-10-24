@@ -45,16 +45,66 @@ export const CONTABILIDAD_DEFAULT_DETRACTION_RATES: {
   ratePercent: number;
   minAmount: number;
 }[] = [
-  { sunatCode: '001', description: 'Azúcar y melaza de caña', ratePercent: 10, minAmount: 700 },
-  { sunatCode: '010', description: 'Maquinaria y equipos de industrias', ratePercent: 1.5, minAmount: 700 },
-  { sunatCode: '014', description: 'Carnes y despojos comestibles', ratePercent: 4, minAmount: 700 },
-  { sunatCode: '017', description: 'Maquinaria y equipos para construcción', ratePercent: 1.5, minAmount: 700 },
-  { sunatCode: '019', description: 'Arrendamiento de bienes muebles', ratePercent: 2, minAmount: 700 },
-  { sunatCode: '020', description: 'Mantenimiento y reparación de bienes muebles', ratePercent: 12, minAmount: 700 },
-  { sunatCode: '022', description: 'Otros servicios empresariales', ratePercent: 12, minAmount: 700 },
-  { sunatCode: '023', description: 'Transporte de carga', ratePercent: 4, minAmount: 700 },
-  { sunatCode: '030', description: 'Contratos de construcción', ratePercent: 4, minAmount: 700 },
-  { sunatCode: '037', description: 'Demás servicios gravados con el IGV', ratePercent: 12, minAmount: 700 },
+  {
+    sunatCode: '001',
+    description: 'Azúcar y melaza de caña',
+    ratePercent: 10,
+    minAmount: 700,
+  },
+  {
+    sunatCode: '010',
+    description: 'Maquinaria y equipos de industrias',
+    ratePercent: 1.5,
+    minAmount: 700,
+  },
+  {
+    sunatCode: '014',
+    description: 'Carnes y despojos comestibles',
+    ratePercent: 4,
+    minAmount: 700,
+  },
+  {
+    sunatCode: '017',
+    description: 'Maquinaria y equipos para construcción',
+    ratePercent: 1.5,
+    minAmount: 700,
+  },
+  {
+    sunatCode: '019',
+    description: 'Arrendamiento de bienes muebles',
+    ratePercent: 2,
+    minAmount: 700,
+  },
+  {
+    sunatCode: '020',
+    description: 'Mantenimiento y reparación de bienes muebles',
+    ratePercent: 12,
+    minAmount: 700,
+  },
+  {
+    sunatCode: '022',
+    description: 'Otros servicios empresariales',
+    ratePercent: 12,
+    minAmount: 700,
+  },
+  {
+    sunatCode: '023',
+    description: 'Transporte de carga',
+    ratePercent: 4,
+    minAmount: 700,
+  },
+  {
+    sunatCode: '030',
+    description: 'Contratos de construcción',
+    ratePercent: 4,
+    minAmount: 700,
+  },
+  {
+    sunatCode: '037',
+    description: 'Demás servicios gravados con el IGV',
+    ratePercent: 12,
+    minAmount: 700,
+  },
 ];
 
 /** Tasas retención IGV agente (referencia). */

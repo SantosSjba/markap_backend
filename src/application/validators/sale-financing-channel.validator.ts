@@ -12,7 +12,9 @@ export async function assertActiveSaleFinancingChannel(
     where: { id: id.trim(), isActive: true },
   });
   if (!row) {
-    throw new BadRequestException('Medio de pago / banco no válido o inactivo.');
+    throw new BadRequestException(
+      'Medio de pago / banco no válido o inactivo.',
+    );
   }
   return row.id;
 }

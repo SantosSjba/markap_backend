@@ -1,4 +1,6 @@
-export const INTERIOR_PROJECT_BUDGET_REPOSITORY = Symbol('InteriorProjectBudgetRepository');
+export const INTERIOR_PROJECT_BUDGET_REPOSITORY = Symbol(
+  'InteriorProjectBudgetRepository',
+);
 
 export interface ProjectBudgetLineItemDto {
   id: string;
@@ -103,8 +105,14 @@ export interface CreateLineItemSupplierPaymentPayload {
 }
 
 export interface InteriorProjectBudgetRepository {
-  getBudget(projectId: string, applicationSlug?: string): Promise<ProjectBudgetDetailDto | null>;
-  getSettlement(projectId: string, applicationSlug?: string): Promise<ProjectSettlementDto | null>;
+  getBudget(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<ProjectBudgetDetailDto | null>;
+  getSettlement(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<ProjectSettlementDto | null>;
   createSection(
     projectId: string,
     payload: CreateProjectBudgetSectionPayload,
@@ -116,7 +124,11 @@ export interface InteriorProjectBudgetRepository {
     payload: UpdateProjectBudgetSectionPayload,
     applicationSlug?: string,
   ): Promise<ProjectBudgetSectionDto>;
-  deleteSection(projectId: string, sectionId: string, applicationSlug?: string): Promise<void>;
+  deleteSection(
+    projectId: string,
+    sectionId: string,
+    applicationSlug?: string,
+  ): Promise<void>;
   createLineItem(
     projectId: string,
     payload: CreateProjectBudgetLineItemPayload,
@@ -128,7 +140,11 @@ export interface InteriorProjectBudgetRepository {
     payload: UpdateProjectBudgetLineItemPayload,
     applicationSlug?: string,
   ): Promise<ProjectBudgetLineItemDto>;
-  deleteLineItem(projectId: string, lineItemId: string, applicationSlug?: string): Promise<void>;
+  deleteLineItem(
+    projectId: string,
+    lineItemId: string,
+    applicationSlug?: string,
+  ): Promise<void>;
   createSupplierPayment(
     projectId: string,
     payload: CreateLineItemSupplierPaymentPayload,
@@ -155,7 +171,10 @@ export interface InteriorProjectBudgetRepository {
     unmatchedConcepts: string[];
     budget: ProjectBudgetDetailDto;
   }>;
-  assertProjectExists(projectId: string, applicationSlug?: string): Promise<void>;
+  assertProjectExists(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<void>;
   assertLineItemBelongsToProject(
     projectId: string,
     lineItemId: string,
@@ -165,7 +184,11 @@ export interface InteriorProjectBudgetRepository {
     projectId: string,
     sections: Array<{
       name: string;
-      lineItems: Array<{ description: string; budgetedCost: number; hasIgv?: boolean }>;
+      lineItems: Array<{
+        description: string;
+        budgetedCost: number;
+        hasIgv?: boolean;
+      }>;
     }>,
     replace: boolean,
     applicationSlug?: string,

@@ -21,7 +21,9 @@ export interface RentalPort {
   createRental(input: CreateRentalInput): Promise<Rental>;
   getRentalById(id: string): Promise<RentalDetail>;
   updateRental(input: UpdateRentalInput): Promise<Rental>;
-  getRentalFinancialConfig(rentalId: string): Promise<RentalFinancialConfig | null>;
+  getRentalFinancialConfig(
+    rentalId: string,
+  ): Promise<RentalFinancialConfig | null>;
   upsertRentalFinancialConfig(
     rentalId: string,
     data: Omit<CreateOrUpdateRentalFinancialConfigData, 'rentalId'>,

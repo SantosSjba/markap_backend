@@ -44,7 +44,9 @@ export async function getProjectBudgetPriceTotal(
 
 type ArquitecturaBudgetPrisma = Pick<
   PrismaClient,
-  'arquitecturaProject' | 'arquitecturaProjectLineItem' | 'arquitecturaProjectSection'
+  | 'arquitecturaProject'
+  | 'arquitecturaProjectLineItem'
+  | 'arquitecturaProjectSection'
 >;
 
 export async function getArquitecturaProjectBudgetPriceTotal(

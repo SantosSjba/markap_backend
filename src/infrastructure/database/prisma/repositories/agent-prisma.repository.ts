@@ -118,7 +118,9 @@ export class AgentPrismaRepository implements AgentRepository {
         ...(data.isActive !== undefined && { isActive: data.isActive }),
       },
     });
-    const updated = await this.prisma.agent.findUniqueOrThrow({ where: { id } });
+    const updated = await this.prisma.agent.findUniqueOrThrow({
+      where: { id },
+    });
     return AgentPrismaMapper.toDomain(updated);
   }
 }

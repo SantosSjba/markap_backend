@@ -49,7 +49,8 @@ export class UpdateApplicationUseCase {
     if (input.color !== undefined) data.color = input.color;
     if (input.url !== undefined) data.url = input.url;
     if (input.activeCount !== undefined) data.activeCount = input.activeCount;
-    if (input.pendingCount !== undefined) data.pendingCount = input.pendingCount;
+    if (input.pendingCount !== undefined)
+      data.pendingCount = input.pendingCount;
     if (input.isActive !== undefined) data.isActive = input.isActive;
     if (input.order !== undefined) data.order = input.order;
     return this.applicationRepository.update(input.id, data);

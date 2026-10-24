@@ -52,7 +52,8 @@ export class UpdateArquitecturaProjectUseCase {
       where: { id, deletedAt: null },
       select: { applicationId: true },
     });
-    if (!projectRow) throw new EntityNotFoundException('ArquitecturaProject', id);
+    if (!projectRow)
+      throw new EntityNotFoundException('ArquitecturaProject', id);
 
     if (applicationSlug?.trim()) {
       const appRow = await this.prisma.application.findUnique({

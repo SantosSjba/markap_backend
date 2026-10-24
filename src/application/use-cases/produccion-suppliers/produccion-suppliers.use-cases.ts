@@ -18,7 +18,9 @@ const SLUG = 'produccion';
 
 function assertProduccion(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug produccion');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug produccion',
+    );
   }
 }
 
@@ -57,10 +59,14 @@ export class CreateProduccionSupplierUseCase {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateProduccionSupplierPayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateProduccionSupplierPayload,
+  ) {
     assertProduccion(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación produccion no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación produccion no encontrada');
     return this.repo.create(app.id, payload);
   }
 }
@@ -72,7 +78,11 @@ export class UpdateProduccionSupplierUseCase {
     private readonly repo: ProduccionSupplierRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateProduccionSupplierPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateProduccionSupplierPayload,
+  ) {
     assertProduccion(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Proveedor no encontrado');

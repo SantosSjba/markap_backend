@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, HttpCode, HttpStatus, Inject } from '@nestjs/common';
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  Inject,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -23,10 +37,18 @@ export class ClientsController {
 
   @Get()
   @ApiOperation({ summary: 'Listar clientes (paginado)' })
-  @ApiQuery({ name: 'applicationSlug', required: false, description: 'Slug de la aplicación (default: alquileres)' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Slug de la aplicación (default: alquileres)',
+  })
   @ApiQuery({ name: 'page', required: false, description: 'Página (1-based)' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items por página' })
-  @ApiQuery({ name: 'search', required: false, description: 'Buscar por nombre, documento o email' })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Buscar por nombre, documento o email',
+  })
   @ApiQuery({
     name: 'clientType',
     required: false,
@@ -38,7 +60,11 @@ export class ClientsController {
     enum: ['PROSPECT', 'INTERESTED', 'CLIENT'],
     description: 'Filtrar embudo ventas (applicationSlug ventas)',
   })
-  @ApiQuery({ name: 'isActive', required: false, description: 'Filtrar por estado activo (true/false)' })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    description: 'Filtrar por estado activo (true/false)',
+  })
   @ApiResponse({ status: 200 })
   async list(
     @Query('applicationSlug') applicationSlug?: string,
@@ -52,12 +78,13 @@ export class ClientsController {
   ) {
     return this.clients.listClients({
       applicationSlug: applicationSlug ?? 'alquileres',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
       clientType,
       salesStatus,
-      isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+      isActive:
+        isActive === 'true' ? true : isActive === 'false' ? false : undefined,
     });
   }
 
@@ -142,7 +169,8 @@ export class ClientsController {
   @ApiQuery({
     name: 'applicationSlug',
     required: false,
-    description: 'Si se indica (ej. ventas), solo se devuelve si el cliente pertenece a esa aplicación',
+    description:
+      'Si se indica (ej. ventas), solo se devuelve si el cliente pertenece a esa aplicación',
   })
   @ApiResponse({ status: 200 })
   async getById(
@@ -168,22 +196,22 @@ export class ClientsController {
     return this.clients.updateClient(
       id,
       {
-      clientType: dto.clientType,
-      documentTypeId: dto.documentTypeId,
-      documentNumber: dto.documentNumber,
-      fullName: dto.fullName,
-      legalRepresentativeName: dto.legalRepresentativeName,
-      legalRepresentativePosition: dto.legalRepresentativePosition,
-      primaryPhone: dto.primaryPhone,
-      secondaryPhone: dto.secondaryPhone,
-      primaryEmail: dto.primaryEmail,
-      secondaryEmail: dto.secondaryEmail,
-      notes: dto.notes,
-      salesStatus: dto.salesStatus,
-      leadOrigin: dto.leadOrigin,
-      assignedAgentId: dto.assignedAgentId,
-      address: dto.address,
-    },
+        clientType: dto.clientType,
+        documentTypeId: dto.documentTypeId,
+        documentNumber: dto.documentNumber,
+        fullName: dto.fullName,
+        legalRepresentativeName: dto.legalRepresentativeName,
+        legalRepresentativePosition: dto.legalRepresentativePosition,
+        primaryPhone: dto.primaryPhone,
+        secondaryPhone: dto.secondaryPhone,
+        primaryEmail: dto.primaryEmail,
+        secondaryEmail: dto.secondaryEmail,
+        notes: dto.notes,
+        salesStatus: dto.salesStatus,
+        leadOrigin: dto.leadOrigin,
+        assignedAgentId: dto.assignedAgentId,
+        address: dto.address,
+      },
       applicationSlug,
     );
   }

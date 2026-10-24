@@ -87,7 +87,10 @@ function mapTask(row: {
 export class InteriorExecutionPrismaRepository implements InteriorExecutionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async ensureProjectScope(projectId: string, applicationSlug = 'interiorismo'): Promise<boolean> {
+  async ensureProjectScope(
+    projectId: string,
+    applicationSlug = 'interiorismo',
+  ): Promise<boolean> {
     const slug = applicationSlug.trim() || 'interiorismo';
     const n = await this.prisma.interiorProject.count({
       where: { id: projectId, deletedAt: null, application: { slug } },
@@ -95,7 +98,10 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
     return n > 0;
   }
 
-  async getOverview(projectId: string, applicationSlug = 'interiorismo'): Promise<InteriorExecutionOverviewDto | null> {
+  async getOverview(
+    projectId: string,
+    applicationSlug = 'interiorismo',
+  ): Promise<InteriorExecutionOverviewDto | null> {
     const slug = applicationSlug.trim() || 'interiorismo';
     const project = await this.prisma.interiorProject.findFirst({
       where: { id: projectId, deletedAt: null },
@@ -106,29 +112,36 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
     });
     if (!project || project.application.slug !== slug) return null;
 
-    const [tasks, evidences, incidents, costs, budgetPriceTotal, sectionCount] = await Promise.all([
-      this.prisma.interiorExecutionTask.findMany({ where: { projectId } }),
-      this.prisma.interiorExecutionEvidence.findMany({
-        where: { projectId },
-        orderBy: { capturedAt: 'desc' },
-      }),
-      this.prisma.interiorExecutionIncident.findMany({
-        where: { projectId },
-        orderBy: { reportedAt: 'desc' },
-      }),
-      this.prisma.interiorExecutionActualCost.findMany({
-        where: { projectId },
-        orderBy: { occurredAt: 'desc' },
-        include: { catalogMaterial: { select: { code: true, name: true } } },
-      }),
-      getProjectBudgetPriceTotal(this.prisma, projectId),
-      this.prisma.interiorProjectSection.count({ where: { projectId } }),
-    ]);
+    const [tasks, evidences, incidents, costs, budgetPriceTotal, sectionCount] =
+      await Promise.all([
+        this.prisma.interiorExecutionTask.findMany({ where: { projectId } }),
+        this.prisma.interiorExecutionEvidence.findMany({
+          where: { projectId },
+          orderBy: { capturedAt: 'desc' },
+        }),
+        this.prisma.interiorExecutionIncident.findMany({
+          where: { projectId },
+          orderBy: { reportedAt: 'desc' },
+        }),
+        this.prisma.interiorExecutionActualCost.findMany({
+          where: { projectId },
+          orderBy: { occurredAt: 'desc' },
+          include: { catalogMaterial: { select: { code: true, name: true } } },
+        }),
+        getProjectBudgetPriceTotal(this.prisma, projectId),
+        this.prisma.interiorProjectSection.count({ where: { projectId } }),
+      ]);
 
     const budgetGrand = sectionCount > 0 ? budgetPriceTotal : null;
-    const ref = sectionCount > 0
-      ? { id: projectId, code: project.code, version: 1, grandTotal: budgetPriceTotal }
-      : null;
+    const ref =
+      sectionCount > 0
+        ? {
+            id: projectId,
+            code: project.code,
+            version: 1,
+            grandTotal: budgetPriceTotal,
+          }
+        : null;
 
     tasks.sort(
       (a, b) =>
@@ -137,10 +150,18 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
         a.title.localeCompare(b.title),
     );
 
-    const labor = costs.filter((c) => c.costCategory === 'LABOR').reduce((s, c) => s + num(c.amount), 0);
-    const material = costs.filter((c) => c.costCategory === 'MATERIAL').reduce((s, c) => s + num(c.amount), 0);
-    const expense = costs.filter((c) => c.costCategory === 'EXPENSE').reduce((s, c) => s + num(c.amount), 0);
-    const transport = costs.filter((c) => c.costCategory === 'TRANSPORT').reduce((s, c) => s + num(c.amount), 0);
+    const labor = costs
+      .filter((c) => c.costCategory === 'LABOR')
+      .reduce((s, c) => s + num(c.amount), 0);
+    const material = costs
+      .filter((c) => c.costCategory === 'MATERIAL')
+      .reduce((s, c) => s + num(c.amount), 0);
+    const expense = costs
+      .filter((c) => c.costCategory === 'EXPENSE')
+      .reduce((s, c) => s + num(c.amount), 0);
+    const transport = costs
+      .filter((c) => c.costCategory === 'TRANSPORT')
+      .reduce((s, c) => s + num(c.amount), 0);
     const totalActual = labor + material + expense + transport;
 
     const mappedCosts: InteriorExecutionActualCostDto[] = costs.map((c) => ({
@@ -198,7 +219,10 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
     };
   }
 
-  async createTask(projectId: string, payload: CreateInteriorExecutionTaskPayload): Promise<InteriorExecutionTaskDto> {
+  async createTask(
+    projectId: string,
+    payload: CreateInteriorExecutionTaskPayload,
+  ): Promise<InteriorExecutionTaskDto> {
     const agg = await this.prisma.interiorExecutionTask.aggregate({
       where: { projectId },
       _max: { sortOrder: true },
@@ -215,7 +239,9 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
         plannedStart: payload.plannedStart ?? null,
         plannedEnd: payload.plannedEnd ?? null,
         progressPct:
-          payload.progressPct != null ? new Prisma.Decimal(payload.progressPct) : new Prisma.Decimal(0),
+          payload.progressPct != null
+            ? new Prisma.Decimal(payload.progressPct)
+            : new Prisma.Decimal(0),
       },
     });
     return mapTask(row);
@@ -234,12 +260,15 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
     const patch: Prisma.InteriorExecutionTaskUncheckedUpdateInput = {};
     if (payload.phase != null) patch.phase = payload.phase;
     if (payload.title != null) patch.title = payload.title.trim();
-    if (payload.description !== undefined) patch.description = payload.description?.trim() ?? null;
+    if (payload.description !== undefined)
+      patch.description = payload.description?.trim() ?? null;
     if (payload.kanbanStatus != null) patch.kanbanStatus = payload.kanbanStatus;
     if (payload.sortOrder != null) patch.sortOrder = payload.sortOrder;
-    if (payload.plannedStart !== undefined) patch.plannedStart = payload.plannedStart;
+    if (payload.plannedStart !== undefined)
+      patch.plannedStart = payload.plannedStart;
     if (payload.plannedEnd !== undefined) patch.plannedEnd = payload.plannedEnd;
-    if (payload.progressPct != null) patch.progressPct = new Prisma.Decimal(payload.progressPct);
+    if (payload.progressPct != null)
+      patch.progressPct = new Prisma.Decimal(payload.progressPct);
 
     const row = await this.prisma.interiorExecutionTask.update({
       where: { id: taskId },
@@ -249,7 +278,9 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
   }
 
   async deleteTask(projectId: string, taskId: string): Promise<boolean> {
-    const r = await this.prisma.interiorExecutionTask.deleteMany({ where: { id: taskId, projectId } });
+    const r = await this.prisma.interiorExecutionTask.deleteMany({
+      where: { id: taskId, projectId },
+    });
     return r.count > 0;
   }
 
@@ -259,7 +290,9 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
   ): Promise<InteriorExecutionEvidenceDto> {
     const tid = payload.taskId?.trim() || null;
     if (tid) {
-      const ok = await this.prisma.interiorExecutionTask.count({ where: { id: tid, projectId } });
+      const ok = await this.prisma.interiorExecutionTask.count({
+        where: { id: tid, projectId },
+      });
       if (!ok) {
         throw new Error('TASK_SCOPE');
       }
@@ -285,7 +318,10 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
     };
   }
 
-  async deleteEvidence(projectId: string, evidenceId: string): Promise<boolean> {
+  async deleteEvidence(
+    projectId: string,
+    evidenceId: string,
+  ): Promise<boolean> {
     const r = await this.prisma.interiorExecutionEvidence.deleteMany({
       where: { id: evidenceId, projectId },
     });
@@ -331,7 +367,8 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
     const patch: Prisma.InteriorExecutionIncidentUncheckedUpdateInput = {};
     if (payload.status != null) patch.status = payload.status;
     if (payload.title != null) patch.title = payload.title.trim();
-    if (payload.description !== undefined) patch.description = payload.description?.trim() ?? null;
+    if (payload.description !== undefined)
+      patch.description = payload.description?.trim() ?? null;
     if (payload.severity != null) patch.severity = payload.severity;
     if (payload.closedAt !== undefined) patch.closedAt = payload.closedAt;
 

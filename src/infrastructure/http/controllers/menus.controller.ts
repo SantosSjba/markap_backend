@@ -1,3 +1,4 @@
+import { AdminGuard } from '../../../common/guards/admin.guard';
 import {
   Controller,
   Get,
@@ -54,6 +55,7 @@ export class MenusController {
   }
 
   @Post()
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Crear menú' })
   @ApiResponse({ status: 201 })
   async create(@Body() dto: CreateMenuDto) {
@@ -68,6 +70,7 @@ export class MenusController {
   }
 
   @Patch(':id')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Actualizar menú' })
   async update(@Param('id') id: string, @Body() dto: UpdateMenuDto) {
     return this.updateMenuUseCase.execute({
@@ -77,6 +80,7 @@ export class MenusController {
   }
 
   @Delete(':id')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Eliminar menú' })
   @ApiResponse({ status: 200 })
   async delete(@Param('id') id: string) {

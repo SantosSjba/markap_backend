@@ -21,31 +21,44 @@ const PAY_STATUSES = ['PENDING', 'PAID', 'CANCELLED'] as const;
 
 function assertScheduleKind(v: string) {
   if (!(SCHEDULE_KINDS as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Tipo de cuota inválido. Use: ${SCHEDULE_KINDS.join(', ')}`);
+    throw new BadRequestException(
+      `Tipo de cuota inválido. Use: ${SCHEDULE_KINDS.join(', ')}`,
+    );
   }
 }
 
 function assertScheduleStatus(v: string) {
   if (!(SCHEDULE_STATUS as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Estado de programación inválido: ${SCHEDULE_STATUS.join(', ')}`);
+    throw new BadRequestException(
+      `Estado de programación inválido: ${SCHEDULE_STATUS.join(', ')}`,
+    );
   }
 }
 
 function assertPaymentStatus(v: string) {
   if (!(PAY_STATUSES as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Estado de pago inválido: ${PAY_STATUSES.join(', ')}`);
+    throw new BadRequestException(
+      `Estado de pago inválido: ${PAY_STATUSES.join(', ')}`,
+    );
   }
 }
 
 function mapRepoError(e: unknown): never {
   const msg = e instanceof Error ? e.message : '';
-  if (msg === 'PROJECT_NOT_FOUND') throw new NotFoundException('Proyecto no encontrado');
-  if (msg === 'SCHEDULE_NOT_FOUND') throw new NotFoundException('Programación de cobro no encontrada');
-  if (msg === 'PAYMENT_NOT_FOUND') throw new NotFoundException('Pago no encontrado');
+  if (msg === 'PROJECT_NOT_FOUND')
+    throw new NotFoundException('Proyecto no encontrado');
+  if (msg === 'SCHEDULE_NOT_FOUND')
+    throw new NotFoundException('Programación de cobro no encontrada');
+  if (msg === 'PAYMENT_NOT_FOUND')
+    throw new NotFoundException('Pago no encontrado');
   if (msg === 'SCHEDULE_LINK_INVALID') {
-    throw new BadRequestException('La cuota vinculada no pertenece al proyecto');
+    throw new BadRequestException(
+      'La cuota vinculada no pertenece al proyecto',
+    );
   }
-  throw e instanceof Error ? e : new BadRequestException('Error en operación financiera');
+  throw e instanceof Error
+    ? e
+    : new BadRequestException('Error en operación financiera');
 }
 
 @Injectable()
@@ -73,9 +86,14 @@ export class CreateInteriorFinanceScheduleUseCase {
     payload: CreateInteriorFinanceSchedulePayload,
   ) {
     assertScheduleKind(payload.kind);
-    if (payload.amount <= 0) throw new BadRequestException('El monto debe ser mayor a cero');
+    if (payload.amount <= 0)
+      throw new BadRequestException('El monto debe ser mayor a cero');
     try {
-      return await this.repo.createSchedule(projectId, applicationSlug ?? SLUG_DFLT, payload);
+      return await this.repo.createSchedule(
+        projectId,
+        applicationSlug ?? SLUG_DFLT,
+        payload,
+      );
     } catch (e) {
       mapRepoError(e);
     }
@@ -101,7 +119,12 @@ export class UpdateInteriorFinanceScheduleUseCase {
       throw new BadRequestException('El monto debe ser mayor a cero');
     }
     try {
-      return await this.repo.updateSchedule(projectId, scheduleId, applicationSlug ?? SLUG_DFLT, payload);
+      return await this.repo.updateSchedule(
+        projectId,
+        scheduleId,
+        applicationSlug ?? SLUG_DFLT,
+        payload,
+      );
     } catch (e) {
       mapRepoError(e);
     }
@@ -115,9 +138,17 @@ export class DeleteInteriorFinanceScheduleUseCase {
     private readonly repo: InteriorFinanceRepository,
   ) {}
 
-  async execute(projectId: string, scheduleId: string, applicationSlug?: string) {
+  async execute(
+    projectId: string,
+    scheduleId: string,
+    applicationSlug?: string,
+  ) {
     try {
-      await this.repo.deleteSchedule(projectId, scheduleId, applicationSlug ?? SLUG_DFLT);
+      await this.repo.deleteSchedule(
+        projectId,
+        scheduleId,
+        applicationSlug ?? SLUG_DFLT,
+      );
     } catch (e) {
       mapRepoError(e);
     }
@@ -137,9 +168,14 @@ export class CreateInteriorFinancePaymentUseCase {
     payload: CreateInteriorFinancePaymentPayload,
   ) {
     assertPaymentStatus(payload.status);
-    if (payload.amount <= 0) throw new BadRequestException('El monto debe ser mayor a cero');
+    if (payload.amount <= 0)
+      throw new BadRequestException('El monto debe ser mayor a cero');
     try {
-      return await this.repo.createPayment(projectId, applicationSlug ?? SLUG_DFLT, payload);
+      return await this.repo.createPayment(
+        projectId,
+        applicationSlug ?? SLUG_DFLT,
+        payload,
+      );
     } catch (e) {
       mapRepoError(e);
     }
@@ -164,7 +200,12 @@ export class UpdateInteriorFinancePaymentUseCase {
       throw new BadRequestException('El monto debe ser mayor a cero');
     }
     try {
-      return await this.repo.updatePayment(projectId, paymentId, applicationSlug ?? SLUG_DFLT, payload);
+      return await this.repo.updatePayment(
+        projectId,
+        paymentId,
+        applicationSlug ?? SLUG_DFLT,
+        payload,
+      );
     } catch (e) {
       mapRepoError(e);
     }
@@ -178,9 +219,17 @@ export class DeleteInteriorFinancePaymentUseCase {
     private readonly repo: InteriorFinanceRepository,
   ) {}
 
-  async execute(projectId: string, paymentId: string, applicationSlug?: string) {
+  async execute(
+    projectId: string,
+    paymentId: string,
+    applicationSlug?: string,
+  ) {
     try {
-      await this.repo.deletePayment(projectId, paymentId, applicationSlug ?? SLUG_DFLT);
+      await this.repo.deletePayment(
+        projectId,
+        paymentId,
+        applicationSlug ?? SLUG_DFLT,
+      );
     } catch (e) {
       mapRepoError(e);
     }

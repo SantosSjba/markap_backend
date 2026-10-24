@@ -35,7 +35,7 @@ function parseIsoDateTime(s?: string | null): Date | null | undefined {
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
-@ApiTags('arquitectura â€” Calendario')
+@ApiTags('arquitectura — Calendario')
 @Controller('arquitectura-calendar')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
@@ -75,7 +75,10 @@ export class ArquitecturaCalendarController {
   }
 
   @Post('events')
-  @ApiOperation({ summary: 'Crear reunion, visita, visita de obra, fecha limite o bloque de equipo' })
+  @ApiOperation({
+    summary:
+      'Crear reunion, visita, visita de obra, fecha limite o bloque de equipo',
+  })
   async create(
     @Body() dto: CreateArquitecturaCalendarEventDto,
     @Query('applicationSlug') applicationSlug?: string,
@@ -121,7 +124,10 @@ export class ArquitecturaCalendarController {
   @Delete('events/:eventId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Eliminar evento manual' })
-  async delete(@Param('eventId') eventId: string, @Query('applicationSlug') applicationSlug?: string) {
+  async delete(
+    @Param('eventId') eventId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     await this.deleteUc.execute(eventId, applicationSlug ?? 'arquitectura');
   }
 }

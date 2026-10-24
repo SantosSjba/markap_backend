@@ -15,7 +15,9 @@ const SLUG = 'produccion';
 
 function assertProduccion(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug produccion');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug produccion',
+    );
   }
 }
 
@@ -27,7 +29,10 @@ export class GetProduccionFurnitureCostingUseCase {
   ) {}
 
   async execute(furnitureId: string, applicationSlug?: string) {
-    const row = await this.repo.getCosting(furnitureId, applicationSlug ?? SLUG);
+    const row = await this.repo.getCosting(
+      furnitureId,
+      applicationSlug ?? SLUG,
+    );
     if (!row) throw new NotFoundException('Mueble no encontrado');
     return row;
   }
@@ -40,7 +45,11 @@ export class UpdateProduccionFurnitureCostingUseCase {
     private readonly repo: ProduccionFurnitureCostingRepository,
   ) {}
 
-  async execute(furnitureId: string, applicationSlug: string, payload: UpdateFurnitureCostingPayload) {
+  async execute(
+    furnitureId: string,
+    applicationSlug: string,
+    payload: UpdateFurnitureCostingPayload,
+  ) {
     assertProduccion(applicationSlug);
     try {
       return await this.repo.updateCosting(furnitureId, SLUG, payload);
@@ -57,7 +66,11 @@ export class CreateProduccionFurnitureCostingSnapshotUseCase {
     private readonly repo: ProduccionFurnitureCostingRepository,
   ) {}
 
-  async execute(furnitureId: string, applicationSlug: string, payload: CreateCostingSnapshotPayload) {
+  async execute(
+    furnitureId: string,
+    applicationSlug: string,
+    payload: CreateCostingSnapshotPayload,
+  ) {
     assertProduccion(applicationSlug);
     try {
       return await this.repo.createSnapshot(furnitureId, SLUG, payload);

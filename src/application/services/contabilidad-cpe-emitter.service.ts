@@ -27,11 +27,13 @@ export interface CpeEmitOutput {
 export class ContabilidadCpeEmitterService {
   constructor(private readonly ubl: ContabilidadCpeUblService) {}
 
-  async emit(input: CpeEmitInput): Promise<CpeEmitOutput> {
+  emit(input: CpeEmitInput): CpeEmitOutput {
     const sentAt = new Date();
 
     if (!input.config.isActive) {
-      throw new BadRequestException('El proveedor de facturación electrónica está inactivo.');
+      throw new BadRequestException(
+        'El proveedor de facturación electrónica está inactivo.',
+      );
     }
 
     switch (input.config.providerCode) {
@@ -44,7 +46,9 @@ export class ContabilidadCpeEmitterService {
           `Proveedor ${input.config.providerCode} pendiente de integración. Use MOCK (sandbox) mientras se configura OSE/PSE.`,
         );
       default:
-        throw new BadRequestException(`Proveedor CPE desconocido: ${input.config.providerCode}`);
+        throw new BadRequestException(
+          `Proveedor CPE desconocido: ${input.config.providerCode}`,
+        );
     }
   }
 

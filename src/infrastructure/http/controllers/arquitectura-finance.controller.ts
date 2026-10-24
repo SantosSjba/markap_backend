@@ -60,8 +60,14 @@ export class ArquitecturaFinanceController {
       'Panel financiero: presupuesto, programación (adelantos/cuotas), pagos, egresos por ejecución, flujo de caja y rentabilidad',
   })
   @ApiParam({ name: 'projectId' })
-  async overview(@Param('projectId') projectId: string, @Query('applicationSlug') applicationSlug?: string) {
-    const row = await this.overviewUc.execute(projectId, applicationSlug ?? 'arquitectura');
+  async overview(
+    @Param('projectId') projectId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    const row = await this.overviewUc.execute(
+      projectId,
+      applicationSlug ?? 'arquitectura',
+    );
     if (!row) throw new NotFoundException('Proyecto no encontrado');
     return row;
   }
@@ -73,31 +79,43 @@ export class ArquitecturaFinanceController {
     @Body() dto: CreateArquitecturaFinanceScheduleDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createScheduleUc.execute(projectId, applicationSlug ?? 'arquitectura', {
-      kind: dto.kind,
-      dueDate: parseIsoDate(dto.dueDate),
-      amount: dto.amount,
-      concept: dto.concept,
-      sortOrder: dto.sortOrder,
-    });
+    return this.createScheduleUc.execute(
+      projectId,
+      applicationSlug ?? 'arquitectura',
+      {
+        kind: dto.kind,
+        dueDate: parseIsoDate(dto.dueDate),
+        amount: dto.amount,
+        concept: dto.concept,
+        sortOrder: dto.sortOrder,
+      },
+    );
   }
 
   @Patch('projects/:projectId/schedules/:scheduleId')
-  @ApiOperation({ summary: 'Actualizar programación de cobro (puede marcar WAIVED)' })
+  @ApiOperation({
+    summary: 'Actualizar programación de cobro (puede marcar WAIVED)',
+  })
   async updateSchedule(
     @Param('projectId') projectId: string,
     @Param('scheduleId') scheduleId: string,
     @Body() dto: UpdateArquitecturaFinanceScheduleDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateScheduleUc.execute(projectId, scheduleId, applicationSlug ?? 'arquitectura', {
-      kind: dto.kind,
-      dueDate: dto.dueDate !== undefined ? parseIsoDate(dto.dueDate) : undefined,
-      amount: dto.amount,
-      concept: dto.concept,
-      sortOrder: dto.sortOrder,
-      status: dto.status,
-    });
+    return this.updateScheduleUc.execute(
+      projectId,
+      scheduleId,
+      applicationSlug ?? 'arquitectura',
+      {
+        kind: dto.kind,
+        dueDate:
+          dto.dueDate !== undefined ? parseIsoDate(dto.dueDate) : undefined,
+        amount: dto.amount,
+        concept: dto.concept,
+        sortOrder: dto.sortOrder,
+        status: dto.status,
+      },
+    );
   }
 
   @Delete('projects/:projectId/schedules/:scheduleId')
@@ -108,42 +126,59 @@ export class ArquitecturaFinanceController {
     @Param('scheduleId') scheduleId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    await this.deleteScheduleUc.execute(projectId, scheduleId, applicationSlug ?? 'arquitectura');
+    await this.deleteScheduleUc.execute(
+      projectId,
+      scheduleId,
+      applicationSlug ?? 'arquitectura',
+    );
   }
 
   @Post('projects/:projectId/payments')
-  @ApiOperation({ summary: 'Registrar pago del cliente (opcionalmente ligado a una cuota)' })
+  @ApiOperation({
+    summary: 'Registrar pago del cliente (opcionalmente ligado a una cuota)',
+  })
   async createPayment(
     @Param('projectId') projectId: string,
     @Body() dto: CreateArquitecturaFinancePaymentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createPaymentUc.execute(projectId, applicationSlug ?? 'arquitectura', {
-      paidAt: parseIsoDate(dto.paidAt),
-      amount: dto.amount,
-      concept: dto.concept,
-      paymentType: dto.paymentType ?? 'OTHER',
-      status: dto.status,
-      scheduleItemId: dto.scheduleItemId ?? null,
-    });
+    return this.createPaymentUc.execute(
+      projectId,
+      applicationSlug ?? 'arquitectura',
+      {
+        paidAt: parseIsoDate(dto.paidAt),
+        amount: dto.amount,
+        concept: dto.concept,
+        paymentType: dto.paymentType ?? 'OTHER',
+        status: dto.status,
+        scheduleItemId: dto.scheduleItemId ?? null,
+      },
+    );
   }
 
   @Patch('projects/:projectId/payments/:paymentId')
-  @ApiOperation({ summary: 'Actualizar pago (estado, montos, vínculo a cuota)' })
+  @ApiOperation({
+    summary: 'Actualizar pago (estado, montos, vínculo a cuota)',
+  })
   async updatePayment(
     @Param('projectId') projectId: string,
     @Param('paymentId') paymentId: string,
     @Body() dto: UpdateArquitecturaFinancePaymentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updatePaymentUc.execute(projectId, paymentId, applicationSlug ?? 'arquitectura', {
-      paidAt: dto.paidAt !== undefined ? parseIsoDate(dto.paidAt) : undefined,
-      amount: dto.amount,
-      concept: dto.concept,
-      paymentType: dto.paymentType,
-      status: dto.status,
-      scheduleItemId: dto.scheduleItemId,
-    });
+    return this.updatePaymentUc.execute(
+      projectId,
+      paymentId,
+      applicationSlug ?? 'arquitectura',
+      {
+        paidAt: dto.paidAt !== undefined ? parseIsoDate(dto.paidAt) : undefined,
+        amount: dto.amount,
+        concept: dto.concept,
+        paymentType: dto.paymentType,
+        status: dto.status,
+        scheduleItemId: dto.scheduleItemId,
+      },
+    );
   }
 
   @Delete('projects/:projectId/payments/:paymentId')
@@ -154,6 +189,10 @@ export class ArquitecturaFinanceController {
     @Param('paymentId') paymentId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    await this.deletePaymentUc.execute(projectId, paymentId, applicationSlug ?? 'arquitectura');
+    await this.deletePaymentUc.execute(
+      projectId,
+      paymentId,
+      applicationSlug ?? 'arquitectura',
+    );
   }
 }

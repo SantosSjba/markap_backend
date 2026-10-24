@@ -1,6 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PAYMENT_REPOSITORY } from '@common/constants/injection-tokens';
-import type { PaymentRepository, PendingPaymentItem, ListPendingPaymentsFilters, PaymentStatus } from '@domain/repositories/payment.repository';
+import type {
+  PaymentRepository,
+  PendingPaymentItem,
+  ListPendingPaymentsFilters,
+  PaymentStatus,
+} from '@domain/repositories/payment.repository';
 
 @Injectable()
 export class ListPendingPaymentsUseCase {
@@ -14,7 +19,9 @@ export class ListPendingPaymentsUseCase {
     search?: string;
     status?: string;
   }): Promise<PendingPaymentItem[]> {
-    await this.paymentRepository.generateMonthlyPending(filters.applicationSlug);
+    await this.paymentRepository.generateMonthlyPending(
+      filters.applicationSlug,
+    );
 
     const normalized: ListPendingPaymentsFilters = {
       applicationSlug: filters.applicationSlug,

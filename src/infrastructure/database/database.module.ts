@@ -13,8 +13,7 @@ import {
   PasswordResetCodeRepository,
   MenuRepository,
 } from '@common/constants/injection-tokens';
-import { ClientRepository } from '@domain/repositories/client.repository';
-import { PropertyRepository } from '@domain/repositories/property.repository';
+
 import { RentalFinancialConfigPrismaRepository } from './prisma/repositories/rental-financial-config-prisma.repository';
 import { AgentPrismaRepository } from './prisma/repositories/agent-prisma.repository';
 import { ReportPrismaRepository } from './prisma/repositories/report-prisma.repository';
@@ -381,7 +380,11 @@ import {
         financial: ContabilidadFinancialPrismaRepository,
         taxes: ContabilidadTaxesPrismaRepository,
       ) => new ContabilidadReportsPrismaRepository(prisma, financial, taxes),
-      inject: [PrismaService, CONTABILIDAD_FINANCIAL_REPOSITORY, CONTABILIDAD_TAXES_REPOSITORY],
+      inject: [
+        PrismaService,
+        CONTABILIDAD_FINANCIAL_REPOSITORY,
+        CONTABILIDAD_TAXES_REPOSITORY,
+      ],
     },
     {
       provide: CONTABILIDAD_EXTENSIONS_REPOSITORY,

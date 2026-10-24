@@ -70,11 +70,20 @@ export class InteriorismoExecutionController {
   ) {}
 
   @Get('projects/:projectId/overview')
-  @ApiOperation({ summary: 'Tablero ejecución: tareas, costos reales, evidencias, incidencias, vs presupuesto' })
+  @ApiOperation({
+    summary:
+      'Tablero ejecución: tareas, costos reales, evidencias, incidencias, vs presupuesto',
+  })
   @ApiParam({ name: 'projectId' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  async overview(@Param('projectId') projectId: string, @Query('applicationSlug') applicationSlug?: string) {
-    const row = await this.overviewUc.execute(projectId, applicationSlug ?? 'interiorismo');
+  async overview(
+    @Param('projectId') projectId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    const row = await this.overviewUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+    );
     if (!row) throw new NotFoundException('Proyecto no encontrado');
     return row;
   }
@@ -86,7 +95,11 @@ export class InteriorismoExecutionController {
     @Body() dto: PatchInteriorExecutionProgressDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.patchProgressUc.execute(projectId, applicationSlug ?? 'interiorismo', dto.progressPct);
+    return this.patchProgressUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+      dto.progressPct,
+    );
   }
 
   @Post('projects/:projectId/tasks')
@@ -96,15 +109,19 @@ export class InteriorismoExecutionController {
     @Body() dto: CreateInteriorExecutionTaskDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createTaskUc.execute(projectId, applicationSlug ?? 'interiorismo', {
-      phase: dto.phase,
-      title: dto.title,
-      description: dto.description ?? null,
-      kanbanStatus: dto.kanbanStatus,
-      plannedStart: parseIsoDate(dto.plannedStart ?? undefined) ?? null,
-      plannedEnd: parseIsoDate(dto.plannedEnd ?? undefined) ?? null,
-      progressPct: dto.progressPct,
-    });
+    return this.createTaskUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+      {
+        phase: dto.phase,
+        title: dto.title,
+        description: dto.description ?? null,
+        kanbanStatus: dto.kanbanStatus,
+        plannedStart: parseIsoDate(dto.plannedStart ?? undefined) ?? null,
+        plannedEnd: parseIsoDate(dto.plannedEnd ?? undefined) ?? null,
+        progressPct: dto.progressPct,
+      },
+    );
   }
 
   @Patch('projects/:projectId/tasks/:taskId')
@@ -115,18 +132,27 @@ export class InteriorismoExecutionController {
     @Body() dto: UpdateInteriorExecutionTaskDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateTaskUc.execute(projectId, taskId, applicationSlug ?? 'interiorismo', {
-      phase: dto.phase,
-      title: dto.title,
-      description: dto.description,
-      kanbanStatus: dto.kanbanStatus,
-      sortOrder: dto.sortOrder,
-      plannedStart:
-        dto.plannedStart === undefined ? undefined : parseIsoDate(dto.plannedStart as string | null | undefined),
-      plannedEnd:
-        dto.plannedEnd === undefined ? undefined : parseIsoDate(dto.plannedEnd as string | null | undefined),
-      progressPct: dto.progressPct,
-    });
+    return this.updateTaskUc.execute(
+      projectId,
+      taskId,
+      applicationSlug ?? 'interiorismo',
+      {
+        phase: dto.phase,
+        title: dto.title,
+        description: dto.description,
+        kanbanStatus: dto.kanbanStatus,
+        sortOrder: dto.sortOrder,
+        plannedStart:
+          dto.plannedStart === undefined
+            ? undefined
+            : parseIsoDate(dto.plannedStart),
+        plannedEnd:
+          dto.plannedEnd === undefined
+            ? undefined
+            : parseIsoDate(dto.plannedEnd),
+        progressPct: dto.progressPct,
+      },
+    );
   }
 
   @Delete('projects/:projectId/tasks/:taskId')
@@ -138,7 +164,11 @@ export class InteriorismoExecutionController {
     @Param('taskId') taskId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    await this.deleteTaskUc.execute(projectId, taskId, applicationSlug ?? 'interiorismo');
+    await this.deleteTaskUc.execute(
+      projectId,
+      taskId,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Post('projects/:projectId/evidences')
@@ -149,13 +179,17 @@ export class InteriorismoExecutionController {
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     const capturedAt = new Date(dto.capturedAt);
-    return this.createEvidenceUc.execute(projectId, applicationSlug ?? 'interiorismo', {
-      taskId: dto.taskId ?? null,
-      kind: dto.kind,
-      title: dto.title,
-      fileUrl: dto.fileUrl,
-      capturedAt,
-    });
+    return this.createEvidenceUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+      {
+        taskId: dto.taskId ?? null,
+        kind: dto.kind,
+        title: dto.title,
+        fileUrl: dto.fileUrl,
+        capturedAt,
+      },
+    );
   }
 
   @Delete('projects/:projectId/evidences/:evidenceId')
@@ -166,7 +200,11 @@ export class InteriorismoExecutionController {
     @Param('evidenceId') evidenceId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    await this.deleteEvidenceUc.execute(projectId, evidenceId, applicationSlug ?? 'interiorismo');
+    await this.deleteEvidenceUc.execute(
+      projectId,
+      evidenceId,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 
   @Post('projects/:projectId/incidents')
@@ -176,12 +214,16 @@ export class InteriorismoExecutionController {
     @Body() dto: CreateInteriorExecutionIncidentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createIncidentUc.execute(projectId, applicationSlug ?? 'interiorismo', {
-      severity: dto.severity,
-      title: dto.title,
-      description: dto.description ?? null,
-      reportedAt: new Date(dto.reportedAt),
-    });
+    return this.createIncidentUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+      {
+        severity: dto.severity,
+        title: dto.title,
+        description: dto.description ?? null,
+        reportedAt: new Date(dto.reportedAt),
+      },
+    );
   }
 
   @Patch('projects/:projectId/incidents/:incidentId')
@@ -192,18 +234,29 @@ export class InteriorismoExecutionController {
     @Body() dto: UpdateInteriorExecutionIncidentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateIncidentUc.execute(projectId, incidentId, applicationSlug ?? 'interiorismo', {
-      status: dto.status,
-      severity: dto.severity,
-      title: dto.title,
-      description: dto.description,
-      closedAt:
-        dto.closedAt === undefined ? undefined : dto.closedAt ? new Date(dto.closedAt) : null,
-    });
+    return this.updateIncidentUc.execute(
+      projectId,
+      incidentId,
+      applicationSlug ?? 'interiorismo',
+      {
+        status: dto.status,
+        severity: dto.severity,
+        title: dto.title,
+        description: dto.description,
+        closedAt:
+          dto.closedAt === undefined
+            ? undefined
+            : dto.closedAt
+              ? new Date(dto.closedAt)
+              : null,
+      },
+    );
   }
 
   @Post('projects/:projectId/actual-costs')
-  @ApiOperation({ summary: 'Registrar costo real (mano de obra, material, gastos)' })
+  @ApiOperation({
+    summary: 'Registrar costo real (mano de obra, material, gastos)',
+  })
   async createActualCost(
     @Param('projectId') projectId: string,
     @Body() dto: CreateInteriorExecutionActualCostDto,
@@ -213,13 +266,17 @@ export class InteriorismoExecutionController {
     if (Number.isNaN(occurred.getTime())) {
       throw new BadRequestException('Fecha del costo inválida');
     }
-    return this.createCostUc.execute(projectId, applicationSlug ?? 'interiorismo', {
-      costCategory: dto.costCategory,
-      concept: dto.concept,
-      amount: dto.amount,
-      occurredAt: occurred,
-      catalogMaterialId: dto.catalogMaterialId ?? null,
-    });
+    return this.createCostUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+      {
+        costCategory: dto.costCategory,
+        concept: dto.concept,
+        amount: dto.amount,
+        occurredAt: occurred,
+        catalogMaterialId: dto.catalogMaterialId ?? null,
+      },
+    );
   }
 
   @Delete('projects/:projectId/actual-costs/:costId')
@@ -230,6 +287,10 @@ export class InteriorismoExecutionController {
     @Param('costId') costId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    await this.deleteCostUc.execute(projectId, costId, applicationSlug ?? 'interiorismo');
+    await this.deleteCostUc.execute(
+      projectId,
+      costId,
+      applicationSlug ?? 'interiorismo',
+    );
   }
 }

@@ -58,7 +58,7 @@ export class NodemailerMailService extends MailService {
       await this.transport.sendMail(mailOptions);
     } else {
       console.log(
-        '\n========== EMAIL (consola - SMTP no configurado) =========='
+        '\n========== EMAIL (consola - SMTP no configurado) ==========',
       );
       console.log('Para:', options.to);
       console.log('Asunto:', options.subject);

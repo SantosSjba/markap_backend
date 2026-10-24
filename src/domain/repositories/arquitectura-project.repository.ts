@@ -10,7 +10,9 @@ export type ArquitecturaProjectLifecycleStatus =
   | 'FINISHED';
 
 /** Ciclo comercial + cancelación administrativa. */
-export type ArquitecturaProjectStatus = ArquitecturaProjectLifecycleStatus | 'CANCELLED';
+export type ArquitecturaProjectStatus =
+  | ArquitecturaProjectLifecycleStatus
+  | 'CANCELLED';
 
 export interface ArquitecturaProjectAgentRef {
   id: string;
@@ -152,10 +154,22 @@ export interface ListArquitecturaProjectsResult {
 }
 
 export interface ArquitecturaProjectRepository {
-  findMany(filters: ListArquitecturaProjectsFilters): Promise<ListArquitecturaProjectsResult>;
-  findById(id: string, applicationSlug?: string): Promise<ArquitecturaProjectDetail | null>;
-  create(data: CreateArquitecturaProjectData): Promise<ArquitecturaProjectDetail>;
-  update(id: string, data: UpdateArquitecturaProjectData): Promise<ArquitecturaProjectDetail>;
+  findMany(
+    filters: ListArquitecturaProjectsFilters,
+  ): Promise<ListArquitecturaProjectsResult>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ArquitecturaProjectDetail | null>;
+  create(
+    data: CreateArquitecturaProjectData,
+  ): Promise<ArquitecturaProjectDetail>;
+  update(
+    id: string,
+    data: UpdateArquitecturaProjectData,
+  ): Promise<ArquitecturaProjectDetail>;
 }
 
-export const ARQUITECTURA_PROJECT_REPOSITORY = Symbol('ArquitecturaProjectRepository');
+export const ARQUITECTURA_PROJECT_REPOSITORY = Symbol(
+  'ArquitecturaProjectRepository',
+);

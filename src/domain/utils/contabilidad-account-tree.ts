@@ -1,6 +1,11 @@
-import type { ContabilidadAccountDto, ContabilidadAccountFlatDto } from '@domain/repositories/contabilidad-account.repository';
+import type {
+  ContabilidadAccountDto,
+  ContabilidadAccountFlatDto,
+} from '@domain/repositories/contabilidad-account.repository';
 
-export function buildContabilidadAccountTree(rows: ContabilidadAccountFlatDto[]): ContabilidadAccountDto[] {
+export function buildContabilidadAccountTree(
+  rows: ContabilidadAccountFlatDto[],
+): ContabilidadAccountDto[] {
   const byParent = new Map<string | null, ContabilidadAccountFlatDto[]>();
 
   for (const row of rows) {
@@ -11,7 +16,9 @@ export function buildContabilidadAccountTree(rows: ContabilidadAccountFlatDto[])
   }
 
   for (const bucket of byParent.values()) {
-    bucket.sort((a, b) => a.sortOrder - b.sortOrder || a.code.localeCompare(b.code));
+    bucket.sort(
+      (a, b) => a.sortOrder - b.sortOrder || a.code.localeCompare(b.code),
+    );
   }
 
   function walk(parentId: string | null): ContabilidadAccountDto[] {
@@ -28,7 +35,9 @@ export function buildContabilidadAccountTree(rows: ContabilidadAccountFlatDto[])
   return walk(null);
 }
 
-export function flattenContabilidadAccountTree(tree: ContabilidadAccountDto[]): ContabilidadAccountDto[] {
+export function flattenContabilidadAccountTree(
+  tree: ContabilidadAccountDto[],
+): ContabilidadAccountDto[] {
   const out: ContabilidadAccountDto[] = [];
   const walk = (nodes: ContabilidadAccountDto[]) => {
     for (const node of nodes) {

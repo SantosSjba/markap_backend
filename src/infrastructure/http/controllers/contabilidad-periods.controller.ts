@@ -1,6 +1,21 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request } from 'express';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadPeriodOperationsService } from '../../../application/services/contabilidad-period-operations.service';
 import type {
@@ -13,10 +28,14 @@ import type {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class ContabilidadPeriodsController {
-  constructor(private readonly operations: ContabilidadPeriodOperationsService) {}
+  constructor(
+    private readonly operations: ContabilidadPeriodOperationsService,
+  ) {}
 
   @Get('contabilidad-periods')
-  @ApiOperation({ summary: 'Listar periodos del año (crea los 12 meses si faltan)' })
+  @ApiOperation({
+    summary: 'Listar periodos del año (crea los 12 meses si faltan)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'year', required: false })
   @ApiQuery({ name: 'legalEntityId', required: false })
@@ -38,7 +57,12 @@ export class ContabilidadPeriodsController {
     @Body() body: { status: 'OPEN' | 'CLOSED' },
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.operations.setPeriodStatus(applicationSlug, id, body.status, req.user?.sub ?? null);
+    return this.operations.setPeriodStatus(
+      applicationSlug,
+      id,
+      body.status,
+      req.user?.sub ?? null,
+    );
   }
 
   @Get('contabilidad-cost-centers')

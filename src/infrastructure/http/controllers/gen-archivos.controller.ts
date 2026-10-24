@@ -1,3 +1,4 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   Controller,
   Get,
@@ -6,7 +7,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { GenArchivoService } from '../../../application/services/gen-archivo.service';
 
@@ -34,7 +40,9 @@ export class GenArchivosController {
     if (!archivo) {
       throw new NotFoundException('Archivo no encontrado');
     }
-    const seconds = expiresIn ? Math.min(86400, Math.max(60, parseInt(expiresIn, 10))) : 3600;
+    const seconds = expiresIn
+      ? parseIntegerQuery(expiresIn, 3600, 60, 86400)
+      : 3600;
     const url = await this.genArchivo.getPresignedDownloadUrl(id, seconds);
     return {
       id,

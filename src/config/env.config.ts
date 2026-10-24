@@ -31,10 +31,7 @@ export const envValidationSchema = Joi.object({
   MAIL_FROM: Joi.string().default('"MARKAP" <noreply@markap.com>'),
 
   // Password reset
-  PASSWORD_RESET_EXPIRES_MINUTES: Joi.number()
-    .integer()
-    .positive()
-    .default(15),
+  PASSWORD_RESET_EXPIRES_MINUTES: Joi.number().integer().positive().default(15),
   PASSWORD_RESET_GERENCIA_EMAIL: Joi.string()
     .email()
     .default('sistemas@markaphomes.com'),
@@ -76,7 +73,7 @@ export const envConfig = () => ({
   passwordReset: {
     codeExpiresInMinutes: parseInt(
       process.env.PASSWORD_RESET_EXPIRES_MINUTES || '15',
-      10
+      10,
     ),
     codeLength: 6,
     /** Correo de sistemas: todos los códigos de recuperación se envían aquí para validación por administradores */

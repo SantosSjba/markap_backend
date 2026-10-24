@@ -18,7 +18,10 @@ export class SyncInteriorProjectBudgetFromExecutionUseCase {
     private readonly repo: InteriorProjectBudgetRepository,
   ) {}
 
-  execute(projectId: string, applicationSlug = 'interiorismo'): Promise<SyncBudgetFromExecutionResult> {
+  execute(
+    projectId: string,
+    applicationSlug = 'interiorismo',
+  ): Promise<SyncBudgetFromExecutionResult> {
     return this.repo.syncActualCostsFromExecution(projectId, applicationSlug);
   }
 }

@@ -7,15 +7,25 @@ export const VENTAS_PIPELINE_STAGES = [
 export type VentasPipelineStage = (typeof VENTAS_PIPELINE_STAGES)[number];
 
 export const VENTAS_SALE_PROCESS_STATUS = ['ACTIVE', 'WON', 'LOST'] as const;
-export type VentasSaleProcessStatus = (typeof VENTAS_SALE_PROCESS_STATUS)[number];
+export type VentasSaleProcessStatus =
+  (typeof VENTAS_SALE_PROCESS_STATUS)[number];
 
-export const VENTAS_SEPARATION_STATUS = ['ACTIVE', 'EXPIRED', 'CLOSED'] as const;
+export const VENTAS_SEPARATION_STATUS = [
+  'ACTIVE',
+  'EXPIRED',
+  'CLOSED',
+] as const;
 export type VentasSeparationStatus = (typeof VENTAS_SEPARATION_STATUS)[number];
 
 export const VENTAS_PAYMENT_TYPES = ['CASH', 'CREDIT'] as const;
 export type VentasPaymentType = (typeof VENTAS_PAYMENT_TYPES)[number];
 
-export const VENTAS_COMMISSION_STATUS = ['PENDING', 'PARTIAL', 'PAID', 'CANCELLED'] as const;
+export const VENTAS_COMMISSION_STATUS = [
+  'PENDING',
+  'PARTIAL',
+  'PAID',
+  'CANCELLED',
+] as const;
 
 export interface ListSaleProcessesFilters {
   applicationSlug: string;
@@ -74,16 +84,16 @@ export interface VentasSalesRepository {
     }[];
   }): Promise<{ id: string }>;
 
-  countProcessCommissions(saleProcessId: string, applicationId: string): Promise<number>;
+  countProcessCommissions(
+    saleProcessId: string,
+    applicationId: string,
+  ): Promise<number>;
 
   listSaleProcesses(
     filters: ListSaleProcessesFilters,
   ): Promise<{ data: unknown[]; total: number }>;
 
-  getSaleProcessById(
-    id: string,
-    applicationId: string,
-  ): Promise<unknown | null>;
+  getSaleProcessById(id: string, applicationId: string): Promise<unknown>;
 
   /** Rellena vínculos de propietario si el proceso se creó sin ellos (legacy). */
   ensureSaleProcessOwnerLinksFromProperty(
@@ -106,14 +116,17 @@ export interface VentasSalesRepository {
   ): Promise<unknown>;
 
   /** Anula comisiones del proceso (venta caída). */
-  cancelProcessCommissions(saleProcessId: string, applicationId: string): Promise<number>;
+  cancelProcessCommissions(
+    saleProcessId: string,
+    applicationId: string,
+  ): Promise<number>;
 
   /** Marca proceso LOST, anula comisiones y registra actividad (transacción atómica). */
   applySaleProcessLost(
     saleProcessId: string,
     applicationId: string,
     data: { lostReason: string; closedAt: Date; activityDescription: string },
-  ): Promise<unknown | null>;
+  ): Promise<unknown>;
 
   listSaleFinancingChannels(): Promise<unknown[]>;
 
@@ -174,10 +187,7 @@ export interface VentasSalesRepository {
     },
   ): Promise<unknown>;
 
-  getSaleSeparationById(
-    id: string,
-    applicationId: string,
-  ): Promise<unknown | null>;
+  getSaleSeparationById(id: string, applicationId: string): Promise<unknown>;
 
   countActiveSeparationsOnProperty(
     propertyId: string,
@@ -203,7 +213,7 @@ export interface VentasSalesRepository {
   getSaleClosingById(
     closingId: string,
     applicationId: string,
-  ): Promise<unknown | null>;
+  ): Promise<unknown>;
 
   updateSaleClosingContractFile(
     closingId: string,

@@ -18,7 +18,10 @@ export class DuplicateArquitecturaProjectBudgetSnapshotUseCase {
     private readonly repo: ArquitecturaProjectBudgetRepository,
   ) {}
 
-  execute(projectId: string, applicationSlug = 'arquitectura'): Promise<DuplicateBudgetSnapshotResult> {
+  execute(
+    projectId: string,
+    applicationSlug = 'arquitectura',
+  ): Promise<DuplicateBudgetSnapshotResult> {
     return this.repo.duplicateBudgetSnapshot(projectId, applicationSlug);
   }
 }

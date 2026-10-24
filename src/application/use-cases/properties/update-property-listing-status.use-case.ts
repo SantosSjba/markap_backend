@@ -5,7 +5,11 @@ import type { ApplicationRepository } from '@domain/repositories/application.rep
 import type { Property } from '@domain/repositories/property.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 
-import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY, RENTAL_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  PROPERTY_REPOSITORY,
+  RENTAL_REPOSITORY,
+} from '@common/constants/injection-tokens';
 
 const VENTAS_LISTING = new Set(['AVAILABLE', 'RESERVED', 'SOLD']);
 const ALQUILERES_LISTING_MODAL = new Set(['RENTED', 'EXPIRING', 'MAINTENANCE']);
@@ -36,7 +40,9 @@ export class UpdatePropertyListingStatusUseCase {
     if (!property) {
       throw new EntityNotFoundException('Property', propertyId);
     }
-    const app = await this.applicationRepository.findById(property.applicationId);
+    const app = await this.applicationRepository.findById(
+      property.applicationId,
+    );
     if (expectedApplicationSlug?.trim()) {
       if (!app || app.slug !== expectedApplicationSlug.trim()) {
         throw new EntityNotFoundException('Property', propertyId);
@@ -61,9 +67,8 @@ export class UpdatePropertyListingStatusUseCase {
         'En Alquileres solo se puede fijar Alquilada, Por vencer o En mantenimiento desde este endpoint.',
       );
     }
-    const activeCount = await this.rentalRepository.countActiveByPropertyId(
-      propertyId,
-    );
+    const activeCount =
+      await this.rentalRepository.countActiveByPropertyId(propertyId);
     if (activeCount === 0) {
       throw new BadRequestException(
         'Solo se puede cambiar el estado si la propiedad tiene un alquiler en vigencia.',

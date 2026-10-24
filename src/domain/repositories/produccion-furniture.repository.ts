@@ -1,4 +1,6 @@
-export const PRODUCCION_FURNITURE_REPOSITORY = Symbol('ProduccionFurnitureRepository');
+export const PRODUCCION_FURNITURE_REPOSITORY = Symbol(
+  'ProduccionFurnitureRepository',
+);
 
 export interface ProduccionFurnitureImageDto {
   id: string;
@@ -108,13 +110,21 @@ export interface ProduccionFurnitureStats {
 }
 
 export interface ProduccionFurnitureRepository {
-  list(filters: ListProduccionFurnitureFilters): Promise<ListProduccionFurnitureResult>;
+  list(
+    filters: ListProduccionFurnitureFilters,
+  ): Promise<ListProduccionFurnitureResult>;
   getStats(applicationSlug: string): Promise<ProduccionFurnitureStats>;
-  findById(id: string, applicationSlug?: string): Promise<ProduccionFurnitureDetail | null>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionFurnitureDetail | null>;
   create(
     applicationId: string,
     payload: CreateProduccionFurniturePayload,
   ): Promise<ProduccionFurnitureDetail>;
-  update(id: string, payload: UpdateProduccionFurniturePayload): Promise<ProduccionFurnitureDetail>;
+  update(
+    id: string,
+    payload: UpdateProduccionFurniturePayload,
+  ): Promise<ProduccionFurnitureDetail>;
   delete(id: string): Promise<void>;
 }

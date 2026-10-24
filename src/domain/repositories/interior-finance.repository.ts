@@ -129,8 +129,14 @@ export interface UpdateInteriorFinancePaymentPayload {
 }
 
 export interface InteriorFinanceRepository {
-  ensureProjectScope(projectId: string, applicationSlug?: string): Promise<boolean>;
-  getOverview(projectId: string, applicationSlug?: string): Promise<InteriorFinanceOverviewDto | null>;
+  ensureProjectScope(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<boolean>;
+  getOverview(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<InteriorFinanceOverviewDto | null>;
 
   createSchedule(
     projectId: string,

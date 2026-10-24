@@ -42,14 +42,21 @@ export class RenderArquitecturaProjectBudgetHtmlUseCase {
     private readonly projectRepo: ArquitecturaProjectRepository,
   ) {}
 
-  async execute(projectId: string, applicationSlug = 'arquitectura'): Promise<string> {
+  async execute(
+    projectId: string,
+    applicationSlug = 'arquitectura',
+  ): Promise<string> {
     const budget = await this.budgetRepo.getBudget(projectId, applicationSlug);
     if (!budget) throw new NotFoundException('Presupuesto no encontrado');
 
     const project = await this.projectRepo.findById(projectId, applicationSlug);
     if (!project) throw new NotFoundException('Proyecto no encontrado');
 
-    return this.buildHtml(budget, project.client.fullName, project.client.documentNumber);
+    return this.buildHtml(
+      budget,
+      project.client.fullName,
+      project.client.documentNumber,
+    );
   }
 
   private buildHtml(
@@ -59,7 +66,8 @@ export class RenderArquitecturaProjectBudgetHtmlUseCase {
   ): string {
     const title = `Presupuesto — ${budget.projectName}`;
     const intervention = budget.interventionLevel
-      ? (INTERVENTION_LABELS[budget.interventionLevel] ?? budget.interventionLevel)
+      ? (INTERVENTION_LABELS[budget.interventionLevel] ??
+        budget.interventionLevel)
       : null;
 
     const metaParts = [

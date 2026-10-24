@@ -6,7 +6,10 @@ import {
   type InteriorismoConfigRepository,
   type InteriorismoProjectStageInput,
 } from '@domain/repositories/interiorismo-config.repository';
-import type { InteriorismoNumberingSeries, InteriorismoProjectStage } from '@domain/entities/interiorismo-config.entity';
+import type {
+  InteriorismoNumberingSeries,
+  InteriorismoProjectStage,
+} from '@domain/entities/interiorismo-config.entity';
 import {
   INTERIOR_PROJECT_LEGACY_STAGE_CODES,
   INTERIOR_PROJECT_LIFECYCLE_CODE_SET,
@@ -17,7 +20,9 @@ import {
 export class InteriorismoConfigPrismaRepository implements InteriorismoConfigRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listProjectStages(applicationId: string): Promise<InteriorismoProjectStage[]> {
+  async listProjectStages(
+    applicationId: string,
+  ): Promise<InteriorismoProjectStage[]> {
     const rows = await this.prisma.interiorismoProjectStageConfig.findMany({
       where: { applicationId },
       orderBy: { sortOrder: 'asc' },
@@ -25,9 +30,14 @@ export class InteriorismoConfigPrismaRepository implements InteriorismoConfigRep
     return rows.map((r) => InteriorismoConfigPrismaMapper.toProjectStage(r));
   }
 
-  async replaceProjectStages(applicationId: string, stages: InteriorismoProjectStageInput[]): Promise<void> {
+  async replaceProjectStages(
+    applicationId: string,
+    stages: InteriorismoProjectStageInput[],
+  ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      await tx.interiorismoProjectStageConfig.deleteMany({ where: { applicationId } });
+      await tx.interiorismoProjectStageConfig.deleteMany({
+        where: { applicationId },
+      });
       await tx.interiorismoProjectStageConfig.createMany({
         data: stages.map((s) => ({
           applicationId,
@@ -40,7 +50,10 @@ export class InteriorismoConfigPrismaRepository implements InteriorismoConfigRep
     });
   }
 
-  async getNumberingSeries(applicationId: string, seriesKey: string): Promise<InteriorismoNumberingSeries | null> {
+  async getNumberingSeries(
+    applicationId: string,
+    seriesKey: string,
+  ): Promise<InteriorismoNumberingSeries | null> {
     const row = await this.prisma.interiorismoNumberingSeries.findUnique({
       where: { applicationId_seriesKey: { applicationId, seriesKey } },
     });
@@ -70,20 +83,25 @@ export class InteriorismoConfigPrismaRepository implements InteriorismoConfigRep
       select: { code: true },
     });
     const existingCodes = new Set(existing.map((r) => r.code));
-    const hasLegacy = INTERIOR_PROJECT_LEGACY_STAGE_CODES.some((c) => existingCodes.has(c));
+    const hasLegacy = INTERIOR_PROJECT_LEGACY_STAGE_CODES.some((c) =>
+      existingCodes.has(c),
+    );
     const hasExactLifecycle =
       existing.length === INTERIOR_PROJECT_LIFECYCLE_STAGES.length &&
-      [...INTERIOR_PROJECT_LIFECYCLE_CODE_SET].every((c) => existingCodes.has(c));
+      [...INTERIOR_PROJECT_LIFECYCLE_CODE_SET].every((c) =>
+        existingCodes.has(c),
+      );
 
     if (existing.length === 0 || hasLegacy || !hasExactLifecycle) {
-      await this.replaceProjectStages(applicationId, INTERIOR_PROJECT_LIFECYCLE_STAGES);
+      await this.replaceProjectStages(
+        applicationId,
+        INTERIOR_PROJECT_LIFECYCLE_STAGES,
+      );
     } else {
       for (const stage of INTERIOR_PROJECT_LIFECYCLE_STAGES) {
         await this.prisma.interiorismoProjectStageConfig.updateMany({
           where: { applicationId, code: stage.code },
           data: {
-            label: stage.label,
-            sortOrder: stage.sortOrder,
             isActive: true,
           },
         });
@@ -103,7 +121,9 @@ export class InteriorismoConfigPrismaRepository implements InteriorismoConfigRep
       where: { applicationId, seriesKey: INTERIOR_PROJECT_SERIES_KEY },
     });
     if (nSeries === 0) {
-      const projectCount = await this.prisma.interiorProject.count({ where: { applicationId } });
+      const projectCount = await this.prisma.interiorProject.count({
+        where: { applicationId },
+      });
       await this.prisma.interiorismoNumberingSeries.create({
         data: {
           applicationId,

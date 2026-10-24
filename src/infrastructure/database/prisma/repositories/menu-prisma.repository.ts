@@ -21,7 +21,10 @@ export class MenuPrismaRepository implements MenuRepository {
       orderBy: { order: 'asc' },
     });
 
-    return this.buildTree(menus.map(MenuPrismaMapper.toDomain), null);
+    return this.buildTree(
+      menus.map((row) => MenuPrismaMapper.toDomain(row)),
+      null,
+    );
   }
 
   async findAllByApplicationId(applicationId: string): Promise<Menu[]> {
@@ -29,7 +32,7 @@ export class MenuPrismaRepository implements MenuRepository {
       where: { applicationId },
       orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
     });
-    return menus.map(MenuPrismaMapper.toDomain);
+    return menus.map((row) => MenuPrismaMapper.toDomain(row));
   }
 
   async findById(id: string): Promise<Menu | null> {

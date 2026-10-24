@@ -28,7 +28,9 @@ const VALID_EXPORT_TYPES: FinancialExportType[] = [
 
 function assertContabilidadSlug(slug: string | undefined | null) {
   if (slug?.trim() !== CONTABILIDAD_SLUG) {
-    throw new BadRequestException('Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).');
+    throw new BadRequestException(
+      'Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).',
+    );
   }
 }
 
@@ -45,15 +47,19 @@ export class ContabilidadFinancialStatementsOperationsService {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertContabilidadSlug(applicationSlug ?? CONTABILIDAD_SLUG);
     const app = await this.applications.findBySlug(CONTABILIDAD_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
+    if (!app)
+      throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
     return app.id;
   }
 
   private requirePeriodId(periodId?: string): string {
-    if (!periodId?.trim()) throw new BadRequestException('periodId es obligatorio.');
+    if (!periodId?.trim())
+      throw new BadRequestException('periodId es obligatorio.');
     return periodId.trim();
   }
 
@@ -82,46 +88,85 @@ export class ContabilidadFinancialStatementsOperationsService {
     if (exportType === 'cash-flow') {
       return this.financial.getCashFlowStatement(applicationId, periodId);
     }
-    return this.reports.getTrialBalance(applicationId, periodId, costCenterId?.trim() || null);
+    return this.reports.getTrialBalance(
+      applicationId,
+      periodId,
+      costCenterId?.trim() || null,
+    );
   }
 
-  private async resolveExportHeader(applicationId: string): Promise<FinancialExportHeader> {
+  private async resolveExportHeader(
+    applicationId: string,
+  ): Promise<FinancialExportHeader> {
     const profile = await this.config.getCompanyProfile(applicationId);
     return { ruc: profile.ruc, legalName: profile.legalName };
   }
 
-  async getBalanceSheet(applicationSlug: string | undefined, periodId?: string, comparePrior = true) {
+  async getBalanceSheet(
+    applicationSlug: string | undefined,
+    periodId?: string,
+    comparePrior = true,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const id = this.requirePeriodId(periodId);
     const priorPeriodId = comparePrior ? undefined : null;
     try {
-      return await this.financial.getBalanceSheet(applicationId, id, priorPeriodId);
+      return await this.financial.getBalanceSheet(
+        applicationId,
+        id,
+        priorPeriodId,
+      );
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'No se pudo generar el balance general.';
+      const message =
+        e instanceof Error
+          ? e.message
+          : 'No se pudo generar el balance general.';
       throw new BadRequestException(message);
     }
   }
 
-  async getIncomeStatement(applicationSlug: string | undefined, periodId?: string, comparePrior = true) {
+  async getIncomeStatement(
+    applicationSlug: string | undefined,
+    periodId?: string,
+    comparePrior = true,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const id = this.requirePeriodId(periodId);
     const priorPeriodId = comparePrior ? undefined : null;
     try {
-      return await this.financial.getIncomeStatement(applicationId, id, priorPeriodId);
+      return await this.financial.getIncomeStatement(
+        applicationId,
+        id,
+        priorPeriodId,
+      );
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'No se pudo generar el estado de resultados.';
+      const message =
+        e instanceof Error
+          ? e.message
+          : 'No se pudo generar el estado de resultados.';
       throw new BadRequestException(message);
     }
   }
 
-  async getCashFlowStatement(applicationSlug: string | undefined, periodId?: string, comparePrior = true) {
+  async getCashFlowStatement(
+    applicationSlug: string | undefined,
+    periodId?: string,
+    comparePrior = true,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const id = this.requirePeriodId(periodId);
     const priorPeriodId = comparePrior ? undefined : null;
     try {
-      return await this.financial.getCashFlowStatement(applicationId, id, priorPeriodId);
+      return await this.financial.getCashFlowStatement(
+        applicationId,
+        id,
+        priorPeriodId,
+      );
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'No se pudo generar el flujo de efectivo.';
+      const message =
+        e instanceof Error
+          ? e.message
+          : 'No se pudo generar el flujo de efectivo.';
       throw new BadRequestException(message);
     }
   }
@@ -137,12 +182,21 @@ export class ContabilidadFinancialStatementsOperationsService {
     const exportType = this.parseExportType(type);
 
     try {
-      const data = await this.loadExportData(applicationId, id, exportType, costCenterId);
+      const data = await this.loadExportData(
+        applicationId,
+        id,
+        exportType,
+        costCenterId,
+      );
       const buffer = await buildFinancialStatementExcel(exportType, data);
-      return { buffer, fileName: financialExportFileName(exportType, id, 'xlsx') };
+      return {
+        buffer,
+        fileName: financialExportFileName(exportType, id, 'xlsx'),
+      };
     } catch (e) {
       if (e instanceof BadRequestException) throw e;
-      const message = e instanceof Error ? e.message : 'No se pudo exportar el reporte.';
+      const message =
+        e instanceof Error ? e.message : 'No se pudo exportar el reporte.';
       throw new BadRequestException(message);
     }
   }
@@ -163,10 +217,14 @@ export class ContabilidadFinancialStatementsOperationsService {
         this.resolveExportHeader(applicationId),
       ]);
       const buffer = await buildFinancialStatementPdf(exportType, data, header);
-      return { buffer, fileName: financialExportFileName(exportType, id, 'pdf') };
+      return {
+        buffer,
+        fileName: financialExportFileName(exportType, id, 'pdf'),
+      };
     } catch (e) {
       if (e instanceof BadRequestException) throw e;
-      const message = e instanceof Error ? e.message : 'No se pudo exportar el reporte PDF.';
+      const message =
+        e instanceof Error ? e.message : 'No se pudo exportar el reporte PDF.';
       throw new BadRequestException(message);
     }
   }

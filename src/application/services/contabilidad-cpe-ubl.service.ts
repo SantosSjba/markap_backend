@@ -20,7 +20,9 @@ export interface CpeUblInvoicePayload {
 
 @Injectable()
 export class ContabilidadCpeUblService {
-  buildSalesInvoiceXml(ctx: CpeSalesInvoiceEmitContext): CpeUblInvoicePayload & { xml: string } {
+  buildSalesInvoiceXml(
+    ctx: CpeSalesInvoiceEmitContext,
+  ): CpeUblInvoicePayload & { xml: string } {
     const invoiceTypeCode = ctx.documentType === 'BOLETA' ? '03' : '01';
     const customerDocType = ctx.customerRuc.length === 11 ? '6' : '1';
     const payload: CpeUblInvoicePayload = {
@@ -100,7 +102,11 @@ export class ContabilidadCpeUblService {
 </Invoice>`;
   }
 
-  buildMockCdr(documentRef: string, responseCode: string, description: string): string {
+  buildMockCdr(
+    documentRef: string,
+    responseCode: string,
+    description: string,
+  ): string {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <ApplicationResponse xmlns="urn:oasis:names:specification:ubl:schema:xsd:ApplicationResponse-2">
   <cbc:ResponseDate>${todayDateOnlyLima()}</cbc:ResponseDate>

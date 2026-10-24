@@ -7,7 +7,10 @@ import { assertClientAddressLocation } from '@application/validators/client-addr
 import { assertActiveSaleCurrency } from '@application/validators/sale-currency.validator';
 import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
 
-import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  PROPERTY_REPOSITORY,
+} from '@common/constants/injection-tokens';
 
 const VENTAS_LISTING = new Set(['AVAILABLE', 'RESERVED', 'SOLD']);
 const ALQUILERES_LISTING = new Set([
@@ -94,7 +97,10 @@ export class CreatePropertyUseCase {
       input.locationCustom,
     );
 
-    const saleCurrency = await assertActiveSaleCurrency(this.prisma, input.saleCurrency);
+    const saleCurrency = await assertActiveSaleCurrency(
+      this.prisma,
+      input.saleCurrency,
+    );
 
     const ownerClientIds = Array.from(
       new Set([input.ownerId, ...(input.ownerClientIds ?? [])].filter(Boolean)),

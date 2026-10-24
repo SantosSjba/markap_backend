@@ -1,4 +1,6 @@
-export const CONTABILIDAD_PERIOD_REPOSITORY = Symbol('ContabilidadPeriodRepository');
+export const CONTABILIDAD_PERIOD_REPOSITORY = Symbol(
+  'ContabilidadPeriodRepository',
+);
 
 export interface ContabilidadPeriodDto {
   id: string;
@@ -31,20 +33,50 @@ export interface UpdateContabilidadCostCenterInput {
 }
 
 export interface ContabilidadPeriodRepository {
-  ensureYearPeriods(applicationId: string, legalEntityId: string, year: number): Promise<ContabilidadPeriodDto[]>;
-  listPeriods(applicationId: string, legalEntityId: string, year: number): Promise<ContabilidadPeriodDto[]>;
-  findPeriodById(applicationId: string, id: string): Promise<ContabilidadPeriodDto | null>;
-  setPeriodStatus(applicationId: string, id: string, status: string): Promise<ContabilidadPeriodDto>;
+  ensureYearPeriods(
+    applicationId: string,
+    legalEntityId: string,
+    year: number,
+  ): Promise<ContabilidadPeriodDto[]>;
+  listPeriods(
+    applicationId: string,
+    legalEntityId: string,
+    year: number,
+  ): Promise<ContabilidadPeriodDto[]>;
+  findPeriodById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadPeriodDto | null>;
+  setPeriodStatus(
+    applicationId: string,
+    id: string,
+    status: string,
+  ): Promise<ContabilidadPeriodDto>;
   ensureDefaultCostCenters(applicationId: string): Promise<void>;
-  listCostCenters(applicationId: string, search?: string): Promise<ContabilidadCostCenterDto[]>;
-  findCostCenterById(applicationId: string, id: string): Promise<ContabilidadCostCenterDto | null>;
-  findCostCenterByCode(applicationId: string, code: string): Promise<ContabilidadCostCenterDto | null>;
-  createCostCenter(applicationId: string, input: CreateContabilidadCostCenterInput): Promise<ContabilidadCostCenterDto>;
+  listCostCenters(
+    applicationId: string,
+    search?: string,
+  ): Promise<ContabilidadCostCenterDto[]>;
+  findCostCenterById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadCostCenterDto | null>;
+  findCostCenterByCode(
+    applicationId: string,
+    code: string,
+  ): Promise<ContabilidadCostCenterDto | null>;
+  createCostCenter(
+    applicationId: string,
+    input: CreateContabilidadCostCenterInput,
+  ): Promise<ContabilidadCostCenterDto>;
   updateCostCenter(
     applicationId: string,
     id: string,
     input: UpdateContabilidadCostCenterInput,
   ): Promise<ContabilidadCostCenterDto>;
-  deactivateCostCenter(applicationId: string, id: string): Promise<ContabilidadCostCenterDto>;
+  deactivateCostCenter(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadCostCenterDto>;
   hasCostCenterChildren(applicationId: string, id: string): Promise<boolean>;
 }

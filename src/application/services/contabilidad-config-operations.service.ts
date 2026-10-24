@@ -57,14 +57,21 @@ export class ContabilidadConfigOperationsService {
     private readonly context: ContabilidadContextService,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertContabilidadSlug(applicationSlug ?? CONTABILIDAD_SLUG);
     const app = await this.applications.findBySlug(CONTABILIDAD_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
+    if (!app)
+      throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
     return app.id;
   }
 
-  async bootstrap(applicationSlug?: string, legalEntityId?: string, year?: number) {
+  async bootstrap(
+    applicationSlug?: string,
+    legalEntityId?: string,
+    year?: number,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
 
     await this.config.ensureDefaults(applicationId);
@@ -74,22 +81,38 @@ export class ContabilidadConfigOperationsService {
     await this.treasury.ensureDefaults(applicationId);
     await this.taxes.ensureDefaults(applicationId);
 
-    const entityId = await this.context.resolveLegalEntityId(applicationId, legalEntityId);
+    const entityId = await this.context.resolveLegalEntityId(
+      applicationId,
+      legalEntityId,
+    );
     const targetYear = year ?? new Date().getFullYear();
     if (targetYear < 2000 || targetYear > 2100) {
       throw new BadRequestException('Año no válido.');
     }
 
-    await this.periods.ensureYearPeriods(applicationId, entityId, targetYear - 1);
-    const periodRows = await this.periods.ensureYearPeriods(applicationId, entityId, targetYear);
-    await this.periods.ensureYearPeriods(applicationId, entityId, targetYear + 1);
+    await this.periods.ensureYearPeriods(
+      applicationId,
+      entityId,
+      targetYear - 1,
+    );
+    const periodRows = await this.periods.ensureYearPeriods(
+      applicationId,
+      entityId,
+      targetYear,
+    );
+    await this.periods.ensureYearPeriods(
+      applicationId,
+      entityId,
+      targetYear + 1,
+    );
 
-    const [company, settings, documentSeries, legalEntitiesList] = await Promise.all([
-      this.config.getCompanyProfile(applicationId),
-      this.config.getSettings(applicationId),
-      this.config.listDocumentSeries(applicationId),
-      this.legalEntities.list(applicationId),
-    ]);
+    const [company, settings, documentSeries, legalEntitiesList] =
+      await Promise.all([
+        this.config.getCompanyProfile(applicationId),
+        this.config.getSettings(applicationId),
+        this.config.listDocumentSeries(applicationId),
+        this.legalEntities.list(applicationId),
+      ]);
 
     return {
       company,
@@ -112,7 +135,9 @@ export class ContabilidadConfigOperationsService {
     if (body.ruc !== undefined) {
       const ruc = normalizeRuc(body.ruc);
       if (ruc && !isValidPeruvianRuc(ruc)) {
-        throw new BadRequestException('RUC inválido. Verifique el número y el dígito verificador.');
+        throw new BadRequestException(
+          'RUC inválido. Verifique el número y el dígito verificador.',
+        );
       }
       body = { ...body, ruc };
     }
@@ -121,7 +146,11 @@ export class ContabilidadConfigOperationsService {
       throw new BadRequestException('La razón social es obligatoria.');
     }
 
-    if (body.ubigeoCode !== undefined && body.ubigeoCode && !/^\d{6}$/.test(body.ubigeoCode)) {
+    if (
+      body.ubigeoCode !== undefined &&
+      body.ubigeoCode &&
+      !/^\d{6}$/.test(body.ubigeoCode)
+    ) {
       throw new BadRequestException('El ubigeo debe tener 6 dígitos.');
     }
 
@@ -144,20 +173,39 @@ export class ContabilidadConfigOperationsService {
     const applicationId = await this.resolveApplicationId(applicationSlug);
 
     if (body.taxRegime !== undefined) {
-      const valid = CONTABILIDAD_TAX_REGIMES.some((r) => r.code === body.taxRegime);
-      if (!valid) throw new BadRequestException('Régimen tributario no válido.');
+      const valid = CONTABILIDAD_TAX_REGIMES.some(
+        (r) => r.code === body.taxRegime,
+      );
+      if (!valid)
+        throw new BadRequestException('Régimen tributario no válido.');
     }
-    if (body.igvPercent !== undefined && (body.igvPercent < 0 || body.igvPercent > 100)) {
+    if (
+      body.igvPercent !== undefined &&
+      (body.igvPercent < 0 || body.igvPercent > 100)
+    ) {
       throw new BadRequestException('IGV debe estar entre 0 y 100.');
     }
-    if (body.fiscalYearStartMonth !== undefined && (body.fiscalYearStartMonth < 1 || body.fiscalYearStartMonth > 12)) {
-      throw new BadRequestException('Mes de inicio fiscal debe estar entre 1 y 12.');
+    if (
+      body.fiscalYearStartMonth !== undefined &&
+      (body.fiscalYearStartMonth < 1 || body.fiscalYearStartMonth > 12)
+    ) {
+      throw new BadRequestException(
+        'Mes de inicio fiscal debe estar entre 1 y 12.',
+      );
     }
-    if (body.amountDecimals !== undefined && (body.amountDecimals < 0 || body.amountDecimals > 4)) {
+    if (
+      body.amountDecimals !== undefined &&
+      (body.amountDecimals < 0 || body.amountDecimals > 4)
+    ) {
       throw new BadRequestException('Decimales debe estar entre 0 y 4.');
     }
-    if (body.currencyCode !== undefined && body.currencyCode.trim().length !== 3) {
-      throw new BadRequestException('Código de moneda debe tener 3 caracteres (ISO).');
+    if (
+      body.currencyCode !== undefined &&
+      body.currencyCode.trim().length !== 3
+    ) {
+      throw new BadRequestException(
+        'Código de moneda debe tener 3 caracteres (ISO).',
+      );
     }
 
     return this.config.updateSettings(applicationId, body);
@@ -166,7 +214,12 @@ export class ContabilidadConfigOperationsService {
   async patchDocumentSeries(
     applicationSlug: string | undefined,
     seriesKey: string,
-    body: { sunatSeries?: string; lastNumber?: number; padLength?: number; isActive?: boolean },
+    body: {
+      sunatSeries?: string;
+      lastNumber?: number;
+      padLength?: number;
+      isActive?: boolean;
+    },
   ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.config.ensureDefaults(applicationId);
@@ -179,13 +232,20 @@ export class ContabilidadConfigOperationsService {
       throw new BadRequestException('La serie SUNAT no puede estar vacía.');
     }
     if (body.sunatSeries !== undefined && body.sunatSeries.length > 4) {
-      throw new BadRequestException('La serie SUNAT admite hasta 4 caracteres.');
+      throw new BadRequestException(
+        'La serie SUNAT admite hasta 4 caracteres.',
+      );
     }
     if (body.lastNumber !== undefined && body.lastNumber < 0) {
       throw new BadRequestException('El correlativo no puede ser negativo.');
     }
-    if (body.padLength !== undefined && (body.padLength < 1 || body.padLength > 8)) {
-      throw new BadRequestException('Longitud del correlativo debe estar entre 1 y 8.');
+    if (
+      body.padLength !== undefined &&
+      (body.padLength < 1 || body.padLength > 8)
+    ) {
+      throw new BadRequestException(
+        'Longitud del correlativo debe estar entre 1 y 8.',
+      );
     }
     if (
       body.sunatSeries === undefined &&
@@ -199,8 +259,16 @@ export class ContabilidadConfigOperationsService {
     return this.config.updateDocumentSeries(applicationId, seriesKey, body);
   }
 
-  async previewDocumentNumber(applicationSlug: string | undefined, seriesKey: string) {
+  async previewDocumentNumber(
+    applicationSlug: string | undefined,
+    seriesKey: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
-    return { number: await this.config.previewNextDocumentNumber(applicationId, seriesKey) };
+    return {
+      number: await this.config.previewNextDocumentNumber(
+        applicationId,
+        seriesKey,
+      ),
+    };
   }
 }

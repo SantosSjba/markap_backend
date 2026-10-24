@@ -6,23 +6,29 @@ import { ClientPrismaMapper } from '../mappers/client-prisma.mapper';
 import type {
   ClientRepository,
   Client,
-  ClientType,
   CreateClientData,
   UpdateClientData,
   ClientDetail,
   ListClientsFilters,
   ListClientsResult,
   ClientStats,
-  SalesPipelineStatus,
 } from '@domain/repositories/client.repository';
 import { parseLocationCustom } from '@application/validators/client-address-location.validator';
 
 function toLocationCustomJson(
-  value: { country: string; department: string; province: string; district: string } | null | undefined,
+  value:
+    | {
+        country: string;
+        department: string;
+        province: string;
+        district: string;
+      }
+    | null
+    | undefined,
 ): Prisma.InputJsonValue | typeof Prisma.JsonNull | undefined {
   if (value === undefined) return undefined;
   if (value === null) return Prisma.JsonNull;
-  return value as Prisma.InputJsonValue;
+  return value;
 }
 
 @Injectable()
@@ -55,7 +61,9 @@ export class ClientPrismaRepository implements ClientRepository {
                   addressType: 'FISCAL',
                   addressLine: data.address.addressLine.trim(),
                   districtId: data.address.districtId,
-                  locationCustom: toLocationCustomJson(data.address.locationCustom),
+                  locationCustom: toLocationCustomJson(
+                    data.address.locationCustom,
+                  ),
                   reference: data.address.reference?.trim() || null,
                   isPrimary: true,
                 },
@@ -127,25 +135,42 @@ export class ClientPrismaRepository implements ClientRepository {
       where: { id },
       data: {
         ...(data.clientType !== undefined && { clientType: data.clientType }),
-        ...(data.documentTypeId !== undefined && { documentTypeId: data.documentTypeId }),
-        ...(data.documentNumber !== undefined && { documentNumber: data.documentNumber.trim() }),
+        ...(data.documentTypeId !== undefined && {
+          documentTypeId: data.documentTypeId,
+        }),
+        ...(data.documentNumber !== undefined && {
+          documentNumber: data.documentNumber.trim(),
+        }),
         ...(data.fullName !== undefined && { fullName: data.fullName.trim() }),
         ...(data.legalRepresentativeName !== undefined && {
           legalRepresentativeName: data.legalRepresentativeName?.trim() || null,
         }),
         ...(data.legalRepresentativePosition !== undefined && {
-          legalRepresentativePosition: data.legalRepresentativePosition?.trim() || null,
+          legalRepresentativePosition:
+            data.legalRepresentativePosition?.trim() || null,
         }),
-        ...(data.primaryPhone !== undefined && { primaryPhone: data.primaryPhone.trim() }),
-        ...(data.secondaryPhone !== undefined && { secondaryPhone: data.secondaryPhone?.trim() || null }),
+        ...(data.primaryPhone !== undefined && {
+          primaryPhone: data.primaryPhone.trim(),
+        }),
+        ...(data.secondaryPhone !== undefined && {
+          secondaryPhone: data.secondaryPhone?.trim() || null,
+        }),
         ...(data.primaryEmail !== undefined && {
           primaryEmail: data.primaryEmail?.trim() || null,
         }),
-        ...(data.secondaryEmail !== undefined && { secondaryEmail: data.secondaryEmail?.trim() || null }),
+        ...(data.secondaryEmail !== undefined && {
+          secondaryEmail: data.secondaryEmail?.trim() || null,
+        }),
         ...(data.notes !== undefined && { notes: data.notes?.trim() || null }),
-        ...(data.salesStatus !== undefined && { salesStatus: data.salesStatus }),
-        ...(data.leadOrigin !== undefined && { leadOrigin: data.leadOrigin?.trim() || null }),
-        ...(data.assignedAgentId !== undefined && { assignedAgentId: data.assignedAgentId }),
+        ...(data.salesStatus !== undefined && {
+          salesStatus: data.salesStatus,
+        }),
+        ...(data.leadOrigin !== undefined && {
+          leadOrigin: data.leadOrigin?.trim() || null,
+        }),
+        ...(data.assignedAgentId !== undefined && {
+          assignedAgentId: data.assignedAgentId,
+        }),
       },
     });
     if (data.address) {
@@ -159,7 +184,9 @@ export class ClientPrismaRepository implements ClientRepository {
             ...(data.address.addressLine !== undefined && {
               addressLine: data.address.addressLine.trim(),
             }),
-            ...(data.address.districtId !== undefined && { districtId: data.address.districtId }),
+            ...(data.address.districtId !== undefined && {
+              districtId: data.address.districtId,
+            }),
             ...(data.address.locationCustom !== undefined && {
               locationCustom: toLocationCustomJson(data.address.locationCustom),
             }),
@@ -196,7 +223,8 @@ export class ClientPrismaRepository implements ClientRepository {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
     const andParts: Record<string, unknown>[] = [
       { applicationId: app.id, deletedAt: null },
@@ -221,7 +249,10 @@ export class ClientPrismaRepository implements ClientRepository {
       } else if (st) {
         andParts.push({ clientType: { in: ['BUYER', 'OWNER'] } });
         andParts.push({
-          OR: [{ clientType: 'OWNER' }, { clientType: 'BUYER', salesStatus: st }],
+          OR: [
+            { clientType: 'OWNER' },
+            { clientType: 'BUYER', salesStatus: st },
+          ],
         });
       } else {
         andParts.push({ clientType: { in: ['BUYER', 'OWNER'] } });
@@ -268,70 +299,85 @@ export class ClientPrismaRepository implements ClientRepository {
       this.prisma.client.count({ where }),
     ]);
 
-    const ownerIds = data.filter((c) => c.clientType === 'OWNER').map((c) => c.id);
-    const tenantIds = data.filter((c) => c.clientType === 'TENANT').map((c) => c.id);
+    const ownerIds = data
+      .filter((c) => c.clientType === 'OWNER')
+      .map((c) => c.id);
+    const tenantIds = data
+      .filter((c) => c.clientType === 'TENANT')
+      .map((c) => c.id);
 
-    const [propertiesCountByOwner, rentalsCountByTenant, rentalsForOwners] = await Promise.all([
-      ownerIds.length > 0
-        ? this.prisma.property.groupBy({
-            by: ['ownerId'],
-            where: {
-              ownerId: { in: ownerIds },
-              deletedAt: null,
-              applicationId: app.id,
-            },
-            _count: { id: true },
-          })
-        : [],
-      tenantIds.length > 0
-        ? this.prisma.rental.groupBy({
-            by: ['tenantId'],
-            where: {
-              tenantId: { in: tenantIds },
-              deletedAt: null,
-              applicationId: app.id,
-            },
-            _count: { id: true },
-          })
-        : [],
-      ownerIds.length > 0
-        ? this.prisma.rental.findMany({
-            where: {
-              deletedAt: null,
-              applicationId: app.id,
-              property: {
+    const [propertiesCountByOwner, rentalsCountByTenant, rentalsForOwners] =
+      await Promise.all([
+        ownerIds.length > 0
+          ? this.prisma.property.groupBy({
+              by: ['ownerId'],
+              where: {
                 ownerId: { in: ownerIds },
                 deletedAt: null,
                 applicationId: app.id,
               },
-            },
-            select: { property: { select: { ownerId: true } } },
-          })
-        : [],
-    ]);
+              _count: { id: true },
+            })
+          : [],
+        tenantIds.length > 0
+          ? this.prisma.rental.groupBy({
+              by: ['tenantId'],
+              where: {
+                tenantId: { in: tenantIds },
+                deletedAt: null,
+                applicationId: app.id,
+              },
+              _count: { id: true },
+            })
+          : [],
+        ownerIds.length > 0
+          ? this.prisma.rental.findMany({
+              where: {
+                deletedAt: null,
+                applicationId: app.id,
+                property: {
+                  ownerId: { in: ownerIds },
+                  deletedAt: null,
+                  applicationId: app.id,
+                },
+              },
+              select: { property: { select: { ownerId: true } } },
+            })
+          : [],
+      ]);
 
     const propertiesCountMap = new Map<string, number>();
-    for (const row of propertiesCountByOwner as { ownerId: string; _count: { id: number } }[]) {
+    for (const row of propertiesCountByOwner as {
+      ownerId: string;
+      _count: { id: number };
+    }[]) {
       propertiesCountMap.set(row.ownerId, row._count.id);
     }
     const rentalsByTenantMap = new Map<string, number>();
-    for (const row of rentalsCountByTenant as { tenantId: string; _count: { id: number } }[]) {
+    for (const row of rentalsCountByTenant as {
+      tenantId: string;
+      _count: { id: number };
+    }[]) {
       rentalsByTenantMap.set(row.tenantId, row._count.id);
     }
     const rentalsByOwnerMap = new Map<string, number>();
     for (const r of rentalsForOwners as { property: { ownerId: string } }[]) {
       const ownerId = r.property?.ownerId;
-      if (ownerId) rentalsByOwnerMap.set(ownerId, (rentalsByOwnerMap.get(ownerId) ?? 0) + 1);
+      if (ownerId)
+        rentalsByOwnerMap.set(
+          ownerId,
+          (rentalsByOwnerMap.get(ownerId) ?? 0) + 1,
+        );
     }
 
     return {
       data: data.map((c) =>
         ClientPrismaMapper.toListItem(
           c,
-          c.clientType === 'OWNER' ? propertiesCountMap.get(c.id) ?? 0 : 0,
+          c.clientType === 'OWNER' ? (propertiesCountMap.get(c.id) ?? 0) : 0,
           c.clientType === 'TENANT'
-            ? rentalsByTenantMap.get(c.id) ?? 0
-            : rentalsByOwnerMap.get(c.id) ?? 0,
+            ? (rentalsByTenantMap.get(c.id) ?? 0)
+            : (rentalsByOwnerMap.get(c.id) ?? 0),
         ),
       ),
       total,
@@ -350,13 +396,25 @@ export class ClientPrismaRepository implements ClientRepository {
       const interiorTypes = { in: ['RESIDENTIAL', 'CORPORATE'] };
       const [total, residential, corporate, active] = await Promise.all([
         this.prisma.client.count({
-          where: { applicationId: app.id, deletedAt: null, clientType: interiorTypes },
+          where: {
+            applicationId: app.id,
+            deletedAt: null,
+            clientType: interiorTypes,
+          },
         }),
         this.prisma.client.count({
-          where: { applicationId: app.id, deletedAt: null, clientType: 'RESIDENTIAL' },
+          where: {
+            applicationId: app.id,
+            deletedAt: null,
+            clientType: 'RESIDENTIAL',
+          },
         }),
         this.prisma.client.count({
-          where: { applicationId: app.id, deletedAt: null, clientType: 'CORPORATE' },
+          where: {
+            applicationId: app.id,
+            deletedAt: null,
+            clientType: 'CORPORATE',
+          },
         }),
         this.prisma.client.count({
           where: {
@@ -392,7 +450,11 @@ export class ClientPrismaRepository implements ClientRepository {
         await Promise.all([
           this.prisma.client.count({ where: allVentas }),
           this.prisma.client.count({
-            where: { applicationId: app.id, deletedAt: null, clientType: 'OWNER' },
+            where: {
+              applicationId: app.id,
+              deletedAt: null,
+              clientType: 'OWNER',
+            },
           }),
           this.prisma.client.count({
             where: { ...buyerBase, isActive: true },

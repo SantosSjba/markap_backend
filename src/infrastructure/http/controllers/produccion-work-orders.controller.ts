@@ -1,3 +1,4 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   Body,
   Controller,
@@ -11,7 +12,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
   CancelProduccionWorkOrderUseCase,
@@ -68,20 +74,27 @@ export class ProduccionWorkOrdersController {
     @Query('clientId') clientId?: string,
     @Query('priority') priority?: string,
   ) {
-    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const;
+    const validStatuses = [
+      'PENDING',
+      'IN_PROGRESS',
+      'COMPLETED',
+      'CANCELLED',
+    ] as const;
     const validPriorities = ['LOW', 'NORMAL', 'HIGH', 'URGENT'] as const;
 
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'produccion',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(100, Math.max(1, parseInt(limit ?? '20', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       search: search?.trim() || undefined,
       status: validStatuses.includes(status as ProduccionWorkOrderStatus)
         ? (status as ProduccionWorkOrderStatus)
         : undefined,
       stageKey: stageKey?.trim() || undefined,
       clientId: clientId?.trim() || undefined,
-      priority: validPriorities.includes(priority as ProduccionWorkOrderPriority)
+      priority: validPriorities.includes(
+        priority as ProduccionWorkOrderPriority,
+      )
         ? (priority as ProduccionWorkOrderPriority)
         : undefined,
     });
@@ -102,7 +115,10 @@ export class ProduccionWorkOrdersController {
   }
 
   @Get(':id')
-  getById(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  getById(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.getByIdUc.execute(id, applicationSlug ?? 'produccion');
   }
 
@@ -117,7 +133,10 @@ export class ProduccionWorkOrdersController {
 
   @Post(':id/start')
   @ApiOperation({ summary: 'Iniciar producción' })
-  start(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  start(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.startUc.execute(id, applicationSlug ?? 'produccion');
   }
 
@@ -129,34 +148,54 @@ export class ProduccionWorkOrdersController {
     @Body() dto: UpdateProduccionWorkOrderStageDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateStageUc.execute(id, stageId, applicationSlug ?? 'produccion', dto);
+    return this.updateStageUc.execute(
+      id,
+      stageId,
+      applicationSlug ?? 'produccion',
+      dto,
+    );
   }
 
   @Post(':id/complete')
   @ApiOperation({ summary: 'Marcar OT como terminada' })
-  complete(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  complete(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.completeUc.execute(id, applicationSlug ?? 'produccion');
   }
 
   @Post(':id/cancel')
-  cancel(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  cancel(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.cancelUc.execute(id, applicationSlug ?? 'produccion');
   }
 
   @Post(':id/consume-materials')
-  @ApiOperation({ summary: 'Registrar consumo de materiales (salida inventario)' })
+  @ApiOperation({
+    summary: 'Registrar consumo de materiales (salida inventario)',
+  })
   consumeMaterials(
     @Param('id') id: string,
     @Body() dto: ConsumeProduccionWorkOrderMaterialsDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.consumeUc.execute(id, applicationSlug ?? 'produccion', dto.items);
+    return this.consumeUc.execute(
+      id,
+      applicationSlug ?? 'produccion',
+      dto.items,
+    );
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiResponse({ status: 204 })
-  delete(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  delete(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.deleteUc.execute(id, applicationSlug ?? 'produccion');
   }
 }

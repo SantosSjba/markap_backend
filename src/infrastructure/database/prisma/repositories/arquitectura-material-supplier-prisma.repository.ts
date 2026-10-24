@@ -66,13 +66,17 @@ export class ArquitecturaMaterialSupplierPrismaRepository implements Arquitectur
     };
   }
 
-  private async loadDetail(id: string): Promise<ArquitecturaSupplierDetail | null> {
+  private async loadDetail(
+    id: string,
+  ): Promise<ArquitecturaSupplierDetail | null> {
     const row = await this.prisma.arquitecturaMaterialSupplier.findUnique({
       where: { id },
       include: {
         catalogLinks: {
           include: {
-            catalogMaterial: { select: { code: true, name: true, category: true } },
+            catalogMaterial: {
+              select: { code: true, name: true, category: true },
+            },
           },
           orderBy: { id: 'asc' },
         },
@@ -104,7 +108,9 @@ export class ArquitecturaMaterialSupplierPrismaRepository implements Arquitectur
     };
   }
 
-  async list(filters: ListArquitecturaMaterialSuppliersFilters): Promise<ListArquitecturaMaterialSuppliersResult> {
+  async list(
+    filters: ListArquitecturaMaterialSuppliersFilters,
+  ): Promise<ListArquitecturaMaterialSuppliersResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
@@ -112,7 +118,9 @@ export class ArquitecturaMaterialSupplierPrismaRepository implements Arquitectur
       return { data: [], total: 0, page: filters.page, limit: filters.limit };
     }
 
-    const andParts: Prisma.ArquitecturaMaterialSupplierWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.ArquitecturaMaterialSupplierWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       andParts.push({
@@ -125,7 +133,9 @@ export class ArquitecturaMaterialSupplierPrismaRepository implements Arquitectur
       });
     }
 
-    const where: Prisma.ArquitecturaMaterialSupplierWhereInput = { AND: andParts };
+    const where: Prisma.ArquitecturaMaterialSupplierWhereInput = {
+      AND: andParts,
+    };
 
     const [rows, total] = await Promise.all([
       this.prisma.arquitecturaMaterialSupplier.findMany({
@@ -155,14 +165,19 @@ export class ArquitecturaMaterialSupplierPrismaRepository implements Arquitectur
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ArquitecturaSupplierDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ArquitecturaSupplierDetail | null> {
     const row = await this.prisma.arquitecturaMaterialSupplier.findUnique({
       where: { id },
       include: {
         application: { select: { slug: true } },
         catalogLinks: {
           include: {
-            catalogMaterial: { select: { code: true, name: true, category: true } },
+            catalogMaterial: {
+              select: { code: true, name: true, category: true },
+            },
           },
           orderBy: { id: 'asc' },
         },
@@ -175,7 +190,11 @@ export class ArquitecturaMaterialSupplierPrismaRepository implements Arquitectur
       },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
 
     return {
       id: row.id,
@@ -214,13 +233,20 @@ export class ArquitecturaMaterialSupplierPrismaRepository implements Arquitectur
     return detail;
   }
 
-  async update(id: string, payload: UpdateArquitecturaMaterialSupplierPayload): Promise<ArquitecturaSupplierDetail> {
+  async update(
+    id: string,
+    payload: UpdateArquitecturaMaterialSupplierPayload,
+  ): Promise<ArquitecturaSupplierDetail> {
     const patch: Prisma.ArquitecturaMaterialSupplierUncheckedUpdateInput = {};
-    if (payload.companyName !== undefined) patch.companyName = payload.companyName.trim();
+    if (payload.companyName !== undefined)
+      patch.companyName = payload.companyName.trim();
     if (payload.ruc !== undefined) patch.ruc = payload.ruc.trim();
-    if (payload.contactName !== undefined) patch.contactName = payload.contactName?.trim() || null;
-    if (payload.phone !== undefined) patch.phone = payload.phone?.trim() || null;
-    if (payload.email !== undefined) patch.email = payload.email?.trim() || null;
+    if (payload.contactName !== undefined)
+      patch.contactName = payload.contactName?.trim() || null;
+    if (payload.phone !== undefined)
+      patch.phone = payload.phone?.trim() || null;
+    if (payload.email !== undefined)
+      patch.email = payload.email?.trim() || null;
 
     await this.prisma.arquitecturaMaterialSupplier.update({
       where: { id },
@@ -247,9 +273,12 @@ export class ArquitecturaMaterialSupplierPrismaRepository implements Arquitectur
     const material = await this.prisma.arquitecturaCatalogMaterial.findUnique({
       where: { id: catalogMaterialId },
     });
-    if (!supplier || !material) throw new Error('Supplier or material not found');
+    if (!supplier || !material)
+      throw new Error('Supplier or material not found');
     if (supplier.applicationId !== material.applicationId) {
-      throw new Error('Proveedor y material deben pertenecer a la misma aplicación');
+      throw new Error(
+        'Proveedor y material deben pertenecer a la misma aplicación',
+      );
     }
 
     await this.prisma.arquitecturaSupplierCatalogLink.create({
@@ -267,7 +296,9 @@ export class ArquitecturaMaterialSupplierPrismaRepository implements Arquitectur
   }
 
   async unlinkCatalogMaterial(linkId: string): Promise<void> {
-    await this.prisma.arquitecturaSupplierCatalogLink.delete({ where: { id: linkId } });
+    await this.prisma.arquitecturaSupplierCatalogLink.delete({
+      where: { id: linkId },
+    });
   }
 
   async recordPurchase(
@@ -279,11 +310,14 @@ export class ArquitecturaMaterialSupplierPrismaRepository implements Arquitectur
     });
     if (!supplier) throw new Error('Supplier not found');
 
-    let catalogMaterialId: string | null = payload.catalogMaterialId?.trim() || null;
+    const catalogMaterialId: string | null =
+      payload.catalogMaterialId?.trim() || null;
     if (catalogMaterialId) {
-      const material = await this.prisma.arquitecturaCatalogMaterial.findUnique({
-        where: { id: catalogMaterialId },
-      });
+      const material = await this.prisma.arquitecturaCatalogMaterial.findUnique(
+        {
+          where: { id: catalogMaterialId },
+        },
+      );
       if (!material || material.applicationId !== supplier.applicationId) {
         throw new Error('Material de catálogo inválido para este proveedor');
       }

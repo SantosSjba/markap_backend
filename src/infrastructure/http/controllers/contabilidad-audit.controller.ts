@@ -1,5 +1,11 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadAuditOperationsService } from '../../../application/services/contabilidad-audit-operations.service';
 
@@ -33,7 +39,7 @@ export class ContabilidadAuditController {
       action,
       dateFrom,
       dateTo,
-      limit: limit ? parseInt(limit, 10) : undefined,
+      limit: limit ? parseIntegerQuery(limit, 20, 1, 100) : undefined,
     });
   }
 }

@@ -27,7 +27,12 @@ describe('parseInteriorBudgetExcel', () => {
   });
 
   it('lanza error si no hay partidas', () => {
-    const buffer = buildWorkbookBuffer([['DESCRIPCIÓN', 'COSTO'], ['TOTAL', 1000]]);
-    expect(() => parseInteriorBudgetExcel(buffer)).toThrow(/No se encontraron secciones/);
+    const buffer = buildWorkbookBuffer([
+      ['DESCRIPCIÓN', 'COSTO'],
+      ['TOTAL', 1000],
+    ]);
+    expect(() => parseInteriorBudgetExcel(buffer)).toThrow(
+      /No se encontraron secciones/,
+    );
   });
 });

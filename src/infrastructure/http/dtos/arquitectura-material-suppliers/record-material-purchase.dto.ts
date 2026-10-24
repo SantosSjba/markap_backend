@@ -1,8 +1,17 @@
 ﻿import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class RecordArquitecturaMaterialPurchaseDto {
-  @ApiPropertyOptional({ description: 'Material del catálogo (opcional si es compra genérica)' })
+  @ApiPropertyOptional({
+    description: 'Material del catálogo (opcional si es compra genérica)',
+  })
   @IsOptional()
   @IsUUID()
   catalogMaterialId?: string | null;

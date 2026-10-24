@@ -19,18 +19,23 @@ export const CONTABILIDAD_INVENTORY_OFFSET_TYPE = {
 export const CONTABILIDAD_INVENTORY_EXPENSE_ACCOUNT_CODE = '601';
 export const CONTABILIDAD_INVENTORY_COGS_ACCOUNT_CODE = '691';
 
-export const CONTABILIDAD_INVENTORY_MOVEMENT_TYPE_LABELS: Record<string, string> = {
+export const CONTABILIDAD_INVENTORY_MOVEMENT_TYPE_LABELS: Record<
+  string,
+  string
+> = {
   IN: 'Entrada',
   OUT: 'Salida',
   ADJUST: 'Ajuste',
 };
 
-export const CONTABILIDAD_INVENTORY_COST_METHOD_LABELS: Record<string, string> = {
-  PROMEDIO: 'Promedio ponderado',
-  PEPS: 'PEPS (FIFO)',
-};
+export const CONTABILIDAD_INVENTORY_COST_METHOD_LABELS: Record<string, string> =
+  {
+    PROMEDIO: 'Promedio ponderado',
+    PEPS: 'PEPS (FIFO)',
+  };
 
-export const CONTABILIDAD_INVENTORY_OFFSET_TYPE_LABELS: Record<string, string> = {
-  PAYABLE: 'Cuentas por pagar (421)',
-  EXPENSE: 'Gasto / compra (601)',
-};
+export const CONTABILIDAD_INVENTORY_OFFSET_TYPE_LABELS: Record<string, string> =
+  {
+    PAYABLE: 'Cuentas por pagar (421)',
+    EXPENSE: 'Gasto / compra (601)',
+  };

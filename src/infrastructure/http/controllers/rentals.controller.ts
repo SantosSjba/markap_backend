@@ -1,3 +1,4 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   Controller,
   Get,
@@ -35,11 +36,13 @@ import { UpdateRentalDto } from '../dtos/rentals/update-rental.dto';
 import { UpsertRentalFinancialConfigDto } from '../dtos/rentals/upsert-rental-financial-config.dto';
 import { SaveCommunicationNoteDto } from '../dtos/rentals/save-communication-note.dto';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { GenArchivoService, NotificationsService } from '../../../application/services';
+import {
+  GenArchivoService,
+  NotificationsService,
+} from '../../../application/services';
 import type { UploadedFile as MulterUploadedFile } from '../../../common/types';
 
-const RENTAL_FILE_FIELDS = ['contractFile', 'deliveryActFile'] as const;
-type RentalFileField = (typeof RENTAL_FILE_FIELDS)[number];
+type RentalFileField = 'contractFile' | 'deliveryActFile';
 
 @ApiTags('Rentals')
 @Controller('rentals')
@@ -69,27 +72,40 @@ export class RentalsController {
       },
       file,
     );
-    await this.prisma.rentalAttachment.deleteMany({
-      where: { rentalId, type },
-    });
-    await this.prisma.rentalAttachment.create({
-      data: {
-        rentalId,
-        type,
-        archivoId: archivo.id,
-        filePath: archivo.objectKey,
-        originalFileName: archivo.originalFileName,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM rentals WHERE id = ${rentalId} FOR UPDATE`;
+      await tx.rentalAttachment.deleteMany({ where: { rentalId, type } });
+      await tx.rentalAttachment.create({
+        data: {
+          rentalId,
+          type,
+          archivoId: archivo.id,
+          filePath: archivo.objectKey,
+          originalFileName: archivo.originalFileName,
+        },
+      });
     });
   }
 
   @Get()
   @ApiOperation({ summary: 'Listar alquileres (paginado)' })
-  @ApiQuery({ name: 'applicationSlug', required: false, description: 'Slug de la aplicación (default: alquileres)' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Slug de la aplicación (default: alquileres)',
+  })
   @ApiQuery({ name: 'page', required: false, description: 'Página (1-based)' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items por página' })
-  @ApiQuery({ name: 'search', required: false, description: 'Buscar por código, propiedad, inquilino o propietario' })
-  @ApiQuery({ name: 'status', required: false, enum: ['ACTIVE', 'EXPIRED', 'CANCELLED'] })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Buscar por código, propiedad, inquilino o propietario',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['ACTIVE', 'EXPIRED', 'CANCELLED'],
+  })
   @ApiResponse({ status: 200 })
   async list(
     @Query('applicationSlug') applicationSlug?: string,
@@ -100,8 +116,8 @@ export class RentalsController {
   ) {
     return this.rental.listRentals({
       applicationSlug: applicationSlug ?? 'alquileres',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
       status,
     });
@@ -123,7 +139,9 @@ export class RentalsController {
   }
 
   @Get(':id/financial-breakdown')
-  @ApiOperation({ summary: 'Desglose financiero (utilidad, gastos, impuestos, agentes)' })
+  @ApiOperation({
+    summary: 'Desglose financiero (utilidad, gastos, impuestos, agentes)',
+  })
   @ApiResponse({ status: 200 })
   async getFinancialBreakdown(@Param('id') id: string) {
     const rental = await this.rental.getRentalById(id);
@@ -143,7 +161,9 @@ export class RentalsController {
   }
 
   @Put(':id/financial-config')
-  @ApiOperation({ summary: 'Crear o actualizar configuración financiera del alquiler' })
+  @ApiOperation({
+    summary: 'Crear o actualizar configuración financiera del alquiler',
+  })
   @ApiResponse({ status: 200 })
   async upsertFinancialConfig(
     @Param('id') id: string,
@@ -189,9 +209,7 @@ export class RentalsController {
     @UploadedFiles() files?: UploadedFilesMap<RentalFileField>,
   ) {
     const tenantIds =
-      dto.tenantIds !== undefined
-        ? parseTenantIds(dto.tenantIds)
-        : undefined;
+      dto.tenantIds !== undefined ? parseTenantIds(dto.tenantIds) : undefined;
     if (tenantIds !== undefined && tenantIds.length === 0) {
       throw new BadRequestException('Debe indicar al menos un inquilino');
     }
@@ -201,9 +219,14 @@ export class RentalsController {
       startDate: dto.startDate,
       endDate: dto.endDate,
       currency: dto.currency,
-      monthlyAmount: dto.monthlyAmount != null ? Number(dto.monthlyAmount) : undefined,
-      securityDeposit: dto.securityDeposit != null ? Number(dto.securityDeposit) : dto.securityDeposit,
-      paymentDueDay: dto.paymentDueDay != null ? Number(dto.paymentDueDay) : undefined,
+      monthlyAmount:
+        dto.monthlyAmount != null ? Number(dto.monthlyAmount) : undefined,
+      securityDeposit:
+        dto.securityDeposit != null
+          ? Number(dto.securityDeposit)
+          : dto.securityDeposit,
+      paymentDueDay:
+        dto.paymentDueDay != null ? Number(dto.paymentDueDay) : undefined,
       notes: dto.notes,
       status: dto.status,
       enableExpirationAlerts: dto.enableExpirationAlerts,
@@ -215,10 +238,20 @@ export class RentalsController {
     const deliveryActFile = getFirstFile(files?.deliveryActFile);
 
     if (contractFile) {
-      await this.persistRentalAttachment(id, 'alquileres', 'CONTRACT', contractFile);
+      await this.persistRentalAttachment(
+        id,
+        'alquileres',
+        'CONTRACT',
+        contractFile,
+      );
     }
     if (deliveryActFile) {
-      await this.persistRentalAttachment(id, 'alquileres', 'DELIVERY_ACT', deliveryActFile);
+      await this.persistRentalAttachment(
+        id,
+        'alquileres',
+        'DELIVERY_ACT',
+        deliveryActFile,
+      );
     }
 
     return rental;
@@ -287,10 +320,20 @@ export class RentalsController {
     const deliveryActFile = getFirstFile(files?.deliveryActFile);
 
     if (contractFile) {
-      await this.persistRentalAttachment(rental.id, appSlug, 'CONTRACT', contractFile);
+      await this.persistRentalAttachment(
+        rental.id,
+        appSlug,
+        'CONTRACT',
+        contractFile,
+      );
     }
     if (deliveryActFile) {
-      await this.persistRentalAttachment(rental.id, appSlug, 'DELIVERY_ACT', deliveryActFile);
+      await this.persistRentalAttachment(
+        rental.id,
+        appSlug,
+        'DELIVERY_ACT',
+        deliveryActFile,
+      );
     }
 
     try {

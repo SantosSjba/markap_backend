@@ -23,9 +23,12 @@ class CreateClientAddressDto {
   districtId: string;
 
   @ApiPropertyOptional({
-    description: 'Ubicación libre cuando distrito = Otros (país, departamento, provincia, distrito)',
+    description:
+      'Ubicación libre cuando distrito = Otros (país, departamento, provincia, distrito)',
   })
-  @ValidateIf((o) => o.districtId === UBIGEO_OTHER_DISTRICT_ID)
+  @ValidateIf(
+    (o: { districtId?: string }) => o.districtId === UBIGEO_OTHER_DISTRICT_ID,
+  )
   @IsObject()
   @ValidateNested()
   @Type(() => LocationCustomDto)
@@ -43,7 +46,9 @@ export class CreateClientDto {
   @IsString()
   applicationId?: string;
 
-  @ApiPropertyOptional({ description: 'Slug de la aplicación (ej: alquileres, ventas)' })
+  @ApiPropertyOptional({
+    description: 'Slug de la aplicación (ej: alquileres, ventas)',
+  })
   @IsOptional()
   @IsString()
   applicationSlug?: string;
@@ -87,7 +92,9 @@ export class CreateClientDto {
   @IsString()
   secondaryPhone?: string | null;
 
-  @ApiPropertyOptional({ description: 'Email principal (opcional en alquileres y ventas)' })
+  @ApiPropertyOptional({
+    description: 'Email principal (opcional en alquileres y ventas)',
+  })
   @IsOptional()
   @IsString()
   primaryEmail?: string | null;
@@ -125,7 +132,10 @@ export class CreateClientDto {
     description:
       'Dirección obligatoria para propietario (ventas o alquileres) e inquilino (alquileres). Opcional en interiorismo.',
   })
-  @ValidateIf((o) => o.clientType === 'OWNER' || o.clientType === 'TENANT')
+  @ValidateIf(
+    (o: { clientType?: string }) =>
+      o.clientType === 'OWNER' || o.clientType === 'TENANT',
+  )
   @IsObject()
   @ValidateNested()
   @Type(() => CreateClientAddressDto)

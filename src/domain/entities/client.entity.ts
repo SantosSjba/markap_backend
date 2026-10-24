@@ -70,7 +70,11 @@ export class ClientDetail extends Client {
       district: {
         id: string;
         name: string;
-        province: { id: string; name: string; department: { id: string; name: string } };
+        province: {
+          id: string;
+          name: string;
+          department: { id: string; name: string };
+        };
       };
     } | null,
     public readonly assignedAgent: { id: string; fullName: string } | null,

@@ -5,7 +5,12 @@ export class RentalPrismaMapper {
   static toListItem(r: {
     id: string;
     startDate: Date;
-    property: { id: string; addressLine: string; code: string; owner: { id: string; fullName: string } };
+    property: {
+      id: string;
+      addressLine: string;
+      code: string;
+      owner: { id: string; fullName: string };
+    };
     tenant: { id: string; fullName: string };
     tenants?: { client: { id: string; fullName: string } }[];
     endDate: Date;
@@ -17,12 +22,15 @@ export class RentalPrismaMapper {
   }): RentalListItem {
     const year = dateOnlyYear(r.startDate);
     const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
-    const n = (v: number | { toNumber?: () => number } | null | undefined): number | null => {
+    const n = (
+      v: number | { toNumber?: () => number } | null | undefined,
+    ): number | null => {
       if (v == null) return null;
-      return typeof v === 'number' ? v : v.toNumber?.() ?? Number(v);
+      return typeof v === 'number' ? v : (v.toNumber?.() ?? Number(v));
     };
-    const tenantClients =
-      r.tenants?.length ? r.tenants.map((rt) => rt.client) : [r.tenant];
+    const tenantClients = r.tenants?.length
+      ? r.tenants.map((rt) => rt.client)
+      : [r.tenant];
     const primary = tenantClients[0] ?? r.tenant;
     const tenantName = tenantClients.map((t) => t.fullName).join(', ');
 
@@ -62,9 +70,11 @@ export class RentalPrismaMapper {
     enableExpirationAlerts: boolean;
     enableCollectionAlerts: boolean;
   }): Rental {
-    const n = (v: number | { toNumber?: () => number } | null | undefined): number | null => {
+    const n = (
+      v: number | { toNumber?: () => number } | null | undefined,
+    ): number | null => {
       if (v == null) return null;
-      return typeof v === 'number' ? v : v.toNumber?.() ?? Number(v);
+      return typeof v === 'number' ? v : (v.toNumber?.() ?? Number(v));
     };
     return new Rental(
       r.id,

@@ -39,11 +39,12 @@ export const CONTABILIDAD_SALES_STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Anulada',
 };
 
-export const CONTABILIDAD_SALES_TAX_AFFECTATION_LABELS: Record<string, string> = {
-  TAXABLE: 'Gravada',
-  EXEMPT: 'Exonerada',
-  NON_TAXABLE: 'Inafecta',
-};
+export const CONTABILIDAD_SALES_TAX_AFFECTATION_LABELS: Record<string, string> =
+  {
+    TAXABLE: 'Gravada',
+    EXEMPT: 'Exonerada',
+    NON_TAXABLE: 'Inafecta',
+  };
 
 export const CONTABILIDAD_SALES_DOCUMENT_TYPE_LABELS: Record<string, string> = {
   FACTURA: 'Factura',

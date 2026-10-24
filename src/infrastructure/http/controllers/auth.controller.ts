@@ -1,3 +1,4 @@
+import { AdminGuard } from '../../../common/guards/admin.guard';
 import {
   Controller,
   Post,
@@ -35,9 +36,11 @@ export class AuthController {
   constructor(@Inject(AUTH_PORT) private readonly auth: AuthPort) {}
 
   @Post('register')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Registrar un nuevo usuario (requiere autenticación)' })
+  @ApiOperation({
+    summary: 'Registrar un nuevo usuario (requiere autenticación)',
+  })
   @ApiResponse({
     status: 201,
     description: 'Usuario registrado exitosamente',
@@ -129,7 +132,9 @@ export class AuthController {
     description: 'Si el email existe, se enviará un código por correo',
   })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
-  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ message: string }> {
+  async forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
     await this.auth.requestPasswordReset({ email: dto.email });
     return {
       message:

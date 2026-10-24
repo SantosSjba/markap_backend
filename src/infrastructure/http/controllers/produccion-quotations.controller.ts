@@ -1,3 +1,4 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   Body,
   Controller,
@@ -12,7 +13,14 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiProduces, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiProduces,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
@@ -64,8 +72,8 @@ export class ProduccionQuotationsController {
     const validStatuses = ['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED'] as const;
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'produccion',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(100, Math.max(1, parseInt(limit ?? '20', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       search: search?.trim() || undefined,
       status: validStatuses.includes(status as ProduccionQuotationStatus)
         ? (status as ProduccionQuotationStatus)
@@ -83,7 +91,9 @@ export class ProduccionQuotationsController {
   }
 
   @Get(':id/pdf')
-  @ApiOperation({ summary: 'Vista imprimible HTML de cotización (exportar a PDF)' })
+  @ApiOperation({
+    summary: 'Vista imprimible HTML de cotización (exportar a PDF)',
+  })
   @ApiProduces('text/html')
   @ApiQuery({ name: 'applicationSlug', required: false })
   async quotationPdfHtml(
@@ -91,12 +101,18 @@ export class ProduccionQuotationsController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Res() res: Response,
   ) {
-    const html = await this.renderPdfUc.execute(id, applicationSlug ?? 'produccion');
+    const html = await this.renderPdfUc.execute(
+      id,
+      applicationSlug ?? 'produccion',
+    );
     res.type('html').send(html);
   }
 
   @Get(':id')
-  getById(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  getById(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.getByIdUc.execute(id, applicationSlug ?? 'produccion');
   }
 
@@ -111,31 +127,46 @@ export class ProduccionQuotationsController {
 
   @Post(':id/send')
   @ApiOperation({ summary: 'Enviar cotización al cliente' })
-  send(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  send(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.sendUc.execute(id, applicationSlug ?? 'produccion');
   }
 
   @Post(':id/accept')
   @ApiOperation({ summary: 'Marcar cotización como aceptada' })
-  accept(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  accept(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.acceptUc.execute(id, applicationSlug ?? 'produccion');
   }
 
   @Post(':id/reject')
-  reject(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  reject(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.rejectUc.execute(id, applicationSlug ?? 'produccion');
   }
 
   @Post(':id/convert-to-order')
   @ApiOperation({ summary: 'Generar pedido desde cotización aceptada' })
-  convertToOrder(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  convertToOrder(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.convertUc.execute(id, applicationSlug ?? 'produccion');
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiResponse({ status: 204 })
-  delete(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  delete(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.deleteUc.execute(id, applicationSlug ?? 'produccion');
   }
 }

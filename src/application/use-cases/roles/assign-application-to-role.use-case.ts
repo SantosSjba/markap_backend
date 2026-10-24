@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type { RoleRepository } from '@domain/repositories/role.repository';
-import { APPLICATION_REPOSITORY, ROLE_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  ROLE_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 
@@ -24,7 +27,11 @@ export class AssignApplicationToRoleUseCase {
       this.applicationRepository.findById(input.applicationId),
     ]);
     if (!role) throw new EntityNotFoundException('Role', input.roleId);
-    if (!application) throw new EntityNotFoundException('Application', input.applicationId);
-    await this.roleRepository.assignApplication(input.roleId, input.applicationId);
+    if (!application)
+      throw new EntityNotFoundException('Application', input.applicationId);
+    await this.roleRepository.assignApplication(
+      input.roleId,
+      input.applicationId,
+    );
   }
 }

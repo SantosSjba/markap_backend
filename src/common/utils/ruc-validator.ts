@@ -6,13 +6,18 @@ export function isValidPeruvianRuc(ruc: string): boolean {
   if (!/^\d{11}$/.test(normalized)) return false;
 
   const prefix = normalized.slice(0, 2);
-  if (prefix !== '10' && prefix !== '15' && prefix !== '17' && prefix !== '20') {
+  if (
+    prefix !== '10' &&
+    prefix !== '15' &&
+    prefix !== '17' &&
+    prefix !== '20'
+  ) {
     return false;
   }
 
   let sum = 0;
   for (let i = 0; i < 10; i++) {
-    sum += Number(normalized[i]) * RUC_WEIGHTS[i]!;
+    sum += Number(normalized[i]) * RUC_WEIGHTS[i];
   }
 
   const remainder = sum % 11;

@@ -20,9 +20,11 @@ export class PaymentPrismaMapper {
     updatedAt: Date;
     createdBy: string | null;
   }): Payment {
-    const num = (v: number | { toNumber?: () => number } | null | undefined): number | null => {
+    const num = (
+      v: number | { toNumber?: () => number } | null | undefined,
+    ): number | null => {
       if (v == null) return null;
-      return typeof v === 'number' ? v : v.toNumber?.() ?? Number(v);
+      return typeof v === 'number' ? v : (v.toNumber?.() ?? Number(v));
     };
     return new Payment(
       p.id,

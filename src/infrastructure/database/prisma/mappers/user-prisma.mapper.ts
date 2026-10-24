@@ -31,6 +31,6 @@ export class UserPrismaMapper {
    * Convierte múltiples registros de Prisma a entidades de dominio
    */
   static toDomainList(rawList: PrismaUser[]): User[] {
-    return rawList.map(UserPrismaMapper.toDomain);
+    return rawList.map((row) => UserPrismaMapper.toDomain(row));
   }
 }

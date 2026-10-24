@@ -101,8 +101,18 @@ export interface ContabilidadSolRepository {
   getPeriodLegalEntity(
     applicationId: string,
     periodId: string,
-  ): Promise<{ legalEntityId: string; ruc: string; legalName: string; code: string; year: number; month: number } | null>;
-  getPackageContent(applicationId: string, logId: string): Promise<string | null>;
+  ): Promise<{
+    legalEntityId: string;
+    ruc: string;
+    legalName: string;
+    code: string;
+    year: number;
+    month: number;
+  } | null>;
+  getPackageContent(
+    applicationId: string,
+    logId: string,
+  ): Promise<string | null>;
   findDeclarationById(
     applicationId: string,
     logId: string,

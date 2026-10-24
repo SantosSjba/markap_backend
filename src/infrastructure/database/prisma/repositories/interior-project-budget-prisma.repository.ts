@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import {
@@ -37,8 +41,13 @@ function numOrNull(v: unknown): number | null {
 export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBudgetRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async assertProject(projectId: string, applicationSlug = 'interiorismo') {
-    const app = await this.prisma.application.findUnique({ where: { slug: applicationSlug } });
+  private async assertProject(
+    projectId: string,
+    applicationSlug = 'interiorismo',
+  ) {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: applicationSlug },
+    });
     if (!app) throw new NotFoundException('Aplicación no encontrada');
     const project = await this.prisma.interiorProject.findFirst({
       where: { id: projectId, applicationId: app.id, deletedAt: null },
@@ -76,7 +85,9 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     });
     const purchase = computeLineItemPurchase({
       actualPurchaseCost: numOrNull(row.actualPurchaseCost),
-      supplierPayments: row.supplierPayments.map((p) => ({ amount: num(p.amount) })),
+      supplierPayments: row.supplierPayments.map((p) => ({
+        amount: num(p.amount),
+      })),
     });
     return {
       id: row.id,
@@ -107,7 +118,10 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     };
   }
 
-  private async loadBudget(projectId: string, applicationSlug?: string): Promise<ProjectBudgetDetailDto | null> {
+  private async loadBudget(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<ProjectBudgetDetailDto | null> {
     const project = await this.assertProject(projectId, applicationSlug);
     const utilityPct = num(project.defaultUtilityPct);
     const igvPct = num(project.defaultIgvPct);
@@ -129,26 +143,32 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     let priceTotal = 0;
     let actualPurchaseCostTotal = 0;
 
-    const mappedSections: ProjectBudgetSectionDto[] = sections.map((section) => {
-      const lineItems = section.lineItems.map((item) =>
-        this.mapLineItem(item, utilityPct, igvPct),
-      );
-      const sectionTotal = lineItems.reduce((sum, item) => sum + item.price, 0);
-      for (const item of lineItems) {
-        budgetedCostTotal += item.budgetedCost;
-        utilityTotal += item.utilityAmount;
-        igvTotal += item.igvAmount;
-        priceTotal += item.price;
-        if (item.actualPurchaseCost != null) actualPurchaseCostTotal += item.actualPurchaseCost;
-      }
-      return {
-        id: section.id,
-        name: section.name,
-        sortOrder: section.sortOrder,
-        lineItems,
-        sectionTotal: Math.round(sectionTotal * 100) / 100,
-      };
-    });
+    const mappedSections: ProjectBudgetSectionDto[] = sections.map(
+      (section) => {
+        const lineItems = section.lineItems.map((item) =>
+          this.mapLineItem(item, utilityPct, igvPct),
+        );
+        const sectionTotal = lineItems.reduce(
+          (sum, item) => sum + item.price,
+          0,
+        );
+        for (const item of lineItems) {
+          budgetedCostTotal += item.budgetedCost;
+          utilityTotal += item.utilityAmount;
+          igvTotal += item.igvAmount;
+          priceTotal += item.price;
+          if (item.actualPurchaseCost != null)
+            actualPurchaseCostTotal += item.actualPurchaseCost;
+        }
+        return {
+          id: section.id,
+          name: section.name,
+          sortOrder: section.sortOrder,
+          lineItems,
+          sectionTotal: Math.round(sectionTotal * 100) / 100,
+        };
+      },
+    );
 
     return {
       projectId: project.id,
@@ -166,16 +186,23 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
         utilityTotal: Math.round(utilityTotal * 100) / 100,
         igvTotal: Math.round(igvTotal * 100) / 100,
         priceTotal: Math.round(priceTotal * 100) / 100,
-        actualPurchaseCostTotal: Math.round(actualPurchaseCostTotal * 100) / 100,
+        actualPurchaseCostTotal:
+          Math.round(actualPurchaseCostTotal * 100) / 100,
       },
     };
   }
 
-  async getBudget(projectId: string, applicationSlug?: string): Promise<ProjectBudgetDetailDto | null> {
+  async getBudget(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<ProjectBudgetDetailDto | null> {
     return this.loadBudget(projectId, applicationSlug);
   }
 
-  async getSettlement(projectId: string, applicationSlug?: string): Promise<ProjectSettlementDto | null> {
+  async getSettlement(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<ProjectSettlementDto | null> {
     const budget = await this.loadBudget(projectId, applicationSlug);
     if (!budget) return null;
 
@@ -184,7 +211,9 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
       orderBy: { paidAt: 'asc' },
     });
 
-    const lineItemPrices = budget.sections.flatMap((s) => s.lineItems.map((i) => i.price));
+    const lineItemPrices = budget.sections.flatMap((s) =>
+      s.lineItems.map((i) => i.price),
+    );
     const lineItemActualCosts = budget.sections.flatMap((s) =>
       s.lineItems.map((i) => i.actualPurchaseCost),
     );
@@ -249,7 +278,10 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     const section = await this.prisma.interiorProjectSection.findFirst({
       where: { id: sectionId, projectId },
       include: {
-        lineItems: { include: { supplierPayments: true }, orderBy: { sortOrder: 'asc' } },
+        lineItems: {
+          include: { supplierPayments: true },
+          orderBy: { sortOrder: 'asc' },
+        },
       },
     });
     if (!section) throw new NotFoundException('Sección no encontrada');
@@ -258,7 +290,9 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
       where: { id: sectionId },
       data: {
         ...(payload.name !== undefined ? { name: payload.name.trim() } : {}),
-        ...(payload.sortOrder !== undefined ? { sortOrder: payload.sortOrder } : {}),
+        ...(payload.sortOrder !== undefined
+          ? { sortOrder: payload.sortOrder }
+          : {}),
       },
       include: {
         lineItems: {
@@ -270,23 +304,32 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
 
     const utilityPct = num(project.defaultUtilityPct);
     const igvPct = num(project.defaultIgvPct);
-    const lineItems = updated.lineItems.map((item) => this.mapLineItem(item, utilityPct, igvPct));
+    const lineItems = updated.lineItems.map((item) =>
+      this.mapLineItem(item, utilityPct, igvPct),
+    );
     return {
       id: updated.id,
       name: updated.name,
       sortOrder: updated.sortOrder,
       lineItems,
-      sectionTotal: Math.round(lineItems.reduce((s, i) => s + i.price, 0) * 100) / 100,
+      sectionTotal:
+        Math.round(lineItems.reduce((s, i) => s + i.price, 0) * 100) / 100,
     };
   }
 
-  async deleteSection(projectId: string, sectionId: string, applicationSlug?: string): Promise<void> {
+  async deleteSection(
+    projectId: string,
+    sectionId: string,
+    applicationSlug?: string,
+  ): Promise<void> {
     await this.assertProject(projectId, applicationSlug);
     const section = await this.prisma.interiorProjectSection.findFirst({
       where: { id: sectionId, projectId },
     });
     if (!section) throw new NotFoundException('Sección no encontrada');
-    await this.prisma.interiorProjectSection.delete({ where: { id: sectionId } });
+    await this.prisma.interiorProjectSection.delete({
+      where: { id: sectionId },
+    });
   }
 
   async createLineItem(
@@ -322,7 +365,11 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
       include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
     });
 
-    return this.mapLineItem(row, num(project.defaultUtilityPct), num(project.defaultIgvPct));
+    return this.mapLineItem(
+      row,
+      num(project.defaultUtilityPct),
+      num(project.defaultIgvPct),
+    );
   }
 
   async updateLineItem(
@@ -341,7 +388,9 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     if (payload.supplierId !== undefined) {
       if (payload.supplierId === null) {
         resolvedSupplierName =
-          payload.supplierName !== undefined ? payload.supplierName?.trim() || null : undefined;
+          payload.supplierName !== undefined
+            ? payload.supplierName?.trim() || null
+            : undefined;
       } else {
         const supplier = await this.prisma.interiorMaterialSupplier.findUnique({
           where: { id: payload.supplierId },
@@ -354,8 +403,12 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     const row = await this.prisma.interiorProjectLineItem.update({
       where: { id: lineItemId },
       data: {
-        ...(payload.description !== undefined ? { description: payload.description.trim() } : {}),
-        ...(payload.sortOrder !== undefined ? { sortOrder: payload.sortOrder } : {}),
+        ...(payload.description !== undefined
+          ? { description: payload.description.trim() }
+          : {}),
+        ...(payload.sortOrder !== undefined
+          ? { sortOrder: payload.sortOrder }
+          : {}),
         ...(payload.budgetedCost !== undefined
           ? { budgetedCost: new Prisma.Decimal(payload.budgetedCost) }
           : {}),
@@ -373,12 +426,18 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
           : payload.supplierName !== undefined
             ? { supplierName: payload.supplierName?.trim() || null }
             : {}),
-        ...(payload.supplierId !== undefined ? { supplierId: payload.supplierId } : {}),
+        ...(payload.supplierId !== undefined
+          ? { supplierId: payload.supplierId }
+          : {}),
       },
       include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
     });
 
-    return this.mapLineItem(row, num(project.defaultUtilityPct), num(project.defaultIgvPct));
+    return this.mapLineItem(
+      row,
+      num(project.defaultUtilityPct),
+      num(project.defaultIgvPct),
+    );
   }
 
   async deleteLineItem(
@@ -391,7 +450,9 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
       where: { id: lineItemId, section: { projectId } },
     });
     if (!existing) throw new NotFoundException('Partida no encontrada');
-    await this.prisma.interiorProjectLineItem.delete({ where: { id: lineItemId } });
+    await this.prisma.interiorProjectLineItem.delete({
+      where: { id: lineItemId },
+    });
   }
 
   async createSupplierPayment(
@@ -428,7 +489,11 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
       where: { id: payload.lineItemId },
       include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
     });
-    return this.mapLineItem(row, num(project.defaultUtilityPct), num(project.defaultIgvPct));
+    return this.mapLineItem(
+      row,
+      num(project.defaultUtilityPct),
+      num(project.defaultIgvPct),
+    );
   }
 
   async deleteSupplierPayment(
@@ -437,11 +502,15 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     applicationSlug?: string,
   ): Promise<void> {
     await this.assertProject(projectId, applicationSlug);
-    const payment = await this.prisma.interiorLineItemSupplierPayment.findFirst({
-      where: { id: paymentId, lineItem: { section: { projectId } } },
-    });
+    const payment = await this.prisma.interiorLineItemSupplierPayment.findFirst(
+      {
+        where: { id: paymentId, lineItem: { section: { projectId } } },
+      },
+    );
     if (!payment) throw new NotFoundException('Abono no encontrado');
-    await this.prisma.interiorLineItemSupplierPayment.delete({ where: { id: paymentId } });
+    await this.prisma.interiorLineItemSupplierPayment.delete({
+      where: { id: paymentId },
+    });
   }
 
   async duplicateBudgetSnapshot(projectId: string, applicationSlug?: string) {
@@ -499,7 +568,10 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     };
   }
 
-  async syncActualCostsFromExecution(projectId: string, applicationSlug?: string) {
+  async syncActualCostsFromExecution(
+    projectId: string,
+    applicationSlug?: string,
+  ) {
     await this.assertProject(projectId, applicationSlug);
 
     const costs = await this.prisma.interiorExecutionActualCost.findMany({
@@ -514,8 +586,12 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     for (const cost of costs) {
       const key = cost.concept.trim().toLowerCase();
       if (!key) continue;
-      amountByConcept.set(key, (amountByConcept.get(key) ?? 0) + num(cost.amount));
-      if (!displayByConcept.has(key)) displayByConcept.set(key, cost.concept.trim());
+      amountByConcept.set(
+        key,
+        (amountByConcept.get(key) ?? 0) + num(cost.amount),
+      );
+      if (!displayByConcept.has(key))
+        displayByConcept.set(key, cost.concept.trim());
     }
 
     const lineItems = await this.prisma.interiorProjectLineItem.findMany({
@@ -550,7 +626,10 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     return { updatedLineItems, unmatchedConcepts, budget };
   }
 
-  async assertProjectExists(projectId: string, applicationSlug?: string): Promise<void> {
+  async assertProjectExists(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<void> {
     await this.assertProject(projectId, applicationSlug);
   }
 
@@ -570,7 +649,11 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     projectId: string,
     sections: Array<{
       name: string;
-      lineItems: Array<{ description: string; budgetedCost: number; hasIgv?: boolean }>;
+      lineItems: Array<{
+        description: string;
+        budgetedCost: number;
+        hasIgv?: boolean;
+      }>;
     }>,
     replace: boolean,
     applicationSlug?: string,
@@ -578,7 +661,9 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
     await this.assertProject(projectId, applicationSlug);
 
     if (replace) {
-      await this.prisma.interiorProjectSection.deleteMany({ where: { projectId } });
+      await this.prisma.interiorProjectSection.deleteMany({
+        where: { projectId },
+      });
     }
 
     const maxOrder = await this.prisma.interiorProjectSection.aggregate({

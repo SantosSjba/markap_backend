@@ -1,4 +1,6 @@
-export const CONTABILIDAD_TAXES_REPOSITORY = Symbol('ContabilidadTaxesRepository');
+export const CONTABILIDAD_TAXES_REPOSITORY = Symbol(
+  'ContabilidadTaxesRepository',
+);
 
 export interface ContabilidadIgvSummaryDto {
   periodId: string;
@@ -153,7 +155,11 @@ export interface CreatePerceptionInput {
 export interface ContabilidadTaxesRepository {
   ensureDefaults(applicationId: string): Promise<void>;
 
-  getIgvSummary(applicationId: string, periodId: string, igvPercent: number): Promise<ContabilidadIgvSummaryDto>;
+  getIgvSummary(
+    applicationId: string,
+    periodId: string,
+    igvPercent: number,
+  ): Promise<ContabilidadIgvSummaryDto>;
   getPdt621Export(
     applicationId: string,
     periodId: string,
@@ -161,7 +167,9 @@ export interface ContabilidadTaxesRepository {
     igvPercent: number,
   ): Promise<ContabilidadPdt621ExportDto>;
 
-  listDetraccionRates(applicationId: string): Promise<ContabilidadDetraccionRateDto[]>;
+  listDetraccionRates(
+    applicationId: string,
+  ): Promise<ContabilidadDetraccionRateDto[]>;
   listDetracciones(
     applicationId: string,
     filters: { periodId?: string; status?: string },

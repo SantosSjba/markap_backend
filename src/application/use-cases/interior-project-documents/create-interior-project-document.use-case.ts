@@ -15,7 +15,9 @@ export class CreateInteriorProjectDocumentUseCase {
   async execute(data: CreateInteriorProjectDocumentData) {
     const row = await this.repo.create(data);
     if (!row) {
-      throw new NotFoundException('Proyecto no encontrado o aplicación inválida');
+      throw new NotFoundException(
+        'Proyecto no encontrado o aplicación inválida',
+      );
     }
     return row;
   }

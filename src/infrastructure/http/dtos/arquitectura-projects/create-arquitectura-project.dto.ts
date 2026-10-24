@@ -18,13 +18,16 @@ import {
 const PROJECT_STATUSES = [...ARQUITECTURA_PROJECT_STATUS_CODES] as const;
 
 export class CreateArquitecturaProjectDto {
-  @ApiPropertyOptional({ description: 'Slug aplicación (debe ser arquitectura)' })
+  @ApiPropertyOptional({
+    description: 'Slug aplicación (debe ser arquitectura)',
+  })
   @IsOptional()
   @IsString()
   applicationSlug?: string;
 
   @ApiPropertyOptional({
-    description: 'Código único del proyecto; si se omite se asigna desde numeración ARQ-PRY',
+    description:
+      'Código único del proyecto; si se omite se asigna desde numeración ARQ-PRY',
     example: 'ARQ-PRY-0001',
   })
   @IsOptional()
@@ -60,7 +63,10 @@ export class CreateArquitecturaProjectDto {
   @MaxLength(120)
   city?: string | null;
 
-  @ApiPropertyOptional({ enum: ['I', 'II', 'III'], description: 'Nivel de intervención' })
+  @ApiPropertyOptional({
+    enum: ['I', 'II', 'III'],
+    description: 'Nivel de intervención',
+  })
   @IsOptional()
   @IsString()
   @IsIn(['I', 'II', 'III'])

@@ -1,4 +1,6 @@
-export const CONTABILIDAD_SALES_REPOSITORY = Symbol('ContabilidadSalesRepository');
+export const CONTABILIDAD_SALES_REPOSITORY = Symbol(
+  'ContabilidadSalesRepository',
+);
 
 export interface ContabilidadCustomerDto {
   id: string;
@@ -212,20 +214,42 @@ export interface CreateSalesCollectionInput {
 }
 
 export interface ContabilidadSalesRepository {
-  listCustomers(applicationId: string, filters: ListCustomersFilters): Promise<ContabilidadCustomerDto[]>;
-  findCustomerById(applicationId: string, id: string): Promise<ContabilidadCustomerDto | null>;
-  createCustomer(applicationId: string, input: CreateCustomerInput): Promise<ContabilidadCustomerDto>;
-  updateCustomer(applicationId: string, id: string, input: UpdateCustomerInput): Promise<ContabilidadCustomerDto>;
+  listCustomers(
+    applicationId: string,
+    filters: ListCustomersFilters,
+  ): Promise<ContabilidadCustomerDto[]>;
+  findCustomerById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadCustomerDto | null>;
+  createCustomer(
+    applicationId: string,
+    input: CreateCustomerInput,
+  ): Promise<ContabilidadCustomerDto>;
+  updateCustomer(
+    applicationId: string,
+    id: string,
+    input: UpdateCustomerInput,
+  ): Promise<ContabilidadCustomerDto>;
 
-  listInvoices(applicationId: string, filters: ListSalesInvoicesFilters): Promise<ContabilidadSalesInvoiceDto[]>;
-  findInvoiceById(applicationId: string, id: string): Promise<ContabilidadSalesInvoiceDto | null>;
+  listInvoices(
+    applicationId: string,
+    filters: ListSalesInvoicesFilters,
+  ): Promise<ContabilidadSalesInvoiceDto[]>;
+  findInvoiceById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadSalesInvoiceDto | null>;
   createInvoiceWithJournal(
     applicationId: string,
     input: CreateSalesInvoiceInput,
     igvPercent: number,
     createdBy?: string | null,
   ): Promise<ContabilidadSalesInvoiceDto>;
-  cancelInvoice(applicationId: string, id: string): Promise<ContabilidadSalesInvoiceDto>;
+  cancelInvoice(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadSalesInvoiceDto>;
 
   listCreditNotes(
     applicationId: string,

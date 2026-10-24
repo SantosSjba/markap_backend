@@ -52,7 +52,9 @@ export class ArquitecturaCatalogMaterialPrismaRepository implements Arquitectura
     };
   }
 
-  async list(filters: ListArquitecturaCatalogMaterialsFilters): Promise<ListArquitecturaCatalogMaterialsResult> {
+  async list(
+    filters: ListArquitecturaCatalogMaterialsFilters,
+  ): Promise<ListArquitecturaCatalogMaterialsResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
@@ -60,9 +62,13 @@ export class ArquitecturaCatalogMaterialPrismaRepository implements Arquitectura
       return { data: [], total: 0, page: filters.page, limit: filters.limit };
     }
 
-    const andParts: Prisma.ArquitecturaCatalogMaterialWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.ArquitecturaCatalogMaterialWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.category?.trim()) {
-      andParts.push({ category: { equals: filters.category.trim(), mode: 'insensitive' } });
+      andParts.push({
+        category: { equals: filters.category.trim(), mode: 'insensitive' },
+      });
     }
     if (filters.search?.trim()) {
       const q = filters.search.trim();
@@ -76,7 +82,9 @@ export class ArquitecturaCatalogMaterialPrismaRepository implements Arquitectura
       });
     }
 
-    const where: Prisma.ArquitecturaCatalogMaterialWhereInput = { AND: andParts };
+    const where: Prisma.ArquitecturaCatalogMaterialWhereInput = {
+      AND: andParts,
+    };
 
     const [rows, total] = await Promise.all([
       this.prisma.arquitecturaCatalogMaterial.findMany({
@@ -108,7 +116,10 @@ export class ArquitecturaCatalogMaterialPrismaRepository implements Arquitectura
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ArquitecturaCatalogMaterialDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ArquitecturaCatalogMaterialDetail | null> {
     const row = await this.prisma.arquitecturaCatalogMaterial.findUnique({
       where: { id },
       include: {
@@ -117,9 +128,12 @@ export class ArquitecturaCatalogMaterialPrismaRepository implements Arquitectura
       },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
-    const { application: _app, ...mat } = row;
-    return this.mapDetail(mat);
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
+    return this.mapDetail(row);
   }
 
   async create(
@@ -153,14 +167,20 @@ export class ArquitecturaCatalogMaterialPrismaRepository implements Arquitectura
     return this.mapDetail(row);
   }
 
-  async update(id: string, payload: UpdateArquitecturaCatalogMaterialPayload): Promise<ArquitecturaCatalogMaterialDetail> {
+  async update(
+    id: string,
+    payload: UpdateArquitecturaCatalogMaterialPayload,
+  ): Promise<ArquitecturaCatalogMaterialDetail> {
     const patch: Prisma.ArquitecturaCatalogMaterialUncheckedUpdateInput = {};
     if (payload.name !== undefined) patch.name = payload.name.trim();
-    if (payload.category !== undefined) patch.category = payload.category.trim();
+    if (payload.category !== undefined)
+      patch.category = payload.category.trim();
     if (payload.brand !== undefined) patch.brand = payload.brand.trim();
     if (payload.unit !== undefined) patch.unit = payload.unit.trim();
-    if (payload.price !== undefined) patch.price = new Prisma.Decimal(payload.price);
-    if (payload.stock !== undefined) patch.stock = new Prisma.Decimal(payload.stock);
+    if (payload.price !== undefined)
+      patch.price = new Prisma.Decimal(payload.price);
+    if (payload.stock !== undefined)
+      patch.stock = new Prisma.Decimal(payload.stock);
     if (payload.technicalSheetUrl !== undefined) {
       patch.technicalSheetUrl = payload.technicalSheetUrl?.trim() || null;
     }
@@ -171,7 +191,9 @@ export class ArquitecturaCatalogMaterialPrismaRepository implements Arquitectura
         data: patch,
       });
       if (payload.imageUrls !== undefined) {
-        await tx.arquitecturaCatalogMaterialImage.deleteMany({ where: { materialId: id } });
+        await tx.arquitecturaCatalogMaterialImage.deleteMany({
+          where: { materialId: id },
+        });
         const urls = payload.imageUrls.map((u) => u.trim()).filter(Boolean);
         if (urls.length > 0) {
           await tx.arquitecturaCatalogMaterialImage.createMany({
@@ -186,7 +208,8 @@ export class ArquitecturaCatalogMaterialPrismaRepository implements Arquitectura
     });
 
     const detail = await this.findById(id);
-    if (!detail) throw new Error('ArquitecturaCatalogMaterial update: not found');
+    if (!detail)
+      throw new Error('ArquitecturaCatalogMaterial update: not found');
     return detail;
   }
 

@@ -20,7 +20,9 @@ const SLUG = 'produccion';
 
 function assertProduccion(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug produccion');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug produccion',
+    );
   }
 }
 
@@ -55,7 +57,10 @@ export class GetProduccionFurnitureByIdUseCase {
     private readonly repo: ProduccionFurnitureRepository,
   ) {}
 
-  async execute(id: string, applicationSlug?: string): Promise<ProduccionFurnitureDetail> {
+  async execute(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionFurnitureDetail> {
     const row = await this.repo.findById(id, applicationSlug ?? SLUG);
     if (!row) throw new NotFoundException('Mueble no encontrado');
     return row;
@@ -72,15 +77,20 @@ export class CreateProduccionFurnitureUseCase {
     private readonly prisma: PrismaService,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateProduccionFurniturePayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateProduccionFurniturePayload,
+  ) {
     assertProduccion(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación produccion no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación produccion no encontrada');
 
     const dup = await this.prisma.produccionFurniture.findFirst({
       where: { applicationId: app.id, code: payload.code.trim() },
     });
-    if (dup) throw new BadRequestException('Ya existe un mueble con ese código');
+    if (dup)
+      throw new BadRequestException('Ya existe un mueble con ese código');
 
     return this.repo.create(app.id, payload);
   }
@@ -93,7 +103,11 @@ export class UpdateProduccionFurnitureUseCase {
     private readonly repo: ProduccionFurnitureRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateProduccionFurniturePayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateProduccionFurniturePayload,
+  ) {
     assertProduccion(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Mueble no encontrado');

@@ -16,7 +16,9 @@ import {
 export class ContabilidadAuditPrismaRepository implements ContabilidadAuditRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(input: CreateContabilidadAuditLogInput): Promise<ContabilidadAuditLogDto> {
+  async create(
+    input: CreateContabilidadAuditLogInput,
+  ): Promise<ContabilidadAuditLogDto> {
     const row = await this.prisma.contabilidadAuditLog.create({
       data: {
         applicationId: input.applicationId,
@@ -26,7 +28,9 @@ export class ContabilidadAuditPrismaRepository implements ContabilidadAuditRepos
         action: input.action,
         userId: input.userId ?? null,
         summary: input.summary ?? null,
-        payload: input.payload ? (input.payload as Prisma.InputJsonValue) : undefined,
+        payload: input.payload
+          ? (input.payload as Prisma.InputJsonValue)
+          : undefined,
       },
       include: {
         legalEntity: { select: { code: true, ruc: true } },
@@ -36,7 +40,10 @@ export class ContabilidadAuditPrismaRepository implements ContabilidadAuditRepos
     return this.mapRow(row);
   }
 
-  async list(applicationId: string, filters: ListContabilidadAuditLogsFilters): Promise<ContabilidadAuditLogDto[]> {
+  async list(
+    applicationId: string,
+    filters: ListContabilidadAuditLogsFilters,
+  ): Promise<ContabilidadAuditLogDto[]> {
     const where: Prisma.ContabilidadAuditLogWhereInput = { applicationId };
 
     if (filters.legalEntityId) where.legalEntityId = filters.legalEntityId;
@@ -45,8 +52,10 @@ export class ContabilidadAuditPrismaRepository implements ContabilidadAuditRepos
 
     if (filters.dateFrom || filters.dateTo) {
       where.createdAt = {};
-      if (filters.dateFrom) where.createdAt.gte = startOfLimaDayInstant(filters.dateFrom);
-      if (filters.dateTo) where.createdAt.lte = endOfLimaDayInstant(filters.dateTo);
+      if (filters.dateFrom)
+        where.createdAt.gte = startOfLimaDayInstant(filters.dateFrom);
+      if (filters.dateTo)
+        where.createdAt.lte = endOfLimaDayInstant(filters.dateTo);
     }
 
     const rows = await this.prisma.contabilidadAuditLog.findMany({
@@ -81,7 +90,10 @@ export class ContabilidadAuditPrismaRepository implements ContabilidadAuditRepos
       action: row.action,
       userId: row.userId,
       summary: row.summary,
-      payload: row.payload && typeof row.payload === 'object' ? (row.payload as Record<string, unknown>) : null,
+      payload:
+        row.payload && typeof row.payload === 'object'
+          ? (row.payload as Record<string, unknown>)
+          : null,
       createdAt: row.createdAt.toISOString(),
     };
   }

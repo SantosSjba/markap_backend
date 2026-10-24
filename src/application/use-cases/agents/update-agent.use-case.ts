@@ -1,12 +1,15 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { AGENT_REPOSITORY, APPLICATION_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  AGENT_REPOSITORY,
+  APPLICATION_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import type { AgentRepository } from '@domain/repositories/agent.repository';
 import type { UpdateAgentData } from '@domain/repositories/agent.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 import { Email, Phone } from '@domain/value-objects';
 
-export interface UpdateAgentInput extends UpdateAgentData {}
+export type UpdateAgentInput = UpdateAgentData;
 
 @Injectable()
 export class UpdateAgentUseCase {

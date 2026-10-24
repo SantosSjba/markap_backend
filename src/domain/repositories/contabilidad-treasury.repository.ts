@@ -1,4 +1,6 @@
-export const CONTABILIDAD_TREASURY_REPOSITORY = Symbol('ContabilidadTreasuryRepository');
+export const CONTABILIDAD_TREASURY_REPOSITORY = Symbol(
+  'ContabilidadTreasuryRepository',
+);
 
 export interface ContabilidadCashBoxDto {
   id: string;
@@ -151,15 +153,43 @@ export interface UpsertReconciliationInput {
 export interface ContabilidadTreasuryRepository {
   ensureDefaults(applicationId: string): Promise<void>;
   listCashBoxes(applicationId: string): Promise<ContabilidadCashBoxDto[]>;
-  findCashBoxById(applicationId: string, id: string): Promise<ContabilidadCashBoxDto | null>;
-  createCashBox(applicationId: string, input: CreateCashBoxInput): Promise<ContabilidadCashBoxDto>;
-  updateCashBox(applicationId: string, id: string, input: UpdateCashBoxInput): Promise<ContabilidadCashBoxDto>;
-  listBankAccounts(applicationId: string): Promise<ContabilidadBankAccountDto[]>;
-  findBankAccountById(applicationId: string, id: string): Promise<ContabilidadBankAccountDto | null>;
-  createBankAccount(applicationId: string, input: CreateBankAccountInput): Promise<ContabilidadBankAccountDto>;
-  updateBankAccount(applicationId: string, id: string, input: UpdateBankAccountInput): Promise<ContabilidadBankAccountDto>;
-  listMovements(applicationId: string, filters: ListTreasuryMovementsFilters): Promise<ContabilidadTreasuryMovementDto[]>;
-  findMovementById(applicationId: string, id: string): Promise<ContabilidadTreasuryMovementDto | null>;
+  findCashBoxById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadCashBoxDto | null>;
+  createCashBox(
+    applicationId: string,
+    input: CreateCashBoxInput,
+  ): Promise<ContabilidadCashBoxDto>;
+  updateCashBox(
+    applicationId: string,
+    id: string,
+    input: UpdateCashBoxInput,
+  ): Promise<ContabilidadCashBoxDto>;
+  listBankAccounts(
+    applicationId: string,
+  ): Promise<ContabilidadBankAccountDto[]>;
+  findBankAccountById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadBankAccountDto | null>;
+  createBankAccount(
+    applicationId: string,
+    input: CreateBankAccountInput,
+  ): Promise<ContabilidadBankAccountDto>;
+  updateBankAccount(
+    applicationId: string,
+    id: string,
+    input: UpdateBankAccountInput,
+  ): Promise<ContabilidadBankAccountDto>;
+  listMovements(
+    applicationId: string,
+    filters: ListTreasuryMovementsFilters,
+  ): Promise<ContabilidadTreasuryMovementDto[]>;
+  findMovementById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadTreasuryMovementDto | null>;
   createMovementWithJournal(
     applicationId: string,
     input: CreateTreasuryMovementInput,
@@ -185,5 +215,8 @@ export interface ContabilidadTreasuryRepository {
     movementId: string,
     reconciled: boolean,
   ): Promise<ContabilidadBankReconciliationDto>;
-  closeReconciliation(applicationId: string, id: string): Promise<ContabilidadBankReconciliationDto>;
+  closeReconciliation(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadBankReconciliationDto>;
 }

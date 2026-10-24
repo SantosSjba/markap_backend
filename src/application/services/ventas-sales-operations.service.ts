@@ -92,7 +92,9 @@ export class VentasSalesOperationsService {
     return this.ventasSales.listSaleFinancingChannels();
   }
 
-  private async resolveVentasApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveVentasApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertVentasApp(applicationSlug ?? VENTAS_SLUG);
     const app = await this.applicationRepository.findBySlug(VENTAS_SLUG);
     if (!app) throw new EntityNotFoundException('Application', VENTAS_SLUG);
@@ -117,7 +119,10 @@ export class VentasSalesOperationsService {
 
   async listProcesses(f: ListSaleProcessesFilters) {
     assertVentasApp(f.applicationSlug);
-    return this.ventasSales.listSaleProcesses({ ...f, applicationSlug: VENTAS_SLUG });
+    return this.ventasSales.listSaleProcesses({
+      ...f,
+      applicationSlug: VENTAS_SLUG,
+    });
   }
 
   async createProcess(
@@ -141,10 +146,13 @@ export class VentasSalesOperationsService {
       }[];
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
 
     const buyerIds = Array.from(
-      new Set([body.buyerClientId, ...(body.buyerClientIds ?? [])].filter(Boolean)),
+      new Set(
+        [body.buyerClientId, ...(body.buyerClientIds ?? [])].filter(Boolean),
+      ),
     );
     if (!buyerIds.length) {
       throw new BadRequestException('Debe indicar al menos un comprador.');
@@ -166,10 +174,11 @@ export class VentasSalesOperationsService {
       throw new EntityNotFoundException('Property', body.propertyId);
     }
     const ownerIds = Array.from(
-      new Set([
-        property.ownerId,
-        ...(property.owners?.map((o) => o.id) ?? []),
-      ].filter(Boolean)),
+      new Set(
+        [property.ownerId, ...(property.owners?.map((o) => o.id) ?? [])].filter(
+          Boolean,
+        ),
+      ),
     );
     for (const ownerId of ownerIds) {
       const owner = await this.clientRepository.findById(ownerId);
@@ -186,7 +195,9 @@ export class VentasSalesOperationsService {
     if (body.agentId) {
       const ag = await this.agentRepository.findById(body.agentId);
       if (!ag || ag.applicationId !== applicationId) {
-        throw new BadRequestException('El asesor no existe o no pertenece a Ventas.');
+        throw new BadRequestException(
+          'El asesor no existe o no pertenece a Ventas.',
+        );
       }
     }
 
@@ -242,7 +253,8 @@ export class VentasSalesOperationsService {
         );
       }
 
-      const calculationType = row.calculationType === 'FIXED' ? 'FIXED' : 'PERCENT';
+      const calculationType =
+        row.calculationType === 'FIXED' ? 'FIXED' : 'PERCENT';
       let amount = 0;
       let percentApplied: number | null = null;
 
@@ -272,7 +284,9 @@ export class VentasSalesOperationsService {
       }[] = [];
       for (const d of row.deductibles ?? []) {
         if (d.amount == null || d.amount < 0) {
-          throw new BadRequestException('Cada deducible debe tener un monto válido.');
+          throw new BadRequestException(
+            'Cada deducible debe tener un monto válido.',
+          );
         }
         deductibles.push({
           deductibleType: assertValidDeductibleType(d.deductibleType),
@@ -282,7 +296,10 @@ export class VentasSalesOperationsService {
       }
 
       const net = computeNetPayable(amount, deductibles);
-      const paymentParts = resolvePaymentPartAmounts(net, row.paymentParts ?? []);
+      const paymentParts = resolvePaymentPartAmounts(
+        net,
+        row.paymentParts ?? [],
+      );
       assertPaymentPartsMatchNet(net, paymentParts);
 
       resolvedCommissions.push({
@@ -300,7 +317,9 @@ export class VentasSalesOperationsService {
     if (primaryAgentId && !agentIds.has(primaryAgentId)) {
       const ag = await this.agentRepository.findById(primaryAgentId);
       if (!ag || ag.applicationId !== applicationId) {
-        throw new BadRequestException('El asesor del proceso no existe o no pertenece a Ventas.');
+        throw new BadRequestException(
+          'El asesor del proceso no existe o no pertenece a Ventas.',
+        );
       }
     }
 
@@ -321,14 +340,18 @@ export class VentasSalesOperationsService {
   }
 
   async getProcessById(id: string, applicationSlug?: string) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     let row = await this.ventasSales.getSaleProcessById(id, applicationId);
     if (!row) throw new EntityNotFoundException('SaleProcess', id);
 
     const ownersOnRow = (row as { owners?: unknown[] }).owners ?? [];
     const propertyId = (row as { propertyId?: string }).propertyId;
     if (!ownersOnRow.length && propertyId) {
-      await this.ventasSales.ensureSaleProcessOwnerLinksFromProperty(id, propertyId);
+      await this.ventasSales.ensureSaleProcessOwnerLinksFromProperty(
+        id,
+        propertyId,
+      );
       row = await this.ventasSales.getSaleProcessById(id, applicationId);
       if (!row) throw new EntityNotFoundException('SaleProcess', id);
     }
@@ -348,8 +371,12 @@ export class VentasSalesOperationsService {
       lostReason?: string | null;
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
-    const existing = await this.ventasSales.getSaleProcessById(id, applicationId);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
+    const existing = await this.ventasSales.getSaleProcessById(
+      id,
+      applicationId,
+    );
     if (!existing) throw new EntityNotFoundException('SaleProcess', id);
 
     const cur = existing as {
@@ -361,12 +388,17 @@ export class VentasSalesOperationsService {
     if (body.agentId) {
       const ag = await this.agentRepository.findById(body.agentId);
       if (!ag || ag.applicationId !== applicationId) {
-        throw new BadRequestException('El asesor no existe o no pertenece a Ventas.');
+        throw new BadRequestException(
+          'El asesor no existe o no pertenece a Ventas.',
+        );
       }
     }
 
     if (cur.status === 'LOST') {
-      if (body.pipelineStage !== undefined && body.pipelineStage !== cur.pipelineStage) {
+      if (
+        body.pipelineStage !== undefined &&
+        body.pipelineStage !== cur.pipelineStage
+      ) {
         throw new BadRequestException(
           'La venta está registrada como caída. No se puede modificar la etapa del pipeline.',
         );
@@ -379,7 +411,10 @@ export class VentasSalesOperationsService {
     }
 
     if (cur.status === 'WON') {
-      if (body.pipelineStage !== undefined && body.pipelineStage !== cur.pipelineStage) {
+      if (
+        body.pipelineStage !== undefined &&
+        body.pipelineStage !== cur.pipelineStage
+      ) {
         throw new BadRequestException(
           'El proceso ya está ganado. No se puede cambiar la etapa del pipeline.',
         );
@@ -400,9 +435,14 @@ export class VentasSalesOperationsService {
 
     if (body.pipelineStage !== undefined) {
       if (!isVentasPipelineStage(body.pipelineStage)) {
-        throw new BadRequestException(`Etapa inválida: ${VENTAS_PIPELINE_STAGES.join(', ')}`);
+        throw new BadRequestException(
+          `Etapa inválida: ${VENTAS_PIPELINE_STAGES.join(', ')}`,
+        );
       }
-      if (cur.status === 'ACTIVE' && !isForwardPipelineStage(cur.pipelineStage, body.pipelineStage)) {
+      if (
+        cur.status === 'ACTIVE' &&
+        !isForwardPipelineStage(cur.pipelineStage, body.pipelineStage)
+      ) {
         throw new BadRequestException(
           'No se puede retroceder de etapa. Si la venta no continúa, registre la venta como caída.',
         );
@@ -453,11 +493,15 @@ export class VentasSalesOperationsService {
 
     if (markingLost) {
       const reason = patch.lostReason ?? '';
-      const lost = await this.ventasSales.applySaleProcessLost(id, applicationId, {
-        lostReason: reason,
-        closedAt: patch.closedAt ?? new Date(),
-        activityDescription: reason,
-      });
+      const lost = await this.ventasSales.applySaleProcessLost(
+        id,
+        applicationId,
+        {
+          lostReason: reason,
+          closedAt: patch.closedAt ?? new Date(),
+          activityDescription: reason,
+        },
+      );
       if (!lost) {
         throw new BadRequestException('No se pudo registrar la venta caída.');
       }
@@ -478,7 +522,8 @@ export class VentasSalesOperationsService {
     applicationSlug: string | undefined,
     body: { text: string; createdBy?: string | null },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     await this.assertSaleProcessAllowsFollowUp(processId, applicationId);
     const row = await this.ventasSales.addSaleProcessNote(
       processId,
@@ -501,7 +546,8 @@ export class VentasSalesOperationsService {
       completedAt?: string | null;
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     await this.assertSaleProcessAllowsFollowUp(processId, applicationId);
     const row = await this.ventasSales.addSaleProcessActivity({
       saleProcessId: processId,
@@ -525,7 +571,8 @@ export class VentasSalesOperationsService {
     applicationSlug: string | undefined,
     body: { title: string; dueAt: string },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     await this.assertSaleProcessAllowsFollowUp(processId, applicationId);
     const row = await this.ventasSales.addSaleProcessReminder({
       saleProcessId: processId,
@@ -538,18 +585,23 @@ export class VentasSalesOperationsService {
   }
 
   async completeReminder(reminderId: string, applicationSlug?: string) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     const row = await this.ventasSales.completeSaleProcessReminder(
       reminderId,
       applicationId,
     );
-    if (!row) throw new EntityNotFoundException('SaleProcessReminder', reminderId);
+    if (!row)
+      throw new EntityNotFoundException('SaleProcessReminder', reminderId);
     return row;
   }
 
   async listSeparations(f: ListSaleSeparationsFilters) {
     assertVentasApp(f.applicationSlug);
-    return this.ventasSales.listSaleSeparations({ ...f, applicationSlug: VENTAS_SLUG });
+    return this.ventasSales.listSaleSeparations({
+      ...f,
+      applicationSlug: VENTAS_SLUG,
+    });
   }
 
   async createSeparation(
@@ -565,14 +617,17 @@ export class VentasSalesOperationsService {
       notes?: string | null;
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
 
     const buyer = await this.clientRepository.findById(body.buyerClientId);
     if (!buyer || buyer.applicationId !== applicationId) {
       throw new EntityNotFoundException('Client', body.buyerClientId);
     }
     if (buyer.clientType !== 'BUYER') {
-      throw new BadRequestException('La separación debe asociarse a un cliente comprador / lead.');
+      throw new BadRequestException(
+        'La separación debe asociarse a un cliente comprador / lead.',
+      );
     }
 
     const property = await this.propertyRepository.findById(body.propertyId);
@@ -599,7 +654,8 @@ export class VentasSalesOperationsService {
         body.saleProcessId,
         applicationId,
       )) as { status: string } | null;
-      if (!p) throw new EntityNotFoundException('SaleProcess', body.saleProcessId);
+      if (!p)
+        throw new EntityNotFoundException('SaleProcess', body.saleProcessId);
       if (p.status !== 'ACTIVE') {
         throw new BadRequestException(
           'Solo se puede separar sobre un proceso de venta activo.',
@@ -608,7 +664,9 @@ export class VentasSalesOperationsService {
     }
 
     if (body.amount <= 0) {
-      throw new BadRequestException('El monto de separación debe ser mayor que cero.');
+      throw new BadRequestException(
+        'El monto de separación debe ser mayor que cero.',
+      );
     }
 
     const created = await this.ventasSales.createSaleSeparation({
@@ -618,7 +676,10 @@ export class VentasSalesOperationsService {
       buyerClientId: body.buyerClientId,
       amount: body.amount,
       currency: body.currency ?? 'PEN',
-      separationDate: parseValidDateOrThrow(body.separationDate, 'Fecha de separación'),
+      separationDate: parseValidDateOrThrow(
+        body.separationDate,
+        'Fecha de separación',
+      ),
       expiresAt: body.expiresAt
         ? parseValidDateOrThrow(body.expiresAt, 'Fecha de vencimiento')
         : null,
@@ -641,16 +702,21 @@ export class VentasSalesOperationsService {
       expiresAt?: string | null;
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     const sep = await this.ventasSales.getSaleSeparationById(id, applicationId);
     if (!sep) throw new EntityNotFoundException('SaleSeparation', id);
-    const current = sep as { propertyId: string; status: VentasSeparationStatus };
+    const current = sep as {
+      propertyId: string;
+      status: VentasSeparationStatus;
+    };
 
     if (body.status === 'ACTIVE' && current.status !== 'ACTIVE') {
-      const activeCount = await this.ventasSales.countActiveSeparationsOnProperty(
-        current.propertyId,
-        applicationId,
-      );
+      const activeCount =
+        await this.ventasSales.countActiveSeparationsOnProperty(
+          current.propertyId,
+          applicationId,
+        );
       if (activeCount > 0) {
         throw new BadRequestException(
           'No se puede activar esta separación porque ya existe otra separación activa para el inmueble.',
@@ -658,16 +724,20 @@ export class VentasSalesOperationsService {
       }
     }
 
-    const updated = await this.ventasSales.updateSaleSeparation(id, applicationId, {
-      status: body.status,
-      notes: body.notes,
-      expiresAt:
-        body.expiresAt !== undefined
-          ? body.expiresAt
-            ? parseValidDateOrThrow(body.expiresAt, 'Fecha de vencimiento')
-            : null
-          : undefined,
-    });
+    const updated = await this.ventasSales.updateSaleSeparation(
+      id,
+      applicationId,
+      {
+        status: body.status,
+        notes: body.notes,
+        expiresAt:
+          body.expiresAt !== undefined
+            ? body.expiresAt
+              ? parseValidDateOrThrow(body.expiresAt, 'Fecha de vencimiento')
+              : null
+            : undefined,
+      },
+    );
 
     if (body.status === 'EXPIRED' || body.status === 'CLOSED') {
       await this.ventasSales.refreshPropertyListingAfterSeparationChange(
@@ -709,13 +779,17 @@ export class VentasSalesOperationsService {
     applicationSlug: string | undefined,
     file: { filePath: string; archivoId?: string | null },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     return this.setSeparationReceipt(separationId, applicationId, file);
   }
 
   async listClosings(f: ListSaleClosingsFilters) {
     assertVentasApp(f.applicationSlug);
-    return this.ventasSales.listSaleClosings({ ...f, applicationSlug: VENTAS_SLUG });
+    return this.ventasSales.listSaleClosings({
+      ...f,
+      applicationSlug: VENTAS_SLUG,
+    });
   }
 
   async createClosing(
@@ -737,7 +811,8 @@ export class VentasSalesOperationsService {
       commissionAutoFromProfile?: boolean;
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
 
     if (!isVentasPaymentType(body.paymentType)) {
       throw new BadRequestException(
@@ -751,7 +826,9 @@ export class VentasSalesOperationsService {
       throw new EntityNotFoundException('Client', body.buyerClientId);
     }
     if (buyer.clientType !== 'BUYER') {
-      throw new BadRequestException('El cierre debe asociarse a un cliente comprador / lead.');
+      throw new BadRequestException(
+        'El cierre debe asociarse a un cliente comprador / lead.',
+      );
     }
 
     const property = await this.propertyRepository.findById(body.propertyId);
@@ -778,27 +855,52 @@ export class VentasSalesOperationsService {
     }
 
     if (body.saleSeparationId) {
-      const sep = await this.ventasSales.getSaleSeparationById(
+      const sep = (await this.ventasSales.getSaleSeparationById(
         body.saleSeparationId,
         applicationId,
-      ) as { propertyId: string; buyerClientId: string; status: string } | null;
-      if (!sep) throw new EntityNotFoundException('SaleSeparation', body.saleSeparationId);
-      if (sep.propertyId !== body.propertyId || sep.buyerClientId !== body.buyerClientId) {
-        throw new BadRequestException('La separación no coincide con propiedad ni comprador del cierre.');
+      )) as {
+        propertyId: string;
+        buyerClientId: string;
+        status: string;
+      } | null;
+      if (!sep)
+        throw new EntityNotFoundException(
+          'SaleSeparation',
+          body.saleSeparationId,
+        );
+      if (
+        sep.propertyId !== body.propertyId ||
+        sep.buyerClientId !== body.buyerClientId
+      ) {
+        throw new BadRequestException(
+          'La separación no coincide con propiedad ni comprador del cierre.',
+        );
       }
       if (sep.status !== 'ACTIVE') {
-        throw new BadRequestException('La separación debe estar activa para cerrar desde ella.');
+        throw new BadRequestException(
+          'La separación debe estar activa para cerrar desde ella.',
+        );
       }
     }
 
     if (body.saleProcessId) {
-      const proc = await this.ventasSales.getSaleProcessById(
+      const proc = (await this.ventasSales.getSaleProcessById(
         body.saleProcessId,
         applicationId,
-      ) as { propertyId: string; buyerClientId: string; status: string } | null;
-      if (!proc) throw new EntityNotFoundException('SaleProcess', body.saleProcessId);
-      if (proc.propertyId !== body.propertyId || proc.buyerClientId !== body.buyerClientId) {
-        throw new BadRequestException('El proceso no coincide con propiedad ni comprador del cierre.');
+      )) as {
+        propertyId: string;
+        buyerClientId: string;
+        status: string;
+      } | null;
+      if (!proc)
+        throw new EntityNotFoundException('SaleProcess', body.saleProcessId);
+      if (
+        proc.propertyId !== body.propertyId ||
+        proc.buyerClientId !== body.buyerClientId
+      ) {
+        throw new BadRequestException(
+          'El proceso no coincide con propiedad ni comprador del cierre.',
+        );
       }
       if (proc.status !== 'ACTIVE') {
         throw new BadRequestException(
@@ -808,7 +910,10 @@ export class VentasSalesOperationsService {
     }
 
     const processCommissionCount = body.saleProcessId
-      ? await this.ventasSales.countProcessCommissions(body.saleProcessId, applicationId)
+      ? await this.ventasSales.countProcessCommissions(
+          body.saleProcessId,
+          applicationId,
+        )
       : 0;
 
     let commissionAgentId = body.commissionAgentId ?? body.agentId ?? null;
@@ -840,14 +945,19 @@ export class VentasSalesOperationsService {
           );
         }
         commissionPercent = pct;
-        commissionAmount = Math.round(body.finalPrice * (pct / 100) * 100) / 100;
+        commissionAmount =
+          Math.round(body.finalPrice * (pct / 100) * 100) / 100;
       } else if (commissionAmount == null || commissionAmount < 0) {
-        throw new BadRequestException('Indique el monto de comisión para el cierre.');
+        throw new BadRequestException(
+          'Indique el monto de comisión para el cierre.',
+        );
       }
 
       const ag = await this.agentRepository.findById(commissionAgentId);
       if (!ag || ag.applicationId !== applicationId) {
-        throw new BadRequestException('El agente de comisión no existe o no pertenece a Ventas.');
+        throw new BadRequestException(
+          'El agente de comisión no existe o no pertenece a Ventas.',
+        );
       }
     } else {
       commissionAgentId = null;
@@ -858,7 +968,9 @@ export class VentasSalesOperationsService {
     if (body.agentId) {
       const ag2 = await this.agentRepository.findById(body.agentId);
       if (!ag2 || ag2.applicationId !== applicationId) {
-        throw new BadRequestException('El asesor del cierre no existe o no pertenece a Ventas.');
+        throw new BadRequestException(
+          'El asesor del cierre no existe o no pertenece a Ventas.',
+        );
       }
     }
 
@@ -874,7 +986,7 @@ export class VentasSalesOperationsService {
       contractFilePath: null,
       notes: body.notes ?? null,
       commissionAgentId,
-      commissionAmount: commissionAmount!,
+      commissionAmount: commissionAmount,
       commissionPercent,
     });
     if (!created) {
@@ -890,9 +1002,17 @@ export class VentasSalesOperationsService {
     applicationSlug: string | undefined,
     file: { filePath: string; archivoId?: string | null },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
-    const row = await this.ventasSales.getSaleClosingById(closingId, applicationId);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
+    const row = await this.ventasSales.getSaleClosingById(
+      closingId,
+      applicationId,
+    );
     if (!row) throw new EntityNotFoundException('SaleClosing', closingId);
-    return this.ventasSales.updateSaleClosingContractFile(closingId, applicationId, file);
+    return this.ventasSales.updateSaleClosingContractFile(
+      closingId,
+      applicationId,
+      file,
+    );
   }
 }

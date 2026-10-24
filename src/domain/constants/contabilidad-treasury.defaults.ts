@@ -10,7 +10,10 @@ export const CONTABILIDAD_TREASURY_MOVEMENT_TYPE = {
   TRANSFER_IN: 'TRANSFER_IN',
 } as const;
 
-export const CONTABILIDAD_TREASURY_MOVEMENT_TYPE_LABELS: Record<string, string> = {
+export const CONTABILIDAD_TREASURY_MOVEMENT_TYPE_LABELS: Record<
+  string,
+  string
+> = {
   IN: 'Ingreso',
   OUT: 'Egreso',
   TRANSFER_OUT: 'Transferencia (salida)',
@@ -22,10 +25,11 @@ export const CONTABILIDAD_RECONCILIATION_STATUS = {
   CLOSED: 'CLOSED',
 } as const;
 
-export const CONTABILIDAD_RECONCILIATION_STATUS_LABELS: Record<string, string> = {
-  OPEN: 'Abierta',
-  CLOSED: 'Cerrada',
-};
+export const CONTABILIDAD_RECONCILIATION_STATUS_LABELS: Record<string, string> =
+  {
+    OPEN: 'Abierta',
+    CLOSED: 'Cerrada',
+  };
 
 export const CONTABILIDAD_TREASURY_DEFAULTS = {
   CASH_CODE: 'CAJA-01',

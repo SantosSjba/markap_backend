@@ -1,4 +1,6 @@
-export const CONTABILIDAD_PURCHASES_REPOSITORY = Symbol('ContabilidadPurchasesRepository');
+export const CONTABILIDAD_PURCHASES_REPOSITORY = Symbol(
+  'ContabilidadPurchasesRepository',
+);
 
 export interface ContabilidadSupplierDto {
   id: string;
@@ -217,23 +219,42 @@ export interface CreatePurchasePaymentInput {
 }
 
 export interface ContabilidadPurchasesRepository {
-  listSuppliers(applicationId: string, filters: ListSuppliersFilters): Promise<ContabilidadSupplierDto[]>;
-  findSupplierById(applicationId: string, id: string): Promise<ContabilidadSupplierDto | null>;
-  createSupplier(applicationId: string, input: CreateSupplierInput): Promise<ContabilidadSupplierDto>;
-  updateSupplier(applicationId: string, id: string, input: UpdateSupplierInput): Promise<ContabilidadSupplierDto>;
+  listSuppliers(
+    applicationId: string,
+    filters: ListSuppliersFilters,
+  ): Promise<ContabilidadSupplierDto[]>;
+  findSupplierById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadSupplierDto | null>;
+  createSupplier(
+    applicationId: string,
+    input: CreateSupplierInput,
+  ): Promise<ContabilidadSupplierDto>;
+  updateSupplier(
+    applicationId: string,
+    id: string,
+    input: UpdateSupplierInput,
+  ): Promise<ContabilidadSupplierDto>;
 
   listInvoices(
     applicationId: string,
     filters: ListPurchaseInvoicesFilters,
   ): Promise<ContabilidadPurchaseInvoiceDto[]>;
-  findInvoiceById(applicationId: string, id: string): Promise<ContabilidadPurchaseInvoiceDto | null>;
+  findInvoiceById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadPurchaseInvoiceDto | null>;
   createInvoiceWithJournal(
     applicationId: string,
     input: CreatePurchaseInvoiceInput,
     igvPercent: number,
     createdBy?: string | null,
   ): Promise<ContabilidadPurchaseInvoiceDto>;
-  cancelInvoice(applicationId: string, id: string): Promise<ContabilidadPurchaseInvoiceDto>;
+  cancelInvoice(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadPurchaseInvoiceDto>;
 
   listCreditNotes(
     applicationId: string,

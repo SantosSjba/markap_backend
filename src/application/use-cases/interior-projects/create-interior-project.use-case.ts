@@ -49,7 +49,9 @@ export class CreateInteriorProjectUseCase {
     expectedMargin?: number | null;
     progressPct?: number | null;
   }) {
-    const app = await this.applicationRepository.findBySlug(input.applicationSlug);
+    const app = await this.applicationRepository.findBySlug(
+      input.applicationSlug,
+    );
     if (!app || app.slug !== 'interiorismo') {
       throw new BadRequestException(
         'Los proyectos de interiorismo solo se crean con applicationSlug interiorismo',
@@ -64,7 +66,9 @@ export class CreateInteriorProjectUseCase {
       },
     });
     if (dup) {
-      throw new BadRequestException('Ya existe un proyecto con ese código en esta aplicación');
+      throw new BadRequestException(
+        'Ya existe un proyecto con ese código en esta aplicación',
+      );
     }
 
     const client = await this.prisma.client.findFirst({

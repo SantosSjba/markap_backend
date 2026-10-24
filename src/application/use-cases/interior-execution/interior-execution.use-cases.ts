@@ -28,21 +28,23 @@ const COST_CAT = ['LABOR', 'MATERIAL', 'EXPENSE', 'TRANSPORT'] as const;
 
 function assertPhase(v: string) {
   if (!(PHASES as readonly string[]).includes(v)) {
-    throw new BadRequestException(
-      `Fase inválida. Use: ${PHASES.join(', ')}`,
-    );
+    throw new BadRequestException(`Fase inválida. Use: ${PHASES.join(', ')}`);
   }
 }
 
 function assertKanban(v: string) {
   if (!(KANBAN as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Estado Kanban inválido: ${KANBAN.join(', ')}`);
+    throw new BadRequestException(
+      `Estado Kanban inválido: ${KANBAN.join(', ')}`,
+    );
   }
 }
 
 function assertEvidenceKind(v: string) {
   if (!(EVIDENCE_KINDS as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Tipo de evidencia inválido: ${EVIDENCE_KINDS.join(', ')}`);
+    throw new BadRequestException(
+      `Tipo de evidencia inválido: ${EVIDENCE_KINDS.join(', ')}`,
+    );
   }
 }
 
@@ -54,13 +56,17 @@ function assertSeverity(v: string) {
 
 function assertIncidentStatus(v: string) {
   if (!(INCIDENT_STATUS as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Estado de incidencia inválido: ${INCIDENT_STATUS.join(', ')}`);
+    throw new BadRequestException(
+      `Estado de incidencia inválido: ${INCIDENT_STATUS.join(', ')}`,
+    );
   }
 }
 
 function assertCostCat(v: string) {
   if (!(COST_CAT as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Categoría de costo inválida: ${COST_CAT.join(', ')}`);
+    throw new BadRequestException(
+      `Categoría de costo inválida: ${COST_CAT.join(', ')}`,
+    );
   }
 }
 
@@ -93,11 +99,18 @@ export class CreateInteriorExecutionTaskUseCase {
     private readonly repo: InteriorExecutionRepository,
   ) {}
 
-  async execute(projectId: string, applicationSlug: string | undefined, payload: CreateInteriorExecutionTaskPayload) {
+  async execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    payload: CreateInteriorExecutionTaskPayload,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     assertPhase(payload.phase);
     if (payload.kanbanStatus) assertKanban(payload.kanbanStatus);
-    if (payload.progressPct != null && (payload.progressPct < 0 || payload.progressPct > 100)) {
+    if (
+      payload.progressPct != null &&
+      (payload.progressPct < 0 || payload.progressPct > 100)
+    ) {
       throw new BadRequestException('progressPct debe estar entre 0 y 100');
     }
     return this.repo.createTask(projectId, payload);
@@ -120,7 +133,10 @@ export class UpdateInteriorExecutionTaskUseCase {
     await assertProject(this.repo, projectId, applicationSlug);
     if (payload.phase != null) assertPhase(payload.phase);
     if (payload.kanbanStatus != null) assertKanban(payload.kanbanStatus);
-    if (payload.progressPct != null && (payload.progressPct < 0 || payload.progressPct > 100)) {
+    if (
+      payload.progressPct != null &&
+      (payload.progressPct < 0 || payload.progressPct > 100)
+    ) {
       throw new BadRequestException('progressPct debe estar entre 0 y 100');
     }
     const row = await this.repo.updateTask(projectId, taskId, payload);
@@ -136,7 +152,11 @@ export class DeleteInteriorExecutionTaskUseCase {
     private readonly repo: InteriorExecutionRepository,
   ) {}
 
-  async execute(projectId: string, taskId: string, applicationSlug: string | undefined) {
+  async execute(
+    projectId: string,
+    taskId: string,
+    applicationSlug: string | undefined,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     const ok = await this.repo.deleteTask(projectId, taskId);
     if (!ok) throw new NotFoundException('Tarea no encontrada');
@@ -150,7 +170,11 @@ export class CreateInteriorExecutionEvidenceUseCase {
     private readonly repo: InteriorExecutionRepository,
   ) {}
 
-  async execute(projectId: string, applicationSlug: string | undefined, payload: CreateInteriorExecutionEvidencePayload) {
+  async execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    payload: CreateInteriorExecutionEvidencePayload,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     assertEvidenceKind(payload.kind);
     try {
@@ -171,7 +195,11 @@ export class DeleteInteriorExecutionEvidenceUseCase {
     private readonly repo: InteriorExecutionRepository,
   ) {}
 
-  async execute(projectId: string, evidenceId: string, applicationSlug: string | undefined) {
+  async execute(
+    projectId: string,
+    evidenceId: string,
+    applicationSlug: string | undefined,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     const ok = await this.repo.deleteEvidence(projectId, evidenceId);
     if (!ok) throw new NotFoundException('Evidencia no encontrada');
@@ -185,7 +213,11 @@ export class CreateInteriorExecutionIncidentUseCase {
     private readonly repo: InteriorExecutionRepository,
   ) {}
 
-  async execute(projectId: string, applicationSlug: string | undefined, payload: CreateInteriorExecutionIncidentPayload) {
+  async execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    payload: CreateInteriorExecutionIncidentPayload,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     assertSeverity(payload.severity);
     return this.repo.createIncident(projectId, payload);
@@ -222,7 +254,11 @@ export class CreateInteriorExecutionActualCostUseCase {
     private readonly prisma: PrismaService,
   ) {}
 
-  async execute(projectId: string, applicationSlug: string | undefined, payload: CreateInteriorExecutionActualCostPayload) {
+  async execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    payload: CreateInteriorExecutionActualCostPayload,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     assertCostCat(payload.costCategory);
 
@@ -238,7 +274,9 @@ export class CreateInteriorExecutionActualCostUseCase {
         where: { id: mid, applicationId: proj.applicationId },
       });
       if (!mat) {
-        throw new BadRequestException('Material del catálogo no válido para este proyecto');
+        throw new BadRequestException(
+          'Material del catálogo no válido para este proyecto',
+        );
       }
     }
 
@@ -256,7 +294,11 @@ export class DeleteInteriorExecutionActualCostUseCase {
     private readonly repo: InteriorExecutionRepository,
   ) {}
 
-  async execute(projectId: string, costId: string, applicationSlug: string | undefined) {
+  async execute(
+    projectId: string,
+    costId: string,
+    applicationSlug: string | undefined,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     const ok = await this.repo.deleteActualCost(projectId, costId);
     if (!ok) throw new NotFoundException('Costo no encontrado');
@@ -267,10 +309,16 @@ export class DeleteInteriorExecutionActualCostUseCase {
 export class PatchInteriorExecutionProgressUseCase {
   constructor(private readonly updateProject: UpdateInteriorProjectUseCase) {}
 
-  execute(projectId: string, applicationSlug: string | undefined, progressPct: number) {
+  execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    progressPct: number,
+  ) {
     if (progressPct < 0 || progressPct > 100) {
       throw new BadRequestException('Avance debe estar entre 0 y 100');
     }
-    return this.updateProject.execute(projectId, applicationSlug ?? SLUG_DFLT, { progressPct });
+    return this.updateProject.execute(projectId, applicationSlug ?? SLUG_DFLT, {
+      progressPct,
+    });
   }
 }

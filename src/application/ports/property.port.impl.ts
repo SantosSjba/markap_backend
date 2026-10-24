@@ -28,7 +28,9 @@ export class PropertyPortImpl implements PropertyPort {
     private readonly deleteUc: DeletePropertyUseCase,
   ) {}
 
-  listProperties(filters: ListPropertiesFilters): Promise<ListPropertiesResult> {
+  listProperties(
+    filters: ListPropertiesFilters,
+  ): Promise<ListPropertiesResult> {
     return this.listUc.execute(filters);
   }
 

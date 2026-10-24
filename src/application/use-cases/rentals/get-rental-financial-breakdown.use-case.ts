@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { RENTAL_FINANCIAL_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
-import type { RentalFinancialConfigRepository, RentalFinancialBreakdown } from '@domain/repositories/rental-financial-config.repository';
+import type {
+  RentalFinancialConfigRepository,
+  RentalFinancialBreakdown,
+} from '@domain/repositories/rental-financial-config.repository';
 
 @Injectable()
 export class GetRentalFinancialBreakdownUseCase {

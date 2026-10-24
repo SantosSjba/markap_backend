@@ -50,7 +50,7 @@ function parseIsoDate(s?: string | null): Date | null | undefined {
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
-@ApiTags('Interiorismo â€” EjecuciÃ³n')
+@ApiTags('Interiorismo — Ejecución')
 @Controller('arquitectura-execution')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
@@ -70,11 +70,20 @@ export class ArquitecturaExecutionController {
   ) {}
 
   @Get('projects/:projectId/overview')
-  @ApiOperation({ summary: 'Tablero ejecuciÃ³n: tareas, costos reales, evidencias, incidencias, vs presupuesto' })
+  @ApiOperation({
+    summary:
+      'Tablero ejecución: tareas, costos reales, evidencias, incidencias, vs presupuesto',
+  })
   @ApiParam({ name: 'projectId' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  async overview(@Param('projectId') projectId: string, @Query('applicationSlug') applicationSlug?: string) {
-    const row = await this.overviewUc.execute(projectId, applicationSlug ?? 'arquitectura');
+  async overview(
+    @Param('projectId') projectId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    const row = await this.overviewUc.execute(
+      projectId,
+      applicationSlug ?? 'arquitectura',
+    );
     if (!row) throw new NotFoundException('Proyecto no encontrado');
     return row;
   }
@@ -86,25 +95,33 @@ export class ArquitecturaExecutionController {
     @Body() dto: PatchArquitecturaExecutionProgressDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.patchProgressUc.execute(projectId, applicationSlug ?? 'arquitectura', dto.progressPct);
+    return this.patchProgressUc.execute(
+      projectId,
+      applicationSlug ?? 'arquitectura',
+      dto.progressPct,
+    );
   }
 
   @Post('projects/:projectId/tasks')
-  @ApiOperation({ summary: 'Crear tarea de ejecuciÃ³n (fase + Kanban)' })
+  @ApiOperation({ summary: 'Crear tarea de ejecución (fase + Kanban)' })
   async createTask(
     @Param('projectId') projectId: string,
     @Body() dto: CreateArquitecturaExecutionTaskDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createTaskUc.execute(projectId, applicationSlug ?? 'arquitectura', {
-      phase: dto.phase,
-      title: dto.title,
-      description: dto.description ?? null,
-      kanbanStatus: dto.kanbanStatus,
-      plannedStart: parseIsoDate(dto.plannedStart ?? undefined) ?? null,
-      plannedEnd: parseIsoDate(dto.plannedEnd ?? undefined) ?? null,
-      progressPct: dto.progressPct,
-    });
+    return this.createTaskUc.execute(
+      projectId,
+      applicationSlug ?? 'arquitectura',
+      {
+        phase: dto.phase,
+        title: dto.title,
+        description: dto.description ?? null,
+        kanbanStatus: dto.kanbanStatus,
+        plannedStart: parseIsoDate(dto.plannedStart ?? undefined) ?? null,
+        plannedEnd: parseIsoDate(dto.plannedEnd ?? undefined) ?? null,
+        progressPct: dto.progressPct,
+      },
+    );
   }
 
   @Patch('projects/:projectId/tasks/:taskId')
@@ -115,18 +132,27 @@ export class ArquitecturaExecutionController {
     @Body() dto: UpdateArquitecturaExecutionTaskDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateTaskUc.execute(projectId, taskId, applicationSlug ?? 'arquitectura', {
-      phase: dto.phase,
-      title: dto.title,
-      description: dto.description,
-      kanbanStatus: dto.kanbanStatus,
-      sortOrder: dto.sortOrder,
-      plannedStart:
-        dto.plannedStart === undefined ? undefined : parseIsoDate(dto.plannedStart as string | null | undefined),
-      plannedEnd:
-        dto.plannedEnd === undefined ? undefined : parseIsoDate(dto.plannedEnd as string | null | undefined),
-      progressPct: dto.progressPct,
-    });
+    return this.updateTaskUc.execute(
+      projectId,
+      taskId,
+      applicationSlug ?? 'arquitectura',
+      {
+        phase: dto.phase,
+        title: dto.title,
+        description: dto.description,
+        kanbanStatus: dto.kanbanStatus,
+        sortOrder: dto.sortOrder,
+        plannedStart:
+          dto.plannedStart === undefined
+            ? undefined
+            : parseIsoDate(dto.plannedStart),
+        plannedEnd:
+          dto.plannedEnd === undefined
+            ? undefined
+            : parseIsoDate(dto.plannedEnd),
+        progressPct: dto.progressPct,
+      },
+    );
   }
 
   @Delete('projects/:projectId/tasks/:taskId')
@@ -138,7 +164,11 @@ export class ArquitecturaExecutionController {
     @Param('taskId') taskId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    await this.deleteTaskUc.execute(projectId, taskId, applicationSlug ?? 'arquitectura');
+    await this.deleteTaskUc.execute(
+      projectId,
+      taskId,
+      applicationSlug ?? 'arquitectura',
+    );
   }
 
   @Post('projects/:projectId/evidences')
@@ -149,13 +179,17 @@ export class ArquitecturaExecutionController {
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     const capturedAt = new Date(dto.capturedAt);
-    return this.createEvidenceUc.execute(projectId, applicationSlug ?? 'arquitectura', {
-      taskId: dto.taskId ?? null,
-      kind: dto.kind,
-      title: dto.title,
-      fileUrl: dto.fileUrl,
-      capturedAt,
-    });
+    return this.createEvidenceUc.execute(
+      projectId,
+      applicationSlug ?? 'arquitectura',
+      {
+        taskId: dto.taskId ?? null,
+        kind: dto.kind,
+        title: dto.title,
+        fileUrl: dto.fileUrl,
+        capturedAt,
+      },
+    );
   }
 
   @Delete('projects/:projectId/evidences/:evidenceId')
@@ -166,7 +200,11 @@ export class ArquitecturaExecutionController {
     @Param('evidenceId') evidenceId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    await this.deleteEvidenceUc.execute(projectId, evidenceId, applicationSlug ?? 'arquitectura');
+    await this.deleteEvidenceUc.execute(
+      projectId,
+      evidenceId,
+      applicationSlug ?? 'arquitectura',
+    );
   }
 
   @Post('projects/:projectId/incidents')
@@ -176,12 +214,16 @@ export class ArquitecturaExecutionController {
     @Body() dto: CreateArquitecturaExecutionIncidentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createIncidentUc.execute(projectId, applicationSlug ?? 'arquitectura', {
-      severity: dto.severity,
-      title: dto.title,
-      description: dto.description ?? null,
-      reportedAt: new Date(dto.reportedAt),
-    });
+    return this.createIncidentUc.execute(
+      projectId,
+      applicationSlug ?? 'arquitectura',
+      {
+        severity: dto.severity,
+        title: dto.title,
+        description: dto.description ?? null,
+        reportedAt: new Date(dto.reportedAt),
+      },
+    );
   }
 
   @Patch('projects/:projectId/incidents/:incidentId')
@@ -192,18 +234,29 @@ export class ArquitecturaExecutionController {
     @Body() dto: UpdateArquitecturaExecutionIncidentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateIncidentUc.execute(projectId, incidentId, applicationSlug ?? 'arquitectura', {
-      status: dto.status,
-      severity: dto.severity,
-      title: dto.title,
-      description: dto.description,
-      closedAt:
-        dto.closedAt === undefined ? undefined : dto.closedAt ? new Date(dto.closedAt) : null,
-    });
+    return this.updateIncidentUc.execute(
+      projectId,
+      incidentId,
+      applicationSlug ?? 'arquitectura',
+      {
+        status: dto.status,
+        severity: dto.severity,
+        title: dto.title,
+        description: dto.description,
+        closedAt:
+          dto.closedAt === undefined
+            ? undefined
+            : dto.closedAt
+              ? new Date(dto.closedAt)
+              : null,
+      },
+    );
   }
 
   @Post('projects/:projectId/actual-costs')
-  @ApiOperation({ summary: 'Registrar costo real (mano de obra, material, gastos)' })
+  @ApiOperation({
+    summary: 'Registrar costo real (mano de obra, material, gastos)',
+  })
   async createActualCost(
     @Param('projectId') projectId: string,
     @Body() dto: CreateArquitecturaExecutionActualCostDto,
@@ -211,15 +264,19 @@ export class ArquitecturaExecutionController {
   ) {
     const occurred = new Date(dto.occurredAt);
     if (Number.isNaN(occurred.getTime())) {
-      throw new BadRequestException('Fecha del costo invÃ¡lida');
+      throw new BadRequestException('Fecha del costo inválida');
     }
-    return this.createCostUc.execute(projectId, applicationSlug ?? 'arquitectura', {
-      costCategory: dto.costCategory,
-      concept: dto.concept,
-      amount: dto.amount,
-      occurredAt: occurred,
-      catalogMaterialId: dto.catalogMaterialId ?? null,
-    });
+    return this.createCostUc.execute(
+      projectId,
+      applicationSlug ?? 'arquitectura',
+      {
+        costCategory: dto.costCategory,
+        concept: dto.concept,
+        amount: dto.amount,
+        occurredAt: occurred,
+        catalogMaterialId: dto.catalogMaterialId ?? null,
+      },
+    );
   }
 
   @Delete('projects/:projectId/actual-costs/:costId')
@@ -230,6 +287,10 @@ export class ArquitecturaExecutionController {
     @Param('costId') costId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    await this.deleteCostUc.execute(projectId, costId, applicationSlug ?? 'arquitectura');
+    await this.deleteCostUc.execute(
+      projectId,
+      costId,
+      applicationSlug ?? 'arquitectura',
+    );
   }
 }

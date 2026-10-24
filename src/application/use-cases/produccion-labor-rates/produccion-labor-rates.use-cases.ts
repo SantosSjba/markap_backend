@@ -18,7 +18,9 @@ const SLUG = 'produccion';
 
 function assertProduccion(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug produccion');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug produccion',
+    );
   }
 }
 
@@ -57,10 +59,14 @@ export class CreateProduccionLaborRateUseCase {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateProduccionLaborRatePayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateProduccionLaborRatePayload,
+  ) {
     assertProduccion(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación produccion no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación produccion no encontrada');
     return this.repo.create(app.id, payload);
   }
 }
@@ -72,7 +78,11 @@ export class UpdateProduccionLaborRateUseCase {
     private readonly repo: ProduccionLaborRateRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateProduccionLaborRatePayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateProduccionLaborRatePayload,
+  ) {
     assertProduccion(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Tarifa no encontrada');

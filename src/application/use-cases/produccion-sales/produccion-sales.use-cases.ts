@@ -32,7 +32,9 @@ const SLUG = 'produccion';
 
 function assertProduccion(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug produccion');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug produccion',
+    );
   }
 }
 
@@ -71,10 +73,14 @@ export class CreateProduccionQuotationUseCase {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateProduccionQuotationPayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateProduccionQuotationPayload,
+  ) {
     assertProduccion(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación produccion no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación produccion no encontrada');
     return this.repo.create(app.id, payload);
   }
 }
@@ -86,7 +92,11 @@ export class UpdateProduccionQuotationUseCase {
     private readonly repo: ProduccionQuotationRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateProduccionQuotationPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateProduccionQuotationPayload,
+  ) {
     assertProduccion(applicationSlug);
     await this.getOrFail(id, applicationSlug);
     return this.repo.update(id, payload);
@@ -209,10 +219,14 @@ export class CreateProduccionOrderUseCase {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateProduccionOrderPayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateProduccionOrderPayload,
+  ) {
     assertProduccion(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación produccion no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación produccion no encontrada');
     return this.repo.create(app.id, payload);
   }
 }
@@ -224,7 +238,11 @@ export class UpdateProduccionOrderUseCase {
     private readonly repo: ProduccionOrderRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateProduccionOrderPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateProduccionOrderPayload,
+  ) {
     assertProduccion(applicationSlug);
     const row = await this.repo.findById(id, applicationSlug);
     if (!row) throw new NotFoundException('Pedido no encontrado');
@@ -266,11 +284,14 @@ export class CreateWorkOrderFromProduccionOrderUseCase {
       throw new BadRequestException('El pedido ya tiene una orden de trabajo');
     }
     if (!['PENDING', 'CONFIRMED'].includes(order.status)) {
-      throw new BadRequestException('El pedido no puede generar OT en este estado');
+      throw new BadRequestException(
+        'El pedido no puede generar OT en este estado',
+      );
     }
 
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación produccion no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación produccion no encontrada');
 
     const wo = await this.workOrderRepo.create(app.id, {
       clientId: order.clientId,
@@ -366,10 +387,14 @@ export class CreateProduccionDeliveryUseCase {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateProduccionDeliveryPayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateProduccionDeliveryPayload,
+  ) {
     assertProduccion(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación produccion no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación produccion no encontrada');
     return this.repo.create(app.id, payload);
   }
 }
@@ -381,7 +406,11 @@ export class UpdateProduccionDeliveryUseCase {
     private readonly repo: ProduccionDeliveryRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateProduccionDeliveryPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateProduccionDeliveryPayload,
+  ) {
     assertProduccion(applicationSlug);
     const row = await this.repo.findById(id, applicationSlug);
     if (!row) throw new NotFoundException('Entrega no encontrada');

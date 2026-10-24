@@ -1,6 +1,9 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY, VENTAS_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  VENTAS_CONFIG_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import {
   type VentasConfigRepository,
   type VentasPipelineStageInput,
@@ -33,7 +36,9 @@ export class VentasConfigOperationsService {
     private readonly applicationRepository: ApplicationRepository,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertVentasSlug(applicationSlug ?? VENTAS_SLUG);
     const app = await this.applicationRepository.findBySlug(VENTAS_SLUG);
     if (!app) throw new EntityNotFoundException('Application', VENTAS_SLUG);
@@ -43,7 +48,11 @@ export class VentasConfigOperationsService {
   private formatNumbering(row: { prefix: string; lastNumber: number } | null) {
     if (!row) {
       return {
-        saleProcess: { prefix: 'VNT-PRC', lastNumber: 0, nextPreview: 'VNT-PRC-0001' },
+        saleProcess: {
+          prefix: 'VNT-PRC',
+          lastNumber: 0,
+          nextPreview: 'VNT-PRC-0001',
+        },
       };
     }
     const next = row.lastNumber + 1;
@@ -60,11 +69,12 @@ export class VentasConfigOperationsService {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.config.ensureDefaults(applicationId);
 
-    const [pipelineStages, saleProcessSeries, propertyTypes] = await Promise.all([
-      this.config.listPipelineStages(applicationId),
-      this.config.getNumberingSeries(applicationId, 'SALE_PROCESS'),
-      this.config.listActivePropertyTypes(),
-    ]);
+    const [pipelineStages, saleProcessSeries, propertyTypes] =
+      await Promise.all([
+        this.config.listPipelineStages(applicationId),
+        this.config.getNumberingSeries(applicationId, 'SALE_PROCESS'),
+        this.config.listActivePropertyTypes(),
+      ]);
 
     return {
       pipelineStages,
@@ -73,11 +83,17 @@ export class VentasConfigOperationsService {
     };
   }
 
-  async replacePipelineStages(applicationSlug: string | undefined, body: { stages: VentasPipelineStageInput[] }) {
+  async replacePipelineStages(
+    applicationSlug: string | undefined,
+    body: { stages: VentasPipelineStageInput[] },
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const stages = body.stages ?? [];
     const codes = new Set(stages.map((s) => s.code));
-    if (codes.size !== REQUIRED_PIPELINE_CODES.size || ![...REQUIRED_PIPELINE_CODES].every((c) => codes.has(c))) {
+    if (
+      codes.size !== REQUIRED_PIPELINE_CODES.size ||
+      ![...REQUIRED_PIPELINE_CODES].every((c) => codes.has(c))
+    ) {
       throw new BadRequestException(
         'Debe enviar exactamente las etapas: SEPARATION, ARRAS, MINUTA, PUBLIC_DEED.',
       );
@@ -85,8 +101,12 @@ export class VentasConfigOperationsService {
     if (!stages.every((s) => s.label?.trim())) {
       throw new BadRequestException('Cada etapa requiere una etiqueta.');
     }
-    if (stages.filter((s) => s.isActive).length < REQUIRED_PIPELINE_CODES.size) {
-      throw new BadRequestException('Las cuatro etapas deben permanecer activas en el pipeline.');
+    if (
+      stages.filter((s) => s.isActive).length < REQUIRED_PIPELINE_CODES.size
+    ) {
+      throw new BadRequestException(
+        'Las cuatro etapas deben permanecer activas en el pipeline.',
+      );
     }
     await this.config.replacePipelineStages(
       applicationId,
@@ -115,10 +135,14 @@ export class VentasConfigOperationsService {
     if (body.prefix === undefined && body.lastNumber === undefined) {
       throw new BadRequestException('Envíe prefix y/o lastNumber.');
     }
-    const updated = await this.config.updateNumberingSeries(applicationId, 'SALE_PROCESS', {
-      ...(body.prefix !== undefined && { prefix: body.prefix }),
-      ...(body.lastNumber !== undefined && { lastNumber: body.lastNumber }),
-    });
+    const updated = await this.config.updateNumberingSeries(
+      applicationId,
+      'SALE_PROCESS',
+      {
+        ...(body.prefix !== undefined && { prefix: body.prefix }),
+        ...(body.lastNumber !== undefined && { lastNumber: body.lastNumber }),
+      },
+    );
     return this.formatNumbering(updated);
   }
 }

@@ -19,7 +19,9 @@ const SLUG = 'produccion';
 
 function assertProduccion(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug produccion');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug produccion',
+    );
   }
 }
 
@@ -58,10 +60,14 @@ export class CreateProduccionPurchaseOrderUseCase {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateProduccionPurchaseOrderPayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateProduccionPurchaseOrderPayload,
+  ) {
     assertProduccion(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación produccion no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación produccion no encontrada');
     return this.repo.create(app.id, payload);
   }
 }
@@ -73,7 +79,11 @@ export class UpdateProduccionPurchaseOrderUseCase {
     private readonly repo: ProduccionPurchaseOrderRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateProduccionPurchaseOrderPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateProduccionPurchaseOrderPayload,
+  ) {
     assertProduccion(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Orden de compra no encontrada');
@@ -103,7 +113,11 @@ export class ReceiveProduccionPurchaseOrderUseCase {
     private readonly repo: ProduccionPurchaseOrderRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: ReceiveProduccionPurchaseOrderPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: ReceiveProduccionPurchaseOrderPayload,
+  ) {
     assertProduccion(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Orden de compra no encontrada');

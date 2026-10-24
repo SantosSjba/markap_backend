@@ -87,7 +87,10 @@ function mapTask(row: {
 export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecutionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async ensureProjectScope(projectId: string, applicationSlug = 'arquitectura'): Promise<boolean> {
+  async ensureProjectScope(
+    projectId: string,
+    applicationSlug = 'arquitectura',
+  ): Promise<boolean> {
     const slug = applicationSlug.trim() || 'arquitectura';
     const n = await this.prisma.arquitecturaProject.count({
       where: { id: projectId, deletedAt: null, application: { slug } },
@@ -95,7 +98,10 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
     return n > 0;
   }
 
-  async getOverview(projectId: string, applicationSlug = 'arquitectura'): Promise<ArquitecturaExecutionOverviewDto | null> {
+  async getOverview(
+    projectId: string,
+    applicationSlug = 'arquitectura',
+  ): Promise<ArquitecturaExecutionOverviewDto | null> {
     const slug = applicationSlug.trim() || 'arquitectura';
     const project = await this.prisma.arquitecturaProject.findFirst({
       where: { id: projectId, deletedAt: null },
@@ -106,29 +112,38 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
     });
     if (!project || project.application.slug !== slug) return null;
 
-    const [tasks, evidences, incidents, costs, budgetPriceTotal, sectionCount] = await Promise.all([
-      this.prisma.arquitecturaExecutionTask.findMany({ where: { projectId } }),
-      this.prisma.arquitecturaExecutionEvidence.findMany({
-        where: { projectId },
-        orderBy: { capturedAt: 'desc' },
-      }),
-      this.prisma.arquitecturaExecutionIncident.findMany({
-        where: { projectId },
-        orderBy: { reportedAt: 'desc' },
-      }),
-      this.prisma.arquitecturaExecutionActualCost.findMany({
-        where: { projectId },
-        include: { catalogMaterial: { select: { code: true, name: true } } },
-        orderBy: { occurredAt: 'desc' },
-      }),
-      getArquitecturaProjectBudgetPriceTotal(this.prisma, projectId),
-      this.prisma.arquitecturaProjectSection.count({ where: { projectId } }),
-    ]);
+    const [tasks, evidences, incidents, costs, budgetPriceTotal, sectionCount] =
+      await Promise.all([
+        this.prisma.arquitecturaExecutionTask.findMany({
+          where: { projectId },
+        }),
+        this.prisma.arquitecturaExecutionEvidence.findMany({
+          where: { projectId },
+          orderBy: { capturedAt: 'desc' },
+        }),
+        this.prisma.arquitecturaExecutionIncident.findMany({
+          where: { projectId },
+          orderBy: { reportedAt: 'desc' },
+        }),
+        this.prisma.arquitecturaExecutionActualCost.findMany({
+          where: { projectId },
+          include: { catalogMaterial: { select: { code: true, name: true } } },
+          orderBy: { occurredAt: 'desc' },
+        }),
+        getArquitecturaProjectBudgetPriceTotal(this.prisma, projectId),
+        this.prisma.arquitecturaProjectSection.count({ where: { projectId } }),
+      ]);
 
     const budgetGrand = sectionCount > 0 ? budgetPriceTotal : null;
-    const ref = sectionCount > 0
-      ? { id: projectId, code: project.code, version: 1, grandTotal: budgetPriceTotal }
-      : null;
+    const ref =
+      sectionCount > 0
+        ? {
+            id: projectId,
+            code: project.code,
+            version: 1,
+            grandTotal: budgetPriceTotal,
+          }
+        : null;
 
     tasks.sort(
       (a, b) =>
@@ -137,23 +152,33 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
         a.title.localeCompare(b.title),
     );
 
-    const labor = costs.filter((c) => c.costCategory === 'LABOR').reduce((s, c) => s + num(c.amount), 0);
-    const material = costs.filter((c) => c.costCategory === 'MATERIAL').reduce((s, c) => s + num(c.amount), 0);
-    const expense = costs.filter((c) => c.costCategory === 'EXPENSE').reduce((s, c) => s + num(c.amount), 0);
-    const transport = costs.filter((c) => c.costCategory === 'TRANSPORT').reduce((s, c) => s + num(c.amount), 0);
+    const labor = costs
+      .filter((c) => c.costCategory === 'LABOR')
+      .reduce((s, c) => s + num(c.amount), 0);
+    const material = costs
+      .filter((c) => c.costCategory === 'MATERIAL')
+      .reduce((s, c) => s + num(c.amount), 0);
+    const expense = costs
+      .filter((c) => c.costCategory === 'EXPENSE')
+      .reduce((s, c) => s + num(c.amount), 0);
+    const transport = costs
+      .filter((c) => c.costCategory === 'TRANSPORT')
+      .reduce((s, c) => s + num(c.amount), 0);
     const totalActual = labor + material + expense + transport;
 
-    const mappedCosts: ArquitecturaExecutionActualCostDto[] = costs.map((c) => ({
-      id: c.id,
-      projectId: c.projectId,
-      costCategory: c.costCategory,
-      concept: c.concept,
-      amount: num(c.amount),
-      occurredAt: toDateOnly(c.occurredAt) ?? '',
-      catalogMaterialId: c.catalogMaterialId,
-      materialCode: c.catalogMaterial?.code ?? null,
-      materialName: c.catalogMaterial?.name ?? null,
-    }));
+    const mappedCosts: ArquitecturaExecutionActualCostDto[] = costs.map(
+      (c) => ({
+        id: c.id,
+        projectId: c.projectId,
+        costCategory: c.costCategory,
+        concept: c.concept,
+        amount: num(c.amount),
+        occurredAt: toDateOnly(c.occurredAt) ?? '',
+        catalogMaterialId: c.catalogMaterialId,
+        materialCode: c.catalogMaterial?.code ?? null,
+        materialName: c.catalogMaterial?.name ?? null,
+      }),
+    );
 
     return {
       projectId: project.id,
@@ -198,7 +223,10 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
     };
   }
 
-  async createTask(projectId: string, payload: CreateArquitecturaExecutionTaskPayload): Promise<ArquitecturaExecutionTaskDto> {
+  async createTask(
+    projectId: string,
+    payload: CreateArquitecturaExecutionTaskPayload,
+  ): Promise<ArquitecturaExecutionTaskDto> {
     const agg = await this.prisma.arquitecturaExecutionTask.aggregate({
       where: { projectId },
       _max: { sortOrder: true },
@@ -215,7 +243,9 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
         plannedStart: payload.plannedStart ?? null,
         plannedEnd: payload.plannedEnd ?? null,
         progressPct:
-          payload.progressPct != null ? new Prisma.Decimal(payload.progressPct) : new Prisma.Decimal(0),
+          payload.progressPct != null
+            ? new Prisma.Decimal(payload.progressPct)
+            : new Prisma.Decimal(0),
       },
     });
     return mapTask(row);
@@ -234,12 +264,15 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
     const patch: Prisma.ArquitecturaExecutionTaskUncheckedUpdateInput = {};
     if (payload.phase != null) patch.phase = payload.phase;
     if (payload.title != null) patch.title = payload.title.trim();
-    if (payload.description !== undefined) patch.description = payload.description?.trim() ?? null;
+    if (payload.description !== undefined)
+      patch.description = payload.description?.trim() ?? null;
     if (payload.kanbanStatus != null) patch.kanbanStatus = payload.kanbanStatus;
     if (payload.sortOrder != null) patch.sortOrder = payload.sortOrder;
-    if (payload.plannedStart !== undefined) patch.plannedStart = payload.plannedStart;
+    if (payload.plannedStart !== undefined)
+      patch.plannedStart = payload.plannedStart;
     if (payload.plannedEnd !== undefined) patch.plannedEnd = payload.plannedEnd;
-    if (payload.progressPct != null) patch.progressPct = new Prisma.Decimal(payload.progressPct);
+    if (payload.progressPct != null)
+      patch.progressPct = new Prisma.Decimal(payload.progressPct);
 
     const row = await this.prisma.arquitecturaExecutionTask.update({
       where: { id: taskId },
@@ -249,7 +282,9 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
   }
 
   async deleteTask(projectId: string, taskId: string): Promise<boolean> {
-    const r = await this.prisma.arquitecturaExecutionTask.deleteMany({ where: { id: taskId, projectId } });
+    const r = await this.prisma.arquitecturaExecutionTask.deleteMany({
+      where: { id: taskId, projectId },
+    });
     return r.count > 0;
   }
 
@@ -259,7 +294,9 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
   ): Promise<ArquitecturaExecutionEvidenceDto> {
     const tid = payload.taskId?.trim() || null;
     if (tid) {
-      const ok = await this.prisma.arquitecturaExecutionTask.count({ where: { id: tid, projectId } });
+      const ok = await this.prisma.arquitecturaExecutionTask.count({
+        where: { id: tid, projectId },
+      });
       if (!ok) {
         throw new Error('TASK_SCOPE');
       }
@@ -285,7 +322,10 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
     };
   }
 
-  async deleteEvidence(projectId: string, evidenceId: string): Promise<boolean> {
+  async deleteEvidence(
+    projectId: string,
+    evidenceId: string,
+  ): Promise<boolean> {
     const r = await this.prisma.arquitecturaExecutionEvidence.deleteMany({
       where: { id: evidenceId, projectId },
     });
@@ -331,7 +371,8 @@ export class ArquitecturaExecutionPrismaRepository implements ArquitecturaExecut
     const patch: Prisma.ArquitecturaExecutionIncidentUncheckedUpdateInput = {};
     if (payload.status != null) patch.status = payload.status;
     if (payload.title != null) patch.title = payload.title.trim();
-    if (payload.description !== undefined) patch.description = payload.description?.trim() ?? null;
+    if (payload.description !== undefined)
+      patch.description = payload.description?.trim() ?? null;
     if (payload.severity != null) patch.severity = payload.severity;
     if (payload.closedAt !== undefined) patch.closedAt = payload.closedAt;
 

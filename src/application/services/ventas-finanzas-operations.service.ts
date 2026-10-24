@@ -55,7 +55,9 @@ export class VentasFinanzasOperationsService {
     private readonly agentRepository: AgentRepository,
   ) {}
 
-  private async resolveVentasApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveVentasApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertVentasApp(applicationSlug ?? VENTAS_SLUG);
     const app = await this.applicationRepository.findBySlug(VENTAS_SLUG);
     if (!app) throw new EntityNotFoundException('Application', VENTAS_SLUG);
@@ -64,7 +66,10 @@ export class VentasFinanzasOperationsService {
 
   async listBuyerPayments(f: ListBuyerPaymentsFilters) {
     assertVentasApp(f.applicationSlug);
-    return this.finanzas.listBuyerPayments({ ...f, applicationSlug: VENTAS_SLUG });
+    return this.finanzas.listBuyerPayments({
+      ...f,
+      applicationSlug: VENTAS_SLUG,
+    });
   }
 
   async createBuyerPayment(
@@ -78,15 +83,25 @@ export class VentasFinanzasOperationsService {
       notes?: string | null;
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     if (!isBuyerPaymentKind(body.kind)) {
-      throw new BadRequestException(`Tipo inválido. Use: ${VENTAS_BUYER_PAYMENT_KINDS.join(', ')}`);
+      throw new BadRequestException(
+        `Tipo inválido. Use: ${VENTAS_BUYER_PAYMENT_KINDS.join(', ')}`,
+      );
     }
-    if (body.amount <= 0) {
+    if (!Number.isFinite(body.amount) || body.amount <= 0) {
       throw new BadRequestException('El monto debe ser mayor que cero.');
     }
-    const ok = await this.finanzas.saleClosingBelongsToApplication(body.saleClosingId, applicationId);
-    if (!ok) throw new EntityNotFoundException('SaleClosing', body.saleClosingId);
+    if (typeof body.saleClosingId !== 'string' || !body.saleClosingId.trim()) {
+      throw new BadRequestException('saleClosingId es obligatorio.');
+    }
+    const ok = await this.finanzas.saleClosingBelongsToApplication(
+      body.saleClosingId,
+      applicationId,
+    );
+    if (!ok)
+      throw new EntityNotFoundException('SaleClosing', body.saleClosingId);
 
     return this.finanzas.createBuyerPayment({
       applicationId,
@@ -104,7 +119,8 @@ export class VentasFinanzasOperationsService {
     applicationSlug: string | undefined,
     body?: { paidAt?: string | null },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     const row = await this.finanzas.markBuyerPaymentPaid(
       id,
       applicationId,
@@ -118,7 +134,10 @@ export class VentasFinanzasOperationsService {
 
   async listCommissions(f: ListCommissionsFilters) {
     assertVentasApp(f.applicationSlug);
-    return this.finanzas.listCommissions({ ...f, applicationSlug: VENTAS_SLUG });
+    return this.finanzas.listCommissions({
+      ...f,
+      applicationSlug: VENTAS_SLUG,
+    });
   }
 
   async markCommissionPaid(
@@ -126,7 +145,8 @@ export class VentasFinanzasOperationsService {
     applicationSlug: string | undefined,
     body?: { paidAt?: string | null },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     const row = await this.finanzas.markCommissionPaid(
       id,
       applicationId,
@@ -143,7 +163,8 @@ export class VentasFinanzasOperationsService {
     applicationSlug: string | undefined,
     body?: { paidAt?: string | null },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     const row = await this.finanzas.markCommissionPaymentPartPaid(
       partId,
       applicationId,
@@ -151,13 +172,18 @@ export class VentasFinanzasOperationsService {
         ? parseValidDateOrThrow(body.paidAt, 'Fecha de pago')
         : undefined,
     );
-    if (!row) throw new EntityNotFoundException('SaleCommissionPaymentPart', partId);
+    if (!row)
+      throw new EntityNotFoundException('SaleCommissionPaymentPart', partId);
     return row;
   }
 
   async recalculateCommission(id: string, applicationSlug: string | undefined) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
-    const row = await this.finanzas.recalculateCommissionFromProfile(id, applicationId);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
+    const row = await this.finanzas.recalculateCommissionFromProfile(
+      id,
+      applicationId,
+    );
     if (!row) {
       throw new BadRequestException(
         'No se pudo recalcular: comisión inexistente o sin perfil de % para el asesor.',
@@ -167,7 +193,8 @@ export class VentasFinanzasOperationsService {
   }
 
   async listAgentCommissionProfiles(applicationSlug?: string) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     return this.finanzas.listAgentCommissionProfiles(applicationId);
   }
 
@@ -175,13 +202,16 @@ export class VentasFinanzasOperationsService {
     applicationSlug: string | undefined,
     body: { agentId: string; commissionPercent: number },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     if (body.commissionPercent < 0 || body.commissionPercent > 100) {
       throw new BadRequestException('El porcentaje debe estar entre 0 y 100.');
     }
     const ag = await this.agentRepository.findById(body.agentId);
     if (!ag || ag.applicationId !== applicationId) {
-      throw new BadRequestException('El asesor no existe o no pertenece a Ventas.');
+      throw new BadRequestException(
+        'El asesor no existe o no pertenece a Ventas.',
+      );
     }
     return this.finanzas.upsertAgentCommissionProfile({
       applicationId,
@@ -192,7 +222,10 @@ export class VentasFinanzasOperationsService {
 
   async listDocumentationCosts(f: ListDocCostsFilters) {
     assertVentasApp(f.applicationSlug);
-    return this.finanzas.listDocumentationCosts({ ...f, applicationSlug: VENTAS_SLUG });
+    return this.finanzas.listDocumentationCosts({
+      ...f,
+      applicationSlug: VENTAS_SLUG,
+    });
   }
 
   async createDocumentationCost(
@@ -206,15 +239,22 @@ export class VentasFinanzasOperationsService {
       expenseDate?: string | null;
     },
   ) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
     if (!isDocCostType(body.costType)) {
-      throw new BadRequestException(`Tipo inválido. Use: ${VENTAS_DOC_COST_TYPES.join(', ')}`);
+      throw new BadRequestException(
+        `Tipo inválido. Use: ${VENTAS_DOC_COST_TYPES.join(', ')}`,
+      );
     }
     if (body.amount <= 0) {
       throw new BadRequestException('El monto debe ser mayor que cero.');
     }
-    const ok = await this.finanzas.saleClosingBelongsToApplication(body.saleClosingId, applicationId);
-    if (!ok) throw new EntityNotFoundException('SaleClosing', body.saleClosingId);
+    const ok = await this.finanzas.saleClosingBelongsToApplication(
+      body.saleClosingId,
+      applicationId,
+    );
+    if (!ok)
+      throw new EntityNotFoundException('SaleClosing', body.saleClosingId);
 
     return this.finanzas.createDocumentationCost({
       applicationId,
@@ -230,8 +270,12 @@ export class VentasFinanzasOperationsService {
   }
 
   async getClosingProfitability(closingId: string, applicationSlug?: string) {
-    const applicationId = await this.resolveVentasApplicationId(applicationSlug);
-    const row = await this.finanzas.getClosingProfitability(closingId, applicationId);
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
+    const row = await this.finanzas.getClosingProfitability(
+      closingId,
+      applicationId,
+    );
     if (!row) throw new EntityNotFoundException('SaleClosing', closingId);
     return row;
   }

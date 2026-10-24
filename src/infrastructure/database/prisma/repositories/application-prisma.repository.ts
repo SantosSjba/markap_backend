@@ -1,3 +1,8 @@
+import {
+  startOfTodayLima,
+  todayDateOnlyLima,
+  parseDateOnly,
+} from '@domain/utils/peru-date.util';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Application } from '@domain/entities';
@@ -21,7 +26,7 @@ export class ApplicationPrismaRepository implements ApplicationRepository {
       orderBy: { order: 'asc' },
     });
 
-    return applications.map(ApplicationPrismaMapper.toDomain);
+    return applications.map((row) => ApplicationPrismaMapper.toDomain(row));
   }
 
   async findById(id: string): Promise<Application | null> {
@@ -81,42 +86,118 @@ export class ApplicationPrismaRepository implements ApplicationRepository {
       }),
     );
 
-    return appsWithCounts.map(ApplicationPrismaMapper.toDomain);
+    return appsWithCounts.map((row) => ApplicationPrismaMapper.toDomain(row));
   }
 
-  /**
-   * Calculates activeCount and pendingCount dynamically based on real data.
-   * - activeCount: active rentals/contracts for this application
-   * - pendingCount: pending payments across those rentals
-   */
+  /** Indicadores del selector calculados desde los mismos registros del negocio. */
   private async getDynamicCounts(
     applicationId: string,
     slug: string,
   ): Promise<{ activeCount: number; pendingCount: number }> {
-    // Only calculate for applications that have rentals (e.g. alquileres)
-    // For others, fall back to stored values
-    const RENTAL_SLUGS = ['alquileres'];
-
-    if (!RENTAL_SLUGS.includes(slug)) {
-      return { activeCount: 0, pendingCount: 0 };
+    let counts: [number, number];
+    switch (slug) {
+      case 'alquileres':
+        counts = await Promise.all([
+          this.prisma.rental.count({
+            where: {
+              applicationId,
+              deletedAt: null,
+              status: 'ACTIVE',
+              endDate: { gte: startOfTodayLima() },
+            },
+          }),
+          this.prisma.payment.count({
+            where: {
+              rental: { applicationId, deletedAt: null, status: 'ACTIVE' },
+              status: { in: ['PENDING', 'PARTIAL', 'OVERDUE'] },
+            },
+          }),
+        ]);
+        break;
+      case 'ventas':
+        counts = await Promise.all([
+          this.prisma.saleProcess.count({
+            where: { applicationId, deletedAt: null, status: 'ACTIVE' },
+          }),
+          this.prisma.saleBuyerPayment.count({
+            where: {
+              closing: { applicationId },
+              status: 'PENDING',
+            },
+          }),
+        ]);
+        break;
+      case 'interiorismo':
+        counts = await Promise.all([
+          this.prisma.interiorProject.count({
+            where: {
+              applicationId,
+              deletedAt: null,
+              status: { in: ['DESIGN', 'QUOTE', 'APPROVED', 'IN_PROGRESS'] },
+            },
+          }),
+          this.prisma.interiorProject.count({
+            where: { applicationId, deletedAt: null, status: 'QUOTE' },
+          }),
+        ]);
+        break;
+      case 'arquitectura':
+        counts = await Promise.all([
+          this.prisma.arquitecturaProject.count({
+            where: {
+              applicationId,
+              deletedAt: null,
+              status: { in: ['DESIGN', 'QUOTE', 'APPROVED', 'IN_PROGRESS'] },
+            },
+          }),
+          this.prisma.arquitecturaProject.count({
+            where: { applicationId, deletedAt: null, status: 'QUOTE' },
+          }),
+        ]);
+        break;
+      case 'produccion':
+        counts = await Promise.all([
+          this.prisma.produccionWorkOrder.count({
+            where: {
+              applicationId,
+              status: { in: ['PENDING', 'IN_PROGRESS'] },
+            },
+          }),
+          this.prisma.produccionPurchaseOrder.count({
+            where: {
+              applicationId,
+              status: { in: ['DRAFT', 'SENT', 'PARTIAL'] },
+            },
+          }),
+        ]);
+        break;
+      case 'contabilidad': {
+        const monthStart = parseDateOnly(
+          `${todayDateOnlyLima().slice(0, 7)}-01`,
+        );
+        const nextMonth = new Date(monthStart);
+        nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
+        counts = await Promise.all([
+          this.prisma.contabilidadJournalEntry.count({
+            where: {
+              applicationId,
+              entryDate: { gte: monthStart, lt: nextMonth },
+            },
+          }),
+          this.prisma.contabilidadSalesInvoice.count({
+            where: {
+              applicationId,
+              status: { not: 'CANCELLED' },
+              electronicStatus: 'NONE',
+            },
+          }),
+        ]);
+        break;
+      }
+      default:
+        counts = [0, 0];
     }
-
-    const [activeCount, pendingCount] = await Promise.all([
-      this.prisma.rental.count({
-        where: {
-          applicationId,
-          status: 'ACTIVE',
-        },
-      }),
-      this.prisma.payment.count({
-        where: {
-          rental: { applicationId },
-          status: 'PENDING',
-        },
-      }),
-    ]);
-
-    return { activeCount, pendingCount };
+    return { activeCount: counts[0], pendingCount: counts[1] };
   }
 
   async findByRoleId(roleId: string): Promise<Application[]> {
@@ -131,7 +212,7 @@ export class ApplicationPrismaRepository implements ApplicationRepository {
       orderBy: { order: 'asc' },
     });
 
-    return applications.map(ApplicationPrismaMapper.toDomain);
+    return applications.map((row) => ApplicationPrismaMapper.toDomain(row));
   }
 
   async create(

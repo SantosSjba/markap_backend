@@ -35,10 +35,13 @@ import type {
   UpdateSupplierInput,
 } from '@domain/repositories/contabilidad-purchases.repository';
 import type { ContabilidadTreasuryRepository } from '@domain/repositories/contabilidad-treasury.repository';
-import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import {
+  parsePenAmount,
+  roundPenAmount,
+} from '@domain/utils/contabilidad-journal-amounts';
 import { parseDateOnly } from '@domain/utils/peru-date.util';
 import { resolveInvoiceTaxableBaseInPen } from '../helpers/contabilidad-invoice-multicurrency.helper';
-import { PrismaService } from '../prisma.service';
+import { Atomic, PrismaService } from '../prisma.service';
 import { ContabilidadPurchasesPrismaMapper } from '../mappers/contabilidad-purchases-prisma.mapper';
 
 const supplierInclude = {
@@ -85,16 +88,26 @@ const paymentInclude = {
 } as const;
 
 function computeSupplierBalance(
-  invoices: { totalAmount: { toString(): string } | number; paidAmount: { toString(): string } | number }[],
+  invoices: {
+    totalAmount: { toString(): string } | number;
+    paidAmount: { toString(): string } | number;
+  }[],
   creditNotes: { totalAmount: { toString(): string } | number }[],
   debitNotes: { totalAmount: { toString(): string } | number }[],
 ): number {
   const invoiceBalance = invoices.reduce(
-    (sum, inv) => sum + Math.max(0, Number(inv.totalAmount) - Number(inv.paidAmount)),
+    (sum, inv) =>
+      sum + Math.max(0, Number(inv.totalAmount) - Number(inv.paidAmount)),
     0,
   );
-  const creditTotal = creditNotes.reduce((sum, nc) => sum + Number(nc.totalAmount), 0);
-  const debitTotal = debitNotes.reduce((sum, nd) => sum + Number(nd.totalAmount), 0);
+  const creditTotal = creditNotes.reduce(
+    (sum, nc) => sum + Number(nc.totalAmount),
+    0,
+  );
+  const debitTotal = debitNotes.reduce(
+    (sum, nd) => sum + Number(nd.totalAmount),
+    0,
+  );
   return roundPenAmount(Math.max(0, invoiceBalance - creditTotal + debitTotal));
 }
 
@@ -131,7 +144,10 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     private readonly treasury: ContabilidadTreasuryRepository,
   ) {}
 
-  private async resolveAccountId(applicationId: string, code: string): Promise<string> {
+  private async resolveAccountId(
+    applicationId: string,
+    code: string,
+  ): Promise<string> {
     const account = await this.accounts.findByCode(applicationId, code);
     if (!account?.isActive || !account.isMovement) {
       throw new Error(`Cuenta PCGE ${code} no disponible`);
@@ -171,7 +187,10 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     );
   }
 
-  async findSupplierById(applicationId: string, id: string): Promise<ContabilidadSupplierDto | null> {
+  async findSupplierById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadSupplierDto | null> {
     const row = await this.prisma.contabilidadSupplier.findFirst({
       where: { applicationId, id },
       include: supplierInclude,
@@ -184,7 +203,10 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     );
   }
 
-  async createSupplier(applicationId: string, input: CreateSupplierInput): Promise<ContabilidadSupplierDto> {
+  async createSupplier(
+    applicationId: string,
+    input: CreateSupplierInput,
+  ): Promise<ContabilidadSupplierDto> {
     const row = await this.prisma.contabilidadSupplier.create({
       data: {
         applicationId,
@@ -210,18 +232,33 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     const row = await this.prisma.contabilidadSupplier.update({
       where: { id },
       data: {
-        ...(input.businessName !== undefined ? { businessName: input.businessName.trim() } : {}),
-        ...(input.countryCode !== undefined ? { countryCode: input.countryCode.trim().toUpperCase() } : {}),
-        ...(input.isNonDomiciled !== undefined ? { isNonDomiciled: input.isNonDomiciled } : {}),
-        ...(input.tradeName !== undefined ? { tradeName: input.tradeName?.trim() || null } : {}),
-        ...(input.address !== undefined ? { address: input.address?.trim() || null } : {}),
-        ...(input.email !== undefined ? { email: input.email?.trim() || null } : {}),
-        ...(input.phone !== undefined ? { phone: input.phone?.trim() || null } : {}),
+        ...(input.businessName !== undefined
+          ? { businessName: input.businessName.trim() }
+          : {}),
+        ...(input.countryCode !== undefined
+          ? { countryCode: input.countryCode.trim().toUpperCase() }
+          : {}),
+        ...(input.isNonDomiciled !== undefined
+          ? { isNonDomiciled: input.isNonDomiciled }
+          : {}),
+        ...(input.tradeName !== undefined
+          ? { tradeName: input.tradeName?.trim() || null }
+          : {}),
+        ...(input.address !== undefined
+          ? { address: input.address?.trim() || null }
+          : {}),
+        ...(input.email !== undefined
+          ? { email: input.email?.trim() || null }
+          : {}),
+        ...(input.phone !== undefined
+          ? { phone: input.phone?.trim() || null }
+          : {}),
         ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
       },
       include: supplierInclude,
     });
-    if (row.applicationId !== applicationId) throw new Error('Supplier not found');
+    if (row.applicationId !== applicationId)
+      throw new Error('Supplier not found');
     return ContabilidadPurchasesPrismaMapper.toSupplier(
       row,
       computeSupplierBalance(row.invoices, row.creditNotes, row.debitNotes),
@@ -245,7 +282,11 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
               OR: [
                 { series: { contains: q, mode: 'insensitive' } },
                 { number: { contains: q, mode: 'insensitive' } },
-                { supplier: { businessName: { contains: q, mode: 'insensitive' } } },
+                {
+                  supplier: {
+                    businessName: { contains: q, mode: 'insensitive' },
+                  },
+                },
                 { supplier: { ruc: { contains: q, mode: 'insensitive' } } },
               ],
             }
@@ -257,7 +298,10 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     return rows.map((row) => ContabilidadPurchasesPrismaMapper.toInvoice(row));
   }
 
-  async findInvoiceById(applicationId: string, id: string): Promise<ContabilidadPurchaseInvoiceDto | null> {
+  async findInvoiceById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadPurchaseInvoiceDto | null> {
     const row = await this.prisma.contabilidadPurchaseInvoice.findFirst({
       where: { applicationId, id },
       include: invoiceInclude,
@@ -265,6 +309,7 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     return row ? ContabilidadPurchasesPrismaMapper.toInvoice(row) : null;
   }
 
+  @Atomic()
   async createInvoiceWithJournal(
     applicationId: string,
     input: CreatePurchaseInvoiceInput,
@@ -276,21 +321,30 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     });
     if (!supplier) throw new Error('Proveedor no encontrado');
 
-    const fx = await resolveInvoiceTaxableBaseInPen(this.prisma, applicationId, {
-      currencyCode: input.currencyCode,
-      exchangeRate: input.exchangeRate,
-      foreignTaxableBase: input.foreignTaxableBase,
-      taxableBase: input.taxableBase,
-      issueDate: input.issueDate,
-    });
+    const fx = await resolveInvoiceTaxableBaseInPen(
+      this.prisma,
+      applicationId,
+      {
+        currencyCode: input.currencyCode,
+        exchangeRate: input.exchangeRate,
+        foreignTaxableBase: input.foreignTaxableBase,
+        taxableBase: input.taxableBase,
+        issueDate: input.issueDate,
+      },
+    );
     const amounts = computePurchaseAmounts(
       fx.taxableBasePen,
       input.taxAffectation,
       igvPercent,
       input.igvAmount,
     );
-    const detraccion = roundPenAmount(parsePenAmount(input.detraccionAmount ?? 0));
-    const payableAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_PAYABLE_ACCOUNT_CODE);
+    const detraccion = roundPenAmount(
+      parsePenAmount(input.detraccionAmount ?? 0),
+    );
+    const payableAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_PAYABLE_ACCOUNT_CODE,
+    );
     const auxiliaryDoc = `${input.series.trim()}-${input.number.trim()}`;
     const description = `Compra ${auxiliaryDoc} — ${supplier.businessName}`;
 
@@ -309,7 +363,10 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
       },
     ];
     if (amounts.igvAmount > 0) {
-      const igvAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_IGV_ACCOUNT_CODE);
+      const igvAccountId = await this.resolveAccountId(
+        applicationId,
+        CONTABILIDAD_IGV_ACCOUNT_CODE,
+      );
       lines.push({ accountId: igvAccountId, debit: amounts.igvAmount });
     }
 
@@ -362,13 +419,24 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     return ContabilidadPurchasesPrismaMapper.toInvoice(row);
   }
 
-  async cancelInvoice(applicationId: string, id: string): Promise<ContabilidadPurchaseInvoiceDto> {
+  @Atomic()
+  async cancelInvoice(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadPurchaseInvoiceDto> {
+    await this.prisma
+      .$queryRaw`SELECT id FROM contabilidad_purchase_invoices WHERE id = ${id} FOR UPDATE`;
     const existing = await this.prisma.contabilidadPurchaseInvoice.findFirst({
       where: { applicationId, id },
     });
     if (!existing) throw new Error('Factura no encontrada');
-    if (existing.status === CONTABILIDAD_PURCHASE_STATUS.CANCELLED) throw new Error('Factura ya anulada');
-    if (Number(existing.paidAmount) > 0) throw new Error('No se puede anular una factura con pagos');
+    if (existing.status === CONTABILIDAD_PURCHASE_STATUS.CANCELLED)
+      throw new Error('Factura ya anulada');
+    if (Number(existing.paidAmount) > 0)
+      throw new Error('No se puede anular una factura con pagos');
+    // La anulación revierte el asiento para que no siga en los estados financieros.
+    if (existing.journalEntryId)
+      await this.journal.reverse(applicationId, existing.journalEntryId, null);
 
     const row = await this.prisma.contabilidadPurchaseInvoice.update({
       where: { id },
@@ -396,7 +464,11 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
               OR: [
                 { series: { contains: q, mode: 'insensitive' } },
                 { number: { contains: q, mode: 'insensitive' } },
-                { supplier: { businessName: { contains: q, mode: 'insensitive' } } },
+                {
+                  supplier: {
+                    businessName: { contains: q, mode: 'insensitive' },
+                  },
+                },
               ],
             }
           : {}),
@@ -404,9 +476,12 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
       include: creditNoteInclude,
       orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
     });
-    return rows.map((row) => ContabilidadPurchasesPrismaMapper.toCreditNote(row));
+    return rows.map((row) =>
+      ContabilidadPurchasesPrismaMapper.toCreditNote(row),
+    );
   }
 
+  @Atomic()
   async createCreditNoteWithJournal(
     applicationId: string,
     input: CreatePurchaseCreditNoteInput,
@@ -421,7 +496,11 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     let expenseAccountId: string | null = null;
     if (input.invoiceId) {
       const invoice = await this.prisma.contabilidadPurchaseInvoice.findFirst({
-        where: { applicationId, id: input.invoiceId, supplierId: input.supplierId },
+        where: {
+          applicationId,
+          id: input.invoiceId,
+          supplierId: input.supplierId,
+        },
       });
       if (!invoice) throw new Error('Factura vinculada no encontrada');
       expenseAccountId = invoice.expenseAccountId;
@@ -430,12 +509,26 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
       expenseAccountId = await this.resolveAccountId(applicationId, '601');
     }
 
-    const amounts = computePurchaseAmounts(input.taxableBase, CONTABILIDAD_PURCHASE_TAX_AFFECTATION.TAXABLE, igvPercent, input.igvAmount);
-    const payableAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_PAYABLE_ACCOUNT_CODE);
+    const amounts = computePurchaseAmounts(
+      input.taxableBase,
+      CONTABILIDAD_PURCHASE_TAX_AFFECTATION.TAXABLE,
+      igvPercent,
+      input.igvAmount,
+    );
+    const payableAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_PAYABLE_ACCOUNT_CODE,
+    );
     const auxiliaryDoc = `${input.series.trim()}-${input.number.trim()}`;
     const description = `NC compra ${auxiliaryDoc} — ${supplier.businessName}`;
 
-    const lines: { accountId: string; debit?: number; credit?: number; auxiliaryRuc?: string; auxiliaryDoc?: string }[] = [
+    const lines: {
+      accountId: string;
+      debit?: number;
+      credit?: number;
+      auxiliaryRuc?: string;
+      auxiliaryDoc?: string;
+    }[] = [
       {
         accountId: payableAccountId,
         debit: amounts.totalAmount,
@@ -451,7 +544,10 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     ];
 
     if (amounts.igvAmount > 0) {
-      const igvAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_IGV_ACCOUNT_CODE);
+      const igvAccountId = await this.resolveAccountId(
+        applicationId,
+        CONTABILIDAD_IGV_ACCOUNT_CODE,
+      );
       lines.push({ accountId: igvAccountId, credit: amounts.igvAmount });
     }
 
@@ -504,7 +600,11 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
               OR: [
                 { series: { contains: q, mode: 'insensitive' } },
                 { number: { contains: q, mode: 'insensitive' } },
-                { supplier: { businessName: { contains: q, mode: 'insensitive' } } },
+                {
+                  supplier: {
+                    businessName: { contains: q, mode: 'insensitive' },
+                  },
+                },
               ],
             }
           : {}),
@@ -512,9 +612,12 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
       include: debitNoteInclude,
       orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
     });
-    return rows.map((row) => ContabilidadPurchasesPrismaMapper.toDebitNote(row));
+    return rows.map((row) =>
+      ContabilidadPurchasesPrismaMapper.toDebitNote(row),
+    );
   }
 
+  @Atomic()
   async createDebitNoteWithJournal(
     applicationId: string,
     input: CreatePurchaseDebitNoteInput,
@@ -529,7 +632,11 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     let expenseAccountId: string | null = null;
     if (input.invoiceId) {
       const invoice = await this.prisma.contabilidadPurchaseInvoice.findFirst({
-        where: { applicationId, id: input.invoiceId, supplierId: input.supplierId },
+        where: {
+          applicationId,
+          id: input.invoiceId,
+          supplierId: input.supplierId,
+        },
       });
       if (!invoice) throw new Error('Factura vinculada no encontrada');
       expenseAccountId = invoice.expenseAccountId;
@@ -544,11 +651,20 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
       igvPercent,
       input.igvAmount,
     );
-    const payableAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_PAYABLE_ACCOUNT_CODE);
+    const payableAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_PAYABLE_ACCOUNT_CODE,
+    );
     const auxiliaryDoc = `${input.series.trim()}-${input.number.trim()}`;
     const description = `ND compra ${auxiliaryDoc} — ${supplier.businessName}`;
 
-    const lines: { accountId: string; debit?: number; credit?: number; auxiliaryRuc?: string; auxiliaryDoc?: string }[] = [
+    const lines: {
+      accountId: string;
+      debit?: number;
+      credit?: number;
+      auxiliaryRuc?: string;
+      auxiliaryDoc?: string;
+    }[] = [
       {
         accountId: expenseAccountId,
         debit: amounts.taxableBase,
@@ -557,7 +673,10 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
       },
     ];
     if (amounts.igvAmount > 0) {
-      const igvAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_IGV_ACCOUNT_CODE);
+      const igvAccountId = await this.resolveAccountId(
+        applicationId,
+        CONTABILIDAD_IGV_ACCOUNT_CODE,
+      );
       lines.push({ accountId: igvAccountId, debit: amounts.igvAmount });
     }
     lines.push({
@@ -610,7 +729,9 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
         applicationId,
         ...(filters.periodId ? { periodId: filters.periodId } : {}),
         ...(filters.invoiceId ? { invoiceId: filters.invoiceId } : {}),
-        ...(filters.supplierId ? { invoice: { supplierId: filters.supplierId } } : {}),
+        ...(filters.supplierId
+          ? { invoice: { supplierId: filters.supplierId } }
+          : {}),
       },
       include: paymentInclude,
       orderBy: [{ paymentDate: 'desc' }, { createdAt: 'desc' }],
@@ -618,22 +739,29 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     return rows.map((row) => ContabilidadPurchasesPrismaMapper.toPayment(row));
   }
 
+  @Atomic()
   async createPaymentWithTreasury(
     applicationId: string,
     input: CreatePurchasePaymentInput,
     payableAccountId: string,
     createdBy?: string | null,
   ): Promise<ContabilidadPurchasePaymentDto> {
+    await this.prisma
+      .$queryRaw`SELECT id FROM contabilidad_purchase_invoices WHERE id = ${input.invoiceId} FOR UPDATE`;
     const invoice = await this.prisma.contabilidadPurchaseInvoice.findFirst({
       where: { applicationId, id: input.invoiceId },
       include: { supplier: true },
     });
     if (!invoice) throw new Error('Factura no encontrada');
-    if (invoice.status === CONTABILIDAD_PURCHASE_STATUS.CANCELLED) throw new Error('Factura anulada');
-    if (invoice.status === CONTABILIDAD_PURCHASE_STATUS.PAID) throw new Error('Factura ya pagada');
+    if (invoice.status === CONTABILIDAD_PURCHASE_STATUS.CANCELLED)
+      throw new Error('Factura anulada');
+    if (invoice.status === CONTABILIDAD_PURCHASE_STATUS.PAID)
+      throw new Error('Factura ya pagada');
 
     const amount = roundPenAmount(parsePenAmount(input.amount));
-    const balance = roundPenAmount(Number(invoice.totalAmount) - Number(invoice.paidAmount));
+    const balance = roundPenAmount(
+      Number(invoice.totalAmount) - Number(invoice.paidAmount),
+    );
     if (amount <= 0) throw new Error('Importe inválido');
     if (amount > balance) throw new Error('El pago supera el saldo pendiente');
 

@@ -1,5 +1,20 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadCpeOperationsService } from '../../../application/services/contabilidad-cpe-operations.service';
@@ -33,7 +48,11 @@ export class ContabilidadCpeController {
     @Query('legalEntityId') legalEntityId?: string,
     @Body() body?: UpsertCpeProviderConfigInput,
   ) {
-    return this.cpe.saveProviderConfig(applicationSlug, legalEntityId, body ?? { providerCode: CONTABILIDAD_CPE_PROVIDER.MOCK });
+    return this.cpe.saveProviderConfig(
+      applicationSlug,
+      legalEntityId,
+      body ?? { providerCode: CONTABILIDAD_CPE_PROVIDER.MOCK },
+    );
   }
 
   @Post('emit/sales-invoices/:invoiceId')
@@ -56,9 +75,16 @@ export class ContabilidadCpeController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Res() res: Response,
   ) {
-    const artifact = await this.cpe.downloadArtifact(applicationSlug, logId, 'xml');
+    const artifact = await this.cpe.downloadArtifact(
+      applicationSlug,
+      logId,
+      'xml',
+    );
     res.setHeader('Content-Type', artifact.contentType);
-    res.setHeader('Content-Disposition', `attachment; filename="${artifact.filename}"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${artifact.filename}"`,
+    );
     res.send(artifact.content);
   }
 
@@ -70,9 +96,16 @@ export class ContabilidadCpeController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Res() res: Response,
   ) {
-    const artifact = await this.cpe.downloadArtifact(applicationSlug, logId, 'cdr');
+    const artifact = await this.cpe.downloadArtifact(
+      applicationSlug,
+      logId,
+      'cdr',
+    );
     res.setHeader('Content-Type', artifact.contentType);
-    res.setHeader('Content-Disposition', `attachment; filename="${artifact.filename}"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${artifact.filename}"`,
+    );
     res.send(artifact.content);
   }
 }

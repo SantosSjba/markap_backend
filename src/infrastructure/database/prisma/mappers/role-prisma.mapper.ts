@@ -19,7 +19,9 @@ export class RolePrismaMapper {
     });
   }
 
-  static toPrisma(role: Role): Omit<PrismaRole, 'id' | 'createdAt' | 'updatedAt'> {
+  static toPrisma(
+    role: Role,
+  ): Omit<PrismaRole, 'id' | 'createdAt' | 'updatedAt'> {
     return {
       name: role.name,
       code: role.code,

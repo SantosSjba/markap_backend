@@ -1,3 +1,4 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
 import {
   Body,
   Controller,
@@ -11,7 +12,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
   CreateProduccionMaterialUseCase,
@@ -57,8 +63,8 @@ export class ProduccionMaterialsController {
 
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'produccion',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(100, Math.max(1, parseInt(limit ?? '20', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       search: search?.trim() || undefined,
       category: category?.trim() || undefined,
       isActive: activeFilter,
@@ -81,7 +87,10 @@ export class ProduccionMaterialsController {
   }
 
   @Get(':id')
-  getById(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  getById(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.getByIdUc.execute(id, applicationSlug ?? 'produccion');
   }
 
@@ -97,7 +106,10 @@ export class ProduccionMaterialsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiResponse({ status: 204 })
-  delete(@Param('id') id: string, @Query('applicationSlug') applicationSlug?: string) {
+  delete(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
     return this.deleteUc.execute(id, applicationSlug ?? 'produccion');
   }
 }

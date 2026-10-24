@@ -21,7 +21,7 @@ export class RolePrismaRepository implements RoleRepository {
       orderBy: { name: 'asc' },
     });
 
-    return roles.map(RolePrismaMapper.toDomain);
+    return roles.map((row) => RolePrismaMapper.toDomain(row));
   }
 
   async findById(id: string): Promise<Role | null> {
@@ -64,10 +64,12 @@ export class RolePrismaRepository implements RoleRepository {
       orderBy: { name: 'asc' },
     });
 
-    return roles.map(RolePrismaMapper.toDomain);
+    return roles.map((row) => RolePrismaMapper.toDomain(row));
   }
 
-  async create(data: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<Role> {
+  async create(
+    data: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Role> {
     const role = await this.prisma.role.create({
       data: {
         name: data.name,
@@ -142,7 +144,10 @@ export class RolePrismaRepository implements RoleRepository {
     });
   }
 
-  async assignApplication(roleId: string, applicationId: string): Promise<void> {
+  async assignApplication(
+    roleId: string,
+    applicationId: string,
+  ): Promise<void> {
     await this.prisma.roleApplication.upsert({
       where: {
         roleId_applicationId: { roleId, applicationId },
@@ -155,7 +160,10 @@ export class RolePrismaRepository implements RoleRepository {
     });
   }
 
-  async revokeApplication(roleId: string, applicationId: string): Promise<void> {
+  async revokeApplication(
+    roleId: string,
+    applicationId: string,
+  ): Promise<void> {
     await this.prisma.roleApplication.delete({
       where: {
         roleId_applicationId: { roleId, applicationId },

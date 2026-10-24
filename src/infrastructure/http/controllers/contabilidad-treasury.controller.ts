@@ -1,5 +1,21 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadTreasuryOperationsService } from '../../../application/services/contabilidad-treasury-operations.service';
@@ -19,7 +35,9 @@ import type {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class ContabilidadTreasuryController {
-  constructor(private readonly treasury: ContabilidadTreasuryOperationsService) {}
+  constructor(
+    private readonly treasury: ContabilidadTreasuryOperationsService,
+  ) {}
 
   @Get('cash-boxes')
   @ApiOperation({ summary: 'Listar cajas con saldo' })
@@ -114,18 +132,28 @@ export class ContabilidadTreasuryController {
     @Body() body: CreateTreasuryMovementInput,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.treasury.createMovement(applicationSlug, body, req.user?.sub ?? null);
+    return this.treasury.createMovement(
+      applicationSlug,
+      body,
+      req.user?.sub ?? null,
+    );
   }
 
   @Post('transfers')
-  @ApiOperation({ summary: 'Transferencia entre caja/bancos con asiento puente' })
+  @ApiOperation({
+    summary: 'Transferencia entre caja/bancos con asiento puente',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   createTransfer(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body() body: CreateTreasuryTransferInput,
     @Req() req: Request & { user?: { sub?: string } },
   ) {
-    return this.treasury.createTransfer(applicationSlug, body, req.user?.sub ?? null);
+    return this.treasury.createTransfer(
+      applicationSlug,
+      body,
+      req.user?.sub ?? null,
+    );
   }
 
   @Get('reconciliations')
@@ -136,7 +164,11 @@ export class ContabilidadTreasuryController {
     @Query('bankAccountId') bankAccountId: string,
     @Query('periodId') periodId: string,
   ) {
-    return this.treasury.getReconciliation(applicationSlug, bankAccountId, periodId);
+    return this.treasury.getReconciliation(
+      applicationSlug,
+      bankAccountId,
+      periodId,
+    );
   }
 
   @Put('reconciliations')

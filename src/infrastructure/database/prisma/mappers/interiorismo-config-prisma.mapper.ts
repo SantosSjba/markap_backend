@@ -10,7 +10,12 @@ export class InteriorismoConfigPrismaMapper {
     sortOrder: number;
     isActive: boolean;
   }): InteriorismoProjectStage {
-    return new InteriorismoProjectStage(r.code, r.label, r.sortOrder, r.isActive);
+    return new InteriorismoProjectStage(
+      r.code,
+      r.label,
+      r.sortOrder,
+      r.isActive,
+    );
   }
 
   static toNumberingSeries(r: {

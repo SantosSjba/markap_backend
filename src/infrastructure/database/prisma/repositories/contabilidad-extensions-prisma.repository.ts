@@ -32,8 +32,16 @@ import {
   computeNetTaxBalance,
   computeTaxableBase,
 } from '@domain/utils/contabilidad-income-tax.util';
-import { formatPenAmount, parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
-import { formatDateOnly, parseDateOnly, toIsoDate } from '@domain/utils/peru-date.util';
+import {
+  formatPenAmount,
+  parsePenAmount,
+  roundPenAmount,
+} from '@domain/utils/contabilidad-journal-amounts';
+import {
+  formatDateOnly,
+  parseDateOnly,
+  toIsoDate,
+} from '@domain/utils/peru-date.util';
 import { PrismaService } from '../prisma.service';
 
 const templateInclude = {
@@ -102,12 +110,18 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     const rows = await this.prisma.contabilidadExchangeRate.findMany({
       where: {
         applicationId,
-        ...(filters.currencyCode ? { currencyCode: filters.currencyCode.trim().toUpperCase() } : {}),
+        ...(filters.currencyCode
+          ? { currencyCode: filters.currencyCode.trim().toUpperCase() }
+          : {}),
         ...(filters.dateFrom || filters.dateTo
           ? {
               rateDate: {
-                ...(filters.dateFrom ? { gte: parseDateOnly(filters.dateFrom) } : {}),
-                ...(filters.dateTo ? { lte: parseDateOnly(filters.dateTo) } : {}),
+                ...(filters.dateFrom
+                  ? { gte: parseDateOnly(filters.dateFrom) }
+                  : {}),
+                ...(filters.dateTo
+                  ? { lte: parseDateOnly(filters.dateTo) }
+                  : {}),
               },
             }
           : {}),
@@ -171,7 +185,9 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     };
   }
 
-  async listJournalTemplates(applicationId: string): Promise<ContabilidadJournalTemplateDto[]> {
+  async listJournalTemplates(
+    applicationId: string,
+  ): Promise<ContabilidadJournalTemplateDto[]> {
     const rows = await this.prisma.contabilidadJournalTemplate.findMany({
       where: { applicationId },
       include: templateInclude,
@@ -228,14 +244,18 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     if (!existing) throw new Error('Plantilla no encontrada');
 
     if (input.lines) {
-      await this.prisma.contabilidadJournalTemplateLine.deleteMany({ where: { templateId: id } });
+      await this.prisma.contabilidadJournalTemplateLine.deleteMany({
+        where: { templateId: id },
+      });
     }
 
     const row = await this.prisma.contabilidadJournalTemplate.update({
       where: { id },
       data: {
         ...(input.name !== undefined ? { name: input.name.trim() } : {}),
-        ...(input.description !== undefined ? { description: input.description?.trim() || null } : {}),
+        ...(input.description !== undefined
+          ? { description: input.description?.trim() || null }
+          : {}),
         ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
         ...(input.lines
           ? {
@@ -244,7 +264,9 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
                   lineNumber: line.lineNumber,
                   accountId: line.accountId,
                   defaultDebit: roundPenAmount(Number(line.defaultDebit ?? 0)),
-                  defaultCredit: roundPenAmount(Number(line.defaultCredit ?? 0)),
+                  defaultCredit: roundPenAmount(
+                    Number(line.defaultCredit ?? 0),
+                  ),
                   costCenterId: line.costCenterId ?? null,
                   description: line.description?.trim() || null,
                 })),
@@ -257,7 +279,10 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     return mapTemplate(row);
   }
 
-  async deleteJournalTemplate(applicationId: string, id: string): Promise<void> {
+  async deleteJournalTemplate(
+    applicationId: string,
+    id: string,
+  ): Promise<void> {
     const existing = await this.prisma.contabilidadJournalTemplate.findFirst({
       where: { applicationId, id },
     });
@@ -269,8 +294,12 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     applicationId: string,
     templateId: string,
   ): Promise<ApplyJournalTemplateResultDto> {
-    const template = await this.findJournalTemplateById(applicationId, templateId);
-    if (!template?.isActive) throw new Error('Plantilla no encontrada o inactiva');
+    const template = await this.findJournalTemplateById(
+      applicationId,
+      templateId,
+    );
+    if (!template?.isActive)
+      throw new Error('Plantilla no encontrada o inactiva');
 
     return {
       templateId: template.id,
@@ -301,7 +330,10 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     const periodIds = await this.prisma.contabilidadPeriod.findMany({
       where: {
         applicationId,
-        OR: [{ year: { lt: period.year } }, { year: period.year, month: { lte: period.month } }],
+        OR: [
+          { year: { lt: period.year } },
+          { year: period.year, month: { lte: period.month } },
+        ],
       },
       select: { id: true },
     });
@@ -352,16 +384,18 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
       );
       if (Math.abs(balance) < 0.005) continue;
 
-      const row = await this.prisma.contabilidadInventoryBalanceSnapshot.create({
-        data: {
-          applicationId,
-          periodId,
-          accountId: acc.id,
-          accountCode: acc.code,
-          accountName: acc.name,
-          balance: roundPenAmount(balance),
+      const row = await this.prisma.contabilidadInventoryBalanceSnapshot.create(
+        {
+          data: {
+            applicationId,
+            periodId,
+            accountId: acc.id,
+            accountCode: acc.code,
+            accountName: acc.name,
+            balance: roundPenAmount(balance),
+          },
         },
-      });
+      );
       created.push({
         id: row.id,
         periodId: row.periodId,
@@ -381,10 +415,11 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     applicationId: string,
     periodId: string,
   ): Promise<ContabilidadInventorySnapshotDto[]> {
-    const rows = await this.prisma.contabilidadInventoryBalanceSnapshot.findMany({
-      where: { applicationId, periodId },
-      orderBy: [{ accountCode: 'asc' }],
-    });
+    const rows =
+      await this.prisma.contabilidadInventoryBalanceSnapshot.findMany({
+        where: { applicationId, periodId },
+        orderBy: [{ accountCode: 'asc' }],
+      });
     return rows.map((row) => ({
       id: row.id,
       periodId: row.periodId,
@@ -463,7 +498,10 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     };
   }
 
-  async getIncomeTaxSummary(applicationId: string, periodId: string): Promise<IncomeTaxSummaryDto> {
+  async getIncomeTaxSummary(
+    applicationId: string,
+    periodId: string,
+  ): Promise<IncomeTaxSummaryDto> {
     const detail = await this.getIncomeTaxDetail(applicationId, periodId);
     return {
       periodId: detail.periodId,
@@ -477,7 +515,10 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     };
   }
 
-  async getIncomeTaxDetail(applicationId: string, periodId: string): Promise<IncomeTaxDetailDto> {
+  async getIncomeTaxDetail(
+    applicationId: string,
+    periodId: string,
+  ): Promise<IncomeTaxDetailDto> {
     const period = await this.prisma.contabilidadPeriod.findFirst({
       where: { applicationId, id: periodId },
     });
@@ -487,18 +528,25 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
       where: { applicationId },
     });
 
-    const stored = await this.prisma.contabilidadIncomeTaxPeriodSummary.findUnique({
-      where: { applicationId_periodId: { applicationId, periodId } },
-    });
+    const stored =
+      await this.prisma.contabilidadIncomeTaxPeriodSummary.findUnique({
+        where: { applicationId_periodId: { applicationId, periodId } },
+      });
 
     const adjustments = this.mapStoredAdjustments(stored);
-    const incomeStmt = await this.financial.getIncomeStatement(applicationId, periodId);
+    const incomeStmt = await this.financial.getIncomeStatement(
+      applicationId,
+      periodId,
+    );
     const totalIncome = Number(incomeStmt.income.total);
     const totalExpenses = Number(incomeStmt.expenses.total);
     const netIncome = Number(incomeStmt.netIncome);
     const taxableBase = computeTaxableBase(netIncome, adjustments);
     const estimatedTax = computeEstimatedIncomeTax(taxableBase);
-    const rentaAccountBalance = await this.getRentaAccountBalance(applicationId, period);
+    const rentaAccountBalance = await this.getRentaAccountBalance(
+      applicationId,
+      period,
+    );
 
     const yearPeriods = await this.prisma.contabilidadPeriod.findMany({
       where: { applicationId, year: period.year, month: { lte: period.month } },
@@ -506,9 +554,10 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     });
     const yearPeriodIds = yearPeriods.map((p) => p.id);
 
-    const storedByPeriod = await this.prisma.contabilidadIncomeTaxPeriodSummary.findMany({
-      where: { applicationId, periodId: { in: yearPeriodIds } },
-    });
+    const storedByPeriod =
+      await this.prisma.contabilidadIncomeTaxPeriodSummary.findMany({
+        where: { applicationId, periodId: { in: yearPeriodIds } },
+      });
     const storedMap = new Map(storedByPeriod.map((row) => [row.periodId, row]));
 
     let ytdNetIncome = 0;
@@ -538,15 +587,16 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
 
     const ytdEstimatedTax = computeEstimatedIncomeTax(ytdTaxableBase);
 
-    const retentionsPeriodRows = await this.prisma.contabilidadRetention.findMany({
-      where: {
-        applicationId,
-        periodId,
-        retentionType: CONTABILIDAD_RETENTION_TYPE.RENTA,
-        status: 'ACTIVE',
-      },
-      orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
-    });
+    const retentionsPeriodRows =
+      await this.prisma.contabilidadRetention.findMany({
+        where: {
+          applicationId,
+          periodId,
+          retentionType: CONTABILIDAD_RETENTION_TYPE.RENTA,
+          status: 'ACTIVE',
+        },
+        orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
+      });
 
     const retentionsYtdAgg = await this.prisma.contabilidadRetention.aggregate({
       where: {
@@ -558,15 +608,25 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
       _sum: { amount: true },
     });
 
-    const advancesYtdAgg = await this.prisma.contabilidadIncomeTaxPeriodSummary.aggregate({
-      where: { applicationId, periodId: { in: yearPeriodIds } },
-      _sum: { advancePaymentAmount: true },
-    });
+    const advancesYtdAgg =
+      await this.prisma.contabilidadIncomeTaxPeriodSummary.aggregate({
+        where: { applicationId, periodId: { in: yearPeriodIds } },
+        _sum: { advancePaymentAmount: true },
+      });
 
-    const retentionsPeriodTotal = retentionsPeriodRows.reduce((sum, row) => sum + Number(row.amount), 0);
+    const retentionsPeriodTotal = retentionsPeriodRows.reduce(
+      (sum, row) => sum + Number(row.amount),
+      0,
+    );
     const retentionsYtdTotal = Number(retentionsYtdAgg._sum.amount ?? 0);
-    const advancePaymentsYtd = Number(advancesYtdAgg._sum.advancePaymentAmount ?? 0);
-    const netTaxBalanceYtd = computeNetTaxBalance(ytdEstimatedTax, retentionsYtdTotal, advancePaymentsYtd);
+    const advancePaymentsYtd = Number(
+      advancesYtdAgg._sum.advancePaymentAmount ?? 0,
+    );
+    const netTaxBalanceYtd = computeNetTaxBalance(
+      ytdEstimatedTax,
+      retentionsYtdTotal,
+      advancePaymentsYtd,
+    );
 
     return {
       periodId,
@@ -574,7 +634,8 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
       month: period.month,
       ruc: company?.ruc ?? '',
       legalName: company?.legalName ?? '',
-      incomeTaxRatePercent: CONTABILIDAD_DEFAULT_INCOME_TAX_RATE_PERCENT.toFixed(2),
+      incomeTaxRatePercent:
+        CONTABILIDAD_DEFAULT_INCOME_TAX_RATE_PERCENT.toFixed(2),
       totalIncome: formatPenAmount(totalIncome),
       totalExpenses: formatPenAmount(totalExpenses),
       netIncomeBeforeTax: formatPenAmount(netIncome),
@@ -585,11 +646,21 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
       ytdEstimatedTax: formatPenAmount(ytdEstimatedTax),
       rentaAccountBalance: formatPenAmount(rentaAccountBalance),
       adjustments: {
-        deductibleAdjustments: formatPenAmount(adjustments.deductibleAdjustments),
-        nonDeductibleAdjustments: formatPenAmount(adjustments.nonDeductibleAdjustments),
-        otherIncomeAdjustments: formatPenAmount(adjustments.otherIncomeAdjustments),
-        otherExpenseAdjustments: formatPenAmount(adjustments.otherExpenseAdjustments),
-        advancePaymentAmount: formatPenAmount(Number(stored?.advancePaymentAmount ?? 0)),
+        deductibleAdjustments: formatPenAmount(
+          adjustments.deductibleAdjustments,
+        ),
+        nonDeductibleAdjustments: formatPenAmount(
+          adjustments.nonDeductibleAdjustments,
+        ),
+        otherIncomeAdjustments: formatPenAmount(
+          adjustments.otherIncomeAdjustments,
+        ),
+        otherExpenseAdjustments: formatPenAmount(
+          adjustments.otherExpenseAdjustments,
+        ),
+        advancePaymentAmount: formatPenAmount(
+          Number(stored?.advancePaymentAmount ?? 0),
+        ),
         notes: stored?.notes ?? null,
       },
       retentionsPeriod: retentionsPeriodRows.map((row) => ({
@@ -629,17 +700,29 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
         applicationId,
         periodId,
         deductibleAdjustments: parsePenAmount(input.deductibleAdjustments ?? 0),
-        nonDeductibleAdjustments: parsePenAmount(input.nonDeductibleAdjustments ?? 0),
-        otherIncomeAdjustments: parsePenAmount(input.otherIncomeAdjustments ?? 0),
-        otherExpenseAdjustments: parsePenAmount(input.otherExpenseAdjustments ?? 0),
+        nonDeductibleAdjustments: parsePenAmount(
+          input.nonDeductibleAdjustments ?? 0,
+        ),
+        otherIncomeAdjustments: parsePenAmount(
+          input.otherIncomeAdjustments ?? 0,
+        ),
+        otherExpenseAdjustments: parsePenAmount(
+          input.otherExpenseAdjustments ?? 0,
+        ),
         advancePaymentAmount: parsePenAmount(input.advancePaymentAmount ?? 0),
         notes: input.notes?.trim() || null,
       },
       update: {
         deductibleAdjustments: parsePenAmount(input.deductibleAdjustments ?? 0),
-        nonDeductibleAdjustments: parsePenAmount(input.nonDeductibleAdjustments ?? 0),
-        otherIncomeAdjustments: parsePenAmount(input.otherIncomeAdjustments ?? 0),
-        otherExpenseAdjustments: parsePenAmount(input.otherExpenseAdjustments ?? 0),
+        nonDeductibleAdjustments: parsePenAmount(
+          input.nonDeductibleAdjustments ?? 0,
+        ),
+        otherIncomeAdjustments: parsePenAmount(
+          input.otherIncomeAdjustments ?? 0,
+        ),
+        otherExpenseAdjustments: parsePenAmount(
+          input.otherExpenseAdjustments ?? 0,
+        ),
         advancePaymentAmount: parsePenAmount(input.advancePaymentAmount ?? 0),
         notes: input.notes?.trim() || null,
       },
@@ -648,7 +731,10 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     return this.getIncomeTaxDetail(applicationId, periodId);
   }
 
-  async exportIncomeTaxDraft(applicationId: string, periodId: string): Promise<IncomeTaxExportDto> {
+  async exportIncomeTaxDraft(
+    applicationId: string,
+    periodId: string,
+  ): Promise<IncomeTaxExportDto> {
     const detail = await this.getIncomeTaxDetail(applicationId, periodId);
     return {
       periodId: detail.periodId,
@@ -671,9 +757,15 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
   ) {
     return {
       deductibleAdjustments: stored ? Number(stored.deductibleAdjustments) : 0,
-      nonDeductibleAdjustments: stored ? Number(stored.nonDeductibleAdjustments) : 0,
-      otherIncomeAdjustments: stored ? Number(stored.otherIncomeAdjustments) : 0,
-      otherExpenseAdjustments: stored ? Number(stored.otherExpenseAdjustments) : 0,
+      nonDeductibleAdjustments: stored
+        ? Number(stored.nonDeductibleAdjustments)
+        : 0,
+      otherIncomeAdjustments: stored
+        ? Number(stored.otherIncomeAdjustments)
+        : 0,
+      otherExpenseAdjustments: stored
+        ? Number(stored.otherExpenseAdjustments)
+        : 0,
     };
   }
 
@@ -684,7 +776,10 @@ export class ContabilidadExtensionsPrismaRepository implements ContabilidadExten
     const periodIds = await this.prisma.contabilidadPeriod.findMany({
       where: {
         applicationId,
-        OR: [{ year: { lt: period.year } }, { year: period.year, month: { lte: period.month } }],
+        OR: [
+          { year: { lt: period.year } },
+          { year: period.year, month: { lte: period.month } },
+        ],
       },
       select: { id: true },
     });

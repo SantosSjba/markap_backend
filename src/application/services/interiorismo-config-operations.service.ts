@@ -1,6 +1,9 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
-import { APPLICATION_REPOSITORY, INTERIORISMO_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  INTERIORISMO_CONFIG_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import {
   INTERIOR_PROJECT_SERIES_KEY,
   type InteriorismoConfigRepository,
@@ -31,17 +34,24 @@ export class InteriorismoConfigOperationsService {
     private readonly applicationRepository: ApplicationRepository,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertInteriorismoSlug(applicationSlug ?? INTERIORISMO_SLUG);
     const app = await this.applicationRepository.findBySlug(INTERIORISMO_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', INTERIORISMO_SLUG);
+    if (!app)
+      throw new EntityNotFoundException('Application', INTERIORISMO_SLUG);
     return app.id;
   }
 
   private formatNumbering(row: { prefix: string; lastNumber: number } | null) {
     if (!row) {
       return {
-        interiorProject: { prefix: 'INT-PRY', lastNumber: 0, nextPreview: 'INT-PRY-0001' },
+        interiorProject: {
+          prefix: 'INT-PRY',
+          lastNumber: 0,
+          nextPreview: 'INT-PRY-0001',
+        },
       };
     }
     const next = row.lastNumber + 1;
@@ -60,7 +70,10 @@ export class InteriorismoConfigOperationsService {
 
     const [projectStages, interiorProjectSeries] = await Promise.all([
       this.config.listProjectStages(applicationId),
-      this.config.getNumberingSeries(applicationId, INTERIOR_PROJECT_SERIES_KEY),
+      this.config.getNumberingSeries(
+        applicationId,
+        INTERIOR_PROJECT_SERIES_KEY,
+      ),
     ]);
 
     return {
@@ -69,7 +82,10 @@ export class InteriorismoConfigOperationsService {
     };
   }
 
-  async replaceProjectStages(applicationSlug: string | undefined, body: { stages: InteriorismoProjectStageInput[] }) {
+  async replaceProjectStages(
+    applicationSlug: string | undefined,
+    body: { stages: InteriorismoProjectStageInput[] },
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const stages = body.stages ?? [];
     const codes = new Set(stages.map((s) => s.code));
@@ -84,8 +100,13 @@ export class InteriorismoConfigOperationsService {
     if (!stages.every((s) => s.label?.trim())) {
       throw new BadRequestException('Cada etapa requiere una etiqueta.');
     }
-    if (stages.filter((s) => s.isActive).length < INTERIOR_PROJECT_LIFECYCLE_STAGES.length) {
-      throw new BadRequestException('Las cinco etapas deben permanecer activas.');
+    if (
+      stages.filter((s) => s.isActive).length <
+      INTERIOR_PROJECT_LIFECYCLE_STAGES.length
+    ) {
+      throw new BadRequestException(
+        'Las cinco etapas deben permanecer activas.',
+      );
     }
     await this.config.replaceProjectStages(
       applicationId,
@@ -114,10 +135,14 @@ export class InteriorismoConfigOperationsService {
     if (body.prefix === undefined && body.lastNumber === undefined) {
       throw new BadRequestException('Envíe prefix y/o lastNumber.');
     }
-    const updated = await this.config.updateNumberingSeries(applicationId, INTERIOR_PROJECT_SERIES_KEY, {
-      ...(body.prefix !== undefined && { prefix: body.prefix }),
-      ...(body.lastNumber !== undefined && { lastNumber: body.lastNumber }),
-    });
+    const updated = await this.config.updateNumberingSeries(
+      applicationId,
+      INTERIOR_PROJECT_SERIES_KEY,
+      {
+        ...(body.prefix !== undefined && { prefix: body.prefix }),
+        ...(body.lastNumber !== undefined && { lastNumber: body.lastNumber }),
+      },
+    );
     return this.formatNumbering(updated);
   }
 }

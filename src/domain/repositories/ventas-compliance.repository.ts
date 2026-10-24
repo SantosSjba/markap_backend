@@ -50,7 +50,7 @@ export interface SaleComplianceDocumentCreateData {
 export interface SaleClosingReadinessResult {
   ok: boolean;
   missing: string[];
-  checklist: unknown | null;
+  checklist: unknown;
 }
 
 export interface CompliancePendingBoardFilters {
@@ -60,18 +60,31 @@ export interface CompliancePendingBoardFilters {
   onlyOverdue?: boolean;
 }
 
-export const VENTAS_COMPLIANCE_REPOSITORY = Symbol('VentasComplianceRepository');
+export const VENTAS_COMPLIANCE_REPOSITORY = Symbol(
+  'VentasComplianceRepository',
+);
 
 export interface VentasComplianceRepository {
-  getChecklist(applicationId: string, propertyId: string, buyerClientId: string): Promise<unknown | null>;
+  getChecklist(
+    applicationId: string,
+    propertyId: string,
+    buyerClientId: string,
+  ): Promise<unknown>;
   upsertChecklist(data: SaleComplianceChecklistUpsertData): Promise<unknown>;
   addDocument(data: SaleComplianceDocumentCreateData): Promise<unknown>;
-  listDocuments(applicationId: string, propertyId: string, buyerClientId: string): Promise<unknown[]>;
+  listDocuments(
+    applicationId: string,
+    propertyId: string,
+    buyerClientId: string,
+  ): Promise<unknown[]>;
   getClosingReadiness(
     applicationId: string,
     propertyId: string,
     buyerClientId: string,
   ): Promise<SaleClosingReadinessResult>;
-  listChecklistRows(applicationId: string, filters: CompliancePendingBoardFilters): Promise<unknown[]>;
+  listChecklistRows(
+    applicationId: string,
+    filters: CompliancePendingBoardFilters,
+  ): Promise<unknown[]>;
   markAlertSent(checklistId: string): Promise<void>;
 }

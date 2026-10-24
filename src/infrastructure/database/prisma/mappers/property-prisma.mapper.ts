@@ -9,7 +9,9 @@ import { Property } from '@domain/entities/property.entity';
 import { parseLocationCustom } from '@application/validators/client-address-location.validator';
 
 export class PropertyPrismaMapper {
-  static parseMediaItems(raw: Prisma.JsonValue | null | undefined): PropertyMediaItem[] | null {
+  static parseMediaItems(
+    raw: Prisma.JsonValue | null | undefined,
+  ): PropertyMediaItem[] | null {
     if (raw == null) return null;
     if (!Array.isArray(raw)) return null;
     const out: PropertyMediaItem[] = [];
@@ -17,7 +19,8 @@ export class PropertyPrismaMapper {
       if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
       const o = item as Record<string, unknown>;
       const url = typeof o.url === 'string' ? o.url.trim() : '';
-      const kind = o.kind === 'plan' ? 'plan' : o.kind === 'photo' ? 'photo' : null;
+      const kind =
+        o.kind === 'plan' ? 'plan' : o.kind === 'photo' ? 'photo' : null;
       if (!url || !kind) continue;
       out.push({ url, kind });
     }
@@ -29,7 +32,7 @@ export class PropertyPrismaMapper {
   ): Prisma.InputJsonValue | typeof Prisma.JsonNull | undefined {
     if (value === undefined) return undefined;
     if (value === null) return Prisma.JsonNull;
-    return value as Prisma.InputJsonValue;
+    return value;
   }
 
   static mediaToJson(
@@ -42,7 +45,7 @@ export class PropertyPrismaMapper {
         kind: m.kind === 'plan' ? 'plan' : 'photo',
       }))
       .filter((m) => m.url.length > 0);
-    return cleaned.length ? (cleaned as Prisma.InputJsonValue) : Prisma.JsonNull;
+    return cleaned.length ? cleaned : Prisma.JsonNull;
   }
 
   static mapOwners(

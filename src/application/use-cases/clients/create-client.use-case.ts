@@ -1,5 +1,9 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
-import { AGENT_REPOSITORY, APPLICATION_REPOSITORY, CLIENT_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  AGENT_REPOSITORY,
+  APPLICATION_REPOSITORY,
+  CLIENT_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import type { ClientRepository } from '@domain/repositories/client.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import type { AgentRepository } from '@domain/repositories/agent.repository';
@@ -76,7 +80,9 @@ export class CreateClientUseCase {
       applicationId = app.id;
     }
     if (!applicationId) {
-      throw new BadRequestException('applicationId or applicationSlug is required');
+      throw new BadRequestException(
+        'applicationId or applicationSlug is required',
+      );
     }
 
     if (input.clientType === 'BUYER') {
@@ -113,7 +119,11 @@ export class CreateClientUseCase {
       input.clientType === 'RESIDENTIAL' ||
       input.clientType === 'CORPORATE'
     ) {
-      if (slug !== 'interiorismo' && slug !== 'produccion' && slug !== 'arquitectura') {
+      if (
+        slug !== 'interiorismo' &&
+        slug !== 'produccion' &&
+        slug !== 'arquitectura'
+      ) {
         throw new BadRequestException(
           'Los clientes residencial/corporativo se crean con applicationSlug interiorismo, produccion o arquitectura',
         );
@@ -123,7 +133,7 @@ export class CreateClientUseCase {
     }
 
     const salesStatus: SalesPipelineStatus | null =
-      input.clientType === 'BUYER' ? input.salesStatus ?? 'PROSPECT' : null;
+      input.clientType === 'BUYER' ? (input.salesStatus ?? 'PROSPECT') : null;
 
     const primaryPhone = Phone.create(input.primaryPhone).value;
     const isPrimaryEmailOptional =
@@ -164,7 +174,7 @@ export class CreateClientUseCase {
       leadOrigin:
         input.clientType === 'BUYER' ? input.leadOrigin?.trim() || null : null,
       assignedAgentId:
-        input.clientType === 'BUYER' ? input.assignedAgentId ?? null : null,
+        input.clientType === 'BUYER' ? (input.assignedAgentId ?? null) : null,
       address,
     });
   }

@@ -35,7 +35,10 @@ function monthLastDayUtc(year: number, month: number): number {
 export class ReportPrismaRepository implements ReportRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSummary(applicationSlug: string, days: number): Promise<ReportsSummary> {
+  async getSummary(
+    applicationSlug: string,
+    days: number,
+  ): Promise<ReportsSummary> {
     const app = await this.prisma.application.findUnique({
       where: { slug: applicationSlug },
     });
@@ -47,18 +50,19 @@ export class ReportPrismaRepository implements ReportRepository {
     const endRange = parseDateOnly(formatDateOnly(today));
     endRange.setUTCDate(endRange.getUTCDate() + days);
 
-    const [contratosPorVencer, propiedadesSinContrato, clientesActivos] = await Promise.all([
-      (this.prisma as any).rental.count({
-        where: {
-          applicationId: app.id,
-          deletedAt: null,
-          status: 'ACTIVE',
-          endDate: { gte: today, lte: endRange },
-        },
-      }),
-      this.countPropertiesWithoutContract(app.id),
-      this.countActiveTenants(app.id),
-    ]);
+    const [contratosPorVencer, propiedadesSinContrato, clientesActivos] =
+      await Promise.all([
+        this.prisma.rental.count({
+          where: {
+            applicationId: app.id,
+            deletedAt: null,
+            status: 'ACTIVE',
+            endDate: { gte: today, lte: endRange },
+          },
+        }),
+        this.countPropertiesWithoutContract(app.id),
+        this.countActiveTenants(app.id),
+      ]);
 
     return new ReportsSummary(
       contratosPorVencer,
@@ -81,7 +85,7 @@ export class ReportPrismaRepository implements ReportRepository {
     const endRange = parseDateOnly(formatDateOnly(today));
     endRange.setUTCDate(endRange.getUTCDate() + days);
 
-    const rentals = await (this.prisma as any).rental.findMany({
+    const rentals = await this.prisma.rental.findMany({
       where: {
         applicationId: app.id,
         deletedAt: null,
@@ -100,7 +104,7 @@ export class ReportPrismaRepository implements ReportRepository {
       orderBy: { endDate: 'asc' },
     });
 
-    return rentals.map((r: any) =>
+    return rentals.map((r) =>
       ReportPrismaMapper.toContractExpiringItem(r, today),
     );
   }
@@ -115,7 +119,7 @@ export class ReportPrismaRepository implements ReportRepository {
 
     const today = startOfTodayLima();
 
-    const propertiesWithActiveRental = await (this.prisma as any).rental.findMany({
+    const propertiesWithActiveRental = await this.prisma.rental.findMany({
       where: {
         applicationId: app.id,
         deletedAt: null,
@@ -125,9 +129,11 @@ export class ReportPrismaRepository implements ReportRepository {
       select: { propertyId: true },
       distinct: ['propertyId'],
     });
-    const idsWithRental = new Set(propertiesWithActiveRental.map((r: any) => r.propertyId));
+    const idsWithRental = new Set(
+      propertiesWithActiveRental.map((r) => r.propertyId),
+    );
 
-    const properties = await (this.prisma as any).property.findMany({
+    const properties = await this.prisma.property.findMany({
       where: {
         applicationId: app.id,
         deletedAt: null,
@@ -140,43 +146,36 @@ export class ReportPrismaRepository implements ReportRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return properties.map((p: any) => ReportPrismaMapper.toPropertyWithoutContractItem(p));
+    return properties.map((p) =>
+      ReportPrismaMapper.toPropertyWithoutContractItem(p),
+    );
   }
 
-  async getActiveClients(applicationSlug: string): Promise<ActiveClientReportItem[]> {
+  async getActiveClients(
+    applicationSlug: string,
+  ): Promise<ActiveClientReportItem[]> {
     const app = await this.prisma.application.findUnique({
       where: { slug: applicationSlug },
     });
     if (!app) return [];
 
-    const today = startOfTodayLima();
-
-    const tenantsWithActive = await (this.prisma as any).rental.groupBy({
-      by: ['tenantId'],
+    const countByTenant = await this.activeTenantContractCounts(app.id);
+    const clients = await this.prisma.client.findMany({
       where: {
+        id: { in: [...countByTenant.keys()] },
         applicationId: app.id,
         deletedAt: null,
-        status: 'ACTIVE',
-        endDate: { gte: today },
       },
-      _count: { id: true },
-    });
-
-    if (tenantsWithActive.length === 0) return [];
-
-    const tenantIds = tenantsWithActive.map((g: any) => g.tenantId);
-    const clients = await (this.prisma as any).client.findMany({
-      where: { id: { in: tenantIds }, deletedAt: null },
       select: { id: true, fullName: true },
       orderBy: { createdAt: 'desc' },
     });
-    const countByTenant = Object.fromEntries(
-      tenantsWithActive.map((g: any) => [g.tenantId, g._count.id]),
-    );
-
     return clients.map(
-      (c: any) =>
-        new ActiveClientReportItem(c.id, c.fullName, countByTenant[c.id] ?? 0),
+      (client) =>
+        new ActiveClientReportItem(
+          client.id,
+          client.fullName,
+          countByTenant.get(client.id) ?? 0,
+        ),
     );
   }
 
@@ -206,16 +205,16 @@ export class ReportPrismaRepository implements ReportRepository {
     };
 
     const [vigentes, porVencer, proximos, urgentes] = await Promise.all([
-      (this.prisma as any).rental.count({
+      this.prisma.rental.count({
         where: { ...baseWhere, endDate: { gt: day90 } },
       }),
-      (this.prisma as any).rental.count({
+      this.prisma.rental.count({
         where: { ...baseWhere, endDate: { gte: day60, lte: day90 } },
       }),
-      (this.prisma as any).rental.count({
+      this.prisma.rental.count({
         where: { ...baseWhere, endDate: { gte: day30, lt: day60 } },
       }),
-      (this.prisma as any).rental.count({
+      this.prisma.rental.count({
         where: { ...baseWhere, endDate: { gte: today, lte: day30 } },
       }),
     ]);
@@ -237,10 +236,10 @@ export class ReportPrismaRepository implements ReportRepository {
     startOfMonth.setUTCHours(0, 0, 0, 0);
 
     const [totalProps, rentedCount, newClientsThisMonth] = await Promise.all([
-      (this.prisma as any).property.count({
+      this.prisma.property.count({
         where: { applicationId: app.id, deletedAt: null, isActive: true },
       }),
-      (this.prisma as any).rental.count({
+      this.prisma.rental.count({
         where: {
           applicationId: app.id,
           deletedAt: null,
@@ -248,7 +247,7 @@ export class ReportPrismaRepository implements ReportRepository {
           endDate: { gte: today },
         },
       }),
-      (this.prisma as any).client.count({
+      this.prisma.client.count({
         where: {
           applicationId: app.id,
           deletedAt: null,
@@ -258,7 +257,8 @@ export class ReportPrismaRepository implements ReportRepository {
       }),
     ]);
 
-    const tasaOcupacion = totalProps > 0 ? Math.round((rentedCount / totalProps) * 100) : 0;
+    const tasaOcupacion =
+      totalProps > 0 ? Math.round((rentedCount / totalProps) * 100) : 0;
 
     return new MonthlyMetrics(tasaOcupacion, 0, 0, newClientsThisMonth);
   }
@@ -276,8 +276,18 @@ export class ReportPrismaRepository implements ReportRepository {
     if (!app) return [];
 
     const monthNames = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
     ];
 
     // Determinar el rango de meses a procesar
@@ -288,9 +298,12 @@ export class ReportPrismaRepository implements ReportRepository {
       const start = parseDateOnly(startDate);
       const end = parseDateOnly(endDate);
       const startYmd = formatDateOnly(start);
-      let cur = parseDateOnly(`${startYmd.slice(0, 7)}-01`);
+      const cur = parseDateOnly(`${startYmd.slice(0, 7)}-01`);
       while (cur <= end) {
-        monthsToProcess.push({ year: cur.getUTCFullYear(), month: cur.getUTCMonth() + 1 });
+        monthsToProcess.push({
+          year: cur.getUTCFullYear(),
+          month: cur.getUTCMonth() + 1,
+        });
         cur.setUTCMonth(cur.getUTCMonth() + 1);
       }
     } else if (month && month >= 1 && month <= 12) {
@@ -298,7 +311,10 @@ export class ReportPrismaRepository implements ReportRepository {
       monthsToProcess = [{ year, month }];
     } else {
       // Modo año completo (comportamiento original: 12 meses)
-      monthsToProcess = Array.from({ length: 12 }, (_, i) => ({ year, month: i + 1 }));
+      monthsToProcess = Array.from({ length: 12 }, (_, i) => ({
+        year,
+        month: i + 1,
+      }));
     }
 
     const result: RentalsByMonthItem[] = [];
@@ -308,7 +324,9 @@ export class ReportPrismaRepository implements ReportRepository {
 
     for (const { year: y, month: m } of monthsToProcess) {
       const firstDay = parseDateOnly(`${y}-${pad2(m)}-01`);
-      const lastDay = parseDateOnly(`${y}-${pad2(m)}-${pad2(monthLastDayUtc(y, m))}`);
+      const lastDay = parseDateOnly(
+        `${y}-${pad2(m)}-${pad2(monthLastDayUtc(y, m))}`,
+      );
 
       const periodStart =
         rangeStart && rangeStart > firstDay ? rangeStart : firstDay;
@@ -316,13 +334,16 @@ export class ReportPrismaRepository implements ReportRepository {
 
       const [newContracts, expiredContracts, activeAtEnd, revenueRentals] =
         await Promise.all([
-          (this.prisma as any).rental.count({
-            where: { ...baseWhere, startDate: { gte: periodStart, lte: periodEnd } },
+          this.prisma.rental.count({
+            where: {
+              ...baseWhere,
+              startDate: { gte: periodStart, lte: periodEnd },
+            },
           }),
-          (this.prisma as any).rental.count({
+          this.prisma.rental.count({
             where: { ...baseWhere, endDate: { gte: firstDay, lte: lastDay } },
           }),
-          (this.prisma as any).rental.count({
+          this.prisma.rental.count({
             where: {
               ...baseWhere,
               status: 'ACTIVE',
@@ -331,7 +352,7 @@ export class ReportPrismaRepository implements ReportRepository {
             },
           }),
           // Solo alquileres CONCRETADOS (startDate) dentro del período efectivo del mes
-          (this.prisma as any).rental.findMany({
+          this.prisma.rental.findMany({
             where: {
               ...baseWhere,
               startDate: { gte: periodStart, lte: periodEnd },
@@ -364,11 +385,14 @@ export class ReportPrismaRepository implements ReportRepository {
       let totalInternalCommission = 0;
       let totalUtility = 0;
 
-      for (const r of revenueRentals as any[]) {
+      for (const r of revenueRentals) {
         const monthly = Number(r.monthlyAmount || 0);
         totalRevenue += monthly;
         const cfg = r.financialConfig;
-        const breakdown = computeRentalFinancialBreakdown(monthly, cfg ?? undefined);
+        const breakdown = computeRentalFinancialBreakdown(
+          monthly,
+          cfg ?? undefined,
+        );
         companyRevenue += breakdown.base;
         totalExpense += breakdown.expense;
         totalTax += breakdown.tax;
@@ -378,14 +402,13 @@ export class ReportPrismaRepository implements ReportRepository {
       }
 
       const currency =
-        revenueRentals.length > 0
-          ? (revenueRentals[0] as any).currency || 'PEN'
-          : 'PEN';
+        revenueRentals.length > 0 ? revenueRentals[0].currency || 'PEN' : 'PEN';
 
       // Para el monthName cuando el año es diferente al solicitado (modo rango), incluir el año
-      const monthLabel = startDate && endDate && (y !== year || monthsToProcess.length > 12)
-        ? `${monthNames[m - 1]} ${y}`
-        : monthNames[m - 1];
+      const monthLabel =
+        startDate && endDate && (y !== year || monthsToProcess.length > 12)
+          ? `${monthNames[m - 1]} ${y}`
+          : monthNames[m - 1];
 
       result.push(
         new RentalsByMonthItem(
@@ -431,7 +454,7 @@ export class ReportPrismaRepository implements ReportRepository {
       endDateFilter = parseDateOnly(endDate);
     }
 
-    const rentals = await (this.prisma as any).rental.findMany({
+    const rentals = await this.prisma.rental.findMany({
       where: {
         applicationId: app.id,
         deletedAt: null,
@@ -463,16 +486,20 @@ export class ReportPrismaRepository implements ReportRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return rentals.map((r: any) => {
+    return rentals.map((r) => {
       const cfg = r.financialConfig;
       const monthlyAmount = Number(r.monthlyAmount);
-      const breakdown = computeRentalFinancialBreakdown(monthlyAmount, cfg ?? undefined);
+      const breakdown = computeRentalFinancialBreakdown(
+        monthlyAmount,
+        cfg ?? undefined,
+      );
 
       const year = dateOnlyYear(r.startDate);
       const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
       const rentalCode = `ALQ-${year}-${shortId}`;
 
-      const externalAgentName = cfg?.externalAgent?.fullName ?? cfg?.externalAgentName ?? null;
+      const externalAgentName =
+        cfg?.externalAgent?.fullName ?? cfg?.externalAgentName ?? null;
       const internalAgentName =
         cfg?.internalAgent?.fullName ?? cfg?.internalAgentName ?? null;
 
@@ -498,9 +525,11 @@ export class ReportPrismaRepository implements ReportRepository {
     });
   }
 
-  private async countPropertiesWithoutContract(applicationId: string): Promise<number> {
+  private async countPropertiesWithoutContract(
+    applicationId: string,
+  ): Promise<number> {
     const today = startOfTodayLima();
-    const withActive = await (this.prisma as any).rental.findMany({
+    const withActive = await this.prisma.rental.findMany({
       where: {
         applicationId,
         deletedAt: null,
@@ -510,8 +539,8 @@ export class ReportPrismaRepository implements ReportRepository {
       select: { propertyId: true },
       distinct: ['propertyId'],
     });
-    const ids = new Set(withActive.map((r: any) => r.propertyId));
-    return (this.prisma as any).property.count({
+    const ids = new Set(withActive.map((r) => r.propertyId));
+    return this.prisma.property.count({
       where: {
         applicationId,
         deletedAt: null,
@@ -521,17 +550,34 @@ export class ReportPrismaRepository implements ReportRepository {
     });
   }
 
-  private async countActiveTenants(applicationId: string): Promise<number> {
-    const today = startOfTodayLima();
-    const result = await (this.prisma as any).rental.groupBy({
-      by: ['tenantId'],
+  private async activeTenantContractCounts(
+    applicationId: string,
+  ): Promise<Map<string, number>> {
+    const rentals = await this.prisma.rental.findMany({
       where: {
         applicationId,
         deletedAt: null,
         status: 'ACTIVE',
-        endDate: { gte: today },
+        endDate: { gte: startOfTodayLima() },
       },
+      select: { tenantId: true, tenants: { select: { clientId: true } } },
     });
-    return result.length;
+    const counts = new Map<string, number>();
+    for (const rental of rentals) {
+      const tenantIds = new Set([
+        rental.tenantId,
+        ...rental.tenants.map((tenant) => tenant.clientId),
+      ]);
+      for (const tenantId of tenantIds)
+        counts.set(tenantId, (counts.get(tenantId) ?? 0) + 1);
+    }
+    return counts;
+  }
+
+  private async countActiveTenants(applicationId: string): Promise<number> {
+    const counts = await this.activeTenantContractCounts(applicationId);
+    return this.prisma.client.count({
+      where: { applicationId, deletedAt: null, id: { in: [...counts.keys()] } },
+    });
   }
 }

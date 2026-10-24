@@ -1,4 +1,6 @@
-﻿export const ARQUITECTURA_MATERIAL_SUPPLIER_REPOSITORY = Symbol('ArquitecturaMaterialSupplierRepository');
+﻿export const ARQUITECTURA_MATERIAL_SUPPLIER_REPOSITORY = Symbol(
+  'ArquitecturaMaterialSupplierRepository',
+);
 
 export interface ArquitecturaSupplierListItem {
   id: string;
@@ -86,13 +88,21 @@ export interface ListArquitecturaMaterialSuppliersResult {
 }
 
 export interface ArquitecturaMaterialSupplierRepository {
-  list(filters: ListArquitecturaMaterialSuppliersFilters): Promise<ListArquitecturaMaterialSuppliersResult>;
-  findById(id: string, applicationSlug?: string): Promise<ArquitecturaSupplierDetail | null>;
+  list(
+    filters: ListArquitecturaMaterialSuppliersFilters,
+  ): Promise<ListArquitecturaMaterialSuppliersResult>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ArquitecturaSupplierDetail | null>;
   create(
     applicationId: string,
     payload: CreateArquitecturaMaterialSupplierPayload,
   ): Promise<ArquitecturaSupplierDetail>;
-  update(id: string, payload: UpdateArquitecturaMaterialSupplierPayload): Promise<ArquitecturaSupplierDetail>;
+  update(
+    id: string,
+    payload: UpdateArquitecturaMaterialSupplierPayload,
+  ): Promise<ArquitecturaSupplierDetail>;
   delete(id: string): Promise<void>;
   linkCatalogMaterial(
     supplierId: string,

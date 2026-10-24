@@ -16,7 +16,9 @@ export class ContabilidadConfigPrismaRepository implements ContabilidadConfigRep
   constructor(private readonly prisma: PrismaService) {}
 
   async ensureDefaults(applicationId: string): Promise<void> {
-    const profileCount = await this.prisma.contabilidadCompanyProfile.count({ where: { applicationId } });
+    const profileCount = await this.prisma.contabilidadCompanyProfile.count({
+      where: { applicationId },
+    });
     if (profileCount === 0) {
       await this.prisma.contabilidadCompanyProfile.create({
         data: {
@@ -26,7 +28,9 @@ export class ContabilidadConfigPrismaRepository implements ContabilidadConfigRep
       });
     }
 
-    const settingsCount = await this.prisma.contabilidadAppSettings.count({ where: { applicationId } });
+    const settingsCount = await this.prisma.contabilidadAppSettings.count({
+      where: { applicationId },
+    });
     if (settingsCount === 0) {
       await this.prisma.contabilidadAppSettings.create({
         data: { applicationId },
@@ -58,12 +62,16 @@ export class ContabilidadConfigPrismaRepository implements ContabilidadConfigRep
     return ContabilidadConfigPrismaMapper.toCompanyProfile(row);
   }
 
-  async updateCompanyProfile(applicationId: string, data: Partial<ContabilidadCompanyProfileDto>) {
+  async updateCompanyProfile(
+    applicationId: string,
+    data: Partial<ContabilidadCompanyProfileDto>,
+  ) {
     const update: Prisma.ContabilidadCompanyProfileUpdateInput = {};
     if (data.ruc !== undefined) update.ruc = data.ruc;
     if (data.legalName !== undefined) update.legalName = data.legalName;
     if (data.tradeName !== undefined) update.tradeName = data.tradeName;
-    if (data.fiscalAddress !== undefined) update.fiscalAddress = data.fiscalAddress;
+    if (data.fiscalAddress !== undefined)
+      update.fiscalAddress = data.fiscalAddress;
     if (data.district !== undefined) update.district = data.district;
     if (data.province !== undefined) update.province = data.province;
     if (data.department !== undefined) update.department = data.department;
@@ -83,16 +91,25 @@ export class ContabilidadConfigPrismaRepository implements ContabilidadConfigRep
     return ContabilidadConfigPrismaMapper.toSettings(row);
   }
 
-  async updateSettings(applicationId: string, data: Partial<ReturnType<typeof ContabilidadConfigPrismaMapper.toSettings>>) {
+  async updateSettings(
+    applicationId: string,
+    data: Partial<ReturnType<typeof ContabilidadConfigPrismaMapper.toSettings>>,
+  ) {
     const update: Prisma.ContabilidadAppSettingsUpdateInput = {};
     if (data.taxRegime !== undefined) update.taxRegime = data.taxRegime;
-    if (data.isDetractionAgent !== undefined) update.isDetractionAgent = data.isDetractionAgent;
-    if (data.isRetentionAgent !== undefined) update.isRetentionAgent = data.isRetentionAgent;
-    if (data.isPerceptionAgent !== undefined) update.isPerceptionAgent = data.isPerceptionAgent;
+    if (data.isDetractionAgent !== undefined)
+      update.isDetractionAgent = data.isDetractionAgent;
+    if (data.isRetentionAgent !== undefined)
+      update.isRetentionAgent = data.isRetentionAgent;
+    if (data.isPerceptionAgent !== undefined)
+      update.isPerceptionAgent = data.isPerceptionAgent;
     if (data.igvPercent !== undefined) update.igvPercent = data.igvPercent;
-    if (data.currencyCode !== undefined) update.currencyCode = data.currencyCode;
-    if (data.fiscalYearStartMonth !== undefined) update.fiscalYearStartMonth = data.fiscalYearStartMonth;
-    if (data.amountDecimals !== undefined) update.amountDecimals = data.amountDecimals;
+    if (data.currencyCode !== undefined)
+      update.currencyCode = data.currencyCode;
+    if (data.fiscalYearStartMonth !== undefined)
+      update.fiscalYearStartMonth = data.fiscalYearStartMonth;
+    if (data.amountDecimals !== undefined)
+      update.amountDecimals = data.amountDecimals;
 
     const row = await this.prisma.contabilidadAppSettings.update({
       where: { applicationId },
@@ -112,7 +129,12 @@ export class ContabilidadConfigPrismaRepository implements ContabilidadConfigRep
   async updateDocumentSeries(
     applicationId: string,
     seriesKey: string,
-    data: { sunatSeries?: string; lastNumber?: number; padLength?: number; isActive?: boolean },
+    data: {
+      sunatSeries?: string;
+      lastNumber?: number;
+      padLength?: number;
+      isActive?: boolean;
+    },
   ) {
     const row = await this.prisma.contabilidadDocumentSeries.update({
       where: { applicationId_seriesKey: { applicationId, seriesKey } },

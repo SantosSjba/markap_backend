@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PAYMENT_REPOSITORY } from '@common/constants/injection-tokens';
-import type { PaymentRepository, OverduePaymentItem } from '@domain/repositories/payment.repository';
+import type {
+  PaymentRepository,
+  OverduePaymentItem,
+} from '@domain/repositories/payment.repository';
 
 @Injectable()
 export class ListOverduePaymentsUseCase {
@@ -9,7 +12,10 @@ export class ListOverduePaymentsUseCase {
     private readonly paymentRepository: PaymentRepository,
   ) {}
 
-  async execute(applicationSlug: string, search?: string): Promise<OverduePaymentItem[]> {
+  async execute(
+    applicationSlug: string,
+    search?: string,
+  ): Promise<OverduePaymentItem[]> {
     return this.paymentRepository.listOverdue(applicationSlug, search);
   }
 }

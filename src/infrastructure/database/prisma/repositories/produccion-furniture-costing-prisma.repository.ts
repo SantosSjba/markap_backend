@@ -61,7 +61,9 @@ export class ProduccionFurnitureCostingPrismaRepository implements ProduccionFur
     });
   }
 
-  private buildDetail(row: NonNullable<Awaited<ReturnType<typeof this.loadFurniture>>>): FurnitureCostingDetail {
+  private buildDetail(
+    row: NonNullable<Awaited<ReturnType<typeof this.loadFurniture>>>,
+  ): FurnitureCostingDetail {
     const referencePrice = num(row.referencePrice) ?? 0;
 
     const materials = row.bomLines.map((bl) => {
@@ -102,17 +104,19 @@ export class ProduccionFurnitureCostingPrismaRepository implements ProduccionFur
     const laborTotal = laborEntries.reduce((s, l) => s + l.lineTotal, 0);
     const extrasTotal = extraExpenses.reduce((s, e) => s + e.amount, 0);
 
-    const recentSnapshots: CostingSnapshotDto[] = row.costSnapshots.map((sn) => ({
-      id: sn.id,
-      label: sn.label,
-      materialsTotal: num(sn.materialsTotal) ?? 0,
-      laborTotal: num(sn.laborTotal) ?? 0,
-      extrasTotal: num(sn.extrasTotal) ?? 0,
-      totalCost: num(sn.totalCost) ?? 0,
-      referencePrice: num(sn.referencePrice) ?? 0,
-      marginPercent: num(sn.marginPercent),
-      createdAt: sn.createdAt.toISOString(),
-    }));
+    const recentSnapshots: CostingSnapshotDto[] = row.costSnapshots.map(
+      (sn) => ({
+        id: sn.id,
+        label: sn.label,
+        materialsTotal: num(sn.materialsTotal) ?? 0,
+        laborTotal: num(sn.laborTotal) ?? 0,
+        extrasTotal: num(sn.extrasTotal) ?? 0,
+        totalCost: num(sn.totalCost) ?? 0,
+        referencePrice: num(sn.referencePrice) ?? 0,
+        marginPercent: num(sn.marginPercent),
+        createdAt: sn.createdAt.toISOString(),
+      }),
+    );
 
     return {
       furnitureId: row.id,
@@ -122,12 +126,20 @@ export class ProduccionFurnitureCostingPrismaRepository implements ProduccionFur
       materials,
       laborEntries,
       extraExpenses,
-      totals: computeTotals(materialsTotal, laborTotal, extrasTotal, referencePrice),
+      totals: computeTotals(
+        materialsTotal,
+        laborTotal,
+        extrasTotal,
+        referencePrice,
+      ),
       recentSnapshots,
     };
   }
 
-  async getCosting(furnitureId: string, applicationSlug: string): Promise<FurnitureCostingDetail | null> {
+  async getCosting(
+    furnitureId: string,
+    applicationSlug: string,
+  ): Promise<FurnitureCostingDetail | null> {
     const row = await this.loadFurniture(furnitureId, applicationSlug);
     if (!row) return null;
     return this.buildDetail(row);
@@ -148,15 +160,21 @@ export class ProduccionFurnitureCostingPrismaRepository implements ProduccionFur
             where: { id: item.id, furnitureId },
             data: {
               unitCost:
-                item.unitCost != null ? new Prisma.Decimal(item.unitCost) : null,
+                item.unitCost != null
+                  ? new Prisma.Decimal(item.unitCost)
+                  : null,
             },
           });
         }
       }
 
       if (payload.laborEntries !== undefined) {
-        await tx.produccionFurnitureLaborEntry.deleteMany({ where: { furnitureId } });
-        const entries = payload.laborEntries.filter((e) => e.description.trim());
+        await tx.produccionFurnitureLaborEntry.deleteMany({
+          where: { furnitureId },
+        });
+        const entries = payload.laborEntries.filter((e) =>
+          e.description.trim(),
+        );
         if (entries.length > 0) {
           await tx.produccionFurnitureLaborEntry.createMany({
             data: await Promise.all(
@@ -183,8 +201,12 @@ export class ProduccionFurnitureCostingPrismaRepository implements ProduccionFur
       }
 
       if (payload.extraExpenses !== undefined) {
-        await tx.produccionFurnitureExtraExpense.deleteMany({ where: { furnitureId } });
-        const expenses = payload.extraExpenses.filter((e) => e.description.trim());
+        await tx.produccionFurnitureExtraExpense.deleteMany({
+          where: { furnitureId },
+        });
+        const expenses = payload.extraExpenses.filter((e) =>
+          e.description.trim(),
+        );
         if (expenses.length > 0) {
           await tx.produccionFurnitureExtraExpense.createMany({
             data: expenses.map((e, i) => ({
@@ -241,7 +263,10 @@ export class ProduccionFurnitureCostingPrismaRepository implements ProduccionFur
     };
   }
 
-  async listSnapshots(furnitureId: string, applicationSlug: string): Promise<CostingSnapshotDto[]> {
+  async listSnapshots(
+    furnitureId: string,
+    applicationSlug: string,
+  ): Promise<CostingSnapshotDto[]> {
     const furniture = await this.prisma.produccionFurniture.findFirst({
       where: { id: furnitureId, application: { slug: applicationSlug.trim() } },
       select: { id: true },

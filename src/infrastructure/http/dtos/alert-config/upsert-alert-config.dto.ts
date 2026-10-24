@@ -17,7 +17,9 @@ export class UpsertAlertConfigDto {
   @IsOptional()
   alert90Days?: boolean;
 
-  @ApiPropertyOptional({ description: 'Alerta de pago pendiente próximo a vencer' })
+  @ApiPropertyOptional({
+    description: 'Alerta de pago pendiente próximo a vencer',
+  })
   @IsBoolean()
   @IsOptional()
   alertPendingPayment?: boolean;

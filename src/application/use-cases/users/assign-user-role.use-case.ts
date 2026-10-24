@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
-import { ROLE_REPOSITORY, UserRepository } from '@common/constants/injection-tokens';
+import {
+  ROLE_REPOSITORY,
+  UserRepository,
+} from '@common/constants/injection-tokens';
 import type { RoleRepository } from '@domain/repositories/role.repository';
 
 /**

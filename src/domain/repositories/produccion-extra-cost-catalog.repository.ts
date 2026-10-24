@@ -1,4 +1,6 @@
-export const PRODUCCION_EXTRA_COST_CATALOG_REPOSITORY = Symbol('ProduccionExtraCostCatalogRepository');
+export const PRODUCCION_EXTRA_COST_CATALOG_REPOSITORY = Symbol(
+  'ProduccionExtraCostCatalogRepository',
+);
 
 export interface ProduccionExtraCostCatalogDto {
   id: string;
@@ -39,12 +41,20 @@ export interface ListProduccionExtraCostCatalogResult {
 }
 
 export interface ProduccionExtraCostCatalogRepository {
-  list(filters: ListProduccionExtraCostCatalogFilters): Promise<ListProduccionExtraCostCatalogResult>;
-  findById(id: string, applicationSlug?: string): Promise<ProduccionExtraCostCatalogDto | null>;
+  list(
+    filters: ListProduccionExtraCostCatalogFilters,
+  ): Promise<ListProduccionExtraCostCatalogResult>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionExtraCostCatalogDto | null>;
   create(
     applicationId: string,
     payload: CreateProduccionExtraCostCatalogPayload,
   ): Promise<ProduccionExtraCostCatalogDto>;
-  update(id: string, payload: UpdateProduccionExtraCostCatalogPayload): Promise<ProduccionExtraCostCatalogDto>;
+  update(
+    id: string,
+    payload: UpdateProduccionExtraCostCatalogPayload,
+  ): Promise<ProduccionExtraCostCatalogDto>;
   delete(id: string): Promise<void>;
 }

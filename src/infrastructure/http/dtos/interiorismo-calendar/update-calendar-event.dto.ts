@@ -10,7 +10,13 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-const TYPES = ['MEETING', 'VISIT', 'INSTALLATION', 'DEADLINE', 'TEAM_BLOCK'] as const;
+const TYPES = [
+  'MEETING',
+  'VISIT',
+  'INSTALLATION',
+  'DEADLINE',
+  'TEAM_BLOCK',
+] as const;
 
 export class UpdateInteriorCalendarEventDto {
   @ApiPropertyOptional({ enum: TYPES })
@@ -54,13 +60,17 @@ export class UpdateInteriorCalendarEventDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @ValidateIf((_, v) => v !== undefined && v !== null && String(v).trim() !== '')
+  @ValidateIf(
+    (_, v) => v !== undefined && v !== null && String(v).trim() !== '',
+  )
   @IsUUID()
   projectId?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @ValidateIf((_, v) => v !== undefined && v !== null && String(v).trim() !== '')
+  @ValidateIf(
+    (_, v) => v !== undefined && v !== null && String(v).trim() !== '',
+  )
   @IsUUID()
   assignedAgentId?: string | null;
 }

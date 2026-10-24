@@ -1,4 +1,6 @@
-export const INTERIOR_MATERIAL_SUPPLIER_REPOSITORY = Symbol('InteriorMaterialSupplierRepository');
+export const INTERIOR_MATERIAL_SUPPLIER_REPOSITORY = Symbol(
+  'InteriorMaterialSupplierRepository',
+);
 
 export interface InteriorSupplierListItem {
   id: string;
@@ -86,13 +88,21 @@ export interface ListInteriorMaterialSuppliersResult {
 }
 
 export interface InteriorMaterialSupplierRepository {
-  list(filters: ListInteriorMaterialSuppliersFilters): Promise<ListInteriorMaterialSuppliersResult>;
-  findById(id: string, applicationSlug?: string): Promise<InteriorSupplierDetail | null>;
+  list(
+    filters: ListInteriorMaterialSuppliersFilters,
+  ): Promise<ListInteriorMaterialSuppliersResult>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<InteriorSupplierDetail | null>;
   create(
     applicationId: string,
     payload: CreateInteriorMaterialSupplierPayload,
   ): Promise<InteriorSupplierDetail>;
-  update(id: string, payload: UpdateInteriorMaterialSupplierPayload): Promise<InteriorSupplierDetail>;
+  update(
+    id: string,
+    payload: UpdateInteriorMaterialSupplierPayload,
+  ): Promise<InteriorSupplierDetail>;
   delete(id: string): Promise<void>;
   linkCatalogMaterial(
     supplierId: string,

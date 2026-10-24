@@ -1,5 +1,10 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadReportsOperationsService } from '../../../application/services/contabilidad-reports-operations.service';
 
@@ -31,7 +36,11 @@ export class ContabilidadReportsController {
     @Query('periodId') periodId?: string,
     @Query('costCenterId') costCenterId?: string,
   ) {
-    return this.reports.getTrialBalance(applicationSlug, periodId, costCenterId);
+    return this.reports.getTrialBalance(
+      applicationSlug,
+      periodId,
+      costCenterId,
+    );
   }
 
   @Get('financial-analysis')

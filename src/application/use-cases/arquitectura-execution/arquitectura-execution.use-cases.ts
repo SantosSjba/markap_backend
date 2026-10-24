@@ -28,39 +28,45 @@ const COST_CAT = ['LABOR', 'MATERIAL', 'EXPENSE', 'TRANSPORT'] as const;
 
 function assertPhase(v: string) {
   if (!(PHASES as readonly string[]).includes(v)) {
-    throw new BadRequestException(
-      `Fase invÃ¡lida. Use: ${PHASES.join(', ')}`,
-    );
+    throw new BadRequestException(`Fase inválida. Use: ${PHASES.join(', ')}`);
   }
 }
 
 function assertKanban(v: string) {
   if (!(KANBAN as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Estado Kanban invÃ¡lido: ${KANBAN.join(', ')}`);
+    throw new BadRequestException(
+      `Estado Kanban inválido: ${KANBAN.join(', ')}`,
+    );
   }
 }
 
 function assertEvidenceKind(v: string) {
   if (!(EVIDENCE_KINDS as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Tipo de evidencia invÃ¡lido: ${EVIDENCE_KINDS.join(', ')}`);
+    throw new BadRequestException(
+      `Tipo de evidencia inválido: ${EVIDENCE_KINDS.join(', ')}`,
+    );
   }
 }
 
 function assertSeverity(v: string) {
   if (!(SEVERITY as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Severidad invÃ¡lida: ${SEVERITY.join(', ')}`);
+    throw new BadRequestException(`Severidad inválida: ${SEVERITY.join(', ')}`);
   }
 }
 
 function assertIncidentStatus(v: string) {
   if (!(INCIDENT_STATUS as readonly string[]).includes(v)) {
-    throw new BadRequestException(`Estado de incidencia invÃ¡lido: ${INCIDENT_STATUS.join(', ')}`);
+    throw new BadRequestException(
+      `Estado de incidencia inválido: ${INCIDENT_STATUS.join(', ')}`,
+    );
   }
 }
 
 function assertCostCat(v: string) {
   if (!(COST_CAT as readonly string[]).includes(v)) {
-    throw new BadRequestException(`CategorÃ­a de costo invÃ¡lida: ${COST_CAT.join(', ')}`);
+    throw new BadRequestException(
+      `Categoría de costo inválida: ${COST_CAT.join(', ')}`,
+    );
   }
 }
 
@@ -93,11 +99,18 @@ export class CreateArquitecturaExecutionTaskUseCase {
     private readonly repo: ArquitecturaExecutionRepository,
   ) {}
 
-  async execute(projectId: string, applicationSlug: string | undefined, payload: CreateArquitecturaExecutionTaskPayload) {
+  async execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    payload: CreateArquitecturaExecutionTaskPayload,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     assertPhase(payload.phase);
     if (payload.kanbanStatus) assertKanban(payload.kanbanStatus);
-    if (payload.progressPct != null && (payload.progressPct < 0 || payload.progressPct > 100)) {
+    if (
+      payload.progressPct != null &&
+      (payload.progressPct < 0 || payload.progressPct > 100)
+    ) {
       throw new BadRequestException('progressPct debe estar entre 0 y 100');
     }
     return this.repo.createTask(projectId, payload);
@@ -120,7 +133,10 @@ export class UpdateArquitecturaExecutionTaskUseCase {
     await assertProject(this.repo, projectId, applicationSlug);
     if (payload.phase != null) assertPhase(payload.phase);
     if (payload.kanbanStatus != null) assertKanban(payload.kanbanStatus);
-    if (payload.progressPct != null && (payload.progressPct < 0 || payload.progressPct > 100)) {
+    if (
+      payload.progressPct != null &&
+      (payload.progressPct < 0 || payload.progressPct > 100)
+    ) {
       throw new BadRequestException('progressPct debe estar entre 0 y 100');
     }
     const row = await this.repo.updateTask(projectId, taskId, payload);
@@ -136,7 +152,11 @@ export class DeleteArquitecturaExecutionTaskUseCase {
     private readonly repo: ArquitecturaExecutionRepository,
   ) {}
 
-  async execute(projectId: string, taskId: string, applicationSlug: string | undefined) {
+  async execute(
+    projectId: string,
+    taskId: string,
+    applicationSlug: string | undefined,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     const ok = await this.repo.deleteTask(projectId, taskId);
     if (!ok) throw new NotFoundException('Tarea no encontrada');
@@ -150,7 +170,11 @@ export class CreateArquitecturaExecutionEvidenceUseCase {
     private readonly repo: ArquitecturaExecutionRepository,
   ) {}
 
-  async execute(projectId: string, applicationSlug: string | undefined, payload: CreateArquitecturaExecutionEvidencePayload) {
+  async execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    payload: CreateArquitecturaExecutionEvidencePayload,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     assertEvidenceKind(payload.kind);
     try {
@@ -171,7 +195,11 @@ export class DeleteArquitecturaExecutionEvidenceUseCase {
     private readonly repo: ArquitecturaExecutionRepository,
   ) {}
 
-  async execute(projectId: string, evidenceId: string, applicationSlug: string | undefined) {
+  async execute(
+    projectId: string,
+    evidenceId: string,
+    applicationSlug: string | undefined,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     const ok = await this.repo.deleteEvidence(projectId, evidenceId);
     if (!ok) throw new NotFoundException('Evidencia no encontrada');
@@ -185,7 +213,11 @@ export class CreateArquitecturaExecutionIncidentUseCase {
     private readonly repo: ArquitecturaExecutionRepository,
   ) {}
 
-  async execute(projectId: string, applicationSlug: string | undefined, payload: CreateArquitecturaExecutionIncidentPayload) {
+  async execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    payload: CreateArquitecturaExecutionIncidentPayload,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     assertSeverity(payload.severity);
     return this.repo.createIncident(projectId, payload);
@@ -222,7 +254,11 @@ export class CreateArquitecturaExecutionActualCostUseCase {
     private readonly prisma: PrismaService,
   ) {}
 
-  async execute(projectId: string, applicationSlug: string | undefined, payload: CreateArquitecturaExecutionActualCostPayload) {
+  async execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    payload: CreateArquitecturaExecutionActualCostPayload,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     assertCostCat(payload.costCategory);
 
@@ -238,7 +274,9 @@ export class CreateArquitecturaExecutionActualCostUseCase {
         where: { id: mid, applicationId: proj.applicationId },
       });
       if (!mat) {
-        throw new BadRequestException('Material del catálogo no válido para este proyecto');
+        throw new BadRequestException(
+          'Material del catálogo no válido para este proyecto',
+        );
       }
     }
 
@@ -256,7 +294,11 @@ export class DeleteArquitecturaExecutionActualCostUseCase {
     private readonly repo: ArquitecturaExecutionRepository,
   ) {}
 
-  async execute(projectId: string, costId: string, applicationSlug: string | undefined) {
+  async execute(
+    projectId: string,
+    costId: string,
+    applicationSlug: string | undefined,
+  ) {
     await assertProject(this.repo, projectId, applicationSlug);
     const ok = await this.repo.deleteActualCost(projectId, costId);
     if (!ok) throw new NotFoundException('Costo no encontrado');
@@ -265,12 +307,20 @@ export class DeleteArquitecturaExecutionActualCostUseCase {
 
 @Injectable()
 export class PatchArquitecturaExecutionProgressUseCase {
-  constructor(private readonly updateProject: UpdateArquitecturaProjectUseCase) {}
+  constructor(
+    private readonly updateProject: UpdateArquitecturaProjectUseCase,
+  ) {}
 
-  execute(projectId: string, applicationSlug: string | undefined, progressPct: number) {
+  execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    progressPct: number,
+  ) {
     if (progressPct < 0 || progressPct > 100) {
       throw new BadRequestException('Avance debe estar entre 0 y 100');
     }
-    return this.updateProject.execute(projectId, applicationSlug ?? SLUG_DFLT, { progressPct });
+    return this.updateProject.execute(projectId, applicationSlug ?? SLUG_DFLT, {
+      progressPct,
+    });
   }
 }

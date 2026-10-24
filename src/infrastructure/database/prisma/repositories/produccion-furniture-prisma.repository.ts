@@ -91,7 +91,9 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
     };
   }
 
-  async list(filters: ListProduccionFurnitureFilters): Promise<ListProduccionFurnitureResult> {
+  async list(
+    filters: ListProduccionFurnitureFilters,
+  ): Promise<ListProduccionFurnitureResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
@@ -99,9 +101,13 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
       return { data: [], total: 0, page: filters.page, limit: filters.limit };
     }
 
-    const andParts: Prisma.ProduccionFurnitureWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.ProduccionFurnitureWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.category?.trim()) {
-      andParts.push({ category: { equals: filters.category.trim(), mode: 'insensitive' } });
+      andParts.push({
+        category: { equals: filters.category.trim(), mode: 'insensitive' },
+      });
     }
     if (filters.isActive !== undefined) {
       andParts.push({ isActive: filters.isActive });
@@ -156,14 +162,21 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
     if (!app) return { total: 0, active: 0, inactive: 0 };
 
     const [total, active] = await Promise.all([
-      this.prisma.produccionFurniture.count({ where: { applicationId: app.id } }),
-      this.prisma.produccionFurniture.count({ where: { applicationId: app.id, isActive: true } }),
+      this.prisma.produccionFurniture.count({
+        where: { applicationId: app.id },
+      }),
+      this.prisma.produccionFurniture.count({
+        where: { applicationId: app.id, isActive: true },
+      }),
     ]);
 
     return { total, active, inactive: total - active };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ProduccionFurnitureDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionFurnitureDetail | null> {
     const row = await this.prisma.produccionFurniture.findUnique({
       where: { id },
       include: {
@@ -173,9 +186,12 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
       },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
-    const { application: _app, ...furniture } = row;
-    return this.mapDetail(furniture);
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
+    return this.mapDetail(row);
   }
 
   async create(
@@ -217,11 +233,16 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
     return this.mapDetail(row);
   }
 
-  async update(id: string, payload: UpdateProduccionFurniturePayload): Promise<ProduccionFurnitureDetail> {
+  async update(
+    id: string,
+    payload: UpdateProduccionFurniturePayload,
+  ): Promise<ProduccionFurnitureDetail> {
     const patch: Prisma.ProduccionFurnitureUncheckedUpdateInput = {};
     if (payload.name !== undefined) patch.name = payload.name.trim();
-    if (payload.category !== undefined) patch.category = payload.category.trim();
-    if (payload.description !== undefined) patch.description = payload.description?.trim() || null;
+    if (payload.category !== undefined)
+      patch.category = payload.category.trim();
+    if (payload.description !== undefined)
+      patch.description = payload.description?.trim() || null;
     if (payload.widthCm !== undefined) patch.widthCm = payload.widthCm;
     if (payload.depthCm !== undefined) patch.depthCm = payload.depthCm;
     if (payload.heightCm !== undefined) patch.heightCm = payload.heightCm;
@@ -231,7 +252,8 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
     if (payload.technicalSheetUrl !== undefined) {
       patch.technicalSheetUrl = payload.technicalSheetUrl?.trim() || null;
     }
-    if (payload.notes !== undefined) patch.notes = payload.notes?.trim() || null;
+    if (payload.notes !== undefined)
+      patch.notes = payload.notes?.trim() || null;
     if (payload.isActive !== undefined) patch.isActive = payload.isActive;
 
     await this.prisma.$transaction(async (tx) => {
@@ -240,7 +262,9 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
         data: patch,
       });
       if (payload.imageUrls !== undefined) {
-        await tx.produccionFurnitureImage.deleteMany({ where: { furnitureId: id } });
+        await tx.produccionFurnitureImage.deleteMany({
+          where: { furnitureId: id },
+        });
         const urls = payload.imageUrls.map((u) => u.trim()).filter(Boolean);
         if (urls.length > 0) {
           await tx.produccionFurnitureImage.createMany({
@@ -253,7 +277,9 @@ export class ProduccionFurniturePrismaRepository implements ProduccionFurnitureR
         }
       }
       if (payload.bomLines !== undefined) {
-        await tx.produccionFurnitureBomLine.deleteMany({ where: { furnitureId: id } });
+        await tx.produccionFurnitureBomLine.deleteMany({
+          where: { furnitureId: id },
+        });
         const bomRows = this.bomCreateRows(payload.bomLines);
         if (bomRows.length > 0) {
           await tx.produccionFurnitureBomLine.createMany({

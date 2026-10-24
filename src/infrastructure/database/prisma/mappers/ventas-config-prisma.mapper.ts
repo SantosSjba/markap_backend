@@ -1,4 +1,7 @@
-import { VentasNumberingSeries, VentasPipelineStage } from '@domain/entities/ventas-config.entity';
+import {
+  VentasNumberingSeries,
+  VentasPipelineStage,
+} from '@domain/entities/ventas-config.entity';
 
 export class VentasConfigPrismaMapper {
   static toPipelineStage(r: {

@@ -1,3 +1,5 @@
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
+import type { AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
 import {
   Controller,
   Get,
@@ -47,7 +49,7 @@ export class PaymentsController {
   async registerPayment(
     @Param('id') id: string,
     @Body() dto: RegisterPaymentDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.payments.registerPayment({
       paymentId: id,
@@ -56,7 +58,7 @@ export class PaymentsController {
       paymentMethod: dto.paymentMethod,
       referenceNumber: dto.referenceNumber,
       notes: dto.notes,
-      registeredBy: req.user?.id ?? null,
+      registeredBy: req.user?.sub ?? null,
     });
   }
 
@@ -77,8 +79,8 @@ export class PaymentsController {
       periodYear: periodYear ? parseInt(periodYear, 10) : undefined,
       periodMonth: periodMonth ? parseInt(periodMonth, 10) : undefined,
       paymentMethod: paymentMethod || undefined,
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: page ? parseIntegerQuery(page, 1, 1, 1000000) : 1,
+      limit: limit ? parseIntegerQuery(limit, 20, 1, 100) : 20,
     });
   }
 

@@ -12,7 +12,11 @@ export class UpdateInteriorProjectDocumentUseCase {
     private readonly repo: InteriorProjectDocumentRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, data: UpdateInteriorProjectDocumentData) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    data: UpdateInteriorProjectDocumentData,
+  ) {
     const row = await this.repo.update(id, applicationSlug, data);
     if (!row) {
       throw new NotFoundException('Documento no encontrado');

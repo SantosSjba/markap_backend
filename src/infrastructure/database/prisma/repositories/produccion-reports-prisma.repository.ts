@@ -7,7 +7,11 @@ import type {
   ProduccionReportsFilters,
   ProduccionReportsRepository,
 } from '@domain/repositories/produccion-reports.repository';
-import { formatDateOnly, parseDateOnly, todayDateOnlyLima } from '@domain/utils/peru-date.util';
+import {
+  formatDateOnly,
+  parseDateOnly,
+  todayDateOnlyLima,
+} from '@domain/utils/peru-date.util';
 
 function num(v: unknown): number {
   if (v === null || v === undefined) return 0;
@@ -76,7 +80,10 @@ function formatStageLabel(stageKey: string | null | undefined): string | null {
   return labels[stageKey] ?? stageKey;
 }
 
-function buildWorkOrderActivityTitle(status: string, currentStageKey: string | null): string {
+function buildWorkOrderActivityTitle(
+  status: string,
+  currentStageKey: string | null,
+): string {
   if (status === 'IN_PROGRESS') {
     const stage = formatStageLabel(currentStageKey);
     return stage ? `Orden en ${stage}` : 'Orden en producción';
@@ -105,7 +112,9 @@ function estimateFurnitureCost(row: {
 export class ProduccionReportsPrismaRepository implements ProduccionReportsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getDashboard(filters: ProduccionReportsFilters): Promise<ProduccionReportsDashboardDto | null> {
+  async getDashboard(
+    filters: ProduccionReportsFilters,
+  ): Promise<ProduccionReportsDashboardDto | null> {
     const slug = filters.applicationSlug.trim() || 'produccion';
     const app = await this.prisma.application.findUnique({ where: { slug } });
     if (!app) return null;
@@ -136,13 +145,17 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
 
     const materialWhere: Prisma.ProduccionMaterialWhereInput = {
       applicationId: app.id,
-      ...(category ? { category: { equals: category, mode: 'insensitive' } } : {}),
+      ...(category
+        ? { category: { equals: category, mode: 'insensitive' } }
+        : {}),
     };
 
     const furnitureWhere: Prisma.ProduccionFurnitureWhereInput = {
       applicationId: app.id,
       isActive: true,
-      ...(category ? { category: { equals: category, mode: 'insensitive' } } : {}),
+      ...(category
+        ? { category: { equals: category, mode: 'insensitive' } }
+        : {}),
     };
 
     const [
@@ -174,7 +187,11 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
         where: { ...woBase, createdAt: { gte: start, lte: end } },
       }),
       this.prisma.produccionWorkOrder.count({
-        where: { ...woBase, status: 'COMPLETED', completedAt: { gte: start, lte: end } },
+        where: {
+          ...woBase,
+          status: 'COMPLETED',
+          completedAt: { gte: start, lte: end },
+        },
       }),
       this.prisma.produccionWorkOrder.count({
         where: { ...woBase, status: 'IN_PROGRESS' },
@@ -261,7 +278,11 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
             updatedAt: { gte: start, lte: end },
           },
           ...(category
-            ? { furniture: { category: { equals: category, mode: 'insensitive' } } }
+            ? {
+                furniture: {
+                  category: { equals: category, mode: 'insensitive' },
+                },
+              }
             : {}),
         },
         select: {
@@ -322,7 +343,10 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
     let lowStockCount = 0;
     let totalStockValue = 0;
     let activeMaterials = 0;
-    const categoryMap = new Map<string, { itemCount: number; totalValue: number }>();
+    const categoryMap = new Map<
+      string,
+      { itemCount: number; totalValue: number }
+    >();
 
     for (const m of materials) {
       if (m.isActive) activeMaterials += 1;
@@ -341,26 +365,39 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
     }
 
     const stockInValuePeriod = round2(
-      stockInMovements.reduce((s, m) => s + num(m.quantity) * num(m.unitCost), 0),
+      stockInMovements.reduce(
+        (s, m) => s + num(m.quantity) * num(m.unitCost),
+        0,
+      ),
     );
 
     const salesRevenuePeriod = round2(
       deliveredOrders.reduce(
-        (s, o) => s + o.lines.reduce((ls, l) => ls + num(l.quantity) * num(l.unitPrice), 0),
+        (s, o) =>
+          s +
+          o.lines.reduce((ls, l) => ls + num(l.quantity) * num(l.unitPrice), 0),
         0,
       ),
     );
 
     const pipelineValue = round2(
       pipelineOrders.reduce(
-        (s, o) => s + o.lines.reduce((ls, l) => ls + num(l.quantity) * num(l.unitPrice), 0),
+        (s, o) =>
+          s +
+          o.lines.reduce((ls, l) => ls + num(l.quantity) * num(l.unitPrice), 0),
         0,
       ),
     );
 
-    const soldByFurniture = new Map<string, { units: number; revenue: number }>();
+    const soldByFurniture = new Map<
+      string,
+      { units: number; revenue: number }
+    >();
     for (const line of soldLines) {
-      const prev = soldByFurniture.get(line.furnitureId) ?? { units: 0, revenue: 0 };
+      const prev = soldByFurniture.get(line.furnitureId) ?? {
+        units: 0,
+        revenue: 0,
+      };
       const qty = num(line.quantity);
       const rev = qty * num(line.unitPrice);
       soldByFurniture.set(line.furnitureId, {
@@ -374,7 +411,9 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
       const estimatedCost = estimateFurnitureCost(f);
       const marginAmount = round2(referencePrice - estimatedCost);
       const marginPercent =
-        referencePrice > 0 ? round2((marginAmount / referencePrice) * 100) : null;
+        referencePrice > 0
+          ? round2((marginAmount / referencePrice) * 100)
+          : null;
       const sold = soldByFurniture.get(f.id) ?? { units: 0, revenue: 0 };
       return {
         furnitureId: f.id,
@@ -395,7 +434,10 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
       .filter((m): m is number => m !== null);
     const avgMarginPercent =
       marginsWithValue.length > 0
-        ? round2(marginsWithValue.reduce((s, m) => s + m, 0) / marginsWithValue.length)
+        ? round2(
+            marginsWithValue.reduce((s, m) => s + m, 0) /
+              marginsWithValue.length,
+          )
         : null;
 
     const recentActivity: ProduccionReportsActivityItem[] = [
@@ -426,14 +468,18 @@ export class ProduccionReportsPrismaRepository implements ProduccionReportsRepos
         type: 'STOCK_MOVEMENT' as const,
         entityId: m.id,
         materialId: m.material.id,
-        title: MOVEMENT_ACTIVITY_TITLES[m.movementType] ?? 'Movimiento de stock',
+        title:
+          MOVEMENT_ACTIVITY_TITLES[m.movementType] ?? 'Movimiento de stock',
         detail: m.reference?.trim()
           ? `${m.material.name} — ${m.reference.trim()}`
           : `${m.material.name} (${m.material.code})`,
         occurredAt: m.createdAt.toISOString(),
       })),
     ]
-      .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
+      )
       .slice(0, 8);
 
     return {

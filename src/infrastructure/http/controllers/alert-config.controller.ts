@@ -30,7 +30,9 @@ export class AlertConfigController {
   ) {}
 
   @Get(':applicationSlug')
-  @ApiOperation({ summary: 'Obtener configuración de alertas del usuario para una aplicación' })
+  @ApiOperation({
+    summary: 'Obtener configuración de alertas del usuario para una aplicación',
+  })
   @ApiResponse({ status: 200 })
   async get(
     @Request() req: AuthenticatedRequest,
@@ -40,7 +42,9 @@ export class AlertConfigController {
   }
 
   @Put(':applicationSlug')
-  @ApiOperation({ summary: 'Guardar/actualizar configuración de alertas del usuario' })
+  @ApiOperation({
+    summary: 'Guardar/actualizar configuración de alertas del usuario',
+  })
   @ApiResponse({ status: 200 })
   async upsert(
     @Request() req: AuthenticatedRequest,

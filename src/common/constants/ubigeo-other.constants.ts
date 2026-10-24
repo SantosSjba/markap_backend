@@ -12,6 +12,8 @@ export interface LocationCustomPayload {
   district: string;
 }
 
-export function isUbigeoOtherDistrictId(districtId: string | undefined | null): boolean {
+export function isUbigeoOtherDistrictId(
+  districtId: string | undefined | null,
+): boolean {
   return districtId === UBIGEO_OTHER_DISTRICT_ID;
 }

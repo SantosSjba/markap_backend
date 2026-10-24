@@ -8,18 +8,23 @@ import {
   IsDateString,
   IsIn,
   IsBoolean,
-  IsUUID,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { parseOptionalBoolean } from '@common/utils/parse-boolean.util';
 
 export class UpdateRentalDto {
-  @ApiPropertyOptional({ description: 'Fecha de inicio (ISO)', example: '2025-01-01' })
+  @ApiPropertyOptional({
+    description: 'Fecha de inicio (ISO)',
+    example: '2025-01-01',
+  })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: 'Fecha de fin (ISO)', example: '2026-01-01' })
+  @ApiPropertyOptional({
+    description: 'Fecha de fin (ISO)',
+    example: '2026-01-01',
+  })
   @IsOptional()
   @IsDateString()
   endDate?: string;
@@ -57,7 +62,10 @@ export class UpdateRentalDto {
   @IsString()
   notes?: string | null;
 
-  @ApiPropertyOptional({ description: 'Estado', enum: ['ACTIVE', 'EXPIRED', 'CANCELLED'] })
+  @ApiPropertyOptional({
+    description: 'Estado',
+    enum: ['ACTIVE', 'EXPIRED', 'CANCELLED'],
+  })
   @IsOptional()
   @IsString()
   @IsIn(['ACTIVE', 'EXPIRED', 'CANCELLED'])

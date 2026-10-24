@@ -1,7 +1,10 @@
 import type { VentasReportsGranularity } from '@domain/entities/ventas-reports.entity';
 import { formatDateOnly, startOfDayLima } from '@domain/utils/peru-date.util';
 
-export function periodLabel(d: Date, granularity: VentasReportsGranularity): string {
+export function periodLabel(
+  d: Date,
+  granularity: VentasReportsGranularity,
+): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');

@@ -1,8 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 import { TokenService, TokenPayload } from '@domain/services/token.service';
 import { UserRepository } from '@domain/repositories/user.repository';
@@ -15,7 +11,9 @@ export class WsJwtGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const client = context.switchToWs().getClient<{ handshake: { auth?: { token?: string }; query?: { token?: string } } }>();
+    const client = context.switchToWs().getClient<{
+      handshake: { auth?: { token?: string }; query?: { token?: string } };
+    }>();
     const token =
       client.handshake?.auth?.token ||
       (typeof client.handshake?.query?.token === 'string'

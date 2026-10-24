@@ -20,7 +20,9 @@ const SLUG = 'interiorismo';
 
 function assertInteriorismo(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug interiorismo');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug interiorismo',
+    );
   }
 }
 
@@ -43,7 +45,10 @@ export class GetInteriorCatalogMaterialByIdUseCase {
     private readonly repo: InteriorCatalogMaterialRepository,
   ) {}
 
-  async execute(id: string, applicationSlug?: string): Promise<InteriorCatalogMaterialDetail> {
+  async execute(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<InteriorCatalogMaterialDetail> {
     const row = await this.repo.findById(id, applicationSlug ?? SLUG);
     if (!row) throw new NotFoundException('Material no encontrado');
     return row;
@@ -60,15 +65,20 @@ export class CreateInteriorCatalogMaterialUseCase {
     private readonly prisma: PrismaService,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateInteriorCatalogMaterialPayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateInteriorCatalogMaterialPayload,
+  ) {
     assertInteriorismo(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación interiorismo no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación interiorismo no encontrada');
 
     const dup = await this.prisma.interiorCatalogMaterial.findFirst({
       where: { applicationId: app.id, code: payload.code.trim() },
     });
-    if (dup) throw new BadRequestException('Ya existe un material con ese código');
+    if (dup)
+      throw new BadRequestException('Ya existe un material con ese código');
 
     return this.repo.create(app.id, payload);
   }
@@ -81,7 +91,11 @@ export class UpdateInteriorCatalogMaterialUseCase {
     private readonly repo: InteriorCatalogMaterialRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateInteriorCatalogMaterialPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateInteriorCatalogMaterialPayload,
+  ) {
     assertInteriorismo(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Material no encontrado');

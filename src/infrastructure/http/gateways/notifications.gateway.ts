@@ -30,7 +30,9 @@ const userIdBySocketId = new Map<string, string>();
     credentials: true,
   },
 })
-export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   private readonly logger = new Logger(NotificationsGateway.name);
 
   @WebSocketServer()
@@ -44,6 +46,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   async handleConnection(client: {
     id: string;
     disconnect: () => void;
+    emit: (event: string) => void;
     handshake: { auth?: { token?: string }; query?: { token?: string } };
   }) {
     const token =
@@ -72,6 +75,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       }
       set.add(client.id);
       userIdBySocketId.set(client.id, payload.sub);
+      client.emit('authenticated');
     } catch {
       client.disconnect();
     }
@@ -87,6 +91,12 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
         if (set.size === 0) socketIdsByUserId.delete(userId);
       }
     }
+  }
+
+  emitDataChanged(resource: string): void {
+    const socketIds = [...userIdBySocketId.keys()];
+    if (socketIds.length)
+      this.server.to(socketIds).emit('data-changed', { resource });
   }
 
   emitToUser(userId: string, payload: NotificationPayload): void {

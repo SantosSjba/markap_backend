@@ -1,5 +1,8 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { APPLICATION_REPOSITORY, CONTABILIDAD_ACCOUNT_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  CONTABILIDAD_ACCOUNT_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import {
   CONTABILIDAD_AUDIT_ACTION,
   CONTABILIDAD_AUDIT_ENTITY_TYPE,
@@ -11,7 +14,6 @@ import {
 import { listPcgeCatalogClassesMeta } from '@domain/constants/contabilidad-pcge-catalog';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import type {
-  ContabilidadAccountDto,
   ContabilidadAccountRepository,
   CreateContabilidadAccountInput,
   UpdateContabilidadAccountInput,
@@ -24,7 +26,9 @@ const CONTABILIDAD_SLUG = 'contabilidad';
 
 function assertContabilidadSlug(slug: string | undefined | null) {
   if (slug?.trim() !== CONTABILIDAD_SLUG) {
-    throw new BadRequestException('Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).');
+    throw new BadRequestException(
+      'Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).',
+    );
   }
 }
 
@@ -40,10 +44,13 @@ export class ContabilidadAccountOperationsService {
     private readonly audit: ContabilidadAuditOperationsService,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertContabilidadSlug(applicationSlug ?? CONTABILIDAD_SLUG);
     const app = await this.applications.findBySlug(CONTABILIDAD_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
+    if (!app)
+      throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
     return app.id;
   }
 
@@ -71,22 +78,37 @@ export class ContabilidadAccountOperationsService {
     await this.accounts.ensurePcgeSeed(applicationId);
 
     const parent = await this.accounts.findById(applicationId, body.parentId);
-    if (!parent) throw new EntityNotFoundException('ContabilidadAccount', body.parentId);
+    if (!parent)
+      throw new EntityNotFoundException('ContabilidadAccount', body.parentId);
     if (parent.isMovement) {
-      throw new BadRequestException('Solo puede crear cuentas bajo cuentas título (no de movimiento).');
+      throw new BadRequestException(
+        'Solo puede crear cuentas bajo cuentas título (no de movimiento).',
+      );
     }
     if (!body.code?.trim() || !body.name?.trim()) {
       throw new BadRequestException('Código y nombre son obligatorios.');
     }
-    if (!VALID_ACCOUNT_TYPES.has(body.accountType as (typeof CONTABILIDAD_ACCOUNT_TYPES)[keyof typeof CONTABILIDAD_ACCOUNT_TYPES])) {
+    if (
+      !VALID_ACCOUNT_TYPES.has(
+        body.accountType as (typeof CONTABILIDAD_ACCOUNT_TYPES)[keyof typeof CONTABILIDAD_ACCOUNT_TYPES],
+      )
+    ) {
       throw new BadRequestException('Tipo de cuenta no válido.');
     }
     if (!body.code.trim().startsWith(parent.code)) {
-      throw new BadRequestException(`El código debe iniciar con el prefijo de la cuenta padre (${parent.code}).`);
+      throw new BadRequestException(
+        `El código debe iniciar con el prefijo de la cuenta padre (${parent.code}).`,
+      );
     }
 
-    const duplicate = await this.accounts.findByCode(applicationId, body.code.trim());
-    if (duplicate) throw new BadRequestException(`Ya existe la cuenta con código ${body.code.trim()}.`);
+    const duplicate = await this.accounts.findByCode(
+      applicationId,
+      body.code.trim(),
+    );
+    if (duplicate)
+      throw new BadRequestException(
+        `Ya existe la cuenta con código ${body.code.trim()}.`,
+      );
 
     const created = await this.accounts.create(applicationId, {
       parentId: body.parentId,
@@ -105,7 +127,11 @@ export class ContabilidadAccountOperationsService {
       action: CONTABILIDAD_AUDIT_ACTION.ACCOUNT_CREATE,
       userId: userId ?? null,
       summary: `Cuenta ${created.code} — ${created.name}`,
-      payload: { code: created.code, name: created.name, accountType: created.accountType },
+      payload: {
+        code: created.code,
+        name: created.name,
+        accountType: created.accountType,
+      },
     });
 
     return created;
@@ -121,28 +147,48 @@ export class ContabilidadAccountOperationsService {
     const existing = await this.accounts.findById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadAccount', id);
 
-    if (body.accountType !== undefined && !VALID_ACCOUNT_TYPES.has(body.accountType as never)) {
+    if (
+      body.accountType !== undefined &&
+      !VALID_ACCOUNT_TYPES.has(body.accountType as never)
+    ) {
       throw new BadRequestException('Tipo de cuenta no válido.');
     }
 
     if (body.code !== undefined && body.code.trim() !== existing.code) {
       if (existing.hasMovements) {
-        throw new BadRequestException('No puede cambiar el código de una cuenta con movimientos.');
+        throw new BadRequestException(
+          'No puede cambiar el código de una cuenta con movimientos.',
+        );
       }
-      const duplicate = await this.accounts.findByCode(applicationId, body.code.trim());
+      const duplicate = await this.accounts.findByCode(
+        applicationId,
+        body.code.trim(),
+      );
       if (duplicate && duplicate.id !== id) {
-        throw new BadRequestException(`Ya existe la cuenta con código ${body.code.trim()}.`);
+        throw new BadRequestException(
+          `Ya existe la cuenta con código ${body.code.trim()}.`,
+        );
       }
       if (existing.parentId) {
-        const parent = await this.accounts.findById(applicationId, existing.parentId);
+        const parent = await this.accounts.findById(
+          applicationId,
+          existing.parentId,
+        );
         if (parent && !body.code.trim().startsWith(parent.code)) {
-          throw new BadRequestException(`El código debe iniciar con el prefijo de la cuenta padre (${parent.code}).`);
+          throw new BadRequestException(
+            `El código debe iniciar con el prefijo de la cuenta padre (${parent.code}).`,
+          );
         }
       }
     }
 
-    if (body.isMovement === true && (await this.accounts.hasChildren(applicationId, id))) {
-      throw new BadRequestException('No puede marcar como cuenta de movimiento si tiene subcuentas.');
+    if (
+      body.isMovement === true &&
+      (await this.accounts.hasChildren(applicationId, id))
+    ) {
+      throw new BadRequestException(
+        'No puede marcar como cuenta de movimiento si tiene subcuentas.',
+      );
     }
 
     if (body.name !== undefined && !body.name.trim()) {
@@ -169,16 +215,24 @@ export class ContabilidadAccountOperationsService {
     return updated;
   }
 
-  async deactivate(applicationSlug: string | undefined, id: string, userId?: string | null) {
+  async deactivate(
+    applicationSlug: string | undefined,
+    id: string,
+    userId?: string | null,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const existing = await this.accounts.findById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadAccount', id);
 
     if (existing.hasMovements) {
-      throw new BadRequestException('No puede desactivar una cuenta con movimientos contables.');
+      throw new BadRequestException(
+        'No puede desactivar una cuenta con movimientos contables.',
+      );
     }
     if (await this.accounts.hasChildren(applicationId, id)) {
-      throw new BadRequestException('Desactive primero las subcuentas o reasígnelas.');
+      throw new BadRequestException(
+        'Desactive primero las subcuentas o reasígnelas.',
+      );
     }
 
     const deactivated = await this.accounts.deactivate(applicationId, id);
@@ -211,7 +265,9 @@ export class ContabilidadAccountOperationsService {
       .filter((n) => Number.isFinite(n) && n >= 1 && n <= 9);
 
     if (!classes.length) {
-      throw new BadRequestException('Indique al menos una clase PCGE válida (1–9) en el parámetro classes.');
+      throw new BadRequestException(
+        'Indique al menos una clase PCGE válida (1–9) en el parámetro classes.',
+      );
     }
 
     return this.accounts.importPcge(applicationId, classes);

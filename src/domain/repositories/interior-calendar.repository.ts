@@ -1,4 +1,8 @@
-export type InteriorCalendarFeedSource = 'MANUAL' | 'MILESTONE' | 'EXECUTION_TASK' | 'FINANCE_SCHEDULE';
+export type InteriorCalendarFeedSource =
+  | 'MANUAL'
+  | 'MILESTONE'
+  | 'EXECUTION_TASK'
+  | 'FINANCE_SCHEDULE';
 
 export interface InteriorCalendarFeedItemDto {
   id: string;
@@ -55,9 +59,16 @@ export interface UpdateInteriorCalendarEventPayload {
 
 export interface InteriorCalendarRepository {
   resolveApplicationId(slug: string): Promise<string | null>;
-  ensureManualEventScope(eventId: string, applicationSlug: string): Promise<boolean>;
-  getFeed(filters: InteriorCalendarFeedFilters): Promise<InteriorCalendarFeedItemDto[]>;
-  createEvent(payload: CreateInteriorCalendarEventPayload): Promise<InteriorCalendarFeedItemDto>;
+  ensureManualEventScope(
+    eventId: string,
+    applicationSlug: string,
+  ): Promise<boolean>;
+  getFeed(
+    filters: InteriorCalendarFeedFilters,
+  ): Promise<InteriorCalendarFeedItemDto[]>;
+  createEvent(
+    payload: CreateInteriorCalendarEventPayload,
+  ): Promise<InteriorCalendarFeedItemDto>;
   updateEvent(
     eventId: string,
     applicationSlug: string,
@@ -66,4 +77,6 @@ export interface InteriorCalendarRepository {
   deleteEvent(eventId: string, applicationSlug: string): Promise<void>;
 }
 
-export const INTERIOR_CALENDAR_REPOSITORY = Symbol('InteriorCalendarRepository');
+export const INTERIOR_CALENDAR_REPOSITORY = Symbol(
+  'InteriorCalendarRepository',
+);

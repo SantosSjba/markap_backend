@@ -1,4 +1,6 @@
-export const CONTABILIDAD_EXTENSIONS_REPOSITORY = Symbol('ContabilidadExtensionsRepository');
+export const CONTABILIDAD_EXTENSIONS_REPOSITORY = Symbol(
+  'ContabilidadExtensionsRepository',
+);
 
 export interface ContabilidadExchangeRateDto {
   id: string;
@@ -221,7 +223,9 @@ export interface ContabilidadExtensionsRepository {
     input: UpsertExchangeRateInput,
   ): Promise<ContabilidadExchangeRateDto>;
 
-  listJournalTemplates(applicationId: string): Promise<ContabilidadJournalTemplateDto[]>;
+  listJournalTemplates(
+    applicationId: string,
+  ): Promise<ContabilidadJournalTemplateDto[]>;
   findJournalTemplateById(
     applicationId: string,
     id: string,
@@ -236,7 +240,10 @@ export interface ContabilidadExtensionsRepository {
     input: UpdateJournalTemplateInput,
   ): Promise<ContabilidadJournalTemplateDto>;
   deleteJournalTemplate(applicationId: string, id: string): Promise<void>;
-  applyJournalTemplate(applicationId: string, templateId: string): Promise<ApplyJournalTemplateResultDto>;
+  applyJournalTemplate(
+    applicationId: string,
+    templateId: string,
+  ): Promise<ApplyJournalTemplateResultDto>;
 
   generateInventorySnapshot(
     applicationId: string,
@@ -256,12 +263,21 @@ export interface ContabilidadExtensionsRepository {
     input: CreateElectronicDocumentLogInput,
   ): Promise<ContabilidadElectronicDocumentLogDto>;
 
-  getIncomeTaxSummary(applicationId: string, periodId: string): Promise<IncomeTaxSummaryDto>;
-  getIncomeTaxDetail(applicationId: string, periodId: string): Promise<IncomeTaxDetailDto>;
+  getIncomeTaxSummary(
+    applicationId: string,
+    periodId: string,
+  ): Promise<IncomeTaxSummaryDto>;
+  getIncomeTaxDetail(
+    applicationId: string,
+    periodId: string,
+  ): Promise<IncomeTaxDetailDto>;
   upsertIncomeTaxPeriodSummary(
     applicationId: string,
     periodId: string,
     input: UpsertIncomeTaxPeriodInput,
   ): Promise<IncomeTaxDetailDto>;
-  exportIncomeTaxDraft(applicationId: string, periodId: string): Promise<IncomeTaxExportDto>;
+  exportIncomeTaxDraft(
+    applicationId: string,
+    periodId: string,
+  ): Promise<IncomeTaxExportDto>;
 }

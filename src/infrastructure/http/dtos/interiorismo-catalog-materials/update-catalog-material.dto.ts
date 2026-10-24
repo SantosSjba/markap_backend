@@ -1,5 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateInteriorCatalogMaterialDto {
   @ApiPropertyOptional()
@@ -41,7 +47,10 @@ export class UpdateInteriorCatalogMaterialDto {
   @IsString()
   technicalSheetUrl?: string | null;
 
-  @ApiPropertyOptional({ type: [String], description: 'Si se envía, reemplaza todas las imágenes' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Si se envía, reemplaza todas las imágenes',
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

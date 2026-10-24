@@ -35,10 +35,13 @@ import type {
   UpdateCustomerInput,
 } from '@domain/repositories/contabilidad-sales.repository';
 import type { ContabilidadTreasuryRepository } from '@domain/repositories/contabilidad-treasury.repository';
-import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import {
+  parsePenAmount,
+  roundPenAmount,
+} from '@domain/utils/contabilidad-journal-amounts';
 import { parseDateOnly } from '@domain/utils/peru-date.util';
 import { resolveInvoiceTaxableBaseInPen } from '../helpers/contabilidad-invoice-multicurrency.helper';
-import { PrismaService } from '../prisma.service';
+import { Atomic, PrismaService } from '../prisma.service';
 import { ContabilidadSalesPrismaMapper } from '../mappers/contabilidad-sales-prisma.mapper';
 
 const customerInclude = {
@@ -85,16 +88,26 @@ const collectionInclude = {
 } as const;
 
 function computeCustomerBalance(
-  invoices: { totalAmount: { toString(): string } | number; collectedAmount: { toString(): string } | number }[],
+  invoices: {
+    totalAmount: { toString(): string } | number;
+    collectedAmount: { toString(): string } | number;
+  }[],
   creditNotes: { totalAmount: { toString(): string } | number }[],
   debitNotes: { totalAmount: { toString(): string } | number }[],
 ): number {
   const invoiceBalance = invoices.reduce(
-    (sum, inv) => sum + Math.max(0, Number(inv.totalAmount) - Number(inv.collectedAmount)),
+    (sum, inv) =>
+      sum + Math.max(0, Number(inv.totalAmount) - Number(inv.collectedAmount)),
     0,
   );
-  const creditTotal = creditNotes.reduce((sum, nc) => sum + Number(nc.totalAmount), 0);
-  const debitTotal = debitNotes.reduce((sum, nd) => sum + Number(nd.totalAmount), 0);
+  const creditTotal = creditNotes.reduce(
+    (sum, nc) => sum + Number(nc.totalAmount),
+    0,
+  );
+  const debitTotal = debitNotes.reduce(
+    (sum, nd) => sum + Number(nd.totalAmount),
+    0,
+  );
   return roundPenAmount(Math.max(0, invoiceBalance - creditTotal + debitTotal));
 }
 
@@ -110,7 +123,11 @@ function computeSalesAmounts(
       igvAmountInput !== undefined && igvAmountInput !== ''
         ? roundPenAmount(parsePenAmount(igvAmountInput))
         : roundPenAmount((base * igvPercent) / 100);
-    return { taxableBase: base, igvAmount: igv, totalAmount: roundPenAmount(base + igv) };
+    return {
+      taxableBase: base,
+      igvAmount: igv,
+      totalAmount: roundPenAmount(base + igv),
+    };
   }
   return { taxableBase: base, igvAmount: 0, totalAmount: base };
 }
@@ -127,7 +144,10 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     private readonly treasury: ContabilidadTreasuryRepository,
   ) {}
 
-  private async resolveAccountId(applicationId: string, code: string): Promise<string> {
+  private async resolveAccountId(
+    applicationId: string,
+    code: string,
+  ): Promise<string> {
     const account = await this.accounts.findByCode(applicationId, code);
     if (!account?.isActive || !account.isMovement) {
       throw new Error(`Cuenta PCGE ${code} no disponible`);
@@ -135,7 +155,10 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     return account.id;
   }
 
-  async listCustomers(applicationId: string, filters: ListCustomersFilters): Promise<ContabilidadCustomerDto[]> {
+  async listCustomers(
+    applicationId: string,
+    filters: ListCustomersFilters,
+  ): Promise<ContabilidadCustomerDto[]> {
     const q = filters.search?.trim();
     const rows = await this.prisma.contabilidadCustomer.findMany({
       where: {
@@ -163,7 +186,10 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     );
   }
 
-  async findCustomerById(applicationId: string, id: string): Promise<ContabilidadCustomerDto | null> {
+  async findCustomerById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadCustomerDto | null> {
     const row = await this.prisma.contabilidadCustomer.findFirst({
       where: { applicationId, id },
       include: customerInclude,
@@ -176,7 +202,10 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     );
   }
 
-  async createCustomer(applicationId: string, input: CreateCustomerInput): Promise<ContabilidadCustomerDto> {
+  async createCustomer(
+    applicationId: string,
+    input: CreateCustomerInput,
+  ): Promise<ContabilidadCustomerDto> {
     const row = await this.prisma.contabilidadCustomer.create({
       data: {
         applicationId,
@@ -200,16 +229,27 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     const row = await this.prisma.contabilidadCustomer.update({
       where: { id },
       data: {
-        ...(input.businessName !== undefined ? { businessName: input.businessName.trim() } : {}),
-        ...(input.tradeName !== undefined ? { tradeName: input.tradeName?.trim() || null } : {}),
-        ...(input.address !== undefined ? { address: input.address?.trim() || null } : {}),
-        ...(input.email !== undefined ? { email: input.email?.trim() || null } : {}),
-        ...(input.phone !== undefined ? { phone: input.phone?.trim() || null } : {}),
+        ...(input.businessName !== undefined
+          ? { businessName: input.businessName.trim() }
+          : {}),
+        ...(input.tradeName !== undefined
+          ? { tradeName: input.tradeName?.trim() || null }
+          : {}),
+        ...(input.address !== undefined
+          ? { address: input.address?.trim() || null }
+          : {}),
+        ...(input.email !== undefined
+          ? { email: input.email?.trim() || null }
+          : {}),
+        ...(input.phone !== undefined
+          ? { phone: input.phone?.trim() || null }
+          : {}),
         ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
       },
       include: customerInclude,
     });
-    if (row.applicationId !== applicationId) throw new Error('Cliente no encontrado');
+    if (row.applicationId !== applicationId)
+      throw new Error('Cliente no encontrado');
     return ContabilidadSalesPrismaMapper.toCustomer(
       row,
       computeCustomerBalance(row.invoices, row.creditNotes, row.debitNotes),
@@ -234,7 +274,11 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
               OR: [
                 { series: { contains: q, mode: 'insensitive' } },
                 { number: { contains: q, mode: 'insensitive' } },
-                { customer: { businessName: { contains: q, mode: 'insensitive' } } },
+                {
+                  customer: {
+                    businessName: { contains: q, mode: 'insensitive' },
+                  },
+                },
                 { customer: { ruc: { contains: q, mode: 'insensitive' } } },
               ],
             }
@@ -246,7 +290,10 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     return rows.map((row) => ContabilidadSalesPrismaMapper.toInvoice(row));
   }
 
-  async findInvoiceById(applicationId: string, id: string): Promise<ContabilidadSalesInvoiceDto | null> {
+  async findInvoiceById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadSalesInvoiceDto | null> {
     const row = await this.prisma.contabilidadSalesInvoice.findFirst({
       where: { applicationId, id },
       include: invoiceInclude,
@@ -254,6 +301,7 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     return row ? ContabilidadSalesPrismaMapper.toInvoice(row) : null;
   }
 
+  @Atomic()
   async createInvoiceWithJournal(
     applicationId: string,
     input: CreateSalesInvoiceInput,
@@ -265,15 +313,27 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     });
     if (!customer) throw new Error('Cliente no encontrado');
 
-    const fx = await resolveInvoiceTaxableBaseInPen(this.prisma, applicationId, {
-      currencyCode: input.currencyCode,
-      exchangeRate: input.exchangeRate,
-      foreignTaxableBase: input.foreignTaxableBase,
-      taxableBase: input.taxableBase,
-      issueDate: input.issueDate,
-    });
-    const amounts = computeSalesAmounts(fx.taxableBasePen, input.taxAffectation, igvPercent, input.igvAmount);
-    const receivableAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_RECEIVABLE_ACCOUNT_CODE);
+    const fx = await resolveInvoiceTaxableBaseInPen(
+      this.prisma,
+      applicationId,
+      {
+        currencyCode: input.currencyCode,
+        exchangeRate: input.exchangeRate,
+        foreignTaxableBase: input.foreignTaxableBase,
+        taxableBase: input.taxableBase,
+        issueDate: input.issueDate,
+      },
+    );
+    const amounts = computeSalesAmounts(
+      fx.taxableBasePen,
+      input.taxAffectation,
+      igvPercent,
+      input.igvAmount,
+    );
+    const receivableAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_RECEIVABLE_ACCOUNT_CODE,
+    );
     const auxiliaryDoc = `${input.series.trim()}-${input.number.trim()}`;
     const description = `Venta ${auxiliaryDoc} — ${customer.businessName}`;
 
@@ -299,13 +359,21 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     ];
 
     if (amounts.igvAmount > 0) {
-      const igvAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_SALES_IGV_ACCOUNT_CODE);
+      const igvAccountId = await this.resolveAccountId(
+        applicationId,
+        CONTABILIDAD_SALES_IGV_ACCOUNT_CODE,
+      );
       lines.push({ accountId: igvAccountId, credit: amounts.igvAmount });
     }
 
     const journal = await this.journal.createAndPost(
       applicationId,
-      { periodId: input.periodId, entryDate: input.issueDate, description, lines },
+      {
+        periodId: input.periodId,
+        entryDate: input.issueDate,
+        description,
+        lines,
+      },
       createdBy,
     );
 
@@ -339,15 +407,31 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     return ContabilidadSalesPrismaMapper.toInvoice(row);
   }
 
-  async cancelInvoice(applicationId: string, id: string): Promise<ContabilidadSalesInvoiceDto> {
-    const existing = await this.prisma.contabilidadSalesInvoice.findFirst({ where: { applicationId, id } });
+  @Atomic()
+  async cancelInvoice(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadSalesInvoiceDto> {
+    await this.prisma
+      .$queryRaw`SELECT id FROM contabilidad_sales_invoices WHERE id = ${id} FOR UPDATE`;
+    const existing = await this.prisma.contabilidadSalesInvoice.findFirst({
+      where: { applicationId, id },
+    });
     if (!existing) throw new Error('Comprobante no encontrado');
-    if (existing.status === CONTABILIDAD_SALES_STATUS.CANCELLED) throw new Error('Comprobante ya anulado');
-    if (Number(existing.collectedAmount) > 0) throw new Error('No se puede anular un comprobante con cobros');
+    if (existing.status === CONTABILIDAD_SALES_STATUS.CANCELLED)
+      throw new Error('Comprobante ya anulado');
+    if (Number(existing.collectedAmount) > 0)
+      throw new Error('No se puede anular un comprobante con cobros');
+    // La anulación revierte el asiento para que no siga en los estados financieros.
+    if (existing.journalEntryId)
+      await this.journal.reverse(applicationId, existing.journalEntryId, null);
 
     const row = await this.prisma.contabilidadSalesInvoice.update({
       where: { id },
-      data: { status: CONTABILIDAD_SALES_STATUS.CANCELLED, cancelledAt: new Date() },
+      data: {
+        status: CONTABILIDAD_SALES_STATUS.CANCELLED,
+        cancelledAt: new Date(),
+      },
       include: invoiceInclude,
     });
     return ContabilidadSalesPrismaMapper.toInvoice(row);
@@ -368,7 +452,11 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
               OR: [
                 { series: { contains: q, mode: 'insensitive' } },
                 { number: { contains: q, mode: 'insensitive' } },
-                { customer: { businessName: { contains: q, mode: 'insensitive' } } },
+                {
+                  customer: {
+                    businessName: { contains: q, mode: 'insensitive' },
+                  },
+                },
               ],
             }
           : {}),
@@ -379,6 +467,7 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     return rows.map((row) => ContabilidadSalesPrismaMapper.toCreditNote(row));
   }
 
+  @Atomic()
   async createCreditNoteWithJournal(
     applicationId: string,
     input: CreateSalesCreditNoteInput,
@@ -393,7 +482,11 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     let incomeAccountId: string | null = null;
     if (input.invoiceId) {
       const invoice = await this.prisma.contabilidadSalesInvoice.findFirst({
-        where: { applicationId, id: input.invoiceId, customerId: input.customerId },
+        where: {
+          applicationId,
+          id: input.invoiceId,
+          customerId: input.customerId,
+        },
       });
       if (!invoice) throw new Error('Factura vinculada no encontrada');
       incomeAccountId = invoice.incomeAccountId;
@@ -408,15 +501,32 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
       igvPercent,
       input.igvAmount,
     );
-    const receivableAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_RECEIVABLE_ACCOUNT_CODE);
+    const receivableAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_RECEIVABLE_ACCOUNT_CODE,
+    );
     const auxiliaryDoc = `${input.series.trim()}-${input.number.trim()}`;
     const description = `NC venta ${auxiliaryDoc} — ${customer.businessName}`;
 
-    const lines: { accountId: string; debit?: number; credit?: number; auxiliaryRuc?: string; auxiliaryDoc?: string }[] = [
-      { accountId: incomeAccountId, debit: amounts.taxableBase, auxiliaryRuc: customer.ruc, auxiliaryDoc },
+    const lines: {
+      accountId: string;
+      debit?: number;
+      credit?: number;
+      auxiliaryRuc?: string;
+      auxiliaryDoc?: string;
+    }[] = [
+      {
+        accountId: incomeAccountId,
+        debit: amounts.taxableBase,
+        auxiliaryRuc: customer.ruc,
+        auxiliaryDoc,
+      },
     ];
     if (amounts.igvAmount > 0) {
-      const igvAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_SALES_IGV_ACCOUNT_CODE);
+      const igvAccountId = await this.resolveAccountId(
+        applicationId,
+        CONTABILIDAD_SALES_IGV_ACCOUNT_CODE,
+      );
       lines.push({ accountId: igvAccountId, debit: amounts.igvAmount });
     }
     lines.push({
@@ -428,7 +538,12 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
 
     const journal = await this.journal.createAndPost(
       applicationId,
-      { periodId: input.periodId, entryDate: input.issueDate, description, lines },
+      {
+        periodId: input.periodId,
+        entryDate: input.issueDate,
+        description,
+        lines,
+      },
       createdBy,
     );
 
@@ -470,7 +585,11 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
               OR: [
                 { series: { contains: q, mode: 'insensitive' } },
                 { number: { contains: q, mode: 'insensitive' } },
-                { customer: { businessName: { contains: q, mode: 'insensitive' } } },
+                {
+                  customer: {
+                    businessName: { contains: q, mode: 'insensitive' },
+                  },
+                },
               ],
             }
           : {}),
@@ -481,6 +600,7 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     return rows.map((row) => ContabilidadSalesPrismaMapper.toDebitNote(row));
   }
 
+  @Atomic()
   async createDebitNoteWithJournal(
     applicationId: string,
     input: CreateSalesDebitNoteInput,
@@ -495,7 +615,11 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     let incomeAccountId: string | null = null;
     if (input.invoiceId) {
       const invoice = await this.prisma.contabilidadSalesInvoice.findFirst({
-        where: { applicationId, id: input.invoiceId, customerId: input.customerId },
+        where: {
+          applicationId,
+          id: input.invoiceId,
+          customerId: input.customerId,
+        },
       });
       if (!invoice) throw new Error('Factura vinculada no encontrada');
       incomeAccountId = invoice.incomeAccountId;
@@ -510,11 +634,20 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
       igvPercent,
       input.igvAmount,
     );
-    const receivableAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_RECEIVABLE_ACCOUNT_CODE);
+    const receivableAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_RECEIVABLE_ACCOUNT_CODE,
+    );
     const auxiliaryDoc = `${input.series.trim()}-${input.number.trim()}`;
     const description = `ND venta ${auxiliaryDoc} — ${customer.businessName}`;
 
-    const lines: { accountId: string; debit?: number; credit?: number; auxiliaryRuc?: string; auxiliaryDoc?: string }[] = [
+    const lines: {
+      accountId: string;
+      debit?: number;
+      credit?: number;
+      auxiliaryRuc?: string;
+      auxiliaryDoc?: string;
+    }[] = [
       {
         accountId: receivableAccountId,
         debit: amounts.totalAmount,
@@ -529,13 +662,21 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
       },
     ];
     if (amounts.igvAmount > 0) {
-      const igvAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_SALES_IGV_ACCOUNT_CODE);
+      const igvAccountId = await this.resolveAccountId(
+        applicationId,
+        CONTABILIDAD_SALES_IGV_ACCOUNT_CODE,
+      );
       lines.push({ accountId: igvAccountId, credit: amounts.igvAmount });
     }
 
     const journal = await this.journal.createAndPost(
       applicationId,
-      { periodId: input.periodId, entryDate: input.issueDate, description, lines },
+      {
+        periodId: input.periodId,
+        entryDate: input.issueDate,
+        description,
+        lines,
+      },
       createdBy,
     );
 
@@ -571,7 +712,9 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
         applicationId,
         ...(filters.periodId ? { periodId: filters.periodId } : {}),
         ...(filters.invoiceId ? { invoiceId: filters.invoiceId } : {}),
-        ...(filters.customerId ? { invoice: { customerId: filters.customerId } } : {}),
+        ...(filters.customerId
+          ? { invoice: { customerId: filters.customerId } }
+          : {}),
       },
       include: collectionInclude,
       orderBy: [{ collectionDate: 'desc' }, { createdAt: 'desc' }],
@@ -579,22 +722,29 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     return rows.map((row) => ContabilidadSalesPrismaMapper.toCollection(row));
   }
 
+  @Atomic()
   async createCollectionWithTreasury(
     applicationId: string,
     input: CreateSalesCollectionInput,
     receivableAccountId: string,
     createdBy?: string | null,
   ): Promise<ContabilidadSalesCollectionDto> {
+    await this.prisma
+      .$queryRaw`SELECT id FROM contabilidad_sales_invoices WHERE id = ${input.invoiceId} FOR UPDATE`;
     const invoice = await this.prisma.contabilidadSalesInvoice.findFirst({
       where: { applicationId, id: input.invoiceId },
       include: { customer: true },
     });
     if (!invoice) throw new Error('Comprobante no encontrado');
-    if (invoice.status === CONTABILIDAD_SALES_STATUS.CANCELLED) throw new Error('Comprobante anulado');
-    if (invoice.status === CONTABILIDAD_SALES_STATUS.PAID) throw new Error('Comprobante ya cobrado');
+    if (invoice.status === CONTABILIDAD_SALES_STATUS.CANCELLED)
+      throw new Error('Comprobante anulado');
+    if (invoice.status === CONTABILIDAD_SALES_STATUS.PAID)
+      throw new Error('Comprobante ya cobrado');
 
     const amount = roundPenAmount(parsePenAmount(input.amount));
-    const balance = roundPenAmount(Number(invoice.totalAmount) - Number(invoice.collectedAmount));
+    const balance = roundPenAmount(
+      Number(invoice.totalAmount) - Number(invoice.collectedAmount),
+    );
     if (amount <= 0) throw new Error('Importe inválido');
     if (amount > balance) throw new Error('El cobro supera el saldo pendiente');
 
@@ -614,8 +764,12 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
       createdBy,
     );
 
-    const newCollected = roundPenAmount(Number(invoice.collectedAmount) + amount);
-    const newBalance = roundPenAmount(Number(invoice.totalAmount) - newCollected);
+    const newCollected = roundPenAmount(
+      Number(invoice.collectedAmount) + amount,
+    );
+    const newBalance = roundPenAmount(
+      Number(invoice.totalAmount) - newCollected,
+    );
     const newStatus =
       newBalance <= 0
         ? CONTABILIDAD_SALES_STATUS.PAID

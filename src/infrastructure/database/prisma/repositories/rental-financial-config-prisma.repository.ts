@@ -13,7 +13,9 @@ import { computeRentalFinancialBreakdown } from '@domain/utils/rental-financial-
 export class RentalFinancialConfigPrismaRepository implements RentalFinancialConfigRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByRentalId(rentalId: string): Promise<RentalFinancialConfig | null> {
+  async findByRentalId(
+    rentalId: string,
+  ): Promise<RentalFinancialConfig | null> {
     const row = await this.prisma.rentalFinancialConfig.findUnique({
       where: { rentalId },
       include: {
@@ -24,7 +26,9 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
     return row ? RentalFinancialConfigPrismaMapper.toDomain(row) : null;
   }
 
-  async upsert(data: CreateOrUpdateRentalFinancialConfigData): Promise<RentalFinancialConfig> {
+  async upsert(
+    data: CreateOrUpdateRentalFinancialConfigData,
+  ): Promise<RentalFinancialConfig> {
     const row = await this.prisma.rentalFinancialConfig.upsert({
       where: { rentalId: data.rentalId },
       create: {
@@ -51,18 +55,36 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
         ...(data.baseAmount !== undefined && { baseAmount: data.baseAmount }),
         ...(data.expenseType != null && { expenseType: data.expenseType }),
         ...(data.expenseValue != null && { expenseValue: data.expenseValue }),
-        ...(data.expenseDetail !== undefined && { expenseDetail: data.expenseDetail }),
+        ...(data.expenseDetail !== undefined && {
+          expenseDetail: data.expenseDetail,
+        }),
         ...(data.taxType != null && { taxType: data.taxType }),
         ...(data.taxValue != null && { taxValue: data.taxValue }),
         ...(data.taxDetail !== undefined && { taxDetail: data.taxDetail }),
-        ...(data.externalAgentId !== undefined && { externalAgentId: data.externalAgentId }),
-        ...(data.externalAgentType != null && { externalAgentType: data.externalAgentType }),
-        ...(data.externalAgentValue != null && { externalAgentValue: data.externalAgentValue }),
-        ...(data.externalAgentName !== undefined && { externalAgentName: data.externalAgentName }),
-        ...(data.internalAgentId !== undefined && { internalAgentId: data.internalAgentId }),
-        ...(data.internalAgentType != null && { internalAgentType: data.internalAgentType }),
-        ...(data.internalAgentValue != null && { internalAgentValue: data.internalAgentValue }),
-        ...(data.internalAgentName !== undefined && { internalAgentName: data.internalAgentName }),
+        ...(data.externalAgentId !== undefined && {
+          externalAgentId: data.externalAgentId,
+        }),
+        ...(data.externalAgentType != null && {
+          externalAgentType: data.externalAgentType,
+        }),
+        ...(data.externalAgentValue != null && {
+          externalAgentValue: data.externalAgentValue,
+        }),
+        ...(data.externalAgentName !== undefined && {
+          externalAgentName: data.externalAgentName,
+        }),
+        ...(data.internalAgentId !== undefined && {
+          internalAgentId: data.internalAgentId,
+        }),
+        ...(data.internalAgentType != null && {
+          internalAgentType: data.internalAgentType,
+        }),
+        ...(data.internalAgentValue != null && {
+          internalAgentValue: data.internalAgentValue,
+        }),
+        ...(data.internalAgentName !== undefined && {
+          internalAgentName: data.internalAgentName,
+        }),
       },
       include: {
         externalAgent: { select: { fullName: true } },
@@ -78,7 +100,10 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
     currency: string,
   ): Promise<RentalFinancialBreakdown> {
     const config = await this.findByRentalId(rentalId);
-    const breakdown = computeRentalFinancialBreakdown(monthlyAmount, config ?? undefined);
+    const breakdown = computeRentalFinancialBreakdown(
+      monthlyAmount,
+      config ?? undefined,
+    );
 
     return new RentalFinancialBreakdown(
       monthlyAmount,
@@ -92,5 +117,4 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
       config,
     );
   }
-
 }

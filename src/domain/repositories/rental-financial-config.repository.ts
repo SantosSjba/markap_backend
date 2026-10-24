@@ -30,10 +30,18 @@ export interface CreateOrUpdateRentalFinancialConfigData {
   internalAgentName?: string | null;
 }
 
-export const RENTAL_FINANCIAL_CONFIG_REPOSITORY = Symbol('RentalFinancialConfigRepository');
+export const RENTAL_FINANCIAL_CONFIG_REPOSITORY = Symbol(
+  'RentalFinancialConfigRepository',
+);
 
 export interface RentalFinancialConfigRepository {
   findByRentalId(rentalId: string): Promise<RentalFinancialConfig | null>;
-  upsert(data: CreateOrUpdateRentalFinancialConfigData): Promise<RentalFinancialConfig>;
-  getBreakdown(rentalId: string, monthlyAmount: number, currency: string): Promise<RentalFinancialBreakdown>;
+  upsert(
+    data: CreateOrUpdateRentalFinancialConfigData,
+  ): Promise<RentalFinancialConfig>;
+  getBreakdown(
+    rentalId: string,
+    monthlyAmount: number,
+    currency: string,
+  ): Promise<RentalFinancialBreakdown>;
 }

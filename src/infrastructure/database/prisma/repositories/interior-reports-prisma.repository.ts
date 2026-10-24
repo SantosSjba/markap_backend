@@ -11,7 +11,11 @@ import type {
   InteriorReportsRentabilidadDto,
   InteriorReportsVentasDto,
 } from '@domain/entities/interior-reports.entity';
-import { formatDateOnly, parseDateOnly, todayDateOnlyLima } from '@domain/utils/peru-date.util';
+import {
+  formatDateOnly,
+  parseDateOnly,
+  todayDateOnlyLima,
+} from '@domain/utils/peru-date.util';
 
 function num(v: unknown): number {
   if (v === null || v === undefined) return 0;
@@ -61,7 +65,7 @@ export class InteriorReportsPrismaRepository implements InteriorReportsRepositor
     const start = dayStartUtc(startStr);
     const end = dayEndUtc(endStr);
 
-    const projectBase = { applicationId: app.id, deletedAt: null as null };
+    const projectBase = { applicationId: app.id, deletedAt: null };
 
     const [
       paymentsAgg,
@@ -246,11 +250,14 @@ export class InteriorReportsPrismaRepository implements InteriorReportsRepositor
     );
     const margenBruto = volumenAprob - costosEjec - compras;
     const denomVentas = volumenAprob > 0 ? volumenAprob : null;
-    const margenBrutoPct = denomVentas !== null ? (margenBruto / denomVentas) * 100 : null;
+    const margenBrutoPct =
+      denomVentas !== null ? (margenBruto / denomVentas) * 100 : null;
 
     const closedDenom = budgetsApproved + budgetsRejected;
     const tasaCierre =
-      closedDenom > 0 ? Math.round((budgetsApproved / closedDenom) * 1000) / 10 : null;
+      closedDenom > 0
+        ? Math.round((budgetsApproved / closedDenom) * 1000) / 10
+        : null;
 
     const conversion: InteriorReportsConversionDto = {
       proyectosPorEstado: statusGroups.map((g) => ({
@@ -277,11 +284,14 @@ export class InteriorReportsPrismaRepository implements InteriorReportsRepositor
       costosEjecucionPeriodo: costosEjec,
       comprasMaterialesPeriodo: compras,
       margenBrutoEstimado: margenBruto,
-      margenBrutoPct: margenBrutoPct !== null ? Math.round(margenBrutoPct * 10) / 10 : null,
+      margenBrutoPct:
+        margenBrutoPct !== null ? Math.round(margenBrutoPct * 10) / 10 : null,
     };
 
     const pctTareas =
-      tareasTotales > 0 ? Math.round((tareasHechasSnapshot / tareasTotales) * 1000) / 10 : null;
+      tareasTotales > 0
+        ? Math.round((tareasHechasSnapshot / tareasTotales) * 1000) / 10
+        : null;
 
     const productividad: InteriorReportsProductividadDto = {
       tareasTotales,

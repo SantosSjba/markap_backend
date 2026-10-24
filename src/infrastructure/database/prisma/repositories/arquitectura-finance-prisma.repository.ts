@@ -15,7 +15,7 @@ import type {
   UpdateArquitecturaFinancePaymentPayload,
   UpdateArquitecturaFinanceSchedulePayload,
 } from '@domain/repositories/arquitectura-finance.repository';
-import { PrismaService } from '../prisma.service';
+import { Atomic, PrismaService } from '../prisma.service';
 import { formatDateOnly } from '@domain/utils/peru-date.util';
 import { getArquitecturaProjectBudgetPriceTotal } from '../helpers/project-budget-query.helper';
 
@@ -29,7 +29,9 @@ function ym(d: Date): string {
   return formatDateOnly(d).slice(0, 7);
 }
 
-function buildExpenseSummary(costs: { costCategory: string; amount: Prisma.Decimal }[]): ArquitecturaFinanceExpenseSummaryDto {
+function buildExpenseSummary(
+  costs: { costCategory: string; amount: Prisma.Decimal }[],
+): ArquitecturaFinanceExpenseSummaryDto {
   let purchases = 0;
   let labor = 0;
   let transport = 0;
@@ -63,7 +65,10 @@ function buildExpenseSummary(costs: { costCategory: string; amount: Prisma.Decim
 export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async ensureProjectScope(projectId: string, applicationSlug = 'arquitectura'): Promise<boolean> {
+  async ensureProjectScope(
+    projectId: string,
+    applicationSlug = 'arquitectura',
+  ): Promise<boolean> {
     const slug = applicationSlug.trim() || 'arquitectura';
     const n = await this.prisma.arquitecturaProject.count({
       where: { id: projectId, deletedAt: null, application: { slug } },
@@ -71,10 +76,22 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     return n > 0;
   }
 
+  /**
+   * Bloquea las cuotas antes de tocar sus pagos (el pago referencia la cuota, así
+   * que bloquear después provoca interbloqueos) y evita estados calculados con
+   * pagos desfasados. Llamar dentro de una transacción.
+   */
+  private async lockSchedules(...ids: (string | null)[]): Promise<void> {
+    for (const id of [...new Set(ids.filter((v): v is string => !!v))].sort())
+      await this.prisma
+        .$queryRaw`SELECT id FROM arquitectura_finance_income_schedules WHERE id = ${id} FOR UPDATE`;
+  }
+
   private async refreshScheduleStatus(scheduleId: string): Promise<void> {
-    const schedule = await this.prisma.arquitecturaFinanceIncomeSchedule.findUnique({
-      where: { id: scheduleId },
-    });
+    const schedule =
+      await this.prisma.arquitecturaFinanceIncomeSchedule.findUnique({
+        where: { id: scheduleId },
+      });
     if (!schedule || schedule.status === 'WAIVED') return;
 
     const agg = await this.prisma.arquitecturaProjectPayment.aggregate({
@@ -95,7 +112,10 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     }
   }
 
-  async getOverview(projectId: string, applicationSlug = 'arquitectura'): Promise<ArquitecturaFinanceOverviewDto | null> {
+  async getOverview(
+    projectId: string,
+    applicationSlug = 'arquitectura',
+  ): Promise<ArquitecturaFinanceOverviewDto | null> {
     const slug = applicationSlug.trim() || 'arquitectura';
     const project = await this.prisma.arquitecturaProject.findFirst({
       where: { id: projectId, deletedAt: null },
@@ -105,22 +125,23 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     });
     if (!project || project.application.slug !== slug) return null;
 
-    const [schedules, payments, costs, budgetPriceTotal, sectionCount] = await Promise.all([
-      this.prisma.arquitecturaFinanceIncomeSchedule.findMany({
-        where: { projectId },
-        orderBy: [{ sortOrder: 'asc' }, { dueDate: 'asc' }],
-      }),
-      this.prisma.arquitecturaProjectPayment.findMany({
-        where: { projectId },
-        orderBy: { paidAt: 'desc' },
-      }),
-      this.prisma.arquitecturaExecutionActualCost.findMany({
-        where: { projectId },
-        orderBy: { occurredAt: 'desc' },
-      }),
-      getArquitecturaProjectBudgetPriceTotal(this.prisma, projectId),
-      this.prisma.arquitecturaProjectSection.count({ where: { projectId } }),
-    ]);
+    const [schedules, payments, costs, budgetPriceTotal, sectionCount] =
+      await Promise.all([
+        this.prisma.arquitecturaFinanceIncomeSchedule.findMany({
+          where: { projectId },
+          orderBy: [{ sortOrder: 'asc' }, { dueDate: 'asc' }],
+        }),
+        this.prisma.arquitecturaProjectPayment.findMany({
+          where: { projectId },
+          orderBy: { paidAt: 'desc' },
+        }),
+        this.prisma.arquitecturaExecutionActualCost.findMany({
+          where: { projectId },
+          orderBy: { occurredAt: 'desc' },
+        }),
+        getArquitecturaProjectBudgetPriceTotal(this.prisma, projectId),
+        this.prisma.arquitecturaProjectSection.count({ where: { projectId } }),
+      ]);
 
     const schedulePaidMap = new Map<string, number>();
     const groupedPaid = await this.prisma.arquitecturaProjectPayment.groupBy({
@@ -133,37 +154,44 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
       _sum: { amount: true },
     });
     for (const g of groupedPaid) {
-      if (g.scheduleItemId) schedulePaidMap.set(g.scheduleItemId, num(g._sum.amount));
+      if (g.scheduleItemId)
+        schedulePaidMap.set(g.scheduleItemId, num(g._sum.amount));
     }
 
-    const mappedSchedules: ArquitecturaFinanceScheduleDto[] = schedules.map((s) => ({
-      id: s.id,
-      kind: s.kind,
-      dueDate: formatDateOnly(s.dueDate),
-      amount: num(s.amount),
-      concept: s.concept,
-      sortOrder: s.sortOrder,
-      status: s.status,
-      paidTowardSchedule: schedulePaidMap.get(s.id) ?? 0,
-    }));
+    const mappedSchedules: ArquitecturaFinanceScheduleDto[] = schedules.map(
+      (s) => ({
+        id: s.id,
+        kind: s.kind,
+        dueDate: formatDateOnly(s.dueDate),
+        amount: num(s.amount),
+        concept: s.concept,
+        sortOrder: s.sortOrder,
+        status: s.status,
+        paidTowardSchedule: schedulePaidMap.get(s.id) ?? 0,
+      }),
+    );
 
-    const mappedPayments: ArquitecturaFinancePaymentDto[] = payments.map((p) => ({
-      id: p.id,
-      paidAt: p.paidAt.toISOString(),
-      amount: num(p.amount),
-      concept: p.concept,
-      paymentType: p.paymentType ?? 'OTHER',
-      status: p.status,
-      scheduleItemId: p.scheduleItemId,
-    }));
+    const mappedPayments: ArquitecturaFinancePaymentDto[] = payments.map(
+      (p) => ({
+        id: p.id,
+        paidAt: p.paidAt.toISOString(),
+        amount: num(p.amount),
+        concept: p.concept,
+        paymentType: p.paymentType ?? 'OTHER',
+        status: p.status,
+        scheduleItemId: p.scheduleItemId,
+      }),
+    );
 
-    const expenseLines: ArquitecturaFinanceExpenseLineDto[] = costs.map((c) => ({
-      id: c.id,
-      costCategory: c.costCategory,
-      concept: c.concept,
-      amount: num(c.amount),
-      occurredAt: formatDateOnly(c.occurredAt),
-    }));
+    const expenseLines: ArquitecturaFinanceExpenseLineDto[] = costs.map(
+      (c) => ({
+        id: c.id,
+        costCategory: c.costCategory,
+        concept: c.concept,
+        amount: num(c.amount),
+        occurredAt: formatDateOnly(c.occurredAt),
+      }),
+    );
 
     const expenseSummary = buildExpenseSummary(costs);
 
@@ -214,7 +242,9 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
       budgetVsCosts: contractValue - totalActualCosts,
       collectedVsCosts: collectedConfirmed - totalActualCosts,
       marginOnCollectedPct:
-        collectedConfirmed > 0 ? ((collectedConfirmed - totalActualCosts) / collectedConfirmed) * 100 : null,
+        collectedConfirmed > 0
+          ? ((collectedConfirmed - totalActualCosts) / collectedConfirmed) * 100
+          : null,
     };
 
     const monthKeys = new Set<string>();
@@ -230,7 +260,8 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
       let inflow = 0;
       let outflow = 0;
       for (const p of payments) {
-        if (p.status === 'PAID' && ym(p.paidAt) === month) inflow += num(p.amount);
+        if (p.status === 'PAID' && ym(p.paidAt) === month)
+          inflow += num(p.amount);
       }
       for (const c of costs) {
         if (ym(c.occurredAt) === month) outflow += num(c.amount);
@@ -309,6 +340,7 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     };
   }
 
+  @Atomic()
   async updateSchedule(
     projectId: string,
     scheduleId: string,
@@ -318,15 +350,18 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     const ok = await this.ensureProjectScope(projectId, applicationSlug);
     if (!ok) throw new Error('PROJECT_NOT_FOUND');
 
-    const existing = await this.prisma.arquitecturaFinanceIncomeSchedule.findFirst({
-      where: { id: scheduleId, projectId },
-    });
+    const existing =
+      await this.prisma.arquitecturaFinanceIncomeSchedule.findFirst({
+        where: { id: scheduleId, projectId },
+      });
     if (!existing) throw new Error('SCHEDULE_NOT_FOUND');
 
+    await this.lockSchedules(scheduleId);
     const patch: Prisma.ArquitecturaFinanceIncomeScheduleUpdateInput = {};
     if (payload.kind !== undefined) patch.kind = payload.kind.trim();
     if (payload.dueDate !== undefined) patch.dueDate = payload.dueDate;
-    if (payload.amount !== undefined) patch.amount = new Prisma.Decimal(payload.amount);
+    if (payload.amount !== undefined)
+      patch.amount = new Prisma.Decimal(payload.amount);
     if (payload.concept !== undefined) patch.concept = payload.concept.trim();
     if (payload.sortOrder !== undefined) patch.sortOrder = payload.sortOrder;
     if (payload.status !== undefined) patch.status = payload.status.trim();
@@ -346,18 +381,26 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     return s;
   }
 
-  async deleteSchedule(projectId: string, scheduleId: string, applicationSlug: string | undefined): Promise<void> {
+  async deleteSchedule(
+    projectId: string,
+    scheduleId: string,
+    applicationSlug: string | undefined,
+  ): Promise<void> {
     const ok = await this.ensureProjectScope(projectId, applicationSlug);
     if (!ok) throw new Error('PROJECT_NOT_FOUND');
 
-    const existing = await this.prisma.arquitecturaFinanceIncomeSchedule.findFirst({
-      where: { id: scheduleId, projectId },
-    });
+    const existing =
+      await this.prisma.arquitecturaFinanceIncomeSchedule.findFirst({
+        where: { id: scheduleId, projectId },
+      });
     if (!existing) throw new Error('SCHEDULE_NOT_FOUND');
 
-    await this.prisma.arquitecturaFinanceIncomeSchedule.delete({ where: { id: scheduleId } });
+    await this.prisma.arquitecturaFinanceIncomeSchedule.delete({
+      where: { id: scheduleId },
+    });
   }
 
+  @Atomic()
   async createPayment(
     projectId: string,
     applicationSlug: string | undefined,
@@ -368,9 +411,12 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
 
     let scheduleItemId: string | null = payload.scheduleItemId?.trim() || null;
     if (scheduleItemId) {
-      const sch = await this.prisma.arquitecturaFinanceIncomeSchedule.findFirst({
-        where: { id: scheduleItemId, projectId },
-      });
+      await this.lockSchedules(scheduleItemId);
+      const sch = await this.prisma.arquitecturaFinanceIncomeSchedule.findFirst(
+        {
+          where: { id: scheduleItemId, projectId },
+        },
+      );
       if (!sch) throw new Error('SCHEDULE_LINK_INVALID');
     } else {
       scheduleItemId = null;
@@ -401,6 +447,7 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     };
   }
 
+  @Atomic()
   async updatePayment(
     projectId: string,
     paymentId: string,
@@ -419,9 +466,10 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     if (payload.scheduleItemId !== undefined) {
       const sid = payload.scheduleItemId?.trim() || null;
       if (sid) {
-        const sch = await this.prisma.arquitecturaFinanceIncomeSchedule.findFirst({
-          where: { id: sid, projectId },
-        });
+        const sch =
+          await this.prisma.arquitecturaFinanceIncomeSchedule.findFirst({
+            where: { id: sid, projectId },
+          });
         if (!sch) throw new Error('SCHEDULE_LINK_INVALID');
         scheduleItemId = sid;
       } else {
@@ -429,11 +477,14 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
       }
     }
 
+    await this.lockSchedules(existing.scheduleItemId, scheduleItemId);
     const patch: Prisma.ArquitecturaProjectPaymentUpdateInput = {};
     if (payload.paidAt !== undefined) patch.paidAt = payload.paidAt;
-    if (payload.amount !== undefined) patch.amount = new Prisma.Decimal(payload.amount);
+    if (payload.amount !== undefined)
+      patch.amount = new Prisma.Decimal(payload.amount);
     if (payload.concept !== undefined) patch.concept = payload.concept.trim();
-    if (payload.paymentType !== undefined) patch.paymentType = payload.paymentType.trim();
+    if (payload.paymentType !== undefined)
+      patch.paymentType = payload.paymentType.trim();
     if (payload.status !== undefined) patch.status = payload.status.trim();
     if (payload.scheduleItemId !== undefined) {
       patch.scheduleItem = scheduleItemId
@@ -448,9 +499,12 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
 
     const oldSid = existing.scheduleItemId;
     if (oldSid) await this.refreshScheduleStatus(oldSid);
-    if (scheduleItemId && scheduleItemId !== oldSid) await this.refreshScheduleStatus(scheduleItemId);
+    if (scheduleItemId && scheduleItemId !== oldSid)
+      await this.refreshScheduleStatus(scheduleItemId);
 
-    const updated = await this.prisma.arquitecturaProjectPayment.findUnique({ where: { id: paymentId } });
+    const updated = await this.prisma.arquitecturaProjectPayment.findUnique({
+      where: { id: paymentId },
+    });
     if (!updated) throw new Error('PAYMENT_NOT_FOUND');
 
     return {
@@ -464,7 +518,12 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     };
   }
 
-  async deletePayment(projectId: string, paymentId: string, applicationSlug: string | undefined): Promise<void> {
+  @Atomic()
+  async deletePayment(
+    projectId: string,
+    paymentId: string,
+    applicationSlug: string | undefined,
+  ): Promise<void> {
     const ok = await this.ensureProjectScope(projectId, applicationSlug);
     if (!ok) throw new Error('PROJECT_NOT_FOUND');
 
@@ -473,8 +532,12 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
     });
     if (!existing) throw new Error('PAYMENT_NOT_FOUND');
 
-    await this.prisma.arquitecturaProjectPayment.delete({ where: { id: paymentId } });
+    await this.lockSchedules(existing.scheduleItemId);
+    await this.prisma.arquitecturaProjectPayment.delete({
+      where: { id: paymentId },
+    });
 
-    if (existing.scheduleItemId) await this.refreshScheduleStatus(existing.scheduleItemId);
+    if (existing.scheduleItemId)
+      await this.refreshScheduleStatus(existing.scheduleItemId);
   }
 }

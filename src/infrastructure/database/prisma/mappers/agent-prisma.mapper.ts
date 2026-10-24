@@ -1,4 +1,8 @@
-import { Agent, AgentListItem, type AgentType } from '@domain/entities/agent.entity';
+import {
+  Agent,
+  AgentListItem,
+  type AgentType,
+} from '@domain/entities/agent.entity';
 
 type AgentBaseRow = {
   id: string;
@@ -40,7 +44,11 @@ export class AgentPrismaMapper {
 
   static toListItem(row: AgentListRow): AgentListItem {
     const user = row.user
-      ? { id: row.user.id, firstName: row.user.firstName, lastName: row.user.lastName }
+      ? {
+          id: row.user.id,
+          firstName: row.user.firstName,
+          lastName: row.user.lastName,
+        }
       : null;
     const documentType = row.documentType
       ? { code: row.documentType.code, name: row.documentType.name }

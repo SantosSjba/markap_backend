@@ -15,7 +15,9 @@ export class CreateArquitecturaProjectDocumentUseCase {
   async execute(data: CreateArquitecturaProjectDocumentData) {
     const row = await this.repo.create(data);
     if (!row) {
-      throw new NotFoundException('Proyecto no encontrado o aplicaciÃ³n invÃ¡lida');
+      throw new NotFoundException(
+        'Proyecto no encontrado o aplicación inválida',
+      );
     }
     return row;
   }

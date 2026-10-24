@@ -27,7 +27,9 @@ export class RegisterPaymentUseCase {
   async execute(input: RegisterPaymentInput): Promise<Payment> {
     const payment = await this.paymentRepository.findById(input.paymentId);
     if (!payment) {
-      throw new NotFoundException(`Pago con id ${input.paymentId} no encontrado`);
+      throw new NotFoundException(
+        `Pago con id ${input.paymentId} no encontrado`,
+      );
     }
 
     const paid = Money.create(input.paidAmount, payment.currency);

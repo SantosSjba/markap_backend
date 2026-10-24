@@ -1,4 +1,6 @@
-export const CONTABILIDAD_INVENTORY_REPOSITORY = Symbol('ContabilidadInventoryRepository');
+export const CONTABILIDAD_INVENTORY_REPOSITORY = Symbol(
+  'ContabilidadInventoryRepository',
+);
 
 export interface ContabilidadInventoryItemDto {
   id: string;
@@ -108,9 +110,15 @@ export interface ContabilidadInventoryRepository {
     filters: ListInventoryItemsFilters,
   ): Promise<{ items: ContabilidadInventoryItemDto[] }>;
 
-  getItem(applicationId: string, id: string): Promise<ContabilidadInventoryItemDto | null>;
+  getItem(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadInventoryItemDto | null>;
 
-  createItem(applicationId: string, input: CreateInventoryItemInput): Promise<ContabilidadInventoryItemDto>;
+  createItem(
+    applicationId: string,
+    input: CreateInventoryItemInput,
+  ): Promise<ContabilidadInventoryItemDto>;
 
   updateItem(
     applicationId: string,
@@ -132,9 +140,15 @@ export interface ContabilidadInventoryRepository {
   getKardex(
     applicationId: string,
     itemId: string,
-  ): Promise<{ item: ContabilidadInventoryItemDto; lines: ContabilidadInventoryKardexLineDto[] }>;
+  ): Promise<{
+    item: ContabilidadInventoryItemDto;
+    lines: ContabilidadInventoryKardexLineDto[];
+  }>;
 
-  getValuedBalance(applicationId: string): Promise<{ lines: ContabilidadInventoryValuedLineDto[]; totalValue: string }>;
+  getValuedBalance(applicationId: string): Promise<{
+    lines: ContabilidadInventoryValuedLineDto[];
+    totalValue: string;
+  }>;
 
   getValuedBalanceByAccount(
     applicationId: string,

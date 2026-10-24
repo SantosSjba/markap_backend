@@ -6,7 +6,12 @@ import type {
   PropertyStats,
 } from '@domain/entities/property.entity';
 
-export type { Property, PropertyListItem, PropertyMediaItem, PropertyStats } from '@domain/entities/property.entity';
+export type {
+  Property,
+  PropertyListItem,
+  PropertyMediaItem,
+  PropertyStats,
+} from '@domain/entities/property.entity';
 
 export interface ListPropertiesFilters {
   applicationSlug: string;

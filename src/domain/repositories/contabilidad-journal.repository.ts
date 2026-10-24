@@ -1,4 +1,6 @@
-export const CONTABILIDAD_JOURNAL_REPOSITORY = Symbol('ContabilidadJournalRepository');
+export const CONTABILIDAD_JOURNAL_REPOSITORY = Symbol(
+  'ContabilidadJournalRepository',
+);
 
 export interface ContabilidadJournalLineInput {
   accountId: string;
@@ -81,7 +83,10 @@ export interface ContabilidadJournalRepository {
     applicationId: string,
     filters: ListContabilidadJournalEntriesFilters,
   ): Promise<ContabilidadJournalEntryListItemDto[]>;
-  findById(applicationId: string, id: string): Promise<ContabilidadJournalEntryDetailDto | null>;
+  findById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadJournalEntryDetailDto | null>;
   createDraft(
     applicationId: string,
     input: CreateContabilidadJournalEntryInput,
@@ -93,7 +98,11 @@ export interface ContabilidadJournalRepository {
     input: UpdateContabilidadJournalEntryInput,
   ): Promise<ContabilidadJournalEntryDetailDto>;
   deleteDraft(applicationId: string, id: string): Promise<void>;
-  post(applicationId: string, id: string, postedBy?: string | null): Promise<ContabilidadJournalEntryDetailDto>;
+  post(
+    applicationId: string,
+    id: string,
+    postedBy?: string | null,
+  ): Promise<ContabilidadJournalEntryDetailDto>;
   reverse(
     applicationId: string,
     id: string,

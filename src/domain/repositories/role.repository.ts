@@ -1,6 +1,9 @@
 import { Role } from '../entities';
 
-export type CreateRoleData = Pick<Role, 'name' | 'code' | 'description' | 'isActive'> & {
+export type CreateRoleData = Pick<
+  Role,
+  'name' | 'code' | 'description' | 'isActive'
+> & {
   deletedAt?: Date | null;
 };
 
@@ -47,12 +50,20 @@ export interface RoleRepository {
   /**
    * Assign role to user
    */
-  assignToUser(userId: string, roleId: string, assignedBy?: string): Promise<void>;
+  assignToUser(
+    userId: string,
+    roleId: string,
+    assignedBy?: string,
+  ): Promise<void>;
 
   /**
    * Revoke role from user
    */
-  revokeFromUser(userId: string, roleId: string, revokedBy?: string): Promise<void>;
+  revokeFromUser(
+    userId: string,
+    roleId: string,
+    revokedBy?: string,
+  ): Promise<void>;
 
   /**
    * Assign application to role

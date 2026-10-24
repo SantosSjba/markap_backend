@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
-import { ProduccionConfigPrismaMapper, formatProduccionNumberingCode } from '../mappers/produccion-config-prisma.mapper';
+import {
+  ProduccionConfigPrismaMapper,
+  formatProduccionNumberingCode,
+} from '../mappers/produccion-config-prisma.mapper';
 import {
   PRODUCCION_DEFAULT_FURNITURE_CATEGORIES,
   PRODUCCION_DEFAULT_MATERIAL_CATEGORIES,
@@ -29,14 +32,18 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
   constructor(private readonly prisma: PrismaService) {}
 
   async ensureDefaults(applicationId: string): Promise<void> {
-    const settingsCount = await this.prisma.produccionAppSettings.count({ where: { applicationId } });
+    const settingsCount = await this.prisma.produccionAppSettings.count({
+      where: { applicationId },
+    });
     if (settingsCount === 0) {
       await this.prisma.produccionAppSettings.create({
         data: { applicationId },
       });
     }
 
-    const catCount = await this.prisma.produccionFurnitureCategoryConfig.count({ where: { applicationId } });
+    const catCount = await this.prisma.produccionFurnitureCategoryConfig.count({
+      where: { applicationId },
+    });
     if (catCount === 0) {
       await this.prisma.produccionFurnitureCategoryConfig.createMany({
         data: PRODUCCION_DEFAULT_FURNITURE_CATEGORIES.map((c) => ({
@@ -49,7 +56,10 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
       });
     }
 
-    const matCatCount = await this.prisma.produccionMaterialCategoryConfig.count({ where: { applicationId } });
+    const matCatCount =
+      await this.prisma.produccionMaterialCategoryConfig.count({
+        where: { applicationId },
+      });
     if (matCatCount === 0) {
       await this.prisma.produccionMaterialCategoryConfig.createMany({
         data: PRODUCCION_DEFAULT_MATERIAL_CATEGORIES.map((c) => ({
@@ -62,7 +72,9 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
       });
     }
 
-    const stageCount = await this.prisma.produccionProductionStageConfig.count({ where: { applicationId } });
+    const stageCount = await this.prisma.produccionProductionStageConfig.count({
+      where: { applicationId },
+    });
     if (stageCount === 0) {
       await this.prisma.produccionProductionStageConfig.createMany({
         data: PRODUCCION_DEFAULT_PRODUCTION_STAGES.map((s) => ({
@@ -75,7 +87,9 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
       });
     }
 
-    const unitCount = await this.prisma.produccionUnitConfig.count({ where: { applicationId } });
+    const unitCount = await this.prisma.produccionUnitConfig.count({
+      where: { applicationId },
+    });
     if (unitCount === 0) {
       await this.prisma.produccionUnitConfig.createMany({
         data: PRODUCCION_DEFAULT_UNITS.map((u) => ({
@@ -94,7 +108,10 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
       });
       if (exists > 0) continue;
 
-      const lastNumber = await this.estimateLastNumber(applicationId, def.seriesKey);
+      const lastNumber = await this.estimateLastNumber(
+        applicationId,
+        def.seriesKey,
+      );
       await this.prisma.produccionNumberingSeries.create({
         data: {
           applicationId,
@@ -108,27 +125,42 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
     }
   }
 
-  private async estimateLastNumber(applicationId: string, seriesKey: string): Promise<number> {
+  private async estimateLastNumber(
+    applicationId: string,
+    seriesKey: string,
+  ): Promise<number> {
     switch (seriesKey) {
       case PRODUCCION_NUMBERING_SERIES_KEYS.FURNITURE:
-        return this.prisma.produccionFurniture.count({ where: { applicationId } });
+        return this.prisma.produccionFurniture.count({
+          where: { applicationId },
+        });
       case PRODUCCION_NUMBERING_SERIES_KEYS.WORK_ORDER:
-        return this.prisma.produccionWorkOrder.count({ where: { applicationId } });
+        return this.prisma.produccionWorkOrder.count({
+          where: { applicationId },
+        });
       case PRODUCCION_NUMBERING_SERIES_KEYS.QUOTATION:
-        return this.prisma.produccionQuotation.count({ where: { applicationId } });
+        return this.prisma.produccionQuotation.count({
+          where: { applicationId },
+        });
       case PRODUCCION_NUMBERING_SERIES_KEYS.PURCHASE_ORDER:
-        return this.prisma.produccionPurchaseOrder.count({ where: { applicationId } });
+        return this.prisma.produccionPurchaseOrder.count({
+          where: { applicationId },
+        });
       case PRODUCCION_NUMBERING_SERIES_KEYS.ORDER:
         return this.prisma.produccionOrder.count({ where: { applicationId } });
       case PRODUCCION_NUMBERING_SERIES_KEYS.DELIVERY:
-        return this.prisma.produccionDelivery.count({ where: { applicationId } });
+        return this.prisma.produccionDelivery.count({
+          where: { applicationId },
+        });
       default:
         return 0;
     }
   }
 
   async getSettings(applicationId: string): Promise<ProduccionAppSettingsDto> {
-    const row = await this.prisma.produccionAppSettings.findUnique({ where: { applicationId } });
+    const row = await this.prisma.produccionAppSettings.findUnique({
+      where: { applicationId },
+    });
     if (!row) {
       return { igvPercent: 18, woodWastePercent: 10, quotationValidDays: 30 };
     }
@@ -152,11 +184,15 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
         quotationValidDays: data.quotationValidDays ?? 30,
       },
       update: {
-        ...(data.igvPercent !== undefined && { igvPercent: new Prisma.Decimal(data.igvPercent) }),
+        ...(data.igvPercent !== undefined && {
+          igvPercent: new Prisma.Decimal(data.igvPercent),
+        }),
         ...(data.woodWastePercent !== undefined && {
           woodWastePercent: new Prisma.Decimal(data.woodWastePercent),
         }),
-        ...(data.quotationValidDays !== undefined && { quotationValidDays: data.quotationValidDays }),
+        ...(data.quotationValidDays !== undefined && {
+          quotationValidDays: data.quotationValidDays,
+        }),
       },
     });
     return {
@@ -174,9 +210,14 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
     return rows.map((r) => ProduccionConfigPrismaMapper.toCategory(r));
   }
 
-  async replaceFurnitureCategories(applicationId: string, rows: ProduccionFurnitureCategoryInput[]) {
+  async replaceFurnitureCategories(
+    applicationId: string,
+    rows: ProduccionFurnitureCategoryInput[],
+  ) {
     await this.prisma.$transaction(async (tx) => {
-      await tx.produccionFurnitureCategoryConfig.deleteMany({ where: { applicationId } });
+      await tx.produccionFurnitureCategoryConfig.deleteMany({
+        where: { applicationId },
+      });
       if (rows.length) {
         await tx.produccionFurnitureCategoryConfig.createMany({
           data: rows.map((r, i) => ({
@@ -199,9 +240,14 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
     return rows.map((r) => ProduccionConfigPrismaMapper.toMaterialCategory(r));
   }
 
-  async replaceMaterialCategories(applicationId: string, rows: ProduccionMaterialCategoryInput[]) {
+  async replaceMaterialCategories(
+    applicationId: string,
+    rows: ProduccionMaterialCategoryInput[],
+  ) {
     await this.prisma.$transaction(async (tx) => {
-      await tx.produccionMaterialCategoryConfig.deleteMany({ where: { applicationId } });
+      await tx.produccionMaterialCategoryConfig.deleteMany({
+        where: { applicationId },
+      });
       if (rows.length) {
         await tx.produccionMaterialCategoryConfig.createMany({
           data: rows.map((r, i) => ({
@@ -224,9 +270,14 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
     return rows.map((r) => ProduccionConfigPrismaMapper.toStage(r));
   }
 
-  async replaceProductionStages(applicationId: string, rows: ProduccionProductionStageInput[]) {
+  async replaceProductionStages(
+    applicationId: string,
+    rows: ProduccionProductionStageInput[],
+  ) {
     await this.prisma.$transaction(async (tx) => {
-      await tx.produccionProductionStageConfig.deleteMany({ where: { applicationId } });
+      await tx.produccionProductionStageConfig.deleteMany({
+        where: { applicationId },
+      });
       await tx.produccionProductionStageConfig.createMany({
         data: rows.map((r, i) => ({
           applicationId,
@@ -275,7 +326,12 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
   async updateNumberingSeries(
     applicationId: string,
     seriesKey: string,
-    data: { prefix?: string; lastNumber?: number; padLength?: number; includeYear?: boolean },
+    data: {
+      prefix?: string;
+      lastNumber?: number;
+      padLength?: number;
+      includeYear?: boolean;
+    },
   ) {
     const row = await this.prisma.produccionNumberingSeries.update({
       where: { applicationId_seriesKey: { applicationId, seriesKey } },
@@ -283,22 +339,33 @@ export class ProduccionConfigPrismaRepository implements ProduccionConfigReposit
         ...(data.prefix !== undefined && { prefix: data.prefix.trim() }),
         ...(data.lastNumber !== undefined && { lastNumber: data.lastNumber }),
         ...(data.padLength !== undefined && { padLength: data.padLength }),
-        ...(data.includeYear !== undefined && { includeYear: data.includeYear }),
+        ...(data.includeYear !== undefined && {
+          includeYear: data.includeYear,
+        }),
       },
     });
     return ProduccionConfigPrismaMapper.toNumbering(row);
   }
 
-  async previewNextCode(applicationId: string, seriesKey: string): Promise<string> {
+  async previewNextCode(
+    applicationId: string,
+    seriesKey: string,
+  ): Promise<string> {
     await this.ensureDefaults(applicationId);
     const row = await this.prisma.produccionNumberingSeries.findUnique({
       where: { applicationId_seriesKey: { applicationId, seriesKey } },
     });
     if (!row) return '';
-    return formatProduccionNumberingCode({ ...row, lastNumber: row.lastNumber + 1 });
+    return formatProduccionNumberingCode({
+      ...row,
+      lastNumber: row.lastNumber + 1,
+    });
   }
 
-  async allocateNextCode(applicationId: string, seriesKey: string): Promise<string> {
+  async allocateNextCode(
+    applicationId: string,
+    seriesKey: string,
+  ): Promise<string> {
     await this.ensureDefaults(applicationId);
     const row = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.produccionNumberingSeries.update({

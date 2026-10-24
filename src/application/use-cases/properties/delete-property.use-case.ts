@@ -1,10 +1,19 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { PropertyRepository } from '@domain/repositories/property.repository';
 import type { RentalRepository } from '@domain/repositories/rental.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 
-import { APPLICATION_REPOSITORY, PROPERTY_REPOSITORY, RENTAL_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  PROPERTY_REPOSITORY,
+  RENTAL_REPOSITORY,
+} from '@common/constants/injection-tokens';
 
 @Injectable()
 export class DeletePropertyUseCase {
@@ -27,7 +36,9 @@ export class DeletePropertyUseCase {
     const property = await this.propertyRepository.findById(id);
     if (!property) throw new EntityNotFoundException('Property', id);
 
-    const app = await this.applicationRepository.findById(property.applicationId);
+    const app = await this.applicationRepository.findById(
+      property.applicationId,
+    );
     if (expectedApplicationSlug?.trim()) {
       if (!app || app.slug !== expectedApplicationSlug.trim()) {
         throw new NotFoundException(`Propiedad con id ${id} no encontrada`);
@@ -36,9 +47,8 @@ export class DeletePropertyUseCase {
 
     const isVentasInventory = app?.slug === 'ventas';
     if (!isVentasInventory) {
-      const activeRentals = await this.rentalRepository.countActiveByPropertyId(
-        id,
-      );
+      const activeRentals =
+        await this.rentalRepository.countActiveByPropertyId(id);
       if (activeRentals > 0) {
         throw new BadRequestException(
           'No se puede eliminar la propiedad mientras tenga un contrato de alquiler vigente.',

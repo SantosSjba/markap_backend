@@ -37,14 +37,20 @@ export class ProduccionLaborRatePrismaRepository implements ProduccionLaborRateR
     };
   }
 
-  async list(filters: ListProduccionLaborRatesFilters): Promise<ListProduccionLaborRatesResult> {
+  async list(
+    filters: ListProduccionLaborRatesFilters,
+  ): Promise<ListProduccionLaborRatesResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
-    const andParts: Prisma.ProduccionLaborRateWhereInput[] = [{ applicationId: app.id }];
-    if (filters.isActive !== undefined) andParts.push({ isActive: filters.isActive });
+    const andParts: Prisma.ProduccionLaborRateWhereInput[] = [
+      { applicationId: app.id },
+    ];
+    if (filters.isActive !== undefined)
+      andParts.push({ isActive: filters.isActive });
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       andParts.push({
@@ -74,17 +80,27 @@ export class ProduccionLaborRatePrismaRepository implements ProduccionLaborRateR
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ProduccionLaborRateDto | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionLaborRateDto | null> {
     const row = await this.prisma.produccionLaborRate.findUnique({
       where: { id },
       include: { application: { select: { slug: true } } },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
     return this.map(row);
   }
 
-  async create(applicationId: string, payload: CreateProduccionLaborRatePayload) {
+  async create(
+    applicationId: string,
+    payload: CreateProduccionLaborRatePayload,
+  ) {
     const row = await this.prisma.produccionLaborRate.create({
       data: {
         applicationId,
@@ -101,10 +117,14 @@ export class ProduccionLaborRatePrismaRepository implements ProduccionLaborRateR
     const patch: Prisma.ProduccionLaborRateUncheckedUpdateInput = {};
     if (payload.name !== undefined) patch.name = payload.name.trim();
     if (payload.stage !== undefined) patch.stage = payload.stage.trim();
-    if (payload.hourlyRate !== undefined) patch.hourlyRate = new Prisma.Decimal(payload.hourlyRate);
+    if (payload.hourlyRate !== undefined)
+      patch.hourlyRate = new Prisma.Decimal(payload.hourlyRate);
     if (payload.isActive !== undefined) patch.isActive = payload.isActive;
 
-    const row = await this.prisma.produccionLaborRate.update({ where: { id }, data: patch });
+    const row = await this.prisma.produccionLaborRate.update({
+      where: { id },
+      data: patch,
+    });
     return this.map(row);
   }
 

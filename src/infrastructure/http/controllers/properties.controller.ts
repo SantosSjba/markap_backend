@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards, HttpCode, HttpStatus, Inject } from '@nestjs/common';
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Query,
+  Param,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  Inject,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -54,12 +68,13 @@ export class PropertiesController {
     };
     return this.properties.listProperties({
       applicationSlug: applicationSlug ?? 'alquileres',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
       propertyTypeId: propertyTypeId || undefined,
       districtId: districtId || undefined,
-      listingStatus: listingStatus === '' ? undefined : listingStatus ?? undefined,
+      listingStatus:
+        listingStatus === '' ? undefined : (listingStatus ?? undefined),
       minSalePrice: parseOptPrice(minSalePrice),
       maxSalePrice: parseOptPrice(maxSalePrice),
     });
@@ -77,7 +92,7 @@ export class PropertiesController {
   @ApiOperation({ summary: 'Listar tipos de propiedad' })
   @ApiResponse({ status: 200 })
   async getPropertyTypes() {
-    return (this.prisma as any).propertyType.findMany({
+    return this.prisma.propertyType.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' },
     });
@@ -129,8 +144,16 @@ export class PropertiesController {
 
   @Get('owners')
   @ApiOperation({ summary: 'Listar propietarios (clientes tipo OWNER)' })
-  @ApiQuery({ name: 'applicationSlug', required: false, description: 'Slug de la aplicación (default: alquileres)' })
-  @ApiQuery({ name: 'search', required: false, description: 'Buscar por nombre o documento' })
+  @ApiQuery({
+    name: 'applicationSlug',
+    required: false,
+    description: 'Slug de la aplicación (default: alquileres)',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Buscar por nombre o documento',
+  })
   @ApiResponse({ status: 200 })
   async getOwners(
     @Query('applicationSlug') applicationSlug?: string,
@@ -175,7 +198,8 @@ export class PropertiesController {
   @ApiQuery({
     name: 'applicationSlug',
     required: false,
-    description: 'Si se indica (ej. ventas), solo se devuelve si la propiedad pertenece a esa aplicación',
+    description:
+      'Si se indica (ej. ventas), solo se devuelve si la propiedad pertenece a esa aplicación',
   })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 404 })
@@ -198,7 +222,10 @@ export class PropertiesController {
     description: 'Si se indica, la propiedad debe pertenecer a esa aplicación',
   })
   @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400, description: 'Validación de aplicación o alquiler' })
+  @ApiResponse({
+    status: 400,
+    description: 'Validación de aplicación o alquiler',
+  })
   @ApiResponse({ status: 404 })
   async updateListingStatus(
     @Param('id') id: string,
@@ -303,7 +330,10 @@ export class PropertiesController {
     required: false,
     description: 'Si se indica, la propiedad debe pertenecer a esa aplicación',
   })
-  @ApiResponse({ status: 200, description: 'Propiedad eliminada correctamente' })
+  @ApiResponse({
+    status: 200,
+    description: 'Propiedad eliminada correctamente',
+  })
   @ApiResponse({ status: 404 })
   async remove(
     @Param('id') id: string,

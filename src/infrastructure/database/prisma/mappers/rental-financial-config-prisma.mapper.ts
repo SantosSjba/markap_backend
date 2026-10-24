@@ -27,7 +27,7 @@ export class RentalFinancialConfigPrismaMapper {
     internalAgent?: { fullName: string } | null;
   }): RentalFinancialConfig {
     const n = (v: number | { toNumber?: () => number }) =>
-      typeof v === 'number' ? v : v.toNumber?.() ?? Number(v);
+      typeof v === 'number' ? v : (v.toNumber?.() ?? Number(v));
     return new RentalFinancialConfig(
       row.id,
       row.rentalId,

@@ -69,7 +69,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     return { books: CONTABILIDAD_PLE_BOOKS };
   }
 
-  getMandatoryProfile(applicationId: string, taxRegime: string): ContabilidadPleMandatoryProfileDto {
+  getMandatoryProfile(
+    applicationId: string,
+    taxRegime: string,
+  ): ContabilidadPleMandatoryProfileDto {
     void applicationId;
     const regime = taxRegime?.trim() || 'GENERAL';
     const mandatoryBookCodes =
@@ -77,13 +80,16 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       CONTABILIDAD_PLE_MANDATORY_BY_TAX_REGIME.GENERAL;
     const mandatorySet = new Set(mandatoryBookCodes);
     const regimeLabel =
-      CONTABILIDAD_TAX_REGIMES.find((r) => r.code === regime)?.label ?? 'Régimen general';
+      CONTABILIDAD_TAX_REGIMES.find((r) => r.code === regime)?.label ??
+      'Régimen general';
 
     return {
       taxRegime: regime,
       taxRegimeLabel: regimeLabel,
       mandatoryBookCodes: [...mandatoryBookCodes],
-      optionalBookCodes: CONTABILIDAD_PLE_BOOKS.map((b) => b.code).filter((c) => !mandatorySet.has(c)),
+      optionalBookCodes: CONTABILIDAD_PLE_BOOKS.map((b) => b.code).filter(
+        (c) => !mandatorySet.has(c),
+      ),
       books: CONTABILIDAD_PLE_BOOKS.map((b) => ({
         code: b.code,
         name: b.name,
@@ -189,7 +195,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     let exportLogId: string | undefined;
 
     if (options?.persistLog !== false) {
-      const { hash } = files.length ? await buildPleZipBuffer(files) : await buildPleZipBuffer([]);
+      const { hash } = files.length
+        ? await buildPleZipBuffer(files)
+        : await buildPleZipBuffer([]);
 
       const log = await this.prisma.contabilidadPleExportLog.create({
         data: {
@@ -202,7 +210,11 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
           errorCount: errors.length,
           warningCount: warnings.length,
           issuesJson: JSON.stringify({ errors, warnings }),
-          status: blocked ? 'BLOCKED' : warnings.length ? 'WITH_WARNINGS' : 'SUCCESS',
+          status: blocked
+            ? 'BLOCKED'
+            : warnings.length
+              ? 'WITH_WARNINGS'
+              : 'SUCCESS',
         },
       });
       exportLogId = log.id;
@@ -239,7 +251,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       },
       include: {
         account: { select: { id: true, code: true, name: true } },
-        journalEntry: { select: { entryDate: true, entryNumber: true, description: true } },
+        journalEntry: {
+          select: { entryDate: true, entryNumber: true, description: true },
+        },
       },
       orderBy: [
         { account: { code: 'asc' } },
@@ -249,7 +263,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       ],
     });
 
-    const byAccount = new Map<string, ContabilidadLibroMayorAccountSummaryDto>();
+    const byAccount = new Map<
+      string,
+      ContabilidadLibroMayorAccountSummaryDto
+    >();
 
     for (const line of lines) {
       const accId = line.account.id;
@@ -289,7 +306,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       summary.balance = roundPenAmount(totalD - totalC).toFixed(2);
     }
 
-    return [...byAccount.values()].sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+    return [...byAccount.values()].sort((a, b) =>
+      a.accountCode.localeCompare(b.accountCode),
+    );
   }
 
   private async resolvePeriodCtx(
@@ -312,7 +331,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     };
   }
 
-  private async validatePeriod(ctx: PeriodCtx): Promise<ContabilidadPleValidationIssue[]> {
+  private async validatePeriod(
+    ctx: PeriodCtx,
+  ): Promise<ContabilidadPleValidationIssue[]> {
     const issues: ContabilidadPleValidationIssue[] = [];
     const unbalanced = await this.prisma.contabilidadJournalEntry.findMany({
       where: {
@@ -320,10 +341,18 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         periodId: ctx.periodId,
         status: CONTABILIDAD_JOURNAL_STATUS.POSTED,
       },
-      select: { id: true, entryNumber: true, totalDebit: true, totalCredit: true },
+      select: {
+        id: true,
+        entryNumber: true,
+        totalDebit: true,
+        totalCredit: true,
+      },
     });
     for (const entry of unbalanced) {
-      if (roundPenAmount(Number(entry.totalDebit)) !== roundPenAmount(Number(entry.totalCredit))) {
+      if (
+        roundPenAmount(Number(entry.totalDebit)) !==
+        roundPenAmount(Number(entry.totalCredit))
+      ) {
         issues.push({
           severity: 'error',
           bookCode: '*',
@@ -351,7 +380,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     return issues;
   }
 
-  private async buildBook(ctx: PeriodCtx, bookCode: string): Promise<ContabilidadPleGeneratedFile> {
+  private async buildBook(
+    ctx: PeriodCtx,
+    bookCode: string,
+  ): Promise<ContabilidadPleGeneratedFile> {
     const def = CONTABILIDAD_PLE_BOOKS.find((b) => b.code === bookCode)!;
     const issues: ContabilidadPleValidationIssue[] = [];
 
@@ -401,7 +433,14 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     }
 
     const fileName = pleFileName(ctx.ruc, ctx.year, ctx.month, bookCode);
-    const header = pleHeaderLine(ctx.ruc, ctx.legalName, ctx.year, ctx.month, bookCode, dataLines.length);
+    const header = pleHeaderLine(
+      ctx.ruc,
+      ctx.legalName,
+      ctx.year,
+      ctx.month,
+      bookCode,
+      dataLines.length,
+    );
     const content = [header, ...dataLines].join('\n');
 
     if (dataLines.length === 0) {
@@ -423,7 +462,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     };
   }
 
-  private async buildLibroDiario(ctx: PeriodCtx, issues: ContabilidadPleValidationIssue[]): Promise<string[]> {
+  private async buildLibroDiario(
+    ctx: PeriodCtx,
+    issues: ContabilidadPleValidationIssue[],
+  ): Promise<string[]> {
     const entries = await this.prisma.contabilidadJournalEntry.findMany({
       where: {
         applicationId: ctx.applicationId,
@@ -469,7 +511,11 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
 
   private async buildPlanCuentas(ctx: PeriodCtx): Promise<string[]> {
     const accounts = await this.prisma.contabilidadAccount.findMany({
-      where: { applicationId: ctx.applicationId, isMovement: true, isActive: true },
+      where: {
+        applicationId: ctx.applicationId,
+        isMovement: true,
+        isActive: true,
+      },
       orderBy: { code: 'asc' },
     });
     return accounts.map((acc) =>
@@ -499,7 +545,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     return lines;
   }
 
-  private async buildRegistroCompras(ctx: PeriodCtx, issues: ContabilidadPleValidationIssue[]): Promise<string[]> {
+  private async buildRegistroCompras(
+    ctx: PeriodCtx,
+    issues: ContabilidadPleValidationIssue[],
+  ): Promise<string[]> {
     const rows = await this.collectPurchaseRegistroRows(ctx);
     const lines: string[] = [];
     let lineNumber = 2;
@@ -514,7 +563,16 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         row.counterpartyRuc,
       ]);
       const ctxLabel = `${row.documentType} ${row.series}-${row.number}`;
-      pushIssue(issues, pleValidateIsoDate(row.issueDate, CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS, ctxLabel, lineNumber, linePreview));
+      pushIssue(
+        issues,
+        pleValidateIsoDate(
+          row.issueDate,
+          CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS,
+          ctxLabel,
+          lineNumber,
+          linePreview,
+        ),
+      );
       issues.push(
         ...pleValidateCorrelativo(
           row.series,
@@ -584,7 +642,11 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
           OR: [{ isNonDomiciled: true }, { countryCode: { not: 'PE' } }],
         },
       },
-      include: { supplier: { select: { ruc: true, businessName: true, countryCode: true } } },
+      include: {
+        supplier: {
+          select: { ruc: true, businessName: true, countryCode: true },
+        },
+      },
       orderBy: [{ issueDate: 'asc' }, { series: 'asc' }, { number: 'asc' }],
     });
 
@@ -622,7 +684,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     const periodIds = await this.prisma.contabilidadPeriod.findMany({
       where: {
         applicationId: ctx.applicationId,
-        OR: [{ year: { lt: ctx.year } }, { year: ctx.year, month: { lte: ctx.month } }],
+        OR: [
+          { year: { lt: ctx.year } },
+          { year: ctx.year, month: { lte: ctx.month } },
+        ],
       },
       select: { id: true },
     });
@@ -639,10 +704,16 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       _sum: { debit: true, credit: true },
     });
 
-    const inventoryItems = await this.prisma.contabilidadInventoryItem.findMany({
-      where: { applicationId: ctx.applicationId },
-      include: { account: { select: { id: true, code: true, name: true, accountType: true } } },
-    });
+    const inventoryItems = await this.prisma.contabilidadInventoryItem.findMany(
+      {
+        where: { applicationId: ctx.applicationId },
+        include: {
+          account: {
+            select: { id: true, code: true, name: true, accountType: true },
+          },
+        },
+      },
+    );
 
     if (!grouped.length && inventoryItems.length === 0) return [];
 
@@ -671,11 +742,15 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
 
     const inventoryBalanceByAccount = new Map<string, number>();
     for (const item of inventoryItems) {
-      const valued = roundPenAmount(Number(item.quantityOnHand) * Number(item.avgUnitCost));
+      const valued = roundPenAmount(
+        Number(item.quantityOnHand) * Number(item.avgUnitCost),
+      );
       if (Math.abs(valued) < 0.005) continue;
       inventoryBalanceByAccount.set(
         item.accountId,
-        roundPenAmount((inventoryBalanceByAccount.get(item.accountId) ?? 0) + valued),
+        roundPenAmount(
+          (inventoryBalanceByAccount.get(item.accountId) ?? 0) + valued,
+        ),
       );
     }
 
@@ -694,7 +769,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     for (const [accountId, invBalance] of inventoryBalanceByAccount) {
       balanceByAccount.set(accountId, invBalance);
       if (!accountMap.has(accountId)) {
-        const acc = inventoryItems.find((i) => i.accountId === accountId)?.account;
+        const acc = inventoryItems.find(
+          (i) => i.accountId === accountId,
+        )?.account;
         if (acc) accountMap.set(accountId, acc);
       }
     }
@@ -762,7 +839,10 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     return lines;
   }
 
-  private async buildRegistroVentas(ctx: PeriodCtx, issues: ContabilidadPleValidationIssue[]): Promise<string[]> {
+  private async buildRegistroVentas(
+    ctx: PeriodCtx,
+    issues: ContabilidadPleValidationIssue[],
+  ): Promise<string[]> {
     const rows = await this.collectSalesRegistroRows(ctx);
     const lines: string[] = [];
     let lineNumber = 2;
@@ -777,7 +857,16 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         row.counterpartyRuc,
       ]);
       const ctxLabel = `${row.documentType} ${row.series}-${row.number}`;
-      pushIssue(issues, pleValidateIsoDate(row.issueDate, CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS, ctxLabel, lineNumber, linePreview));
+      pushIssue(
+        issues,
+        pleValidateIsoDate(
+          row.issueDate,
+          CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS,
+          ctxLabel,
+          lineNumber,
+          linePreview,
+        ),
+      );
       issues.push(
         ...pleValidateCorrelativo(
           row.series,
@@ -848,7 +937,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
       pleJoin([
         'M',
         pleFormatDate(formatDateOnly(mov.movementDate)),
-        mov.movementType === CONTABILIDAD_TREASURY_MOVEMENT_TYPE.IN ? 'INGRESO' : 'EGRESO',
+        mov.movementType === CONTABILIDAD_TREASURY_MOVEMENT_TYPE.IN
+          ? 'INGRESO'
+          : 'EGRESO',
         mov.sourceType,
         mov.cashBox?.code ?? '',
         mov.bankAccount?.code ?? '',
@@ -875,8 +966,15 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
 
     return entries.map((entry, idx) => {
       const lineNumber = idx + 2;
-      const linePreview = pleJoin(['M', entry.entryNumber, pleFormatDate(formatDateOnly(entry.entryDate))]);
-      if (roundPenAmount(Number(entry.totalDebit)) !== roundPenAmount(Number(entry.totalCredit))) {
+      const linePreview = pleJoin([
+        'M',
+        entry.entryNumber,
+        pleFormatDate(formatDateOnly(entry.entryDate)),
+      ]);
+      if (
+        roundPenAmount(Number(entry.totalDebit)) !==
+        roundPenAmount(Number(entry.totalCredit))
+      ) {
         issues.push({
           severity: 'error',
           bookCode: CONTABILIDAD_PLE_BOOK_CODE.LIBRO_DIARIO_SIMPLIFICADO,
@@ -964,7 +1062,11 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         r.documentType === CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE ||
         r.documentType === CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE,
     );
-    return this.mapPurchaseRegistroLines(rows, CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_COMPLEMENTARIO, issues);
+    return this.mapPurchaseRegistroLines(
+      rows,
+      CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_COMPLEMENTARIO,
+      issues,
+    );
   }
 
   private async buildRegistroComprasNoGravadas(
@@ -976,7 +1078,11 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         r.taxAffectation === CONTABILIDAD_PURCHASE_TAX_AFFECTATION.EXEMPT ||
         r.taxAffectation === CONTABILIDAD_PURCHASE_TAX_AFFECTATION.NON_TAXABLE,
     );
-    return this.mapPurchaseRegistroLines(rows, CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_NO_GRAVADAS, issues);
+    return this.mapPurchaseRegistroLines(
+      rows,
+      CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_COMPRAS_NO_GRAVADAS,
+      issues,
+    );
   }
 
   private async buildRegistroVentasNcNd(
@@ -988,7 +1094,11 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         r.documentType === CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE ||
         r.documentType === CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE,
     );
-    return this.mapSalesRegistroLines(rows, CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS_COMPLEMENTARIO, issues);
+    return this.mapSalesRegistroLines(
+      rows,
+      CONTABILIDAD_PLE_BOOK_CODE.REGISTRO_VENTAS_COMPLEMENTARIO,
+      issues,
+    );
   }
 
   private mapPurchaseRegistroLines(
@@ -1000,8 +1110,22 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     let lineNumber = 2;
     for (const row of rows) {
       const ctxLabel = `${row.documentType} ${row.series}-${row.number}`;
-      const linePreview = pleJoin(['M', pleFormatDate(row.issueDate), row.series, row.number]);
-      pushIssue(issues, pleValidateRuc(row.counterpartyRuc, bookCode, ctxLabel, lineNumber, linePreview));
+      const linePreview = pleJoin([
+        'M',
+        pleFormatDate(row.issueDate),
+        row.series,
+        row.number,
+      ]);
+      pushIssue(
+        issues,
+        pleValidateRuc(
+          row.counterpartyRuc,
+          bookCode,
+          ctxLabel,
+          lineNumber,
+          linePreview,
+        ),
+      );
       lines.push(
         pleJoin([
           'M',
@@ -1033,8 +1157,22 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     let lineNumber = 2;
     for (const row of rows) {
       const ctxLabel = `${row.documentType} ${row.series}-${row.number}`;
-      const linePreview = pleJoin(['M', pleFormatDate(row.issueDate), row.series, row.number]);
-      pushIssue(issues, pleValidateRuc(row.counterpartyRuc, bookCode, ctxLabel, lineNumber, linePreview));
+      const linePreview = pleJoin([
+        'M',
+        pleFormatDate(row.issueDate),
+        row.series,
+        row.number,
+      ]);
+      pushIssue(
+        issues,
+        pleValidateRuc(
+          row.counterpartyRuc,
+          bookCode,
+          ctxLabel,
+          lineNumber,
+          linePreview,
+        ),
+      );
       lines.push(
         pleJoin([
           'M',
@@ -1057,7 +1195,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     return lines;
   }
 
-  private async collectPurchaseRegistroRows(ctx: PeriodCtx): Promise<PurchaseRegistroRow[]> {
+  private async collectPurchaseRegistroRows(
+    ctx: PeriodCtx,
+  ): Promise<PurchaseRegistroRow[]> {
     const [invoices, creditNotes, debitNotes] = await Promise.all([
       this.prisma.contabilidadPurchaseInvoice.findMany({
         where: {
@@ -1075,7 +1215,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         },
         include: {
           supplier: { select: { ruc: true, businessName: true } },
-          invoice: { select: { documentType: true, series: true, number: true } },
+          invoice: {
+            select: { documentType: true, series: true, number: true },
+          },
         },
       }),
       this.prisma.contabilidadPurchaseDebitNote.findMany({
@@ -1086,7 +1228,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         },
         include: {
           supplier: { select: { ruc: true, businessName: true } },
-          invoice: { select: { documentType: true, series: true, number: true } },
+          invoice: {
+            select: { documentType: true, series: true, number: true },
+          },
         },
       }),
     ]);
@@ -1120,7 +1264,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         igvAmount: Number(nc.igvAmount),
         totalAmount: Number(nc.totalAmount),
         detraccionAmount: 0,
-        modifiedDocRef: nc.invoice ? `${nc.invoice.series}-${nc.invoice.number}` : '',
+        modifiedDocRef: nc.invoice
+          ? `${nc.invoice.series}-${nc.invoice.number}`
+          : '',
         status: nc.status,
         sortKey: `${formatDateOnly(nc.issueDate)}|${nc.series}|${nc.number}`,
       })),
@@ -1136,7 +1282,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         igvAmount: Number(nd.igvAmount),
         totalAmount: Number(nd.totalAmount),
         detraccionAmount: 0,
-        modifiedDocRef: nd.invoice ? `${nd.invoice.series}-${nd.invoice.number}` : '',
+        modifiedDocRef: nd.invoice
+          ? `${nd.invoice.series}-${nd.invoice.number}`
+          : '',
         status: nd.status,
         sortKey: `${formatDateOnly(nd.issueDate)}|${nd.series}|${nd.number}`,
       })),
@@ -1145,7 +1293,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
     return rows.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
   }
 
-  private async collectSalesRegistroRows(ctx: PeriodCtx): Promise<SalesRegistroRow[]> {
+  private async collectSalesRegistroRows(
+    ctx: PeriodCtx,
+  ): Promise<SalesRegistroRow[]> {
     const [invoices, creditNotes, debitNotes] = await Promise.all([
       this.prisma.contabilidadSalesInvoice.findMany({
         where: {
@@ -1163,7 +1313,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         },
         include: {
           customer: { select: { ruc: true, businessName: true } },
-          invoice: { select: { documentType: true, series: true, number: true } },
+          invoice: {
+            select: { documentType: true, series: true, number: true },
+          },
         },
       }),
       this.prisma.contabilidadSalesDebitNote.findMany({
@@ -1174,7 +1326,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         },
         include: {
           customer: { select: { ruc: true, businessName: true } },
-          invoice: { select: { documentType: true, series: true, number: true } },
+          invoice: {
+            select: { documentType: true, series: true, number: true },
+          },
         },
       }),
     ]);
@@ -1206,7 +1360,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         taxableBase: Number(nc.taxableBase),
         igvAmount: Number(nc.igvAmount),
         totalAmount: Number(nc.totalAmount),
-        modifiedDocRef: nc.invoice ? `${nc.invoice.series}-${nc.invoice.number}` : '',
+        modifiedDocRef: nc.invoice
+          ? `${nc.invoice.series}-${nc.invoice.number}`
+          : '',
         status: nc.status,
         sortKey: `${formatDateOnly(nc.issueDate)}|${nc.series}|${nc.number}`,
       })),
@@ -1221,7 +1377,9 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
         taxableBase: Number(nd.taxableBase),
         igvAmount: Number(nd.igvAmount),
         totalAmount: Number(nd.totalAmount),
-        modifiedDocRef: nd.invoice ? `${nd.invoice.series}-${nd.invoice.number}` : '',
+        modifiedDocRef: nd.invoice
+          ? `${nd.invoice.series}-${nd.invoice.number}`
+          : '',
         status: nd.status,
         sortKey: `${formatDateOnly(nd.issueDate)}|${nd.series}|${nd.number}`,
       })),
@@ -1232,15 +1390,19 @@ export class ContabilidadPlePrismaRepository implements ContabilidadPleRepositor
 
   private mapPurchaseDocumentType(documentType: string): string {
     const upper = documentType.toUpperCase();
-    if (upper.includes('CREDIT') || upper === 'NC') return CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE;
-    if (upper.includes('DEBIT') || upper === 'ND') return CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE;
+    if (upper.includes('CREDIT') || upper === 'NC')
+      return CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE;
+    if (upper.includes('DEBIT') || upper === 'ND')
+      return CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE;
     return CONTABILIDAD_SUNAT_DOC_TYPE.FACTURA;
   }
 
   private mapSalesDocumentType(documentType: string): string {
     const upper = documentType.toUpperCase();
-    if (upper.includes('CREDIT') || upper === 'NC') return CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE;
-    if (upper.includes('DEBIT') || upper === 'ND') return CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE;
+    if (upper.includes('CREDIT') || upper === 'NC')
+      return CONTABILIDAD_SUNAT_DOC_TYPE.CREDIT_NOTE;
+    if (upper.includes('DEBIT') || upper === 'ND')
+      return CONTABILIDAD_SUNAT_DOC_TYPE.DEBIT_NOTE;
     if (upper.includes('BOLETA') || upper === '03') return '03';
     return CONTABILIDAD_SUNAT_DOC_TYPE.FACTURA;
   }

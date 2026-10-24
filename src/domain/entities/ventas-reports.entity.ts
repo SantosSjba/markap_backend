@@ -1,5 +1,6 @@
 export const VENTAS_REPORTS_GRANULARITY = ['day', 'week', 'month'] as const;
-export type VentasReportsGranularity = (typeof VENTAS_REPORTS_GRANULARITY)[number];
+export type VentasReportsGranularity =
+  (typeof VENTAS_REPORTS_GRANULARITY)[number];
 
 export interface VentasReportsDateRange {
   applicationId: string;

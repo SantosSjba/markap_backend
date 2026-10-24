@@ -1,4 +1,6 @@
-export const PRODUCCION_WORK_ORDER_REPOSITORY = Symbol('ProduccionWorkOrderRepository');
+export const PRODUCCION_WORK_ORDER_REPOSITORY = Symbol(
+  'ProduccionWorkOrderRepository',
+);
 
 export const PRODUCCION_DEFAULT_STAGES = [
   { stageKey: 'planificacion', label: 'Planificación', sortOrder: 0 },
@@ -7,7 +9,11 @@ export const PRODUCCION_DEFAULT_STAGES = [
   { stageKey: 'acabados', label: 'Acabados', sortOrder: 3 },
 ] as const;
 
-export type ProduccionWorkOrderStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type ProduccionWorkOrderStatus =
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED';
 export type ProduccionWorkOrderPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
 export type ProduccionWorkOrderStageStatus = 'PENDING' | 'IN_PROGRESS' | 'DONE';
 
@@ -145,15 +151,33 @@ export interface ListProduccionWorkOrdersResult {
 }
 
 export interface ProduccionWorkOrderRepository {
-  list(filters: ListProduccionWorkOrdersFilters): Promise<ListProduccionWorkOrdersResult>;
+  list(
+    filters: ListProduccionWorkOrdersFilters,
+  ): Promise<ListProduccionWorkOrdersResult>;
   getStats(applicationSlug: string): Promise<ProduccionWorkOrderStats>;
-  findById(id: string, applicationSlug?: string): Promise<ProduccionWorkOrderDetail | null>;
-  create(applicationId: string, payload: CreateProduccionWorkOrderPayload): Promise<ProduccionWorkOrderDetail>;
-  update(id: string, payload: UpdateProduccionWorkOrderPayload): Promise<ProduccionWorkOrderDetail>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionWorkOrderDetail | null>;
+  create(
+    applicationId: string,
+    payload: CreateProduccionWorkOrderPayload,
+  ): Promise<ProduccionWorkOrderDetail>;
+  update(
+    id: string,
+    payload: UpdateProduccionWorkOrderPayload,
+  ): Promise<ProduccionWorkOrderDetail>;
   start(id: string): Promise<ProduccionWorkOrderDetail>;
-  updateStage(id: string, stageId: string, payload: UpdateProduccionWorkOrderStagePayload): Promise<ProduccionWorkOrderDetail>;
+  updateStage(
+    id: string,
+    stageId: string,
+    payload: UpdateProduccionWorkOrderStagePayload,
+  ): Promise<ProduccionWorkOrderDetail>;
   complete(id: string): Promise<ProduccionWorkOrderDetail>;
   cancel(id: string): Promise<ProduccionWorkOrderDetail>;
-  consumeMaterials(id: string, items: ConsumeProduccionWorkOrderMaterialPayload[]): Promise<ProduccionWorkOrderDetail>;
+  consumeMaterials(
+    id: string,
+    items: ConsumeProduccionWorkOrderMaterialPayload[],
+  ): Promise<ProduccionWorkOrderDetail>;
   delete(id: string): Promise<void>;
 }

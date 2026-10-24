@@ -1,3 +1,4 @@
+import { scalarText } from '@common/utils/scalar-text.util';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import type {
@@ -39,7 +40,7 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
     applicationId: string,
     propertyId: string,
     buyerClientId: string,
-  ): Promise<unknown | null> {
+  ): Promise<unknown> {
     return this.prisma.saleComplianceChecklist.findUnique({
       where: {
         applicationId_propertyId_buyerClientId: {
@@ -51,7 +52,9 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
     });
   }
 
-  async upsertChecklist(data: SaleComplianceChecklistUpsertData): Promise<unknown> {
+  async upsertChecklist(
+    data: SaleComplianceChecklistUpsertData,
+  ): Promise<unknown> {
     return this.prisma.saleComplianceChecklist.upsert({
       where: {
         applicationId_propertyId_buyerClientId: {
@@ -64,100 +67,180 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
         applicationId: data.applicationId,
         propertyId: data.propertyId,
         buyerClientId: data.buyerClientId,
-        ...(data.titleStudyChecked !== undefined && { titleStudyChecked: data.titleStudyChecked }),
+        ...(data.titleStudyChecked !== undefined && {
+          titleStudyChecked: data.titleStudyChecked,
+        }),
         ...(data.criChecked !== undefined && { criChecked: data.criChecked }),
-        ...(data.noLiensChecked !== undefined && { noLiensChecked: data.noLiensChecked }),
+        ...(data.noLiensChecked !== undefined && {
+          noLiensChecked: data.noLiensChecked,
+        }),
         ...(data.municipalTaxClearanceChecked !== undefined && {
           municipalTaxClearanceChecked: data.municipalTaxClearanceChecked,
         }),
-        ...(data.minutaSigned !== undefined && { minutaSigned: data.minutaSigned }),
-        ...(data.publicDeedSigned !== undefined && { publicDeedSigned: data.publicDeedSigned }),
+        ...(data.minutaSigned !== undefined && {
+          minutaSigned: data.minutaSigned,
+        }),
+        ...(data.publicDeedSigned !== undefined && {
+          publicDeedSigned: data.publicDeedSigned,
+        }),
         ...(data.notarialPartSubmitted !== undefined && {
           notarialPartSubmitted: data.notarialPartSubmitted,
         }),
-        ...(data.sunarpStatus !== undefined && { sunarpStatus: data.sunarpStatus }),
-        ...(data.sunarpSubmittedAt !== undefined && { sunarpSubmittedAt: data.sunarpSubmittedAt }),
-        ...(data.sunarpObservedAt !== undefined && { sunarpObservedAt: data.sunarpObservedAt }),
-        ...(data.sunarpRegisteredAt !== undefined && { sunarpRegisteredAt: data.sunarpRegisteredAt }),
+        ...(data.sunarpStatus !== undefined && {
+          sunarpStatus: data.sunarpStatus,
+        }),
+        ...(data.sunarpSubmittedAt !== undefined && {
+          sunarpSubmittedAt: data.sunarpSubmittedAt,
+        }),
+        ...(data.sunarpObservedAt !== undefined && {
+          sunarpObservedAt: data.sunarpObservedAt,
+        }),
+        ...(data.sunarpRegisteredAt !== undefined && {
+          sunarpRegisteredAt: data.sunarpRegisteredAt,
+        }),
         ...(data.sunarpObservationNotes !== undefined && {
           sunarpObservationNotes: data.sunarpObservationNotes,
         }),
-        ...(data.alcabalaApplicable !== undefined && { alcabalaApplicable: data.alcabalaApplicable }),
-        ...(data.alcabalaAmount !== undefined && { alcabalaAmount: data.alcabalaAmount }),
-        ...(data.alcabalaPaidAt !== undefined && { alcabalaPaidAt: data.alcabalaPaidAt }),
-        ...(data.rent2Applicable !== undefined && { rent2Applicable: data.rent2Applicable }),
-        ...(data.rent2Amount !== undefined && { rent2Amount: data.rent2Amount }),
-        ...(data.rent2PaidAt !== undefined && { rent2PaidAt: data.rent2PaidAt }),
+        ...(data.alcabalaApplicable !== undefined && {
+          alcabalaApplicable: data.alcabalaApplicable,
+        }),
+        ...(data.alcabalaAmount !== undefined && {
+          alcabalaAmount: data.alcabalaAmount,
+        }),
+        ...(data.alcabalaPaidAt !== undefined && {
+          alcabalaPaidAt: data.alcabalaPaidAt,
+        }),
+        ...(data.rent2Applicable !== undefined && {
+          rent2Applicable: data.rent2Applicable,
+        }),
+        ...(data.rent2Amount !== undefined && {
+          rent2Amount: data.rent2Amount,
+        }),
+        ...(data.rent2PaidAt !== undefined && {
+          rent2PaidAt: data.rent2PaidAt,
+        }),
         ...(data.bankedPaymentRequired !== undefined && {
           bankedPaymentRequired: data.bankedPaymentRequired,
         }),
         ...(data.bankedPaymentVerified !== undefined && {
           bankedPaymentVerified: data.bankedPaymentVerified,
         }),
-        ...(data.paymentMethod !== undefined && { paymentMethod: data.paymentMethod }),
+        ...(data.paymentMethod !== undefined && {
+          paymentMethod: data.paymentMethod,
+        }),
         ...(data.bankOperationNumber !== undefined && {
           bankOperationNumber: data.bankOperationNumber,
         }),
         ...(data.bankName !== undefined && { bankName: data.bankName }),
-        ...(data.bankAccountHolder !== undefined && { bankAccountHolder: data.bankAccountHolder }),
-        ...(data.paymentEvidencePath !== undefined && { paymentEvidencePath: data.paymentEvidencePath }),
+        ...(data.bankAccountHolder !== undefined && {
+          bankAccountHolder: data.bankAccountHolder,
+        }),
+        ...(data.paymentEvidencePath !== undefined && {
+          paymentEvidencePath: data.paymentEvidencePath,
+        }),
         ...(data.fundsSourceDeclared !== undefined && {
           fundsSourceDeclared: data.fundsSourceDeclared,
         }),
         ...(data.beneficialOwnerDeclared !== undefined && {
           beneficialOwnerDeclared: data.beneficialOwnerDeclared,
         }),
-        ...(data.kycRiskLevel !== undefined && { kycRiskLevel: data.kycRiskLevel }),
-        ...(data.complianceNotes !== undefined && { complianceNotes: data.complianceNotes }),
-        ...(data.nextActionAt !== undefined && { nextActionAt: data.nextActionAt }),
+        ...(data.kycRiskLevel !== undefined && {
+          kycRiskLevel: data.kycRiskLevel,
+        }),
+        ...(data.complianceNotes !== undefined && {
+          complianceNotes: data.complianceNotes,
+        }),
+        ...(data.nextActionAt !== undefined && {
+          nextActionAt: data.nextActionAt,
+        }),
       },
       update: {
-        ...(data.titleStudyChecked !== undefined && { titleStudyChecked: data.titleStudyChecked }),
+        ...(data.titleStudyChecked !== undefined && {
+          titleStudyChecked: data.titleStudyChecked,
+        }),
         ...(data.criChecked !== undefined && { criChecked: data.criChecked }),
-        ...(data.noLiensChecked !== undefined && { noLiensChecked: data.noLiensChecked }),
+        ...(data.noLiensChecked !== undefined && {
+          noLiensChecked: data.noLiensChecked,
+        }),
         ...(data.municipalTaxClearanceChecked !== undefined && {
           municipalTaxClearanceChecked: data.municipalTaxClearanceChecked,
         }),
-        ...(data.minutaSigned !== undefined && { minutaSigned: data.minutaSigned }),
-        ...(data.publicDeedSigned !== undefined && { publicDeedSigned: data.publicDeedSigned }),
+        ...(data.minutaSigned !== undefined && {
+          minutaSigned: data.minutaSigned,
+        }),
+        ...(data.publicDeedSigned !== undefined && {
+          publicDeedSigned: data.publicDeedSigned,
+        }),
         ...(data.notarialPartSubmitted !== undefined && {
           notarialPartSubmitted: data.notarialPartSubmitted,
         }),
-        ...(data.sunarpStatus !== undefined && { sunarpStatus: data.sunarpStatus }),
-        ...(data.sunarpSubmittedAt !== undefined && { sunarpSubmittedAt: data.sunarpSubmittedAt }),
-        ...(data.sunarpObservedAt !== undefined && { sunarpObservedAt: data.sunarpObservedAt }),
-        ...(data.sunarpRegisteredAt !== undefined && { sunarpRegisteredAt: data.sunarpRegisteredAt }),
+        ...(data.sunarpStatus !== undefined && {
+          sunarpStatus: data.sunarpStatus,
+        }),
+        ...(data.sunarpSubmittedAt !== undefined && {
+          sunarpSubmittedAt: data.sunarpSubmittedAt,
+        }),
+        ...(data.sunarpObservedAt !== undefined && {
+          sunarpObservedAt: data.sunarpObservedAt,
+        }),
+        ...(data.sunarpRegisteredAt !== undefined && {
+          sunarpRegisteredAt: data.sunarpRegisteredAt,
+        }),
         ...(data.sunarpObservationNotes !== undefined && {
           sunarpObservationNotes: data.sunarpObservationNotes,
         }),
-        ...(data.alcabalaApplicable !== undefined && { alcabalaApplicable: data.alcabalaApplicable }),
-        ...(data.alcabalaAmount !== undefined && { alcabalaAmount: data.alcabalaAmount }),
-        ...(data.alcabalaPaidAt !== undefined && { alcabalaPaidAt: data.alcabalaPaidAt }),
-        ...(data.rent2Applicable !== undefined && { rent2Applicable: data.rent2Applicable }),
-        ...(data.rent2Amount !== undefined && { rent2Amount: data.rent2Amount }),
-        ...(data.rent2PaidAt !== undefined && { rent2PaidAt: data.rent2PaidAt }),
+        ...(data.alcabalaApplicable !== undefined && {
+          alcabalaApplicable: data.alcabalaApplicable,
+        }),
+        ...(data.alcabalaAmount !== undefined && {
+          alcabalaAmount: data.alcabalaAmount,
+        }),
+        ...(data.alcabalaPaidAt !== undefined && {
+          alcabalaPaidAt: data.alcabalaPaidAt,
+        }),
+        ...(data.rent2Applicable !== undefined && {
+          rent2Applicable: data.rent2Applicable,
+        }),
+        ...(data.rent2Amount !== undefined && {
+          rent2Amount: data.rent2Amount,
+        }),
+        ...(data.rent2PaidAt !== undefined && {
+          rent2PaidAt: data.rent2PaidAt,
+        }),
         ...(data.bankedPaymentRequired !== undefined && {
           bankedPaymentRequired: data.bankedPaymentRequired,
         }),
         ...(data.bankedPaymentVerified !== undefined && {
           bankedPaymentVerified: data.bankedPaymentVerified,
         }),
-        ...(data.paymentMethod !== undefined && { paymentMethod: data.paymentMethod }),
+        ...(data.paymentMethod !== undefined && {
+          paymentMethod: data.paymentMethod,
+        }),
         ...(data.bankOperationNumber !== undefined && {
           bankOperationNumber: data.bankOperationNumber,
         }),
         ...(data.bankName !== undefined && { bankName: data.bankName }),
-        ...(data.bankAccountHolder !== undefined && { bankAccountHolder: data.bankAccountHolder }),
-        ...(data.paymentEvidencePath !== undefined && { paymentEvidencePath: data.paymentEvidencePath }),
+        ...(data.bankAccountHolder !== undefined && {
+          bankAccountHolder: data.bankAccountHolder,
+        }),
+        ...(data.paymentEvidencePath !== undefined && {
+          paymentEvidencePath: data.paymentEvidencePath,
+        }),
         ...(data.fundsSourceDeclared !== undefined && {
           fundsSourceDeclared: data.fundsSourceDeclared,
         }),
         ...(data.beneficialOwnerDeclared !== undefined && {
           beneficialOwnerDeclared: data.beneficialOwnerDeclared,
         }),
-        ...(data.kycRiskLevel !== undefined && { kycRiskLevel: data.kycRiskLevel }),
-        ...(data.complianceNotes !== undefined && { complianceNotes: data.complianceNotes }),
-        ...(data.nextActionAt !== undefined && { nextActionAt: data.nextActionAt }),
+        ...(data.kycRiskLevel !== undefined && {
+          kycRiskLevel: data.kycRiskLevel,
+        }),
+        ...(data.complianceNotes !== undefined && {
+          complianceNotes: data.complianceNotes,
+        }),
+        ...(data.nextActionAt !== undefined && {
+          nextActionAt: data.nextActionAt,
+        }),
       },
     });
   }
@@ -187,15 +270,17 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
     propertyId: string,
     buyerClientId: string,
   ): Promise<unknown[]> {
-    const checklist = await this.getChecklist(applicationId, propertyId, buyerClientId) as
-      | { id: string }
-      | null;
+    const checklist = (await this.getChecklist(
+      applicationId,
+      propertyId,
+      buyerClientId,
+    )) as { id: string } | null;
     if (!checklist) return [];
     const rows = await this.prisma.saleComplianceDocument.findMany({
       where: { checklistId: checklist.id },
       orderBy: { createdAt: 'desc' },
     });
-    return rows as unknown[];
+    return rows;
   }
 
   async getClosingReadiness(
@@ -203,9 +288,11 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
     propertyId: string,
     buyerClientId: string,
   ): Promise<SaleClosingReadinessResult> {
-    const checklist = await this.getChecklist(applicationId, propertyId, buyerClientId) as
-      | Record<string, unknown>
-      | null;
+    const checklist = (await this.getChecklist(
+      applicationId,
+      propertyId,
+      buyerClientId,
+    )) as Record<string, unknown> | null;
     if (!checklist) {
       return {
         ok: false,
@@ -217,10 +304,13 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
     const missing: string[] = [];
     if (!checklist.titleStudyChecked) missing.push('Falta estudio de títulos');
     if (!checklist.criChecked) missing.push('Falta verificación CRI');
-    if (!checklist.noLiensChecked) missing.push('Falta validación de cargas/gravámenes');
-    if (!checklist.municipalTaxClearanceChecked) missing.push('Falta constancia municipal');
+    if (!checklist.noLiensChecked)
+      missing.push('Falta validación de cargas/gravámenes');
+    if (!checklist.municipalTaxClearanceChecked)
+      missing.push('Falta constancia municipal');
     if (!checklist.minutaSigned) missing.push('Falta minuta firmada');
-    if (!checklist.publicDeedSigned) missing.push('Falta escritura pública firmada');
+    if (!checklist.publicDeedSigned)
+      missing.push('Falta escritura pública firmada');
 
     if (checklist.bankedPaymentRequired) {
       if (!checklist.bankedPaymentVerified) {
@@ -244,7 +334,7 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
     if (!checklist.beneficialOwnerDeclared) {
       missing.push('Falta declaración de beneficiario final');
     }
-    if (String(checklist.kycRiskLevel ?? '').toUpperCase() === 'HIGH') {
+    if (scalarText(checklist.kycRiskLevel).toUpperCase() === 'HIGH') {
       missing.push('Riesgo KYC en nivel HIGH');
     }
 
@@ -281,7 +371,7 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
       take: limit,
       skip: offset,
     });
-    return rows as unknown[];
+    return rows;
   }
 
   async markAlertSent(checklistId: string): Promise<void> {

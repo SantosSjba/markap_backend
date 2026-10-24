@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -13,10 +23,7 @@ import {
   ListArquitecturaProjectsUseCase,
   UpdateArquitecturaProjectUseCase,
 } from '../../../application/use-cases/arquitectura-projects';
-import type {
-  ArquitecturaProjectStatus,
-  ArquitecturaProjectType,
-} from '@domain/repositories/arquitectura-project.repository';
+import type { ArquitecturaProjectStatus } from '@domain/repositories/arquitectura-project.repository';
 import { CreateArquitecturaProjectDto } from '../dtos/arquitectura-projects/create-arquitectura-project.dto';
 import { UpdateArquitecturaProjectDto } from '../dtos/arquitectura-projects/update-arquitectura-project.dto';
 import { ListArquitecturaProjectBudgetSummariesUseCase } from '../../../application/use-cases/arquitectura-project-budget/list-budget-summaries.use-case';
@@ -52,7 +59,11 @@ export class ArquitecturaProjectsController {
     required: false,
     description: 'true = APPROVED, IN_PROGRESS (en ejecución)',
   })
-  @ApiQuery({ name: 'clientId', required: false, description: 'Filtrar proyectos por cliente' })
+  @ApiQuery({
+    name: 'clientId',
+    required: false,
+    description: 'Filtrar proyectos por cliente',
+  })
   @ApiResponse({ status: 200 })
   async list(
     @Query('applicationSlug') applicationSlug?: string,
@@ -65,8 +76,8 @@ export class ArquitecturaProjectsController {
   ) {
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'arquitectura',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
       status,
       inProgressOnly: inProgressOnly === 'true',
@@ -75,7 +86,10 @@ export class ArquitecturaProjectsController {
   }
 
   @Get('budget-summaries')
-  @ApiOperation({ summary: 'Listado transversal de proyectos con resumen de presupuesto (hub)' })
+  @ApiOperation({
+    summary:
+      'Listado transversal de proyectos con resumen de presupuesto (hub)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
@@ -85,7 +99,8 @@ export class ArquitecturaProjectsController {
   @ApiQuery({
     name: 'onlyWithBudget',
     required: false,
-    description: 'true = solo proyectos con al menos una sección de presupuesto',
+    description:
+      'true = solo proyectos con al menos una sección de presupuesto',
   })
   @ApiResponse({ status: 200 })
   async listBudgetSummaries(
@@ -99,8 +114,8 @@ export class ArquitecturaProjectsController {
   ) {
     return this.listBudgetSummariesUc.execute({
       applicationSlug: applicationSlug ?? 'arquitectura',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
       status,
       clientId: clientId?.trim() || undefined,
@@ -128,8 +143,8 @@ export class ArquitecturaProjectsController {
       code: dto.code,
       name: dto.name,
       clientId: dto.clientId,
-      projectType: dto.projectType as ArquitecturaProjectType,
-      status: dto.status as ArquitecturaProjectStatus,
+      projectType: dto.projectType,
+      status: dto.status,
       addressLine: dto.addressLine,
       city: dto.city ?? null,
       interventionLevel: dto.interventionLevel ?? null,
@@ -166,8 +181,8 @@ export class ArquitecturaProjectsController {
     return this.updateUc.execute(id, applicationSlug ?? 'arquitectura', {
       name: dto.name,
       clientId: dto.clientId,
-      projectType: dto.projectType as ArquitecturaProjectType | undefined,
-      status: dto.status as ArquitecturaProjectStatus | undefined,
+      projectType: dto.projectType,
+      status: dto.status,
       addressLine: dto.addressLine,
       city: dto.city,
       interventionLevel: dto.interventionLevel,

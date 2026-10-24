@@ -13,7 +13,9 @@ const CONTABILIDAD_SLUG = 'contabilidad';
 
 function assertContabilidadSlug(slug: string | undefined | null) {
   if (slug?.trim() !== CONTABILIDAD_SLUG) {
-    throw new BadRequestException('Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).');
+    throw new BadRequestException(
+      'Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).',
+    );
   }
 }
 
@@ -28,15 +30,19 @@ export class ContabilidadReportsOperationsService {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertContabilidadSlug(applicationSlug ?? CONTABILIDAD_SLUG);
     const app = await this.applications.findBySlug(CONTABILIDAD_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
+    if (!app)
+      throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
     return app.id;
   }
 
   private requirePeriodId(periodId?: string): string {
-    if (!periodId?.trim()) throw new BadRequestException('periodId es obligatorio.');
+    if (!periodId?.trim())
+      throw new BadRequestException('periodId es obligatorio.');
     return periodId.trim();
   }
 
@@ -69,13 +75,20 @@ export class ContabilidadReportsOperationsService {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const id = this.requirePeriodId(periodId);
     try {
-      return await this.reports.getTrialBalance(applicationId, id, costCenterId?.trim() || null);
+      return await this.reports.getTrialBalance(
+        applicationId,
+        id,
+        costCenterId?.trim() || null,
+      );
     } catch (e) {
       this.mapError(e, 'No se pudo generar el balance de comprobación.');
     }
   }
 
-  async getFinancialAnalysis(applicationSlug: string | undefined, periodId?: string) {
+  async getFinancialAnalysis(
+    applicationSlug: string | undefined,
+    periodId?: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const id = this.requirePeriodId(periodId);
     try {
@@ -85,7 +98,10 @@ export class ContabilidadReportsOperationsService {
     }
   }
 
-  async getCashFlowTreasury(applicationSlug: string | undefined, periodId?: string) {
+  async getCashFlowTreasury(
+    applicationSlug: string | undefined,
+    periodId?: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const id = this.requirePeriodId(periodId);
     try {

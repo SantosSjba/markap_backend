@@ -28,7 +28,9 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
         },
       });
       if (!row) {
-        const processCount = await tx.saleProcess.count({ where: { applicationId } });
+        const processCount = await tx.saleProcess.count({
+          where: { applicationId },
+        });
         row = await tx.ventasNumberingSeries.create({
           data: {
             applicationId,
@@ -92,7 +94,9 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       });
 
       const buyers = Array.from(
-        new Set([data.buyerClientId, ...(data.buyerClientIds ?? [])].filter(Boolean)),
+        new Set(
+          [data.buyerClientId, ...(data.buyerClientIds ?? [])].filter(Boolean),
+        ),
       );
       if (buyers.length) {
         await tx.saleProcessBuyerLink.createMany({
@@ -104,7 +108,9 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
         });
       }
 
-      const owners = Array.from(new Set((data.ownerClientIds ?? []).filter(Boolean)));
+      const owners = Array.from(
+        new Set((data.ownerClientIds ?? []).filter(Boolean)),
+      );
       if (owners.length) {
         await tx.saleProcessOwnerLink.createMany({
           data: owners.map((ownerId) => ({
@@ -157,7 +163,10 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     return row;
   }
 
-  async countProcessCommissions(saleProcessId: string, applicationId: string): Promise<number> {
+  async countProcessCommissions(
+    saleProcessId: string,
+    applicationId: string,
+  ): Promise<number> {
     return this.prisma.saleCommission.count({
       where: {
         saleProcessId,
@@ -199,14 +208,25 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
         include: {
           buyer: { select: { id: true, fullName: true, primaryPhone: true } },
           buyers: {
-            include: { buyer: { select: { id: true, fullName: true, primaryPhone: true } } },
+            include: {
+              buyer: {
+                select: { id: true, fullName: true, primaryPhone: true },
+              },
+            },
             orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
           },
           owners: {
             include: { owner: { select: { id: true, fullName: true } } },
             orderBy: { createdAt: 'asc' },
           },
-          property: { select: { id: true, code: true, addressLine: true, salePrice: true } },
+          property: {
+            select: {
+              id: true,
+              code: true,
+              addressLine: true,
+              salePrice: true,
+            },
+          },
           agent: { select: { id: true, fullName: true } },
         },
         orderBy: { updatedAt: 'desc' },
@@ -229,11 +249,11 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           property: row.property
             ? {
                 ...row.property,
-                salePrice: prismaAmountToNumber(row.property.salePrice as unknown),
+                salePrice: prismaAmountToNumber(row.property.salePrice),
               }
             : row.property,
         };
-      }) as unknown[],
+      }),
       total,
     };
   }
@@ -257,10 +277,12 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     if (!property) return;
 
     const ownerClientIds = Array.from(
-      new Set([
-        property.ownerId,
-        ...property.owners.map((o) => o.ownerClientId),
-      ].filter(Boolean)),
+      new Set(
+        [
+          property.ownerId,
+          ...property.owners.map((o) => o.ownerClientId),
+        ].filter(Boolean),
+      ),
     );
     if (!ownerClientIds.length) return;
 
@@ -276,7 +298,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
   async getSaleProcessById(
     id: string,
     applicationId: string,
-  ): Promise<unknown | null> {
+  ): Promise<unknown> {
     return this.prisma.saleProcess.findFirst({
       where: { id, applicationId, deletedAt: null },
       include: {
@@ -424,7 +446,9 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     return this.prisma.saleProcess.update({
       where: { id, applicationId },
       data: {
-        ...(data.pipelineStage !== undefined && { pipelineStage: data.pipelineStage }),
+        ...(data.pipelineStage !== undefined && {
+          pipelineStage: data.pipelineStage,
+        }),
         ...(data.status !== undefined && { status: data.status }),
         ...(data.agentId !== undefined && { agentId: data.agentId }),
         ...(data.title !== undefined && { title: data.title }),
@@ -468,7 +492,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     saleProcessId: string,
     applicationId: string,
     data: { lostReason: string; closedAt: Date; activityDescription: string },
-  ): Promise<unknown | null> {
+  ): Promise<unknown> {
     const applied = await this.prisma.$transaction(async (tx) => {
       const proc = await tx.saleProcess.findFirst({
         where: { id: saleProcessId, applicationId, deletedAt: null },
@@ -522,7 +546,13 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     return this.prisma.saleFinancingChannel.findMany({
       where: { isActive: true },
       orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
-      select: { id: true, code: true, name: true, category: true, sortOrder: true },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        category: true,
+        sortOrder: true,
+      },
     });
   }
 
@@ -555,7 +585,11 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     completedAt?: Date | null;
   }): Promise<unknown> {
     const p = await this.prisma.saleProcess.findFirst({
-      where: { id: data.saleProcessId, applicationId: data.applicationId, deletedAt: null },
+      where: {
+        id: data.saleProcessId,
+        applicationId: data.applicationId,
+        deletedAt: null,
+      },
     });
     if (!p) return null;
     return this.prisma.saleProcessActivity.create({
@@ -577,7 +611,11 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
     dueAt: Date;
   }): Promise<unknown> {
     const p = await this.prisma.saleProcess.findFirst({
-      where: { id: data.saleProcessId, applicationId: data.applicationId, deletedAt: null },
+      where: {
+        id: data.saleProcessId,
+        applicationId: data.applicationId,
+        deletedAt: null,
+      },
     });
     if (!p) return null;
     return this.prisma.saleProcessReminder.create({
@@ -631,7 +669,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       }),
       this.prisma.saleSeparation.count({ where }),
     ]);
-    return { data: rows as unknown[], total };
+    return { data: rows, total };
   }
 
   async createSaleSeparation(data: {
@@ -700,7 +738,9 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       where: { id, applicationId },
       data: {
         ...(data.status !== undefined && { status: data.status }),
-        ...(data.receiptFilePath !== undefined && { receiptFilePath: data.receiptFilePath }),
+        ...(data.receiptFilePath !== undefined && {
+          receiptFilePath: data.receiptFilePath,
+        }),
         ...(data.receiptArchivoId !== undefined && {
           receiptArchivoId: data.receiptArchivoId,
         }),
@@ -713,7 +753,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
   async getSaleSeparationById(
     id: string,
     applicationId: string,
-  ): Promise<unknown | null> {
+  ): Promise<unknown> {
     return this.prisma.saleSeparation.findFirst({
       where: { id, applicationId },
     });
@@ -779,7 +819,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
   async getSaleClosingById(
     closingId: string,
     applicationId: string,
-  ): Promise<unknown | null> {
+  ): Promise<unknown> {
     return this.prisma.saleClosing.findFirst({
       where: { id: closingId, applicationId },
     });
@@ -829,10 +869,13 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
       return {
         ...row,
         commission: r.commissions?.[0] ?? null,
-        commissionsTotal: (r.commissions ?? []).reduce((s, c) => s + c.amount, 0),
+        commissionsTotal: (r.commissions ?? []).reduce(
+          (s, c) => s + c.amount,
+          0,
+        ),
       };
     });
-    return { data: data as unknown[], total };
+    return { data: data, total };
   }
 
   async createSaleClosingWithSideEffects(data: {
@@ -896,7 +939,8 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           let amount = row.amount;
           if (row.calculationType === 'PERCENT' && row.percentApplied != null) {
             amount =
-              Math.round(data.finalPrice * (row.percentApplied / 100) * 100) / 100;
+              Math.round(data.finalPrice * (row.percentApplied / 100) * 100) /
+              100;
           }
           const deductibles = await tx.saleCommissionDeductible.findMany({
             where: { saleCommissionId: row.id },
@@ -908,7 +952,7 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
           });
           await scaleCommissionPaymentPartsToNet(tx, row.id, net);
         }
-        commissionId = processCommissions[0]!.id;
+        commissionId = processCommissions[0].id;
       } else if (data.commissionAgentId) {
         const created = await tx.saleCommission.create({
           data: {
@@ -929,7 +973,10 @@ export class VentasSalesPrismaRepository implements VentasSalesRepository {
 
       if (data.saleSeparationId) {
         await tx.saleSeparation.update({
-          where: { id: data.saleSeparationId, applicationId: data.applicationId },
+          where: {
+            id: data.saleSeparationId,
+            applicationId: data.applicationId,
+          },
           data: { status: 'CLOSED' },
         });
       }

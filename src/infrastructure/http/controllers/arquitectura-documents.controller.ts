@@ -1,4 +1,5 @@
-﻿import {
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
+import {
   BadRequestException,
   Body,
   Controller,
@@ -49,14 +50,14 @@ export class ArquitecturaDocumentsController {
     const v = raw?.trim();
     if (!v || !(ARQUITECTURA_DOCUMENT_TYPES as readonly string[]).includes(v)) {
       throw new BadRequestException(
-        `docType invÃ¡lido. Valores: ${ARQUITECTURA_DOCUMENT_TYPES.join(', ')}`,
+        `docType inválido. Valores: ${ARQUITECTURA_DOCUMENT_TYPES.join(', ')}`,
       );
     }
     return v as ArquitecturaDocumentType;
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar documentos por tipo y aplicaciÃ³n' })
+  @ApiOperation({ summary: 'Listar documentos por tipo y aplicación' })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'docType', required: true })
   @ApiQuery({ name: 'page', required: false })
@@ -75,8 +76,8 @@ export class ArquitecturaDocumentsController {
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'arquitectura',
       docType: this.parseDocType(docType),
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
       projectId: projectId?.trim() || undefined,
     });

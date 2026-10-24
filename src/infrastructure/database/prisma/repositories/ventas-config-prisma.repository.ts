@@ -6,20 +6,30 @@ import type {
   VentasPipelineStageInput,
 } from '@domain/repositories/ventas-config.repository';
 import { VentasPropertyTypeCatalogItem } from '@domain/entities/ventas-config.entity';
-import type { VentasNumberingSeries, VentasPipelineStage } from '@domain/entities/ventas-config.entity';
+import type {
+  VentasNumberingSeries,
+  VentasPipelineStage,
+} from '@domain/entities/ventas-config.entity';
 
 const DEFAULT_STAGES: VentasPipelineStageInput[] = [
   { code: 'SEPARATION', label: 'Separación', sortOrder: 0, isActive: true },
   { code: 'ARRAS', label: 'Contrato de arras', sortOrder: 1, isActive: true },
   { code: 'MINUTA', label: 'Minuta', sortOrder: 2, isActive: true },
-  { code: 'PUBLIC_DEED', label: 'Escritura pública', sortOrder: 3, isActive: true },
+  {
+    code: 'PUBLIC_DEED',
+    label: 'Escritura pública',
+    sortOrder: 3,
+    isActive: true,
+  },
 ];
 
 @Injectable()
 export class VentasConfigPrismaRepository implements VentasConfigRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listPipelineStages(applicationId: string): Promise<VentasPipelineStage[]> {
+  async listPipelineStages(
+    applicationId: string,
+  ): Promise<VentasPipelineStage[]> {
     const rows = await this.prisma.ventasPipelineStageConfig.findMany({
       where: { applicationId },
       orderBy: { sortOrder: 'asc' },
@@ -32,7 +42,9 @@ export class VentasConfigPrismaRepository implements VentasConfigRepository {
     stages: VentasPipelineStageInput[],
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      await tx.ventasPipelineStageConfig.deleteMany({ where: { applicationId } });
+      await tx.ventasPipelineStageConfig.deleteMany({
+        where: { applicationId },
+      });
       await tx.ventasPipelineStageConfig.createMany({
         data: stages.map((s) => ({
           applicationId,
@@ -77,7 +89,9 @@ export class VentasConfigPrismaRepository implements VentasConfigRepository {
       orderBy: { name: 'asc' },
       select: { id: true, name: true, code: true },
     });
-    return rows.map((r) => new VentasPropertyTypeCatalogItem(r.id, r.name, r.code));
+    return rows.map(
+      (r) => new VentasPropertyTypeCatalogItem(r.id, r.name, r.code),
+    );
   }
 
   async ensureDefaults(applicationId: string): Promise<void> {
@@ -100,7 +114,9 @@ export class VentasConfigPrismaRepository implements VentasConfigRepository {
       where: { applicationId, seriesKey: 'SALE_PROCESS' },
     });
     if (nSeries === 0) {
-      const processCount = await this.prisma.saleProcess.count({ where: { applicationId } });
+      const processCount = await this.prisma.saleProcess.count({
+        where: { applicationId },
+      });
       await this.prisma.ventasNumberingSeries.create({
         data: {
           applicationId,

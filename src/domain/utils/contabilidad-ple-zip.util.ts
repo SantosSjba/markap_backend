@@ -27,7 +27,9 @@ export async function buildPleZipBuffer(
     archive.pipe(stream);
 
     for (const file of files) {
-      archive.append(Buffer.from(file.content, 'utf8'), { name: file.fileName });
+      archive.append(Buffer.from(file.content, 'utf8'), {
+        name: file.fileName,
+      });
     }
 
     void archive.finalize();

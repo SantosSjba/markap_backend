@@ -1,5 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ALERT_CONFIG_REPOSITORY, APPLICATION_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  ALERT_CONFIG_REPOSITORY,
+  APPLICATION_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import type { AlertConfigRepository } from '@domain/repositories/alert-config.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 
@@ -29,7 +32,10 @@ export class UpsertAlertConfigUseCase {
     const { applicationSlug, userId, ...rest } = input;
 
     const app = await this.applicationRepository.findBySlug(applicationSlug);
-    if (!app) throw new NotFoundException(`Aplicación '${applicationSlug}' no encontrada`);
+    if (!app)
+      throw new NotFoundException(
+        `Aplicación '${applicationSlug}' no encontrada`,
+      );
 
     return this.alertConfigRepository.upsert({
       applicationId: app.id,

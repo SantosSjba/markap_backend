@@ -1,5 +1,10 @@
 import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadFinancialStatementsOperationsService } from '../../../application/services/contabilidad-financial-statements-operations.service';
@@ -9,7 +14,9 @@ import { ContabilidadFinancialStatementsOperationsService } from '../../../appli
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class ContabilidadFinancialStatementsController {
-  constructor(private readonly statements: ContabilidadFinancialStatementsOperationsService) {}
+  constructor(
+    private readonly statements: ContabilidadFinancialStatementsOperationsService,
+  ) {}
 
   @Get('balance-sheet')
   @ApiOperation({ summary: 'Balance general con comparativo periodo anterior' })
@@ -26,7 +33,9 @@ export class ContabilidadFinancialStatementsController {
   }
 
   @Get('income-statement')
-  @ApiOperation({ summary: 'Estado de resultados con comparativo periodo anterior' })
+  @ApiOperation({
+    summary: 'Estado de resultados con comparativo periodo anterior',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'periodId', required: true })
   @ApiQuery({ name: 'comparePrior', required: false, type: Boolean })
@@ -36,11 +45,17 @@ export class ContabilidadFinancialStatementsController {
     @Query('comparePrior') comparePrior?: string,
   ) {
     const compare = comparePrior !== 'false';
-    return this.statements.getIncomeStatement(applicationSlug, periodId, compare);
+    return this.statements.getIncomeStatement(
+      applicationSlug,
+      periodId,
+      compare,
+    );
   }
 
   @Get('cash-flow')
-  @ApiOperation({ summary: 'Estado de flujo de efectivo (método indirecto v1)' })
+  @ApiOperation({
+    summary: 'Estado de flujo de efectivo (método indirecto v1)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'periodId', required: true })
   @ApiQuery({ name: 'comparePrior', required: false, type: Boolean })
@@ -50,7 +65,11 @@ export class ContabilidadFinancialStatementsController {
     @Query('comparePrior') comparePrior?: string,
   ) {
     const compare = comparePrior !== 'false';
-    return this.statements.getCashFlowStatement(applicationSlug, periodId, compare);
+    return this.statements.getCashFlowStatement(
+      applicationSlug,
+      periodId,
+      compare,
+    );
   }
 
   @Get('export/excel')

@@ -24,10 +24,13 @@ import type {
   UpdateCashBoxInput,
   UpsertReconciliationInput,
 } from '@domain/repositories/contabilidad-treasury.repository';
-import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import {
+  parsePenAmount,
+  roundPenAmount,
+} from '@domain/utils/contabilidad-journal-amounts';
 import { parseDateOnly } from '@domain/utils/peru-date.util';
 import { resolveTreasuryPenAmount } from '../helpers/contabilidad-invoice-multicurrency.helper';
-import { PrismaService } from '../prisma.service';
+import { Atomic, PrismaService } from '../prisma.service';
 import { ContabilidadTreasuryPrismaMapper } from '../mappers/contabilidad-treasury-prisma.mapper';
 
 const movementInclude = {
@@ -36,8 +39,12 @@ const movementInclude = {
   offsetAccount: { select: { code: true, name: true } },
 } as const;
 
-const cashInclude = { account: { select: { code: true, name: true } } } as const;
-const bankInclude = { account: { select: { code: true, name: true } } } as const;
+const cashInclude = {
+  account: { select: { code: true, name: true } },
+} as const;
+const bankInclude = {
+  account: { select: { code: true, name: true } },
+} as const;
 
 @Injectable()
 export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasuryRepository {
@@ -48,7 +55,9 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
   ) {}
 
   async ensureDefaults(applicationId: string): Promise<void> {
-    const cashCount = await this.prisma.contabilidadCashBox.count({ where: { applicationId } });
+    const cashCount = await this.prisma.contabilidadCashBox.count({
+      where: { applicationId },
+    });
     if (cashCount === 0) {
       const cashAccount = await this.prisma.contabilidadAccount.findUnique({
         where: {
@@ -70,7 +79,9 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       }
     }
 
-    const bankCount = await this.prisma.contabilidadBankAccount.count({ where: { applicationId } });
+    const bankCount = await this.prisma.contabilidadBankAccount.count({
+      where: { applicationId },
+    });
     if (bankCount === 0) {
       const bankAccount = await this.prisma.contabilidadAccount.findUnique({
         where: {
@@ -96,7 +107,9 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     }
   }
 
-  async listCashBoxes(applicationId: string): Promise<ContabilidadCashBoxDto[]> {
+  async listCashBoxes(
+    applicationId: string,
+  ): Promise<ContabilidadCashBoxDto[]> {
     const rows = await this.prisma.contabilidadCashBox.findMany({
       where: { applicationId },
       include: cashInclude,
@@ -104,12 +117,18 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     });
     return Promise.all(
       rows.map(async (row) =>
-        ContabilidadTreasuryPrismaMapper.toCashBox(row, await this.computeCashBalance(applicationId, row.id)),
+        ContabilidadTreasuryPrismaMapper.toCashBox(
+          row,
+          await this.computeCashBalance(applicationId, row.id),
+        ),
       ),
     );
   }
 
-  async findCashBoxById(applicationId: string, id: string): Promise<ContabilidadCashBoxDto | null> {
+  async findCashBoxById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadCashBoxDto | null> {
     const row = await this.prisma.contabilidadCashBox.findFirst({
       where: { applicationId, id },
       include: cashInclude,
@@ -121,7 +140,10 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     );
   }
 
-  async createCashBox(applicationId: string, input: CreateCashBoxInput): Promise<ContabilidadCashBoxDto> {
+  async createCashBox(
+    applicationId: string,
+    input: CreateCashBoxInput,
+  ): Promise<ContabilidadCashBoxDto> {
     const row = await this.prisma.contabilidadCashBox.create({
       data: {
         applicationId,
@@ -149,14 +171,17 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       },
       include: cashInclude,
     });
-    if (row.applicationId !== applicationId) throw new Error('Cash box not found');
+    if (row.applicationId !== applicationId)
+      throw new Error('Cash box not found');
     return ContabilidadTreasuryPrismaMapper.toCashBox(
       row,
       await this.computeCashBalance(applicationId, row.id),
     );
   }
 
-  async listBankAccounts(applicationId: string): Promise<ContabilidadBankAccountDto[]> {
+  async listBankAccounts(
+    applicationId: string,
+  ): Promise<ContabilidadBankAccountDto[]> {
     const rows = await this.prisma.contabilidadBankAccount.findMany({
       where: { applicationId },
       include: bankInclude,
@@ -172,7 +197,10 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     );
   }
 
-  async findBankAccountById(applicationId: string, id: string): Promise<ContabilidadBankAccountDto | null> {
+  async findBankAccountById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadBankAccountDto | null> {
     const row = await this.prisma.contabilidadBankAccount.findFirst({
       where: { applicationId, id },
       include: bankInclude,
@@ -221,7 +249,8 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       },
       include: bankInclude,
     });
-    if (row.applicationId !== applicationId) throw new Error('Bank account not found');
+    if (row.applicationId !== applicationId)
+      throw new Error('Bank account not found');
     return ContabilidadTreasuryPrismaMapper.toBankAccount(
       row,
       await this.computeBankBalance(applicationId, row.id),
@@ -232,7 +261,9 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     applicationId: string,
     filters: ListTreasuryMovementsFilters,
   ): Promise<ContabilidadTreasuryMovementDto[]> {
-    const where: Prisma.ContabilidadTreasuryMovementWhereInput = { applicationId };
+    const where: Prisma.ContabilidadTreasuryMovementWhereInput = {
+      applicationId,
+    };
     if (filters.periodId) where.periodId = filters.periodId;
     if (filters.cashBoxId) where.cashBoxId = filters.cashBoxId;
     if (filters.bankAccountId) where.bankAccountId = filters.bankAccountId;
@@ -269,6 +300,7 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     return row ? ContabilidadTreasuryPrismaMapper.toMovement(row) : null;
   }
 
+  @Atomic()
   async createMovementWithJournal(
     applicationId: string,
     input: CreateTreasuryMovementInput,
@@ -285,7 +317,10 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     const amount = fx.penAmount;
     if (Number.isNaN(amount) || amount <= 0) throw new Error('Invalid amount');
 
-    const ledgerAccountId = await this.resolveLedgerAccountId(applicationId, input);
+    const ledgerAccountId = await this.resolveLedgerAccountId(
+      applicationId,
+      input,
+    );
     const journal = await this.journal.createAndPost(
       applicationId,
       {
@@ -312,9 +347,14 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
         periodId: input.periodId,
         movementType: input.movementType,
         sourceType: input.sourceType,
-        cashBoxId: input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH ? input.cashBoxId : null,
+        cashBoxId:
+          input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH
+            ? input.cashBoxId
+            : null,
         bankAccountId:
-          input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK ? input.bankAccountId : null,
+          input.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK
+            ? input.bankAccountId
+            : null,
         offsetAccountId: input.offsetAccountId,
         currencyCode: fx.currencyCode,
         foreignAmount: fx.foreignAmount,
@@ -331,6 +371,7 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     return ContabilidadTreasuryPrismaMapper.toMovement(row);
   }
 
+  @Atomic()
   async createTransferWithJournal(
     applicationId: string,
     input: CreateTreasuryTransferInput,
@@ -349,7 +390,8 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       cashBoxId: input.toCashBoxId,
       bankAccountId: input.toBankAccountId,
     });
-    if (fromAccountId === toAccountId) throw new Error('Source and target must differ');
+    if (fromAccountId === toAccountId)
+      throw new Error('Source and target must differ');
 
     const journal = await this.journal.createAndPost(
       applicationId,
@@ -374,9 +416,14 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
         periodId: input.periodId,
         movementType: CONTABILIDAD_TREASURY_MOVEMENT_TYPE.TRANSFER_OUT,
         sourceType: input.fromType,
-        cashBoxId: input.fromType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH ? input.fromCashBoxId : null,
+        cashBoxId:
+          input.fromType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH
+            ? input.fromCashBoxId
+            : null,
         bankAccountId:
-          input.fromType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK ? input.fromBankAccountId : null,
+          input.fromType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK
+            ? input.fromBankAccountId
+            : null,
         transferGroupId,
         amount,
         movementDate,
@@ -393,8 +440,14 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
         periodId: input.periodId,
         movementType: CONTABILIDAD_TREASURY_MOVEMENT_TYPE.TRANSFER_IN,
         sourceType: input.toType,
-        cashBoxId: input.toType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH ? input.toCashBoxId : null,
-        bankAccountId: input.toType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK ? input.toBankAccountId : null,
+        cashBoxId:
+          input.toType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH
+            ? input.toCashBoxId
+            : null,
+        bankAccountId:
+          input.toType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK
+            ? input.toBankAccountId
+            : null,
         transferGroupId,
         amount,
         movementDate,
@@ -418,7 +471,11 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
   ): Promise<ContabilidadBankReconciliationDto | null> {
     const row = await this.prisma.contabilidadBankReconciliation.findUnique({
       where: {
-        applicationId_bankAccountId_periodId: { applicationId, bankAccountId, periodId },
+        applicationId_bankAccountId_periodId: {
+          applicationId,
+          bankAccountId,
+          periodId,
+        },
       },
       include: { bankAccount: { select: { code: true, bankName: true } } },
     });
@@ -431,7 +488,8 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     input: UpsertReconciliationInput,
   ): Promise<ContabilidadBankReconciliationDto> {
     const statementBalance = parsePenAmount(input.statementBalance);
-    if (Number.isNaN(statementBalance)) throw new Error('Invalid statement balance');
+    if (Number.isNaN(statementBalance))
+      throw new Error('Invalid statement balance');
 
     const row = await this.prisma.contabilidadBankReconciliation.upsert({
       where: {
@@ -450,7 +508,8 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       },
       update: {
         statementBalance,
-        notes: input.notes === undefined ? undefined : input.notes?.trim() || null,
+        notes:
+          input.notes === undefined ? undefined : input.notes?.trim() || null,
       },
       include: { bankAccount: { select: { code: true, bankName: true } } },
     });
@@ -464,16 +523,22 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     movementId: string,
     reconciled: boolean,
   ): Promise<ContabilidadBankReconciliationDto> {
-    const reconciliation = await this.prisma.contabilidadBankReconciliation.findFirst({
-      where: { applicationId, id: reconciliationId },
-    });
+    const reconciliation =
+      await this.prisma.contabilidadBankReconciliation.findFirst({
+        where: { applicationId, id: reconciliationId },
+      });
     if (!reconciliation) throw new Error('Reconciliation not found');
     if (reconciliation.status === CONTABILIDAD_RECONCILIATION_STATUS.CLOSED) {
       throw new Error('Reconciliation is closed');
     }
 
     const movement = await this.prisma.contabilidadTreasuryMovement.findFirst({
-      where: { applicationId, id: movementId, bankAccountId: reconciliation.bankAccountId },
+      where: {
+        applicationId,
+        id: movementId,
+        bankAccountId: reconciliation.bankAccountId,
+        periodId: reconciliation.periodId,
+      },
     });
     if (!movement) throw new Error('Movement not found');
 
@@ -493,16 +558,18 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     return this.mapReconciliation(applicationId, row);
   }
 
-  async closeReconciliation(applicationId: string, id: string): Promise<ContabilidadBankReconciliationDto> {
+  async closeReconciliation(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadBankReconciliationDto> {
     const row = await this.prisma.contabilidadBankReconciliation.update({
-      where: { id },
+      where: { id, applicationId },
       data: {
         status: CONTABILIDAD_RECONCILIATION_STATUS.CLOSED,
         closedAt: new Date(),
       },
       include: { bankAccount: { select: { code: true, bankName: true } } },
     });
-    if (row.applicationId !== applicationId) throw new Error('Reconciliation not found');
     return this.mapReconciliation(applicationId, row);
   }
 
@@ -521,7 +588,10 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
       bankAccount: { code: string; bankName: string };
     },
   ): Promise<ContabilidadBankReconciliationDto> {
-    const bookBalance = await this.computeBankBalance(applicationId, row.bankAccountId);
+    const bookBalance = await this.computeBankBalance(
+      applicationId,
+      row.bankAccountId,
+    );
     const movements = await this.prisma.contabilidadTreasuryMovement.findMany({
       where: {
         applicationId,
@@ -540,7 +610,10 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     );
   }
 
-  private async computeCashBalance(applicationId: string, cashBoxId: string): Promise<number> {
+  private async computeCashBalance(
+    applicationId: string,
+    cashBoxId: string,
+  ): Promise<number> {
     const movements = await this.prisma.contabilidadTreasuryMovement.findMany({
       where: { applicationId, cashBoxId },
       select: { movementType: true, amount: true },
@@ -548,7 +621,10 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     return this.sumBalance(movements);
   }
 
-  private async computeBankBalance(applicationId: string, bankAccountId: string): Promise<number> {
+  private async computeBankBalance(
+    applicationId: string,
+    bankAccountId: string,
+  ): Promise<number> {
     const movements = await this.prisma.contabilidadTreasuryMovement.findMany({
       where: { applicationId, bankAccountId },
       select: { movementType: true, amount: true },
@@ -556,7 +632,9 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
     return this.sumBalance(movements);
   }
 
-  private sumBalance(movements: { movementType: string; amount: Prisma.Decimal }[]): number {
+  private sumBalance(
+    movements: { movementType: string; amount: Prisma.Decimal }[],
+  ): number {
     let balance = 0;
     for (const m of movements) {
       const amount = Number(m.amount);
@@ -594,7 +672,11 @@ export class ContabilidadTreasuryPrismaRepository implements ContabilidadTreasur
 
   private async resolveTransferAccountId(
     applicationId: string,
-    input: { type: 'CASH' | 'BANK'; cashBoxId?: string | null; bankAccountId?: string | null },
+    input: {
+      type: 'CASH' | 'BANK';
+      cashBoxId?: string | null;
+      bankAccountId?: string | null;
+    },
   ): Promise<string> {
     if (input.type === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH) {
       if (!input.cashBoxId) throw new Error('Cash box required');

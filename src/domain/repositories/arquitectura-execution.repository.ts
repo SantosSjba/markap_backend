@@ -1,4 +1,6 @@
-﻿export const ARQUITECTURA_EXECUTION_REPOSITORY = Symbol('ArquitecturaExecutionRepository');
+﻿export const ARQUITECTURA_EXECUTION_REPOSITORY = Symbol(
+  'ArquitecturaExecutionRepository',
+);
 
 export interface ArquitecturaExecutionMilestoneDto {
   id: string;
@@ -138,7 +140,10 @@ export interface CreateArquitecturaExecutionActualCostPayload {
 }
 
 export interface ArquitecturaExecutionRepository {
-  ensureProjectScope(projectId: string, applicationSlug?: string): Promise<boolean>;
+  ensureProjectScope(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<boolean>;
   getOverview(
     projectId: string,
     applicationSlug?: string,

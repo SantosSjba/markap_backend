@@ -12,5 +12,8 @@ export abstract class HashService {
   /**
    * Compara una contraseña plana con su hash
    */
-  abstract compare(plainPassword: string, hashedPassword: string): Promise<boolean>;
+  abstract compare(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean>;
 }

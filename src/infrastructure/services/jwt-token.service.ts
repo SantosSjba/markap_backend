@@ -18,7 +18,9 @@ export class JwtTokenService implements TokenService {
   private readonly expiresIn: number;
 
   constructor(private readonly configService: ConfigService) {
-    this.secret = this.configService.get<string>('jwt.secret') || 'default-secret-change-me';
+    this.secret =
+      this.configService.get<string>('jwt.secret') ||
+      'default-secret-change-me';
     this.expiresIn = this.configService.get<number>('jwt.expiresIn') || 3600;
   }
 

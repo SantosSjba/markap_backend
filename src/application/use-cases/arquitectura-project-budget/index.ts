@@ -25,10 +25,13 @@ export class GetArquitecturaProjectSettlementUseCase {
   ) {}
 
   execute(projectId: string, applicationSlug = 'arquitectura') {
-    return this.repo.getSettlement(projectId, applicationSlug).then((settlement) => {
-      if (!settlement) throw new NotFoundException('Liquidación no disponible');
-      return settlement;
-    });
+    return this.repo
+      .getSettlement(projectId, applicationSlug)
+      .then((settlement) => {
+        if (!settlement)
+          throw new NotFoundException('Liquidación no disponible');
+        return settlement;
+      });
   }
 }
 
@@ -61,7 +64,12 @@ export class UpdateArquitecturaProjectBudgetSectionUseCase {
     payload: { name?: string; sortOrder?: number },
     applicationSlug = 'arquitectura',
   ) {
-    return this.repo.updateSection(projectId, sectionId, payload, applicationSlug);
+    return this.repo.updateSection(
+      projectId,
+      sectionId,
+      payload,
+      applicationSlug,
+    );
   }
 }
 
@@ -72,7 +80,11 @@ export class DeleteArquitecturaProjectBudgetSectionUseCase {
     private readonly repo: ArquitecturaProjectBudgetRepository,
   ) {}
 
-  execute(projectId: string, sectionId: string, applicationSlug = 'arquitectura') {
+  execute(
+    projectId: string,
+    sectionId: string,
+    applicationSlug = 'arquitectura',
+  ) {
     return this.repo.deleteSection(projectId, sectionId, applicationSlug);
   }
 }
@@ -123,7 +135,12 @@ export class UpdateArquitecturaProjectBudgetLineItemUseCase {
     },
     applicationSlug = 'arquitectura',
   ) {
-    return this.repo.updateLineItem(projectId, lineItemId, payload, applicationSlug);
+    return this.repo.updateLineItem(
+      projectId,
+      lineItemId,
+      payload,
+      applicationSlug,
+    );
   }
 }
 
@@ -134,7 +151,11 @@ export class DeleteArquitecturaProjectBudgetLineItemUseCase {
     private readonly repo: ArquitecturaProjectBudgetRepository,
   ) {}
 
-  execute(projectId: string, lineItemId: string, applicationSlug = 'arquitectura') {
+  execute(
+    projectId: string,
+    lineItemId: string,
+    applicationSlug = 'arquitectura',
+  ) {
     return this.repo.deleteLineItem(projectId, lineItemId, applicationSlug);
   }
 }
@@ -148,7 +169,12 @@ export class CreateArquitecturaLineItemSupplierPaymentUseCase {
 
   execute(
     projectId: string,
-    payload: { lineItemId: string; paymentNumber: number; amount: number; paidAt: Date },
+    payload: {
+      lineItemId: string;
+      paymentNumber: number;
+      amount: number;
+      paidAt: Date;
+    },
     applicationSlug = 'arquitectura',
   ) {
     return this.repo.createSupplierPayment(projectId, payload, applicationSlug);
@@ -162,8 +188,16 @@ export class DeleteArquitecturaLineItemSupplierPaymentUseCase {
     private readonly repo: ArquitecturaProjectBudgetRepository,
   ) {}
 
-  execute(projectId: string, paymentId: string, applicationSlug = 'arquitectura') {
-    return this.repo.deleteSupplierPayment(projectId, paymentId, applicationSlug);
+  execute(
+    projectId: string,
+    paymentId: string,
+    applicationSlug = 'arquitectura',
+  ) {
+    return this.repo.deleteSupplierPayment(
+      projectId,
+      paymentId,
+      applicationSlug,
+    );
   }
 }
 

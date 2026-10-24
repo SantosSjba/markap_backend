@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import {
   ExceptionFilter,
   Catch,
@@ -26,16 +27,29 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
 
     let status: number;
-    let message: string;
+    let message: string | string[];
     let errors: string[] | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      message =
+      const details: unknown =
         typeof exceptionResponse === 'string'
           ? exceptionResponse
-          : (exceptionResponse as any).message || exception.message;
+          : (exceptionResponse as { message?: unknown }).message;
+      message =
+        typeof details === 'string'
+          ? details
+          : Array.isArray(details) &&
+              details.every((value: unknown) => typeof value === 'string')
+            ? details
+            : exception.message;
+      // Un error de Prisma envuelto no debe exponer consultas ni rutas del servidor.
+      if (
+        typeof message === 'string' &&
+        /Invalid `.*` invocation/.test(message)
+      )
+        message = 'Operación no válida.';
     } else if (
       exception instanceof EntityNotFoundException ||
       exception instanceof UserNotFoundException
@@ -67,6 +81,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else if (exception instanceof DomainException) {
       status = HttpStatus.UNPROCESSABLE_ENTITY;
       message = exception.message;
+    } else if (
+      exception instanceof Prisma.PrismaClientKnownRequestError &&
+      ['P2002', 'P2003', 'P2025', 'P2034'].includes(exception.code)
+    ) {
+      status =
+        exception.code === 'P2025' ? HttpStatus.NOT_FOUND : HttpStatus.CONFLICT;
+      message =
+        exception.code === 'P2002'
+          ? 'Ya existe un registro con esos datos únicos.'
+          : exception.code === 'P2003'
+            ? 'El registro tiene relaciones que impiden completar la operación.'
+            : exception.code === 'P2025'
+              ? 'Registro no encontrado.'
+              : 'Conflicto de actualización. Vuelve a intentarlo.';
     } else if (exception instanceof Error) {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       message =

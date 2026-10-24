@@ -1,4 +1,5 @@
-﻿import {
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
+import {
   BadRequestException,
   Body,
   Controller,
@@ -65,8 +66,8 @@ export class ArquitecturaMaterialSuppliersController {
   ) {
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'arquitectura',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(100, Math.max(1, parseInt(limit ?? '20', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       search: search?.trim() || undefined,
     });
   }
@@ -98,7 +99,9 @@ export class ArquitecturaMaterialSuppliersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Detalle proveedor (materiales vinculados + historial compras)' })
+  @ApiOperation({
+    summary: 'Detalle proveedor (materiales vinculados + historial compras)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async getById(
     @Param('id') id: string,
@@ -155,13 +158,17 @@ export class ArquitecturaMaterialSuppliersController {
     if (Number.isNaN(purchasedAt.getTime())) {
       throw new BadRequestException('Fecha de compra inválida');
     }
-    return this.purchaseUc.execute(supplierId, applicationSlug ?? 'arquitectura', {
-      catalogMaterialId: dto.catalogMaterialId ?? null,
-      purchasedAt,
-      quantity: dto.quantity,
-      unitPrice: dto.unitPrice,
-      invoiceRef: dto.invoiceRef ?? null,
-      notes: dto.notes ?? null,
-    });
+    return this.purchaseUc.execute(
+      supplierId,
+      applicationSlug ?? 'arquitectura',
+      {
+        catalogMaterialId: dto.catalogMaterialId ?? null,
+        purchasedAt,
+        quantity: dto.quantity,
+        unitPrice: dto.unitPrice,
+        invoiceRef: dto.invoiceRef ?? null,
+        notes: dto.notes ?? null,
+      },
+    );
   }
 }

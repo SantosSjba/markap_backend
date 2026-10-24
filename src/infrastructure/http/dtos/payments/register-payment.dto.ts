@@ -21,7 +21,10 @@ const PAYMENT_METHODS: PaymentMethod[] = [
 
 /** Body de POST /payments/:id/register */
 export class RegisterPaymentDto {
-  @ApiProperty({ example: '2024-06-15', description: 'Fecha de pago (ISO date)' })
+  @ApiProperty({
+    example: '2024-06-15',
+    description: 'Fecha de pago (ISO date)',
+  })
   @IsDateString()
   paidDate!: string;
 

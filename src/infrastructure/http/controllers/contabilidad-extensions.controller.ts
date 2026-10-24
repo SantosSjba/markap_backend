@@ -1,5 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadExtensionsOperationsService } from '../../../application/services/contabilidad-extensions-operations.service';
 import type {
@@ -15,7 +31,9 @@ import type {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class ContabilidadExtensionsController {
-  constructor(private readonly extensions: ContabilidadExtensionsOperationsService) {}
+  constructor(
+    private readonly extensions: ContabilidadExtensionsOperationsService,
+  ) {}
 
   @Get('exchange-rates')
   @ApiOperation({ summary: 'Listar tipos de cambio por rango de fechas' })
@@ -26,7 +44,11 @@ export class ContabilidadExtensionsController {
     @Query('dateTo') dateTo?: string,
     @Query('currencyCode') currencyCode?: string,
   ) {
-    return this.extensions.listExchangeRates(applicationSlug, { dateFrom, dateTo, currencyCode });
+    return this.extensions.listExchangeRates(applicationSlug, {
+      dateFrom,
+      dateTo,
+      currencyCode,
+    });
   }
 
   @Post('exchange-rates')
@@ -88,7 +110,10 @@ export class ContabilidadExtensionsController {
   }
 
   @Post('journal-templates/:id/apply')
-  @ApiOperation({ summary: 'Aplicar plantilla — devuelve estructura de líneas para asiento borrador' })
+  @ApiOperation({
+    summary:
+      'Aplicar plantilla — devuelve estructura de líneas para asiento borrador',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   applyJournalTemplate(
     @Query('applicationSlug') applicationSlug: string | undefined,
@@ -98,7 +123,10 @@ export class ContabilidadExtensionsController {
   }
 
   @Post('inventory-snapshots/generate')
-  @ApiOperation({ summary: 'Generar snapshot de inventarios y balances desde balance de comprobación' })
+  @ApiOperation({
+    summary:
+      'Generar snapshot de inventarios y balances desde balance de comprobación',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'periodId', required: true })
   generateInventorySnapshot(
@@ -116,7 +144,10 @@ export class ContabilidadExtensionsController {
     @Query('applicationSlug') applicationSlug?: string,
     @Query('periodId') periodId?: string,
   ) {
-    return this.extensions.listInventorySnapshots(applicationSlug, periodId ?? '');
+    return this.extensions.listInventorySnapshots(
+      applicationSlug,
+      periodId ?? '',
+    );
   }
 
   @Get('electronic-document-logs')
@@ -128,7 +159,11 @@ export class ContabilidadExtensionsController {
     @Query('documentKind') documentKind?: string,
     @Query('search') search?: string,
   ) {
-    return this.extensions.listElectronicDocumentLogs(applicationSlug, { periodId, documentKind, search });
+    return this.extensions.listElectronicDocumentLogs(applicationSlug, {
+      periodId,
+      documentKind,
+      search,
+    });
   }
 
   @Post('electronic-document-logs')
@@ -142,7 +177,9 @@ export class ContabilidadExtensionsController {
   }
 
   @Get('income-tax-summary')
-  @ApiOperation({ summary: 'Estimación renta del periodo (EEFF + cuenta 4012)' })
+  @ApiOperation({
+    summary: 'Estimación renta del periodo (EEFF + cuenta 4012)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'periodId', required: true })
   getIncomeTaxSummary(
@@ -153,7 +190,10 @@ export class ContabilidadExtensionsController {
   }
 
   @Get('income-tax-detail')
-  @ApiOperation({ summary: 'Detalle IR: ajustes, retenciones, pagos a cuenta y tendencia anual' })
+  @ApiOperation({
+    summary:
+      'Detalle IR: ajustes, retenciones, pagos a cuenta y tendencia anual',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'periodId', required: true })
   getIncomeTaxDetail(
@@ -164,7 +204,9 @@ export class ContabilidadExtensionsController {
   }
 
   @Put('income-tax-period')
-  @ApiOperation({ summary: 'Guardar ajustes y pago a cuenta del periodo (borrador IR)' })
+  @ApiOperation({
+    summary: 'Guardar ajustes y pago a cuenta del periodo (borrador IR)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'periodId', required: true })
   upsertIncomeTaxPeriod(
@@ -172,7 +214,11 @@ export class ContabilidadExtensionsController {
     @Query('periodId') periodId: string,
     @Body() body: UpsertIncomeTaxPeriodInput,
   ) {
-    return this.extensions.upsertIncomeTaxPeriod(applicationSlug, periodId, body);
+    return this.extensions.upsertIncomeTaxPeriod(
+      applicationSlug,
+      periodId,
+      body,
+    );
   }
 
   @Get('income-tax-export')
@@ -183,6 +229,9 @@ export class ContabilidadExtensionsController {
     @Query('applicationSlug') applicationSlug?: string,
     @Query('periodId') periodId?: string,
   ) {
-    return this.extensions.exportIncomeTaxDraft(applicationSlug, periodId ?? '');
+    return this.extensions.exportIncomeTaxDraft(
+      applicationSlug,
+      periodId ?? '',
+    );
   }
 }

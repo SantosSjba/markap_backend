@@ -7,13 +7,16 @@ export class CreateAgentDto {
   @IsString()
   applicationId?: string;
 
-  @ApiPropertyOptional({ description: 'Slug de la aplicación (ej. alquileres, ventas)' })
+  @ApiPropertyOptional({
+    description: 'Slug de la aplicación (ej. alquileres, ventas)',
+  })
   @IsOptional()
   @IsString()
   applicationSlug?: string;
 
   @ApiProperty({
-    description: 'Tipo de agente: Interno (usuario del sistema) o Externo (tercero)',
+    description:
+      'Tipo de agente: Interno (usuario del sistema) o Externo (tercero)',
     enum: ['INTERNAL', 'EXTERNAL'],
   })
   @IsEnum(['INTERNAL', 'EXTERNAL'])
@@ -27,7 +30,8 @@ export class CreateAgentDto {
   userId?: string | null;
 
   @ApiProperty({
-    description: 'Nombre completo (para EXTERNAL es obligatorio; para INTERNAL puede derivarse del usuario)',
+    description:
+      'Nombre completo (para EXTERNAL es obligatorio; para INTERNAL puede derivarse del usuario)',
   })
   @IsString()
   fullName: string;

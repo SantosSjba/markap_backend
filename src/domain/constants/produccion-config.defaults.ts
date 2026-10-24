@@ -48,10 +48,34 @@ export const PRODUCCION_DEFAULT_UNITS = [
 ] as const;
 
 export const PRODUCCION_DEFAULT_NUMBERING = [
-  { seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.FURNITURE, prefix: 'MUE', includeYear: false },
-  { seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.WORK_ORDER, prefix: 'OT', includeYear: true },
-  { seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.QUOTATION, prefix: 'COT', includeYear: true },
-  { seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.PURCHASE_ORDER, prefix: 'OC', includeYear: true },
-  { seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.ORDER, prefix: 'PED', includeYear: true },
-  { seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.DELIVERY, prefix: 'ENT', includeYear: true },
+  {
+    seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.FURNITURE,
+    prefix: 'MUE',
+    includeYear: false,
+  },
+  {
+    seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.WORK_ORDER,
+    prefix: 'OT',
+    includeYear: true,
+  },
+  {
+    seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.QUOTATION,
+    prefix: 'COT',
+    includeYear: true,
+  },
+  {
+    seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.PURCHASE_ORDER,
+    prefix: 'OC',
+    includeYear: true,
+  },
+  {
+    seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.ORDER,
+    prefix: 'PED',
+    includeYear: true,
+  },
+  {
+    seriesKey: PRODUCCION_NUMBERING_SERIES_KEYS.DELIVERY,
+    prefix: 'ENT',
+    includeYear: true,
+  },
 ] as const;

@@ -1,6 +1,13 @@
-export const PRODUCCION_PURCHASE_ORDER_REPOSITORY = Symbol('ProduccionPurchaseOrderRepository');
+export const PRODUCCION_PURCHASE_ORDER_REPOSITORY = Symbol(
+  'ProduccionPurchaseOrderRepository',
+);
 
-export type ProduccionPurchaseOrderStatus = 'DRAFT' | 'SENT' | 'PARTIAL' | 'RECEIVED' | 'CANCELLED';
+export type ProduccionPurchaseOrderStatus =
+  | 'DRAFT'
+  | 'SENT'
+  | 'PARTIAL'
+  | 'RECEIVED'
+  | 'CANCELLED';
 
 export interface ProduccionPurchaseOrderLineDto {
   id: string;
@@ -92,12 +99,26 @@ export interface ListProduccionPurchaseOrdersResult {
 }
 
 export interface ProduccionPurchaseOrderRepository {
-  list(filters: ListProduccionPurchaseOrdersFilters): Promise<ListProduccionPurchaseOrdersResult>;
-  findById(id: string, applicationSlug?: string): Promise<ProduccionPurchaseOrderDetail | null>;
-  create(applicationId: string, payload: CreateProduccionPurchaseOrderPayload): Promise<ProduccionPurchaseOrderDetail>;
-  update(id: string, payload: UpdateProduccionPurchaseOrderPayload): Promise<ProduccionPurchaseOrderDetail>;
+  list(
+    filters: ListProduccionPurchaseOrdersFilters,
+  ): Promise<ListProduccionPurchaseOrdersResult>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionPurchaseOrderDetail | null>;
+  create(
+    applicationId: string,
+    payload: CreateProduccionPurchaseOrderPayload,
+  ): Promise<ProduccionPurchaseOrderDetail>;
+  update(
+    id: string,
+    payload: UpdateProduccionPurchaseOrderPayload,
+  ): Promise<ProduccionPurchaseOrderDetail>;
   send(id: string): Promise<ProduccionPurchaseOrderDetail>;
-  receive(id: string, payload: ReceiveProduccionPurchaseOrderPayload): Promise<ProduccionPurchaseOrderDetail>;
+  receive(
+    id: string,
+    payload: ReceiveProduccionPurchaseOrderPayload,
+  ): Promise<ProduccionPurchaseOrderDetail>;
   cancel(id: string): Promise<ProduccionPurchaseOrderDetail>;
   delete(id: string): Promise<void>;
 }

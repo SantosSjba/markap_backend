@@ -15,7 +15,7 @@ import type {
   UpdateInteriorFinancePaymentPayload,
   UpdateInteriorFinanceSchedulePayload,
 } from '@domain/repositories/interior-finance.repository';
-import { PrismaService } from '../prisma.service';
+import { Atomic, PrismaService } from '../prisma.service';
 import { formatDateOnly } from '@domain/utils/peru-date.util';
 import { getProjectBudgetPriceTotal } from '../helpers/project-budget-query.helper';
 
@@ -29,7 +29,9 @@ function ym(d: Date): string {
   return formatDateOnly(d).slice(0, 7);
 }
 
-function buildExpenseSummary(costs: { costCategory: string; amount: Prisma.Decimal }[]): InteriorFinanceExpenseSummaryDto {
+function buildExpenseSummary(
+  costs: { costCategory: string; amount: Prisma.Decimal }[],
+): InteriorFinanceExpenseSummaryDto {
   let purchases = 0;
   let labor = 0;
   let transport = 0;
@@ -63,7 +65,10 @@ function buildExpenseSummary(costs: { costCategory: string; amount: Prisma.Decim
 export class InteriorFinancePrismaRepository implements InteriorFinanceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async ensureProjectScope(projectId: string, applicationSlug = 'interiorismo'): Promise<boolean> {
+  async ensureProjectScope(
+    projectId: string,
+    applicationSlug = 'interiorismo',
+  ): Promise<boolean> {
     const slug = applicationSlug.trim() || 'interiorismo';
     const n = await this.prisma.interiorProject.count({
       where: { id: projectId, deletedAt: null, application: { slug } },
@@ -71,10 +76,23 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     return n > 0;
   }
 
+  /**
+   * Bloquea las cuotas antes de tocar sus pagos (el pago referencia la cuota, así
+   * que bloquear después provoca interbloqueos) y evita estados calculados con
+   * pagos desfasados. Llamar dentro de una transacción.
+   */
+  private async lockSchedules(...ids: (string | null)[]): Promise<void> {
+    for (const id of [...new Set(ids.filter((v): v is string => !!v))].sort())
+      await this.prisma
+        .$queryRaw`SELECT id FROM interior_finance_income_schedules WHERE id = ${id} FOR UPDATE`;
+  }
+
   private async refreshScheduleStatus(scheduleId: string): Promise<void> {
-    const schedule = await this.prisma.interiorFinanceIncomeSchedule.findUnique({
-      where: { id: scheduleId },
-    });
+    const schedule = await this.prisma.interiorFinanceIncomeSchedule.findUnique(
+      {
+        where: { id: scheduleId },
+      },
+    );
     if (!schedule || schedule.status === 'WAIVED') return;
 
     const agg = await this.prisma.interiorProjectPayment.aggregate({
@@ -95,7 +113,10 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     }
   }
 
-  async getOverview(projectId: string, applicationSlug = 'interiorismo'): Promise<InteriorFinanceOverviewDto | null> {
+  async getOverview(
+    projectId: string,
+    applicationSlug = 'interiorismo',
+  ): Promise<InteriorFinanceOverviewDto | null> {
     const slug = applicationSlug.trim() || 'interiorismo';
     const project = await this.prisma.interiorProject.findFirst({
       where: { id: projectId, deletedAt: null },
@@ -105,22 +126,23 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     });
     if (!project || project.application.slug !== slug) return null;
 
-    const [schedules, payments, costs, budgetPriceTotal, sectionCount] = await Promise.all([
-      this.prisma.interiorFinanceIncomeSchedule.findMany({
-        where: { projectId },
-        orderBy: [{ sortOrder: 'asc' }, { dueDate: 'asc' }],
-      }),
-      this.prisma.interiorProjectPayment.findMany({
-        where: { projectId },
-        orderBy: { paidAt: 'desc' },
-      }),
-      this.prisma.interiorExecutionActualCost.findMany({
-        where: { projectId },
-        orderBy: { occurredAt: 'desc' },
-      }),
-      getProjectBudgetPriceTotal(this.prisma, projectId),
-      this.prisma.interiorProjectSection.count({ where: { projectId } }),
-    ]);
+    const [schedules, payments, costs, budgetPriceTotal, sectionCount] =
+      await Promise.all([
+        this.prisma.interiorFinanceIncomeSchedule.findMany({
+          where: { projectId },
+          orderBy: [{ sortOrder: 'asc' }, { dueDate: 'asc' }],
+        }),
+        this.prisma.interiorProjectPayment.findMany({
+          where: { projectId },
+          orderBy: { paidAt: 'desc' },
+        }),
+        this.prisma.interiorExecutionActualCost.findMany({
+          where: { projectId },
+          orderBy: { occurredAt: 'desc' },
+        }),
+        getProjectBudgetPriceTotal(this.prisma, projectId),
+        this.prisma.interiorProjectSection.count({ where: { projectId } }),
+      ]);
 
     const schedulePaidMap = new Map<string, number>();
     const groupedPaid = await this.prisma.interiorProjectPayment.groupBy({
@@ -133,19 +155,22 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       _sum: { amount: true },
     });
     for (const g of groupedPaid) {
-      if (g.scheduleItemId) schedulePaidMap.set(g.scheduleItemId, num(g._sum.amount));
+      if (g.scheduleItemId)
+        schedulePaidMap.set(g.scheduleItemId, num(g._sum.amount));
     }
 
-    const mappedSchedules: InteriorFinanceScheduleDto[] = schedules.map((s) => ({
-      id: s.id,
-      kind: s.kind,
-      dueDate: formatDateOnly(s.dueDate),
-      amount: num(s.amount),
-      concept: s.concept,
-      sortOrder: s.sortOrder,
-      status: s.status,
-      paidTowardSchedule: schedulePaidMap.get(s.id) ?? 0,
-    }));
+    const mappedSchedules: InteriorFinanceScheduleDto[] = schedules.map(
+      (s) => ({
+        id: s.id,
+        kind: s.kind,
+        dueDate: formatDateOnly(s.dueDate),
+        amount: num(s.amount),
+        concept: s.concept,
+        sortOrder: s.sortOrder,
+        status: s.status,
+        paidTowardSchedule: schedulePaidMap.get(s.id) ?? 0,
+      }),
+    );
 
     const mappedPayments: InteriorFinancePaymentDto[] = payments.map((p) => ({
       id: p.id,
@@ -214,7 +239,9 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       budgetVsCosts: contractValue - totalActualCosts,
       collectedVsCosts: collectedConfirmed - totalActualCosts,
       marginOnCollectedPct:
-        collectedConfirmed > 0 ? ((collectedConfirmed - totalActualCosts) / collectedConfirmed) * 100 : null,
+        collectedConfirmed > 0
+          ? ((collectedConfirmed - totalActualCosts) / collectedConfirmed) * 100
+          : null,
     };
 
     const monthKeys = new Set<string>();
@@ -230,7 +257,8 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       let inflow = 0;
       let outflow = 0;
       for (const p of payments) {
-        if (p.status === 'PAID' && ym(p.paidAt) === month) inflow += num(p.amount);
+        if (p.status === 'PAID' && ym(p.paidAt) === month)
+          inflow += num(p.amount);
       }
       for (const c of costs) {
         if (ym(c.occurredAt) === month) outflow += num(c.amount);
@@ -309,6 +337,7 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     };
   }
 
+  @Atomic()
   async updateSchedule(
     projectId: string,
     scheduleId: string,
@@ -323,10 +352,12 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     });
     if (!existing) throw new Error('SCHEDULE_NOT_FOUND');
 
+    await this.lockSchedules(scheduleId);
     const patch: Prisma.InteriorFinanceIncomeScheduleUpdateInput = {};
     if (payload.kind !== undefined) patch.kind = payload.kind.trim();
     if (payload.dueDate !== undefined) patch.dueDate = payload.dueDate;
-    if (payload.amount !== undefined) patch.amount = new Prisma.Decimal(payload.amount);
+    if (payload.amount !== undefined)
+      patch.amount = new Prisma.Decimal(payload.amount);
     if (payload.concept !== undefined) patch.concept = payload.concept.trim();
     if (payload.sortOrder !== undefined) patch.sortOrder = payload.sortOrder;
     if (payload.status !== undefined) patch.status = payload.status.trim();
@@ -346,7 +377,11 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     return s;
   }
 
-  async deleteSchedule(projectId: string, scheduleId: string, applicationSlug: string | undefined): Promise<void> {
+  async deleteSchedule(
+    projectId: string,
+    scheduleId: string,
+    applicationSlug: string | undefined,
+  ): Promise<void> {
     const ok = await this.ensureProjectScope(projectId, applicationSlug);
     if (!ok) throw new Error('PROJECT_NOT_FOUND');
 
@@ -355,9 +390,12 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     });
     if (!existing) throw new Error('SCHEDULE_NOT_FOUND');
 
-    await this.prisma.interiorFinanceIncomeSchedule.delete({ where: { id: scheduleId } });
+    await this.prisma.interiorFinanceIncomeSchedule.delete({
+      where: { id: scheduleId },
+    });
   }
 
+  @Atomic()
   async createPayment(
     projectId: string,
     applicationSlug: string | undefined,
@@ -368,6 +406,7 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
 
     let scheduleItemId: string | null = payload.scheduleItemId?.trim() || null;
     if (scheduleItemId) {
+      await this.lockSchedules(scheduleItemId);
       const sch = await this.prisma.interiorFinanceIncomeSchedule.findFirst({
         where: { id: scheduleItemId, projectId },
       });
@@ -401,6 +440,7 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     };
   }
 
+  @Atomic()
   async updatePayment(
     projectId: string,
     paymentId: string,
@@ -429,11 +469,14 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       }
     }
 
+    await this.lockSchedules(existing.scheduleItemId, scheduleItemId);
     const patch: Prisma.InteriorProjectPaymentUpdateInput = {};
     if (payload.paidAt !== undefined) patch.paidAt = payload.paidAt;
-    if (payload.amount !== undefined) patch.amount = new Prisma.Decimal(payload.amount);
+    if (payload.amount !== undefined)
+      patch.amount = new Prisma.Decimal(payload.amount);
     if (payload.concept !== undefined) patch.concept = payload.concept.trim();
-    if (payload.paymentType !== undefined) patch.paymentType = payload.paymentType.trim();
+    if (payload.paymentType !== undefined)
+      patch.paymentType = payload.paymentType.trim();
     if (payload.status !== undefined) patch.status = payload.status.trim();
     if (payload.scheduleItemId !== undefined) {
       patch.scheduleItem = scheduleItemId
@@ -448,9 +491,12 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
 
     const oldSid = existing.scheduleItemId;
     if (oldSid) await this.refreshScheduleStatus(oldSid);
-    if (scheduleItemId && scheduleItemId !== oldSid) await this.refreshScheduleStatus(scheduleItemId);
+    if (scheduleItemId && scheduleItemId !== oldSid)
+      await this.refreshScheduleStatus(scheduleItemId);
 
-    const updated = await this.prisma.interiorProjectPayment.findUnique({ where: { id: paymentId } });
+    const updated = await this.prisma.interiorProjectPayment.findUnique({
+      where: { id: paymentId },
+    });
     if (!updated) throw new Error('PAYMENT_NOT_FOUND');
 
     return {
@@ -464,7 +510,12 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     };
   }
 
-  async deletePayment(projectId: string, paymentId: string, applicationSlug: string | undefined): Promise<void> {
+  @Atomic()
+  async deletePayment(
+    projectId: string,
+    paymentId: string,
+    applicationSlug: string | undefined,
+  ): Promise<void> {
     const ok = await this.ensureProjectScope(projectId, applicationSlug);
     if (!ok) throw new Error('PROJECT_NOT_FOUND');
 
@@ -473,8 +524,12 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     });
     if (!existing) throw new Error('PAYMENT_NOT_FOUND');
 
-    await this.prisma.interiorProjectPayment.delete({ where: { id: paymentId } });
+    await this.lockSchedules(existing.scheduleItemId);
+    await this.prisma.interiorProjectPayment.delete({
+      where: { id: paymentId },
+    });
 
-    if (existing.scheduleItemId) await this.refreshScheduleStatus(existing.scheduleItemId);
+    if (existing.scheduleItemId)
+      await this.refreshScheduleStatus(existing.scheduleItemId);
   }
 }

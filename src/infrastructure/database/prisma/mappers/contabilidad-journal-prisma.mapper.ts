@@ -52,8 +52,14 @@ function toLineDto(row: JournalLineRow): ContabilidadJournalLineDto {
     debit: formatPenAmount(Number(row.debit)),
     credit: formatPenAmount(Number(row.credit)),
     foreignCurrency: row.foreignCurrency,
-    foreignAmount: row.foreignAmount != null ? formatPenAmount(Number(row.foreignAmount)) : null,
-    exchangeRate: row.exchangeRate != null ? formatExchangeRate(Number(row.exchangeRate)) : null,
+    foreignAmount:
+      row.foreignAmount != null
+        ? formatPenAmount(Number(row.foreignAmount))
+        : null,
+    exchangeRate:
+      row.exchangeRate != null
+        ? formatExchangeRate(Number(row.exchangeRate))
+        : null,
     costCenterId: row.costCenterId,
     costCenterCode: row.costCenter?.code ?? null,
     costCenterName: row.costCenter?.name ?? null,

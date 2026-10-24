@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { CONTABILIDAD_JOURNAL_STATUS } from '@domain/constants/contabilidad-journal.defaults';
 import { accountBalanceFromTotals } from '@domain/constants/contabilidad-financial.defaults';
 import { CONTABILIDAD_TREASURY_MOVEMENT_TYPE } from '@domain/constants/contabilidad-treasury.defaults';
@@ -15,7 +14,10 @@ import type {
   FinancialAnalysisDto,
   TrialBalanceDto,
 } from '@domain/repositories/contabilidad-reports.repository';
-import { formatPenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import {
+  formatPenAmount,
+  roundPenAmount,
+} from '@domain/utils/contabilidad-journal-amounts';
 
 export class ContabilidadReportsPrismaRepository implements ContabilidadReportsRepository {
   constructor(
@@ -30,21 +32,29 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
     igvPercent: number,
   ): Promise<ContabilidadDashboardDto> {
     const period = await this.requirePeriod(applicationId, periodId);
-    const [incomeStmt, balanceSheet, igv, entryCounts, treasury] = await Promise.all([
-      this.financial.getIncomeStatement(applicationId, periodId),
-      this.financial.getBalanceSheet(applicationId, periodId),
-      this.taxes.getIgvSummary(applicationId, periodId, igvPercent),
-      this.entryCounts(applicationId, periodId),
-      this.treasuryNet(applicationId, periodId),
-    ]);
+    const [incomeStmt, balanceSheet, igv, entryCounts, treasury] =
+      await Promise.all([
+        this.financial.getIncomeStatement(applicationId, periodId),
+        this.financial.getBalanceSheet(applicationId, periodId),
+        this.taxes.getIgvSummary(applicationId, periodId, igvPercent),
+        this.entryCounts(applicationId, periodId),
+        this.treasuryNet(applicationId, periodId),
+      ]);
 
-    const balances = await this.aggregatePeriodBalances(applicationId, periodId);
+    const balances = await this.aggregatePeriodBalances(
+      applicationId,
+      periodId,
+    );
     const cxc = this.sumByCodePrefix(balances, '104');
     const cxp = this.sumByCodePrefix(balances, '42');
     const liquidityAssets = this.sumByCodePrefix(balances, '10');
     const liquidityLiab = this.sumByCodePrefix(balances, '42');
     const liquidity =
-      liquidityLiab > 0 ? roundPenAmount(liquidityAssets / liquidityLiab) : liquidityAssets > 0 ? 99 : 0;
+      liquidityLiab > 0
+        ? roundPenAmount(liquidityAssets / liquidityLiab)
+        : liquidityAssets > 0
+          ? 99
+          : 0;
 
     const kpis = [
       {
@@ -89,7 +99,8 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
               ? `-${igv.balanceInFavor}`
               : '0.00',
         format: 'money' as const,
-        hint: Number(igv.balanceInFavor) > 0 ? 'Saldo a favor' : 'Saldo a pagar',
+        hint:
+          Number(igv.balanceInFavor) > 0 ? 'Saldo a favor' : 'Saldo a pagar',
       },
       {
         key: 'cash_bank',
@@ -184,15 +195,26 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
     };
   }
 
-  async getFinancialAnalysis(applicationId: string, periodId: string): Promise<FinancialAnalysisDto> {
+  async getFinancialAnalysis(
+    applicationId: string,
+    periodId: string,
+  ): Promise<FinancialAnalysisDto> {
     const period = await this.requirePeriod(applicationId, periodId);
-    const priorId = await this.financial.findPriorPeriodId(applicationId, period.year, period.month);
+    const priorId = await this.financial.findPriorPeriodId(
+      applicationId,
+      period.year,
+      period.month,
+    );
 
     const [bg, er, priorBg, priorEr] = await Promise.all([
       this.financial.getBalanceSheet(applicationId, periodId, priorId),
       this.financial.getIncomeStatement(applicationId, periodId, priorId),
-      priorId ? this.financial.getBalanceSheet(applicationId, priorId, null) : null,
-      priorId ? this.financial.getIncomeStatement(applicationId, priorId, null) : null,
+      priorId
+        ? this.financial.getBalanceSheet(applicationId, priorId, null)
+        : null,
+      priorId
+        ? this.financial.getIncomeStatement(applicationId, priorId, null)
+        : null,
     ]);
 
     const assets = Number(bg.assets.total);
@@ -205,10 +227,13 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
     const priorLiab = priorBg ? Number(priorBg.liabilities.total) : null;
     const priorEquity = priorBg ? Number(priorBg.equity.total) : null;
     const priorIncome = priorEr ? Number(priorEr.income.total) : null;
-    const priorNet = priorEr?.priorNetIncome != null ? Number(priorEr.netIncome) : null;
+    const priorNet =
+      priorEr?.priorNetIncome != null ? Number(priorEr.netIncome) : null;
 
-    const ratio = (num: number, den: number) => (den > 0 ? roundPenAmount(num / den) : null);
-    const pct = (num: number, den: number) => (den > 0 ? roundPenAmount((num / den) * 100) : null);
+    const ratio = (num: number, den: number) =>
+      den > 0 ? roundPenAmount(num / den) : null;
+    const pct = (num: number, den: number) =>
+      den > 0 ? roundPenAmount((num / den) * 100) : null;
 
     const ratios = [
       {
@@ -217,7 +242,7 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
         value: ratio(assets, liabilities)?.toFixed(2) ?? null,
         priorValue:
           priorAssets != null && priorLiab != null
-            ? ratio(priorAssets, priorLiab)?.toFixed(2) ?? null
+            ? (ratio(priorAssets, priorLiab)?.toFixed(2) ?? null)
             : null,
         unit: 'ratio' as const,
         description: 'Activo / Pasivo (aprox. acumulado)',
@@ -228,7 +253,7 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
         value: pct(liabilities, assets)?.toFixed(2) ?? null,
         priorValue:
           priorAssets != null && priorLiab != null
-            ? pct(priorLiab, priorAssets)?.toFixed(2) ?? null
+            ? (pct(priorLiab, priorAssets)?.toFixed(2) ?? null)
             : null,
         unit: 'percent' as const,
         description: 'Pasivo / Activo × 100',
@@ -239,7 +264,7 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
         value: pct(equity, assets)?.toFixed(2) ?? null,
         priorValue:
           priorAssets != null && priorEquity != null
-            ? pct(priorEquity, priorAssets)?.toFixed(2) ?? null
+            ? (pct(priorEquity, priorAssets)?.toFixed(2) ?? null)
             : null,
         unit: 'percent' as const,
         description: 'Participación del patrimonio en el activo',
@@ -250,7 +275,7 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
         value: pct(netIncome, income)?.toFixed(2) ?? null,
         priorValue:
           priorNet != null && priorIncome != null
-            ? pct(priorNet, priorIncome)?.toFixed(2) ?? null
+            ? (pct(priorNet, priorIncome)?.toFixed(2) ?? null)
             : null,
         unit: 'percent' as const,
         description: 'Utilidad neta / Ingresos del periodo',
@@ -261,7 +286,7 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
         value: pct(netIncome, assets)?.toFixed(2) ?? null,
         priorValue:
           priorNet != null && priorAssets != null
-            ? pct(priorNet, priorAssets)?.toFixed(2) ?? null
+            ? (pct(priorNet, priorAssets)?.toFixed(2) ?? null)
             : null,
         unit: 'percent' as const,
         description: 'Utilidad neta / Activo total',
@@ -277,7 +302,10 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
     };
   }
 
-  async getCashFlowTreasury(applicationId: string, periodId: string): Promise<CashFlowTreasuryDto> {
+  async getCashFlowTreasury(
+    applicationId: string,
+    periodId: string,
+  ): Promise<CashFlowTreasuryDto> {
     const period = await this.requirePeriod(applicationId, periodId);
     const movements = await this.prisma.contabilidadTreasuryMovement.findMany({
       where: { applicationId, periodId },
@@ -316,7 +344,9 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
       totalOut += v.out;
       return {
         movementType,
-        label: CONTABILIDAD_TREASURY_MOVEMENT_TYPE_LABELS[movementType] ?? movementType,
+        label:
+          CONTABILIDAD_TREASURY_MOVEMENT_TYPE_LABELS[movementType] ??
+          movementType,
         inAmount: formatPenAmount(v.in),
         outAmount: formatPenAmount(v.out),
         netAmount: formatPenAmount(roundPenAmount(v.in - v.out)),
@@ -351,10 +381,18 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
   private async entryCounts(applicationId: string, periodId: string) {
     const [posted, draft] = await Promise.all([
       this.prisma.contabilidadJournalEntry.count({
-        where: { applicationId, periodId, status: CONTABILIDAD_JOURNAL_STATUS.POSTED },
+        where: {
+          applicationId,
+          periodId,
+          status: CONTABILIDAD_JOURNAL_STATUS.POSTED,
+        },
       }),
       this.prisma.contabilidadJournalEntry.count({
-        where: { applicationId, periodId, status: CONTABILIDAD_JOURNAL_STATUS.DRAFT },
+        where: {
+          applicationId,
+          periodId,
+          status: CONTABILIDAD_JOURNAL_STATUS.DRAFT,
+        },
       }),
     ]);
     return { posted, draft };
@@ -379,10 +417,17 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
         outAmt += amt;
       }
     }
-    return { in: roundPenAmount(inAmt), out: roundPenAmount(outAmt), net: roundPenAmount(inAmt - outAmt) };
+    return {
+      in: roundPenAmount(inAmt),
+      out: roundPenAmount(outAmt),
+      net: roundPenAmount(inAmt - outAmt),
+    };
   }
 
-  private async aggregatePeriodBalances(applicationId: string, periodId: string) {
+  private async aggregatePeriodBalances(
+    applicationId: string,
+    periodId: string,
+  ) {
     const grouped = await this.prisma.contabilidadJournalEntryLine.groupBy({
       by: ['accountId'],
       where: {
@@ -418,7 +463,9 @@ export class ContabilidadReportsPrismaRepository implements ContabilidadReportsR
     prefix: string,
   ): number {
     return roundPenAmount(
-      rows.filter((r) => r.code.startsWith(prefix)).reduce((s, r) => s + r.balance, 0),
+      rows
+        .filter((r) => r.code.startsWith(prefix))
+        .reduce((s, r) => s + r.balance, 0),
     );
   }
 

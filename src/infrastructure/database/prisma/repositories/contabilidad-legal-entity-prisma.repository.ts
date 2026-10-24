@@ -41,7 +41,9 @@ export class ContabilidadLegalEntityPrismaRepository implements ContabilidadLega
   constructor(private readonly prisma: PrismaService) {}
 
   async ensureDefaults(applicationId: string): Promise<void> {
-    const count = await this.prisma.contabilidadLegalEntity.count({ where: { applicationId } });
+    const count = await this.prisma.contabilidadLegalEntity.count({
+      where: { applicationId },
+    });
     if (count > 0) return;
 
     for (const def of CONTABILIDAD_DEMO_LEGAL_ENTITIES) {
@@ -72,7 +74,9 @@ export class ContabilidadLegalEntityPrismaRepository implements ContabilidadLega
     return rows.map(mapEntity);
   }
 
-  async getDefault(applicationId: string): Promise<ContabilidadLegalEntityDto | null> {
+  async getDefault(
+    applicationId: string,
+  ): Promise<ContabilidadLegalEntityDto | null> {
     const row = await this.prisma.contabilidadLegalEntity.findFirst({
       where: { applicationId, isActive: true, isDefault: true },
     });
@@ -84,7 +88,10 @@ export class ContabilidadLegalEntityPrismaRepository implements ContabilidadLega
     return fallback ? mapEntity(fallback) : null;
   }
 
-  async findById(applicationId: string, id: string): Promise<ContabilidadLegalEntityDto | null> {
+  async findById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadLegalEntityDto | null> {
     const row = await this.prisma.contabilidadLegalEntity.findFirst({
       where: { applicationId, id, isActive: true },
     });

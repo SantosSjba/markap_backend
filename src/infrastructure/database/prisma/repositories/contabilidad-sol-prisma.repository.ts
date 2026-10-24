@@ -154,7 +154,9 @@ export class ContabilidadSolPrismaRepository implements ContabilidadSolRepositor
         applicationId,
         legalEntityId,
         ...(filters.periodId ? { periodId: filters.periodId } : {}),
-        ...(filters.declarationType ? { declarationType: filters.declarationType } : {}),
+        ...(filters.declarationType
+          ? { declarationType: filters.declarationType }
+          : {}),
       },
       include: logInclude,
       orderBy: [{ createdAt: 'desc' }],
@@ -225,7 +227,9 @@ export class ContabilidadSolPrismaRepository implements ContabilidadSolRepositor
     const row = await this.prisma.contabilidadPeriod.findFirst({
       where: { applicationId, id: periodId },
       include: {
-        legalEntity: { select: { id: true, ruc: true, legalName: true, code: true } },
+        legalEntity: {
+          select: { id: true, ruc: true, legalName: true, code: true },
+        },
       },
     });
     if (!row) return null;
@@ -239,7 +243,10 @@ export class ContabilidadSolPrismaRepository implements ContabilidadSolRepositor
     };
   }
 
-  async getPackageContent(applicationId: string, logId: string): Promise<string | null> {
+  async getPackageContent(
+    applicationId: string,
+    logId: string,
+  ): Promise<string | null> {
     const row = await this.prisma.contabilidadSunatDeclarationLog.findFirst({
       where: { applicationId, id: logId },
       select: { packageJson: true },

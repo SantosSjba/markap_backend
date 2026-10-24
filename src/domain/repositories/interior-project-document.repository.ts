@@ -51,8 +51,12 @@ export interface UpdateInteriorProjectDocumentData {
 }
 
 export interface InteriorProjectDocumentRepository {
-  findMany(filters: ListInteriorProjectDocumentsFilters): Promise<ListInteriorProjectDocumentsResult>;
-  create(data: CreateInteriorProjectDocumentData): Promise<InteriorProjectDocumentListItem | null>;
+  findMany(
+    filters: ListInteriorProjectDocumentsFilters,
+  ): Promise<ListInteriorProjectDocumentsResult>;
+  create(
+    data: CreateInteriorProjectDocumentData,
+  ): Promise<InteriorProjectDocumentListItem | null>;
   update(
     id: string,
     applicationSlug: string,
@@ -61,4 +65,6 @@ export interface InteriorProjectDocumentRepository {
   delete(id: string, applicationSlug: string): Promise<boolean>;
 }
 
-export const INTERIOR_PROJECT_DOCUMENT_REPOSITORY = Symbol('InteriorProjectDocumentRepository');
+export const INTERIOR_PROJECT_DOCUMENT_REPOSITORY = Symbol(
+  'InteriorProjectDocumentRepository',
+);

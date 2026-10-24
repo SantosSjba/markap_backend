@@ -12,7 +12,8 @@ export class ContabilidadLegalEntityOperationsService {
   ) {}
 
   async list(applicationSlug?: string) {
-    const applicationId = await this.context.resolveApplicationId(applicationSlug);
+    const applicationId =
+      await this.context.resolveApplicationId(applicationSlug);
     await this.legalEntities.ensureDefaults(applicationId);
     const entities = await this.legalEntities.list(applicationId);
     return { entities };

@@ -20,15 +20,17 @@ export class ImportArquitecturaProjectBudgetFromExcelUseCase {
       throw new BadRequestException('Archivo Excel vacío');
     }
     const parsed = parseInteriorBudgetExcel(file.buffer);
-    return this.repo.importBudgetSections(
-      projectId,
-      parsed.sections,
-      options.replace ?? false,
-      applicationSlug,
-    ).then((result) => ({
-      ...result,
-      sheetName: parsed.sheetName,
-      sourceFileName: file.originalname ?? null,
-    }));
+    return this.repo
+      .importBudgetSections(
+        projectId,
+        parsed.sections,
+        options.replace ?? false,
+        applicationSlug,
+      )
+      .then((result) => ({
+        ...result,
+        sheetName: parsed.sheetName,
+        sourceFileName: file.originalname ?? null,
+      }));
   }
 }

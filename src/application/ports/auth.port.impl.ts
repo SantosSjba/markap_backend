@@ -8,7 +8,10 @@ import { RequestPasswordResetUseCase } from '../use-cases/auth/request-password-
 import { ResetPasswordUseCase } from '../use-cases/auth/reset-password.use-case';
 import { GetUserRolesUseCase } from '../use-cases/roles/get-user-roles.use-case';
 import type { RegisterUserInput } from '../use-cases/auth/register-user.use-case';
-import type { LoginUserInput, LoginUserOutput } from '../use-cases/auth/login-user.use-case';
+import type {
+  LoginUserInput,
+  LoginUserOutput,
+} from '../use-cases/auth/login-user.use-case';
 import type { RequestPasswordResetInput } from '../use-cases/auth/request-password-reset.use-case';
 import type { ResetPasswordInput } from '../use-cases/auth/reset-password.use-case';
 import type { AuthPort } from './auth.port';
@@ -36,7 +39,9 @@ export class AuthPortImpl implements AuthPort {
     return this.userRolesUc.execute(userId);
   }
 
-  async getProfileWithRoles(userId: string): Promise<{ user: User; roles: Role[] }> {
+  async getProfileWithRoles(
+    userId: string,
+  ): Promise<{ user: User; roles: Role[] }> {
     const user = await this.profileUc.execute(userId);
     const roles = await this.userRolesUc.execute(user.id);
     return { user, roles };

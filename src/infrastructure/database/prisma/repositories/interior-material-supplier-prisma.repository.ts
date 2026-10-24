@@ -72,7 +72,9 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
       include: {
         catalogLinks: {
           include: {
-            catalogMaterial: { select: { code: true, name: true, category: true } },
+            catalogMaterial: {
+              select: { code: true, name: true, category: true },
+            },
           },
           orderBy: { id: 'asc' },
         },
@@ -104,7 +106,9 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     };
   }
 
-  async list(filters: ListInteriorMaterialSuppliersFilters): Promise<ListInteriorMaterialSuppliersResult> {
+  async list(
+    filters: ListInteriorMaterialSuppliersFilters,
+  ): Promise<ListInteriorMaterialSuppliersResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
@@ -112,7 +116,9 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
       return { data: [], total: 0, page: filters.page, limit: filters.limit };
     }
 
-    const andParts: Prisma.InteriorMaterialSupplierWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.InteriorMaterialSupplierWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       andParts.push({
@@ -155,14 +161,19 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<InteriorSupplierDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<InteriorSupplierDetail | null> {
     const row = await this.prisma.interiorMaterialSupplier.findUnique({
       where: { id },
       include: {
         application: { select: { slug: true } },
         catalogLinks: {
           include: {
-            catalogMaterial: { select: { code: true, name: true, category: true } },
+            catalogMaterial: {
+              select: { code: true, name: true, category: true },
+            },
           },
           orderBy: { id: 'asc' },
         },
@@ -175,7 +186,11 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
       },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
 
     return {
       id: row.id,
@@ -214,13 +229,20 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     return detail;
   }
 
-  async update(id: string, payload: UpdateInteriorMaterialSupplierPayload): Promise<InteriorSupplierDetail> {
+  async update(
+    id: string,
+    payload: UpdateInteriorMaterialSupplierPayload,
+  ): Promise<InteriorSupplierDetail> {
     const patch: Prisma.InteriorMaterialSupplierUncheckedUpdateInput = {};
-    if (payload.companyName !== undefined) patch.companyName = payload.companyName.trim();
+    if (payload.companyName !== undefined)
+      patch.companyName = payload.companyName.trim();
     if (payload.ruc !== undefined) patch.ruc = payload.ruc.trim();
-    if (payload.contactName !== undefined) patch.contactName = payload.contactName?.trim() || null;
-    if (payload.phone !== undefined) patch.phone = payload.phone?.trim() || null;
-    if (payload.email !== undefined) patch.email = payload.email?.trim() || null;
+    if (payload.contactName !== undefined)
+      patch.contactName = payload.contactName?.trim() || null;
+    if (payload.phone !== undefined)
+      patch.phone = payload.phone?.trim() || null;
+    if (payload.email !== undefined)
+      patch.email = payload.email?.trim() || null;
 
     await this.prisma.interiorMaterialSupplier.update({
       where: { id },
@@ -247,9 +269,12 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     const material = await this.prisma.interiorCatalogMaterial.findUnique({
       where: { id: catalogMaterialId },
     });
-    if (!supplier || !material) throw new Error('Supplier or material not found');
+    if (!supplier || !material)
+      throw new Error('Supplier or material not found');
     if (supplier.applicationId !== material.applicationId) {
-      throw new Error('Proveedor y material deben pertenecer a la misma aplicación');
+      throw new Error(
+        'Proveedor y material deben pertenecer a la misma aplicación',
+      );
     }
 
     await this.prisma.interiorSupplierCatalogLink.create({
@@ -267,7 +292,9 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
   }
 
   async unlinkCatalogMaterial(linkId: string): Promise<void> {
-    await this.prisma.interiorSupplierCatalogLink.delete({ where: { id: linkId } });
+    await this.prisma.interiorSupplierCatalogLink.delete({
+      where: { id: linkId },
+    });
   }
 
   async recordPurchase(
@@ -279,7 +306,8 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     });
     if (!supplier) throw new Error('Supplier not found');
 
-    let catalogMaterialId: string | null = payload.catalogMaterialId?.trim() || null;
+    const catalogMaterialId: string | null =
+      payload.catalogMaterialId?.trim() || null;
     if (catalogMaterialId) {
       const material = await this.prisma.interiorCatalogMaterial.findUnique({
         where: { id: catalogMaterialId },

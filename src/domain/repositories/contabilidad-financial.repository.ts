@@ -1,4 +1,6 @@
-export const CONTABILIDAD_FINANCIAL_REPOSITORY = Symbol('ContabilidadFinancialRepository');
+export const CONTABILIDAD_FINANCIAL_REPOSITORY = Symbol(
+  'ContabilidadFinancialRepository',
+);
 
 export interface FinancialStatementLineDto {
   accountId: string;
@@ -114,7 +116,10 @@ export interface ContabilidadFinancialRepository {
     priorPeriodId?: string | null,
   ): Promise<CashFlowStatementDto>;
 
-  getClosingPreview(applicationId: string, periodId: string): Promise<ClosingPreviewDto>;
+  getClosingPreview(
+    applicationId: string,
+    periodId: string,
+  ): Promise<ClosingPreviewDto>;
 
   createClosingRegularizationEntry(
     applicationId: string,
@@ -122,5 +127,9 @@ export interface ContabilidadFinancialRepository {
     createdBy?: string | null,
   ): Promise<ClosingRegularizationResultDto>;
 
-  findPriorPeriodId(applicationId: string, year: number, month: number): Promise<string | null>;
+  findPriorPeriodId(
+    applicationId: string,
+    year: number,
+    month: number,
+  ): Promise<string | null>;
 }

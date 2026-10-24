@@ -1,5 +1,11 @@
 ﻿import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class CreateArquitecturaCatalogMaterialDto {
   @ApiProperty()
@@ -41,7 +47,10 @@ export class CreateArquitecturaCatalogMaterialDto {
   @IsString()
   technicalSheetUrl?: string | null;
 
-  @ApiPropertyOptional({ type: [String], description: 'URLs de imágenes en orden' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'URLs de imágenes en orden',
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

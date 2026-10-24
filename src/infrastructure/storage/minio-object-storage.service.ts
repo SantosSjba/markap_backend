@@ -42,7 +42,9 @@ export class MinioObjectStorageService implements OnModuleInit {
       await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
     } catch {
       try {
-        await this.client.send(new CreateBucketCommand({ Bucket: this.bucket }));
+        await this.client.send(
+          new CreateBucketCommand({ Bucket: this.bucket }),
+        );
         this.logger.log(`Bucket creado: ${this.bucket}`);
       } catch (err) {
         this.logger.warn(

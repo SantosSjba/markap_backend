@@ -20,7 +20,9 @@ const SLUG = 'produccion';
 
 function assertProduccion(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug produccion');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug produccion',
+    );
   }
 }
 
@@ -71,10 +73,14 @@ export class CreateProduccionMaterialUseCase {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateProduccionMaterialPayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateProduccionMaterialPayload,
+  ) {
     assertProduccion(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación produccion no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación produccion no encontrada');
 
     return this.repo.create(app.id, payload);
   }
@@ -87,7 +93,11 @@ export class UpdateProduccionMaterialUseCase {
     private readonly repo: ProduccionMaterialRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateProduccionMaterialPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateProduccionMaterialPayload,
+  ) {
     assertProduccion(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Material no encontrado');
@@ -129,7 +139,10 @@ export class CreateProduccionStockMovementUseCase {
     private readonly repo: ProduccionMaterialRepository,
   ) {}
 
-  execute(applicationSlug: string, payload: CreateProduccionStockMovementPayload) {
+  execute(
+    applicationSlug: string,
+    payload: CreateProduccionStockMovementPayload,
+  ) {
     assertProduccion(applicationSlug);
     return this.repo.createMovement(SLUG, payload);
   }

@@ -1,6 +1,24 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard, type AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
+  JwtAuthGuard,
+  type AuthenticatedRequest,
+} from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadInventoryOperationsService } from '../../../application/services/contabilidad-inventory-operations.service';
 import type {
   CreateInventoryItemInput,
@@ -13,7 +31,9 @@ import type {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class ContabilidadInventoryController {
-  constructor(private readonly inventory: ContabilidadInventoryOperationsService) {}
+  constructor(
+    private readonly inventory: ContabilidadInventoryOperationsService,
+  ) {}
 
   @Get('catalog')
   @ApiOperation({ summary: 'Etiquetas de catálogo inventario' })
@@ -40,7 +60,10 @@ export class ContabilidadInventoryController {
   @Get('items/:id')
   @ApiOperation({ summary: 'Detalle de ítem' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  getItem(@Query('applicationSlug') applicationSlug: string | undefined, @Param('id') id: string) {
+  getItem(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('id') id: string,
+  ) {
     return this.inventory.getItem(applicationSlug, id);
   }
 
@@ -74,7 +97,11 @@ export class ContabilidadInventoryController {
     @Query('itemId') itemId?: string,
     @Query('movementType') movementType?: string,
   ) {
-    return this.inventory.listMovements(applicationSlug, { periodId, itemId, movementType });
+    return this.inventory.listMovements(applicationSlug, {
+      periodId,
+      itemId,
+      movementType,
+    });
   }
 
   @Post('movements')
@@ -91,7 +118,10 @@ export class ContabilidadInventoryController {
   @Get('items/:id/kardex')
   @ApiOperation({ summary: 'Kardex valorizado del ítem' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  getKardex(@Query('applicationSlug') applicationSlug: string | undefined, @Param('id') id: string) {
+  getKardex(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('id') id: string,
+  ) {
     return this.inventory.getKardex(applicationSlug, id);
   }
 

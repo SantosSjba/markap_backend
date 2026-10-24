@@ -10,9 +10,7 @@ import {
   IsDateString,
 } from 'class-validator';
 
-import {
-  INTERIOR_PROJECT_STATUS_CODES,
-} from '@domain/constants/interior-project-stages.constants';
+import { INTERIOR_PROJECT_STATUS_CODES } from '@domain/constants/interior-project-stages.constants';
 
 const PROJECT_TYPES = [
   'REMODELING',

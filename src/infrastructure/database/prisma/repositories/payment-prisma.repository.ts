@@ -1,4 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { rentalPaymentState } from '@domain/utils/rental-payment-state.util';
 import { containsI } from '@common/utils/prisma-contains-insensitive.util';
 import { PrismaService } from '../prisma.service';
 import { PaymentPrismaMapper } from '../mappers/payment-prisma.mapper';
@@ -25,8 +31,18 @@ import {
 } from '@domain/utils/peru-date.util';
 
 const MONTH_NAMES_ES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 function pad2(n: number): string {
@@ -117,7 +133,9 @@ export class PaymentPrismaRepository implements PaymentRepository {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  async listPending(filters: ListPendingPaymentsFilters): Promise<PendingPaymentItem[]> {
+  async listPending(
+    filters: ListPendingPaymentsFilters,
+  ): Promise<PendingPaymentItem[]> {
     const app = await this.prisma.application.findFirst({
       where: { slug: filters.applicationSlug, deletedAt: null },
       select: { id: true },
@@ -131,7 +149,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
 
     const payments = await this.prisma.payment.findMany({
       where: {
-        status: statusFilter as any,
+        status: statusFilter,
         rental: {
           applicationId: app.id,
           status: 'ACTIVE',
@@ -140,7 +158,9 @@ export class PaymentPrismaRepository implements PaymentRepository {
             ? {
                 OR: [
                   { tenant: { fullName: containsI(filters.search.trim()) } },
-                  { property: { addressLine: containsI(filters.search.trim()) } },
+                  {
+                    property: { addressLine: containsI(filters.search.trim()) },
+                  },
                 ],
               }
             : {}),
@@ -176,14 +196,16 @@ export class PaymentPrismaRepository implements PaymentRepository {
         p.rental.tenant.id,
         p.rental.tenant.fullName,
         p.rental.tenant.notes ?? null,
-        `${p.rental.property.addressLine}, ${p.rental.property.district?.name ?? ''}`.trim().replace(/,$/, ''),
+        `${p.rental.property.addressLine}, ${p.rental.property.district?.name ?? ''}`
+          .trim()
+          .replace(/,$/, ''),
         p.rental.property.owner?.fullName ?? '—',
         p.periodYear,
         p.periodMonth,
         `${MONTH_NAMES_ES[p.periodMonth - 1]} ${p.periodYear}`,
         p.dueDate,
         daysOverdue,
-        p.amount,
+        Math.max(0, Math.round((p.amount - (p.paidAmount ?? 0)) * 100) / 100),
         p.currency,
         p.status as PaymentStatus,
       );
@@ -191,32 +213,61 @@ export class PaymentPrismaRepository implements PaymentRepository {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  async registerPayment(paymentId: string, data: RegisterPaymentData): Promise<Payment> {
-    const updated = await this.prisma.payment.update({
-      where: { id: paymentId },
-      data: {
-        paidDate: data.paidDate,
-        paidAmount: data.paidAmount,
-        paymentMethod: data.paymentMethod,
-        referenceNumber: data.referenceNumber ?? null,
-        notes: data.notes ?? null,
-        status: 'PAID',
-        createdBy: data.registeredBy ?? null,
-      },
+  async registerPayment(
+    paymentId: string,
+    data: RegisterPaymentData,
+  ): Promise<Payment> {
+    const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM payments WHERE id = ${paymentId} FOR UPDATE`;
+      const payment = await tx.payment.findUnique({ where: { id: paymentId } });
+      if (!payment) throw new NotFoundException('Cuota no encontrada');
+      let state: ReturnType<typeof rentalPaymentState>;
+      try {
+        state = rentalPaymentState(
+          payment.amount,
+          payment.paidAmount ?? 0,
+          data.paidAmount,
+        );
+      } catch (error) {
+        throw new BadRequestException(
+          error instanceof Error ? error.message : 'Abono no válido',
+        );
+      }
+      return tx.payment.update({
+        where: { id: paymentId },
+        data: {
+          paidDate: data.paidDate,
+          paidAmount: state.paidAmount,
+          paymentMethod: data.paymentMethod,
+          referenceNumber: data.referenceNumber ?? null,
+          notes: data.notes ?? null,
+          status: state.status,
+          createdBy: data.registeredBy ?? null,
+        },
+      });
     });
     return PaymentPrismaMapper.toDomain(updated);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  async listHistory(filters: ListPaymentHistoryFilters): Promise<ListPaymentHistoryResult> {
+  async listHistory(
+    filters: ListPaymentHistoryFilters,
+  ): Promise<ListPaymentHistoryResult> {
     const app = await this.prisma.application.findFirst({
       where: { slug: filters.applicationSlug, deletedAt: null },
       select: { id: true },
     });
-    if (!app) return { data: [], total: 0, totalAmount: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return {
+        data: [],
+        total: 0,
+        totalAmount: 0,
+        page: filters.page,
+        limit: filters.limit,
+      };
 
-    const where: any = {
-      status: 'PAID',
+    const where: Prisma.PaymentWhereInput = {
+      status: { in: ['PAID', 'PARTIAL'] },
       rental: { applicationId: app.id, deletedAt: null },
     };
 
@@ -225,15 +276,16 @@ export class PaymentPrismaRepository implements PaymentRepository {
     if (filters.paymentMethod) where.paymentMethod = filters.paymentMethod;
     if (filters.search?.trim()) {
       const q = filters.search.trim();
-      where.rental = {
-        ...where.rental,
-        OR: [
-          { tenant: { fullName: containsI(q) } },
-          { property: { addressLine: containsI(q) } },
-        ],
-      };
       where.OR = [
-        ...(where.OR ?? []),
+        {
+          rental: {
+            OR: [
+              { tenant: { fullName: containsI(q) } },
+              { tenants: { some: { client: { fullName: containsI(q) } } } },
+              { property: { addressLine: containsI(q) } },
+            ],
+          },
+        },
         { referenceNumber: containsI(q) },
       ];
     }
@@ -273,7 +325,9 @@ export class PaymentPrismaRepository implements PaymentRepository {
           p.rentalId,
           `ALQ-${p.rentalId.slice(-6).toUpperCase()}`,
           p.rental.tenant.fullName,
-          `${p.rental.property.addressLine}, ${p.rental.property.district?.name ?? ''}`.trim().replace(/,$/, ''),
+          `${p.rental.property.addressLine}, ${p.rental.property.district?.name ?? ''}`
+            .trim()
+            .replace(/,$/, ''),
           p.rental.property.owner?.fullName ?? '—',
           p.periodYear,
           p.periodMonth,
@@ -297,22 +351,28 @@ export class PaymentPrismaRepository implements PaymentRepository {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  async listOverdue(applicationSlug: string, search?: string): Promise<OverduePaymentItem[]> {
+  async listOverdue(
+    applicationSlug: string,
+    search?: string,
+  ): Promise<OverduePaymentItem[]> {
     const app = await this.prisma.application.findFirst({
       where: { slug: applicationSlug, deletedAt: null },
       select: { id: true },
     });
     if (!app) return [];
 
-    const where: any = {
-      status: 'OVERDUE',
+    const where: Prisma.PaymentWhereInput = {
+      OR: [
+        { status: 'OVERDUE' },
+        { status: 'PARTIAL', dueDate: { lt: startOfTodayLima() } },
+      ],
       rental: { applicationId: app.id, status: 'ACTIVE', deletedAt: null },
     };
 
     if (search?.trim()) {
       const q = search.trim();
       where.rental = {
-        ...where.rental,
+        ...(where.rental as Prisma.RentalWhereInput),
         OR: [
           { tenant: { fullName: containsI(q) } },
           { property: { addressLine: containsI(q) } },
@@ -351,26 +411,44 @@ export class PaymentPrismaRepository implements PaymentRepository {
     const rentalIds = [...new Set(overduePayments.map((p) => p.rental.id))];
     const rentalNotes = await this.prisma.rental.findMany({
       where: { id: { in: rentalIds } },
-      select: { id: true, lastCommunicationNote: true, lastCommunicationDate: true },
+      select: {
+        id: true,
+        lastCommunicationNote: true,
+        lastCommunicationDate: true,
+      },
     });
     const rentalNoteMap = new Map(
-      rentalNotes.map((r) => [r.id, { note: r.lastCommunicationNote, date: r.lastCommunicationDate }]),
+      rentalNotes.map((r) => [
+        r.id,
+        { note: r.lastCommunicationNote, date: r.lastCommunicationDate },
+      ]),
     );
 
-    // Agrupa por tenantId
+    // Agrupa por contrato para no mezclar propiedades ni monedas.
     const grouped = new Map<
       string,
       {
-        tenant: { id: string; fullName: string; documentNumber: string | null; primaryPhone: string | null; primaryEmail: string | null; notes: string | null };
+        tenant: {
+          id: string;
+          fullName: string;
+          documentNumber: string | null;
+          primaryPhone: string | null;
+          primaryEmail: string | null;
+          notes: string | null;
+        };
         payments: typeof overduePayments;
         rental: (typeof overduePayments)[0]['rental'];
       }
     >();
 
     for (const p of overduePayments) {
-      const tid = p.rental.tenant.id;
+      const tid = p.rental.id;
       if (!grouped.has(tid)) {
-        grouped.set(tid, { tenant: p.rental.tenant, payments: [], rental: p.rental });
+        grouped.set(tid, {
+          tenant: p.rental.tenant,
+          payments: [],
+          rental: p.rental,
+        });
       }
       grouped.get(tid)!.payments.push(p);
     }
@@ -379,12 +457,17 @@ export class PaymentPrismaRepository implements PaymentRepository {
 
     const result: OverduePaymentItem[] = [];
     for (const [, { tenant, payments, rental }] of grouped) {
-      const totalOwed = payments.reduce((s, p) => s + p.amount, 0);
+      const totalOwed = payments.reduce(
+        (s, p) => s + Math.max(0, p.amount - (p.paidAmount ?? 0)),
+        0,
+      );
       const monthsOverdue = payments.length;
       const maxDays = Math.max(
         ...payments.map((p) => {
           const due = startOfDayLima(p.dueDate);
-          return Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+          return Math.floor(
+            (today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24),
+          );
         }),
       );
 
@@ -393,7 +476,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
 
       // Último pago pagado
       const lastPaidPayment = await this.prisma.payment.findFirst({
-        where: { rentalId: rental.id, status: 'PAID' },
+        where: { rentalId: rental.id, status: { in: ['PAID', 'PARTIAL'] } },
         orderBy: [{ paidDate: 'desc' }, { createdAt: 'desc' }],
         select: { paidDate: true },
       });
@@ -414,7 +497,9 @@ export class PaymentPrismaRepository implements PaymentRepository {
           lastPaidPayment?.paidDate ?? null,
           commNote?.date ?? null,
           commNote?.note ?? null,
-          `${rental.property.addressLine}, ${rental.property.district?.name ?? ''}`.trim().replace(/,$/, ''),
+          `${rental.property.addressLine}, ${rental.property.district?.name ?? ''}`
+            .trim()
+            .replace(/,$/, ''),
           rental.property.owner?.fullName ?? '—',
           rental.id,
         ),
@@ -437,25 +522,48 @@ export class PaymentPrismaRepository implements PaymentRepository {
     const year = Number(todayYmd.slice(0, 4));
     const month = Number(todayYmd.slice(5, 7));
 
-    const [pendingAgg, collectedAgg, pendingCount, overdueCount] = await Promise.all([
-      this.prisma.payment.aggregate({
-        where: { periodYear: year, periodMonth: month, status: { in: ['PENDING', 'OVERDUE'] }, rental: { applicationId: app.id, deletedAt: null } },
-        _sum: { amount: true },
-      }),
-      this.prisma.payment.aggregate({
-        where: { periodYear: year, periodMonth: month, status: 'PAID', rental: { applicationId: app.id, deletedAt: null } },
-        _sum: { paidAmount: true },
-      }),
-      this.prisma.payment.count({
-        where: { status: { in: ['PENDING', 'OVERDUE'] }, rental: { applicationId: app.id, deletedAt: null } },
-      }),
-      this.prisma.payment.count({
-        where: { status: 'OVERDUE', rental: { applicationId: app.id, deletedAt: null } },
-      }),
-    ]);
+    const [pendingAgg, collectedAgg, pendingCount, overdueCount] =
+      await Promise.all([
+        this.prisma.payment.aggregate({
+          where: {
+            periodYear: year,
+            periodMonth: month,
+            status: { in: ['PENDING', 'OVERDUE', 'PARTIAL'] },
+            rental: { applicationId: app.id, deletedAt: null },
+          },
+          _sum: { amount: true, paidAmount: true },
+        }),
+        this.prisma.payment.aggregate({
+          where: {
+            periodYear: year,
+            periodMonth: month,
+            status: { in: ['PAID', 'PARTIAL'] },
+            rental: { applicationId: app.id, deletedAt: null },
+          },
+          _sum: { paidAmount: true },
+        }),
+        this.prisma.payment.count({
+          where: {
+            status: { in: ['PENDING', 'OVERDUE', 'PARTIAL'] },
+            rental: { applicationId: app.id, deletedAt: null },
+          },
+        }),
+        this.prisma.payment.count({
+          where: {
+            OR: [
+              { status: 'OVERDUE' },
+              { status: 'PARTIAL', dueDate: { lt: startOfTodayLima() } },
+            ],
+            rental: { applicationId: app.id, deletedAt: null },
+          },
+        }),
+      ]);
 
     return new PaymentStats(
-      pendingAgg._sum.amount ?? 0,
+      Math.max(
+        0,
+        (pendingAgg._sum.amount ?? 0) - (pendingAgg._sum.paidAmount ?? 0),
+      ),
       collectedAgg._sum.paidAmount ?? 0,
       pendingCount,
       overdueCount,

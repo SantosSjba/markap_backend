@@ -1,5 +1,19 @@
-import { Body, Controller, Get, Param, Patch, Put, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ProduccionConfigOperationsService } from '../../../application/services/produccion-config-operations.service';
 import type {
@@ -14,20 +28,33 @@ import type {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class ProduccionConfigController {
-  constructor(private readonly produccionConfig: ProduccionConfigOperationsService) {}
+  constructor(
+    private readonly produccionConfig: ProduccionConfigOperationsService,
+  ) {}
 
   @Get('bootstrap')
-  @ApiOperation({ summary: 'Parametrización: categorías, etapas, unidades, numeración y defaults' })
+  @ApiOperation({
+    summary:
+      'Parametrización: categorías, etapas, unidades, numeración y defaults',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   bootstrap(@Query('applicationSlug') applicationSlug?: string) {
     return this.produccionConfig.bootstrap(applicationSlug);
   }
 
   @Put('settings')
-  @ApiOperation({ summary: 'Parámetros por defecto (IGV, desperdicio madera, vigencia cotización)' })
+  @ApiOperation({
+    summary:
+      'Parámetros por defecto (IGV, desperdicio madera, vigencia cotización)',
+  })
   updateSettings(
     @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: { igvPercent?: number; woodWastePercent?: number; quotationValidDays?: number },
+    @Body()
+    body: {
+      igvPercent?: number;
+      woodWastePercent?: number;
+      quotationValidDays?: number;
+    },
   ) {
     return this.produccionConfig.updateSettings(applicationSlug, body);
   }
@@ -37,7 +64,10 @@ export class ProduccionConfigController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body() body: { categories: ProduccionFurnitureCategoryInput[] },
   ) {
-    return this.produccionConfig.replaceFurnitureCategories(applicationSlug, body);
+    return this.produccionConfig.replaceFurnitureCategories(
+      applicationSlug,
+      body,
+    );
   }
 
   @Put('material-categories')
@@ -45,7 +75,10 @@ export class ProduccionConfigController {
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Body() body: { categories: ProduccionMaterialCategoryInput[] },
   ) {
-    return this.produccionConfig.replaceMaterialCategories(applicationSlug, body);
+    return this.produccionConfig.replaceMaterialCategories(
+      applicationSlug,
+      body,
+    );
   }
 
   @Put('production-stages')
@@ -65,14 +98,26 @@ export class ProduccionConfigController {
   }
 
   @Patch('numbering/:seriesKey')
-  @ApiOperation({ summary: 'Ajustar prefijo/correlativo de una serie documental' })
+  @ApiOperation({
+    summary: 'Ajustar prefijo/correlativo de una serie documental',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   patchNumbering(
     @Query('applicationSlug') applicationSlug: string | undefined,
     @Param('seriesKey') seriesKey: string,
-    @Body() body: { prefix?: string; lastNumber?: number; padLength?: number; includeYear?: boolean },
+    @Body()
+    body: {
+      prefix?: string;
+      lastNumber?: number;
+      padLength?: number;
+      includeYear?: boolean;
+    },
   ) {
-    return this.produccionConfig.patchNumbering(applicationSlug, seriesKey, body);
+    return this.produccionConfig.patchNumbering(
+      applicationSlug,
+      seriesKey,
+      body,
+    );
   }
 
   @Get('numbering/:seriesKey/preview')

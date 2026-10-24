@@ -27,7 +27,9 @@ class UpdateClientAddressDto {
   @ApiPropertyOptional({
     description: 'Ubicación libre cuando distrito = Otros',
   })
-  @ValidateIf((o) => o.districtId === UBIGEO_OTHER_DISTRICT_ID)
+  @ValidateIf(
+    (o: { districtId?: string }) => o.districtId === UBIGEO_OTHER_DISTRICT_ID,
+  )
   @IsObject()
   @ValidateNested()
   @Type(() => LocationCustomDto)

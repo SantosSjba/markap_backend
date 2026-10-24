@@ -1,7 +1,10 @@
 import type { User } from '@domain/entities/user.entity';
 import type { Role } from '@domain/entities/role.entity';
 import type { RegisterUserInput } from '../use-cases/auth/register-user.use-case';
-import type { LoginUserInput, LoginUserOutput } from '../use-cases/auth/login-user.use-case';
+import type {
+  LoginUserInput,
+  LoginUserOutput,
+} from '../use-cases/auth/login-user.use-case';
 import type { RequestPasswordResetInput } from '../use-cases/auth/request-password-reset.use-case';
 import type { ResetPasswordInput } from '../use-cases/auth/reset-password.use-case';
 

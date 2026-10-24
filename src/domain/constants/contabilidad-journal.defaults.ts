@@ -7,7 +7,10 @@ export const CONTABILIDAD_JOURNAL_STATUS = {
 export type ContabilidadJournalStatus =
   (typeof CONTABILIDAD_JOURNAL_STATUS)[keyof typeof CONTABILIDAD_JOURNAL_STATUS];
 
-export const CONTABILIDAD_JOURNAL_STATUS_LABELS: Record<ContabilidadJournalStatus, string> = {
+export const CONTABILIDAD_JOURNAL_STATUS_LABELS: Record<
+  ContabilidadJournalStatus,
+  string
+> = {
   DRAFT: 'Borrador',
   POSTED: 'Publicado',
   REVERSED: 'Reversado',

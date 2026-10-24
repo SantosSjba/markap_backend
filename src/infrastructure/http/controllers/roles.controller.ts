@@ -1,3 +1,4 @@
+import { AdminGuard } from '../../../common/guards/admin.guard';
 import {
   Controller,
   Get,
@@ -32,7 +33,7 @@ import { ApplicationResponseDto } from '../dtos/applications';
 
 @ApiTags('Roles')
 @Controller('roles')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AdminGuard)
 @ApiBearerAuth('JWT-auth')
 export class RolesController {
   constructor(
@@ -56,7 +57,11 @@ export class RolesController {
 
   @Get(':id/applications')
   @ApiOperation({ summary: 'Obtener aplicaciones asignadas a un rol' })
-  @ApiResponse({ status: 200, description: 'Lista de aplicaciones del rol', type: [ApplicationResponseDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de aplicaciones del rol',
+    type: [ApplicationResponseDto],
+  })
   @ApiResponse({ status: 404, description: 'Rol no encontrado' })
   async getRoleApplications(@Param('id') id: string) {
     const applications = await this.getApplicationsByRoleUseCase.execute(id);

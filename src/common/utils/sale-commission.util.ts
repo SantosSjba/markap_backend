@@ -45,9 +45,7 @@ function parseDueDate(value: string | null | undefined): Date | null {
   return d;
 }
 
-export function sumDeductibles(
-  deductibles: { amount: number }[],
-): number {
+export function sumDeductibles(deductibles: { amount: number }[]): number {
   return roundMoney(deductibles.reduce((s, d) => s + d.amount, 0));
 }
 
@@ -63,10 +61,12 @@ export function resolvePaymentPartAmounts(
   parts: SaleCommissionPaymentPartInput[],
 ): ResolvedPaymentPart[] {
   if (!parts.length) {
-    return [{ partNumber: 1, label: null, amount: roundMoney(net), dueDate: null }];
+    return [
+      { partNumber: 1, label: null, amount: roundMoney(net), dueDate: null },
+    ];
   }
 
-  const amounts: number[] = new Array(parts.length).fill(NaN);
+  const amounts: number[] = new Array<number>(parts.length).fill(NaN);
   let explicitSum = 0;
   const percentOnly: number[] = [];
 
@@ -94,7 +94,9 @@ export function resolvePaymentPartAmounts(
     const remaining = Math.max(0, net - explicitSum);
     const pctSum = percentOnly.reduce((s, i) => s + parts[i].percentOfNet!, 0);
     if (pctSum <= 0) {
-      throw new BadRequestException('Indique porcentaje o monto en cada parte de pago.');
+      throw new BadRequestException(
+        'Indique porcentaje o monto en cada parte de pago.',
+      );
     }
     for (const i of percentOnly) {
       amounts[i] = roundMoney(remaining * (parts[i].percentOfNet! / pctSum));
@@ -115,7 +117,9 @@ export function resolvePaymentPartAmounts(
   const total = roundMoney(amounts.reduce((s, v) => s + v, 0));
   const diff = roundMoney(net - total);
   if (diff !== 0 && amounts.length) {
-    amounts[amounts.length - 1] = roundMoney(amounts[amounts.length - 1] + diff);
+    amounts[amounts.length - 1] = roundMoney(
+      amounts[amounts.length - 1] + diff,
+    );
   }
 
   return parts.map((p, i) => ({
@@ -138,7 +142,9 @@ export function assertPaymentPartsMatchNet(
   }
 }
 
-export function assertValidDeductibleType(type: string): SaleCommissionDeductibleType {
+export function assertValidDeductibleType(
+  type: string,
+): SaleCommissionDeductibleType {
   const t = type?.trim().toUpperCase();
   if (!(SALE_COMMISSION_DEDUCTIBLE_TYPES as readonly string[]).includes(t)) {
     throw new BadRequestException(
@@ -180,7 +186,8 @@ export async function scaleCommissionPaymentPartsToNet(
     scaled.push(roundMoney((parts[i].amount / oldSum) * newNet));
   }
   const diff = roundMoney(newNet - scaled.reduce((s, v) => s + v, 0));
-  if (diff !== 0) scaled[scaled.length - 1] = roundMoney(scaled[scaled.length - 1] + diff);
+  if (diff !== 0)
+    scaled[scaled.length - 1] = roundMoney(scaled[scaled.length - 1] + diff);
 
   for (let i = 0; i < parts.length; i++) {
     await tx.saleCommissionPaymentPart.update({
@@ -206,10 +213,10 @@ export async function syncSaleCommissionStatus(
 
   const paidAt =
     status === 'PAID'
-      ? parts
+      ? (parts
           .map((p) => p.paidAt)
           .filter((d): d is Date => d != null)
-          .sort((a, b) => b.getTime() - a.getTime())[0] ?? new Date()
+          .sort((a, b) => b.getTime() - a.getTime())[0] ?? new Date())
       : null;
 
   await db.saleCommission.update({

@@ -23,7 +23,9 @@ export class CreatePropertyDto {
   @IsString()
   applicationId?: string;
 
-  @ApiPropertyOptional({ description: 'Slug de la aplicación (ej: alquileres)' })
+  @ApiPropertyOptional({
+    description: 'Slug de la aplicación (ej: alquileres)',
+  })
   @IsOptional()
   @IsString()
   applicationSlug?: string;
@@ -46,9 +48,12 @@ export class CreatePropertyDto {
   districtId: string;
 
   @ApiPropertyOptional({
-    description: 'Ubicación libre cuando distrito = Otros (país, departamento, provincia, distrito)',
+    description:
+      'Ubicación libre cuando distrito = Otros (país, departamento, provincia, distrito)',
   })
-  @ValidateIf((o) => o.districtId === UBIGEO_OTHER_DISTRICT_ID)
+  @ValidateIf(
+    (o: { districtId?: string }) => o.districtId === UBIGEO_OTHER_DISTRICT_ID,
+  )
   @IsObject()
   @ValidateNested()
   @Type(() => LocationCustomDto)
@@ -99,7 +104,9 @@ export class CreatePropertyDto {
   @Min(0)
   parkingSpaces?: number | null;
 
-  @ApiPropertyOptional({ description: 'Número de partida 1 (máx. 3 por propiedad)' })
+  @ApiPropertyOptional({
+    description: 'Número de partida 1 (máx. 3 por propiedad)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -117,13 +124,16 @@ export class CreatePropertyDto {
   @MaxLength(100)
   partida3?: string | null;
 
-  @ApiProperty({ description: 'ID del propietario principal (cliente tipo OWNER)' })
+  @ApiProperty({
+    description: 'ID del propietario principal (cliente tipo OWNER)',
+  })
   @IsString()
   @IsUUID()
   ownerId: string;
 
   @ApiPropertyOptional({
-    description: 'IDs de copropietarios / propietarios adicionales (incluye el principal)',
+    description:
+      'IDs de copropietarios / propietarios adicionales (incluye el principal)',
     type: [String],
   })
   @IsOptional()
@@ -159,7 +169,10 @@ export class CreatePropertyDto {
   @Min(0)
   salePrice?: number | null;
 
-  @ApiPropertyOptional({ description: 'Moneda del precio de venta (código catálogo, ej. PEN, USD)', default: 'PEN' })
+  @ApiPropertyOptional({
+    description: 'Moneda del precio de venta (código catálogo, ej. PEN, USD)',
+    default: 'PEN',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(10)
@@ -171,7 +184,10 @@ export class CreatePropertyDto {
   @MaxLength(200)
   projectName?: string | null;
 
-  @ApiPropertyOptional({ type: [PropertyMediaItemDto], description: 'Fotos y planos (URLs)' })
+  @ApiPropertyOptional({
+    type: [PropertyMediaItemDto],
+    description: 'Fotos y planos (URLs)',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -179,7 +195,8 @@ export class CreatePropertyDto {
   mediaItems?: PropertyMediaItemDto[] | null;
 
   @ApiPropertyOptional({
-    description: 'Estado comercial (Ventas: AVAILABLE, RESERVED, SOLD; Alquileres: AVAILABLE, etc.)',
+    description:
+      'Estado comercial (Ventas: AVAILABLE, RESERVED, SOLD; Alquileres: AVAILABLE, etc.)',
   })
   @IsOptional()
   @IsString()

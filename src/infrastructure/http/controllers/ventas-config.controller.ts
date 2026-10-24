@@ -1,5 +1,18 @@
-import { Body, Controller, Get, Put, Patch, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Put,
+  Patch,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { VentasConfigOperationsService } from '../../../application/services';
 import type { VentasPipelineStageInput } from '@domain/repositories/ventas-config.repository';
@@ -13,7 +26,8 @@ export class VentasConfigController {
 
   @Get('bootstrap')
   @ApiOperation({
-    summary: 'Parametrización Ventas: pipeline, numeración de procesos, tipos de propiedad (catálogo)',
+    summary:
+      'Parametrización Ventas: pipeline, numeración de procesos, tipos de propiedad (catálogo)',
   })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async bootstrap(@Query('applicationSlug') applicationSlug?: string) {
@@ -21,7 +35,9 @@ export class VentasConfigController {
   }
 
   @Put('pipeline-stages')
-  @ApiOperation({ summary: 'Reemplazar etiquetas y orden de etapas del pipeline CRM' })
+  @ApiOperation({
+    summary: 'Reemplazar etiquetas y orden de etapas del pipeline CRM',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async replacePipeline(
     @Query('applicationSlug') applicationSlug: string | undefined,
@@ -31,7 +47,10 @@ export class VentasConfigController {
   }
 
   @Patch('numbering/sale-process')
-  @ApiOperation({ summary: 'Ajustar prefijo y/o último correlativo de códigos de proceso (VNT-PRC-####)' })
+  @ApiOperation({
+    summary:
+      'Ajustar prefijo y/o último correlativo de códigos de proceso (VNT-PRC-####)',
+  })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async patchNumbering(
     @Query('applicationSlug') applicationSlug: string | undefined,

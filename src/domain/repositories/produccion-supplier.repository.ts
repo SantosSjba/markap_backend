@@ -1,4 +1,6 @@
-export const PRODUCCION_SUPPLIER_REPOSITORY = Symbol('ProduccionSupplierRepository');
+export const PRODUCCION_SUPPLIER_REPOSITORY = Symbol(
+  'ProduccionSupplierRepository',
+);
 
 export interface ProduccionSupplierListItem {
   id: string;
@@ -71,10 +73,21 @@ export interface ListProduccionSuppliersResult {
 }
 
 export interface ProduccionSupplierRepository {
-  list(filters: ListProduccionSuppliersFilters): Promise<ListProduccionSuppliersResult>;
-  findById(id: string, applicationSlug?: string): Promise<ProduccionSupplierDetail | null>;
-  create(applicationId: string, payload: CreateProduccionSupplierPayload): Promise<ProduccionSupplierDetail>;
-  update(id: string, payload: UpdateProduccionSupplierPayload): Promise<ProduccionSupplierDetail>;
+  list(
+    filters: ListProduccionSuppliersFilters,
+  ): Promise<ListProduccionSuppliersResult>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionSupplierDetail | null>;
+  create(
+    applicationId: string,
+    payload: CreateProduccionSupplierPayload,
+  ): Promise<ProduccionSupplierDetail>;
+  update(
+    id: string,
+    payload: UpdateProduccionSupplierPayload,
+  ): Promise<ProduccionSupplierDetail>;
   delete(id: string): Promise<void>;
   linkMaterial(
     supplierId: string,

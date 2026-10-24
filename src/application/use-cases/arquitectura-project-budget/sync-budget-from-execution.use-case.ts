@@ -18,7 +18,10 @@ export class SyncArquitecturaProjectBudgetFromExecutionUseCase {
     private readonly repo: ArquitecturaProjectBudgetRepository,
   ) {}
 
-  execute(projectId: string, applicationSlug = 'arquitectura'): Promise<SyncBudgetFromExecutionResult> {
+  execute(
+    projectId: string,
+    applicationSlug = 'arquitectura',
+  ): Promise<SyncBudgetFromExecutionResult> {
     return this.repo.syncActualCostsFromExecution(projectId, applicationSlug);
   }
 }

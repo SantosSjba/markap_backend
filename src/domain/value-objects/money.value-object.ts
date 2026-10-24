@@ -22,7 +22,9 @@ export class Money {
 
   add(other: Money): Money {
     if (other.currency !== this.currency) {
-      throw new ValidationException('No se pueden sumar montos de distinta moneda');
+      throw new ValidationException(
+        'No se pueden sumar montos de distinta moneda',
+      );
     }
     return Money.create(this.amount + other.amount, this.currency);
   }

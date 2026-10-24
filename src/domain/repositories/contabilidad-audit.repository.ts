@@ -1,4 +1,6 @@
-export const CONTABILIDAD_AUDIT_REPOSITORY = Symbol('ContabilidadAuditRepository');
+export const CONTABILIDAD_AUDIT_REPOSITORY = Symbol(
+  'ContabilidadAuditRepository',
+);
 
 export interface CreateContabilidadAuditLogInput {
   applicationId: string;
@@ -35,6 +37,11 @@ export interface ContabilidadAuditLogDto {
 }
 
 export interface ContabilidadAuditRepository {
-  create(input: CreateContabilidadAuditLogInput): Promise<ContabilidadAuditLogDto>;
-  list(applicationId: string, filters: ListContabilidadAuditLogsFilters): Promise<ContabilidadAuditLogDto[]>;
+  create(
+    input: CreateContabilidadAuditLogInput,
+  ): Promise<ContabilidadAuditLogDto>;
+  list(
+    applicationId: string,
+    filters: ListContabilidadAuditLogsFilters,
+  ): Promise<ContabilidadAuditLogDto[]>;
 }

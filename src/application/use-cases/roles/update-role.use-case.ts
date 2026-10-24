@@ -24,7 +24,12 @@ export class UpdateRoleUseCase {
     if (!existing) {
       throw new EntityNotFoundException('Role', input.id);
     }
-    const data: Partial<{ name: string; code: string; description: string | null; isActive: boolean }> = {};
+    const data: Partial<{
+      name: string;
+      code: string;
+      description: string | null;
+      isActive: boolean;
+    }> = {};
     if (input.name !== undefined) data.name = input.name;
     if (input.code !== undefined) data.code = input.code;
     if (input.description !== undefined) data.description = input.description;

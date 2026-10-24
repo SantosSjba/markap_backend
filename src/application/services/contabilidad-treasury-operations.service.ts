@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import {
   APPLICATION_REPOSITORY,
   CONTABILIDAD_ACCOUNT_REPOSITORY,
@@ -33,12 +39,21 @@ const CONTABILIDAD_SLUG = 'contabilidad';
 
 function assertContabilidadSlug(slug: string | undefined | null) {
   if (slug?.trim() !== CONTABILIDAD_SLUG) {
-    throw new BadRequestException('Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).');
+    throw new BadRequestException(
+      'Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).',
+    );
   }
 }
 
 function mapRepoError(error: unknown): never {
-  const message = error instanceof Error ? error.message : 'Operación no válida.';
+  // Conflictos de base de datos y errores HTTP los traduce el filtro global.
+  if (
+    error instanceof HttpException ||
+    error instanceof Prisma.PrismaClientKnownRequestError
+  )
+    throw error;
+  const message =
+    error instanceof Error ? error.message : 'Operación no válida.';
   throw new BadRequestException(message);
 }
 
@@ -55,27 +70,38 @@ export class ContabilidadTreasuryOperationsService {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertContabilidadSlug(applicationSlug ?? CONTABILIDAD_SLUG);
     const app = await this.applications.findBySlug(CONTABILIDAD_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
+    if (!app)
+      throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
     return app.id;
   }
 
   private async assertOpenPeriod(applicationId: string, periodId: string) {
     const period = await this.periods.findPeriodById(applicationId, periodId);
-    if (!period) throw new EntityNotFoundException('ContabilidadPeriod', periodId);
+    if (!period)
+      throw new EntityNotFoundException('ContabilidadPeriod', periodId);
     if (period.status !== CONTABILIDAD_PERIOD_STATUS.OPEN) {
       throw new BadRequestException('El periodo contable está cerrado.');
     }
     return period;
   }
 
-  private assertEntryDateInPeriod(entryDate: string, year: number, month: number) {
+  private assertEntryDateInPeriod(
+    entryDate: string,
+    year: number,
+    month: number,
+  ) {
     const date = parseDateOnly(entryDate);
-    if (Number.isNaN(date.getTime())) throw new BadRequestException('Fecha no válida.');
+    if (Number.isNaN(date.getTime()))
+      throw new BadRequestException('Fecha no válida.');
     if (date.getUTCFullYear() !== year || date.getUTCMonth() + 1 !== month) {
-      throw new BadRequestException('La fecha debe pertenecer al periodo seleccionado.');
+      throw new BadRequestException(
+        'La fecha debe pertenecer al periodo seleccionado.',
+      );
     }
   }
 
@@ -87,7 +113,10 @@ export class ContabilidadTreasuryOperationsService {
     return { cashBoxes };
   }
 
-  async createCashBox(applicationSlug: string | undefined, body: CreateCashBoxInput) {
+  async createCashBox(
+    applicationSlug: string | undefined,
+    body: CreateCashBoxInput,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     if (!body.code?.trim() || !body.name?.trim()) {
       throw new BadRequestException('Código y nombre son obligatorios.');
@@ -107,12 +136,19 @@ export class ContabilidadTreasuryOperationsService {
     }
   }
 
-  async updateCashBox(applicationSlug: string | undefined, id: string, body: UpdateCashBoxInput) {
+  async updateCashBox(
+    applicationSlug: string | undefined,
+    id: string,
+    body: UpdateCashBoxInput,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const existing = await this.treasury.findCashBoxById(applicationId, id);
     if (!existing) throw new EntityNotFoundException('ContabilidadCashBox', id);
     if (body.accountId) {
-      const account = await this.accounts.findById(applicationId, body.accountId);
+      const account = await this.accounts.findById(
+        applicationId,
+        body.accountId,
+      );
       if (!account?.isActive || !account.isMovement) {
         throw new BadRequestException('Cuenta contable no válida.');
       }
@@ -132,10 +168,19 @@ export class ContabilidadTreasuryOperationsService {
     return { bankAccounts };
   }
 
-  async createBankAccount(applicationSlug: string | undefined, body: CreateBankAccountInput) {
+  async createBankAccount(
+    applicationSlug: string | undefined,
+    body: CreateBankAccountInput,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
-    if (!body.code?.trim() || !body.bankName?.trim() || !body.accountNumber?.trim()) {
-      throw new BadRequestException('Código, banco y número de cuenta son obligatorios.');
+    if (
+      !body.code?.trim() ||
+      !body.bankName?.trim() ||
+      !body.accountNumber?.trim()
+    ) {
+      throw new BadRequestException(
+        'Código, banco y número de cuenta son obligatorios.',
+      );
     }
     const account = await this.accounts.findById(applicationId, body.accountId);
     if (!account?.isActive || !account.isMovement) {
@@ -153,12 +198,20 @@ export class ContabilidadTreasuryOperationsService {
     }
   }
 
-  async updateBankAccount(applicationSlug: string | undefined, id: string, body: UpdateBankAccountInput) {
+  async updateBankAccount(
+    applicationSlug: string | undefined,
+    id: string,
+    body: UpdateBankAccountInput,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const existing = await this.treasury.findBankAccountById(applicationId, id);
-    if (!existing) throw new EntityNotFoundException('ContabilidadBankAccount', id);
+    if (!existing)
+      throw new EntityNotFoundException('ContabilidadBankAccount', id);
     if (body.accountId) {
-      const account = await this.accounts.findById(applicationId, body.accountId);
+      const account = await this.accounts.findById(
+        applicationId,
+        body.accountId,
+      );
       if (!account?.isActive || !account.isMovement) {
         throw new BadRequestException('Cuenta contable no válida.');
       }
@@ -170,7 +223,10 @@ export class ContabilidadTreasuryOperationsService {
     }
   }
 
-  async listMovements(applicationSlug: string | undefined, filters: ListTreasuryMovementsFilters) {
+  async listMovements(
+    applicationSlug: string | undefined,
+    filters: ListTreasuryMovementsFilters,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const movements = await this.treasury.listMovements(applicationId, filters);
     return {
@@ -192,23 +248,38 @@ export class ContabilidadTreasuryOperationsService {
     if (Number.isNaN(amount) || amount <= 0) {
       throw new BadRequestException('Importe debe ser mayor a cero.');
     }
-    if (!body.description?.trim()) throw new BadRequestException('La glosa es obligatoria.');
-    if (!body.offsetAccountId) throw new BadRequestException('Cuenta de contrapartida obligatoria.');
+    if (!body.description?.trim())
+      throw new BadRequestException('La glosa es obligatoria.');
+    if (!body.offsetAccountId)
+      throw new BadRequestException('Cuenta de contrapartida obligatoria.');
 
-    const offset = await this.accounts.findById(applicationId, body.offsetAccountId);
+    const offset = await this.accounts.findById(
+      applicationId,
+      body.offsetAccountId,
+    );
     if (!offset?.isActive || !offset.isMovement) {
       throw new BadRequestException('Cuenta de contrapartida no válida.');
     }
 
-    if (body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH && !body.cashBoxId) {
+    if (
+      body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH &&
+      !body.cashBoxId
+    ) {
       throw new BadRequestException('Seleccione una caja.');
     }
-    if (body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK && !body.bankAccountId) {
+    if (
+      body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK &&
+      !body.bankAccountId
+    ) {
       throw new BadRequestException('Seleccione una cuenta bancaria.');
     }
 
     try {
-      return await this.treasury.createMovementWithJournal(applicationId, body, userId);
+      return await this.treasury.createMovementWithJournal(
+        applicationId,
+        body,
+        userId,
+      );
     } catch (error) {
       mapRepoError(error);
     }
@@ -227,23 +298,40 @@ export class ContabilidadTreasuryOperationsService {
     if (Number.isNaN(amount) || amount <= 0) {
       throw new BadRequestException('Importe debe ser mayor a cero.');
     }
-    if (!body.description?.trim()) throw new BadRequestException('La glosa es obligatoria.');
+    if (!body.description?.trim())
+      throw new BadRequestException('La glosa es obligatoria.');
 
-    if (body.fromType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH && !body.fromCashBoxId) {
+    if (
+      body.fromType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH &&
+      !body.fromCashBoxId
+    ) {
       throw new BadRequestException('Origen caja obligatorio.');
     }
-    if (body.fromType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK && !body.fromBankAccountId) {
+    if (
+      body.fromType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK &&
+      !body.fromBankAccountId
+    ) {
       throw new BadRequestException('Origen banco obligatorio.');
     }
-    if (body.toType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH && !body.toCashBoxId) {
+    if (
+      body.toType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH &&
+      !body.toCashBoxId
+    ) {
       throw new BadRequestException('Destino caja obligatorio.');
     }
-    if (body.toType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK && !body.toBankAccountId) {
+    if (
+      body.toType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK &&
+      !body.toBankAccountId
+    ) {
       throw new BadRequestException('Destino banco obligatorio.');
     }
 
     try {
-      const movements = await this.treasury.createTransferWithJournal(applicationId, body, userId);
+      const movements = await this.treasury.createTransferWithJournal(
+        applicationId,
+        body,
+        userId,
+      );
       return { movements };
     } catch (error) {
       mapRepoError(error);
@@ -255,8 +343,29 @@ export class ContabilidadTreasuryOperationsService {
     bankAccountId: string,
     periodId: string,
   ) {
+    if (!bankAccountId?.trim() || !periodId?.trim()) {
+      throw new BadRequestException(
+        'bankAccountId y periodId son obligatorios.',
+      );
+    }
     const applicationId = await this.resolveApplicationId(applicationSlug);
-    const reconciliation = await this.treasury.getReconciliation(applicationId, bankAccountId, periodId);
+    const bank = await this.treasury.findBankAccountById(
+      applicationId,
+      bankAccountId,
+    );
+    if (!bank)
+      throw new EntityNotFoundException(
+        'ContabilidadBankAccount',
+        bankAccountId,
+      );
+    const period = await this.periods.findPeriodById(applicationId, periodId);
+    if (!period)
+      throw new EntityNotFoundException('ContabilidadPeriod', periodId);
+    const reconciliation = await this.treasury.getReconciliation(
+      applicationId,
+      bankAccountId,
+      periodId,
+    );
     const movements = await this.treasury.listMovements(applicationId, {
       bankAccountId,
       periodId,
@@ -268,11 +377,21 @@ export class ContabilidadTreasuryOperationsService {
     };
   }
 
-  async upsertReconciliation(applicationSlug: string | undefined, body: UpsertReconciliationInput) {
+  async upsertReconciliation(
+    applicationSlug: string | undefined,
+    body: UpsertReconciliationInput,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.assertOpenPeriod(applicationId, body.periodId);
-    const bank = await this.treasury.findBankAccountById(applicationId, body.bankAccountId);
-    if (!bank) throw new EntityNotFoundException('ContabilidadBankAccount', body.bankAccountId);
+    const bank = await this.treasury.findBankAccountById(
+      applicationId,
+      body.bankAccountId,
+    );
+    if (!bank)
+      throw new EntityNotFoundException(
+        'ContabilidadBankAccount',
+        body.bankAccountId,
+      );
 
     try {
       return await this.treasury.upsertReconciliation(applicationId, body);

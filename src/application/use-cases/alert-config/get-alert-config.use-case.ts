@@ -1,5 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ALERT_CONFIG_REPOSITORY, APPLICATION_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  ALERT_CONFIG_REPOSITORY,
+  APPLICATION_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import type { AlertConfigRepository } from '@domain/repositories/alert-config.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import { NotFoundException } from '@nestjs/common';
@@ -15,9 +18,15 @@ export class GetAlertConfigUseCase {
 
   async execute(userId: string, applicationSlug: string) {
     const app = await this.applicationRepository.findBySlug(applicationSlug);
-    if (!app) throw new NotFoundException(`Aplicación '${applicationSlug}' no encontrada`);
+    if (!app)
+      throw new NotFoundException(
+        `Aplicación '${applicationSlug}' no encontrada`,
+      );
 
-    const config = await this.alertConfigRepository.findByUserAndApp(userId, app.id);
+    const config = await this.alertConfigRepository.findByUserAndApp(
+      userId,
+      app.id,
+    );
     if (!config) {
       // Devolver defaults si no existe configuración
       return {

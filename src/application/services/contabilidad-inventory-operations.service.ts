@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import {
   APPLICATION_REPOSITORY,
   CONTABILIDAD_INVENTORY_REPOSITORY,
@@ -25,12 +31,21 @@ const CONTABILIDAD_SLUG = 'contabilidad';
 
 function assertContabilidadSlug(slug: string | undefined | null) {
   if (slug?.trim() !== CONTABILIDAD_SLUG) {
-    throw new BadRequestException('Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).');
+    throw new BadRequestException(
+      'Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).',
+    );
   }
 }
 
 function mapRepoError(error: unknown): never {
-  const message = error instanceof Error ? error.message : 'Operación no válida.';
+  // Conflictos de base de datos y errores HTTP los traduce el filtro global.
+  if (
+    error instanceof HttpException ||
+    error instanceof Prisma.PrismaClientKnownRequestError
+  )
+    throw error;
+  const message =
+    error instanceof Error ? error.message : 'Operación no válida.';
   throw new BadRequestException(message);
 }
 
@@ -45,10 +60,13 @@ export class ContabilidadInventoryOperationsService {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertContabilidadSlug(applicationSlug ?? CONTABILIDAD_SLUG);
     const app = await this.applications.findBySlug(CONTABILIDAD_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
+    if (!app)
+      throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
     return app.id;
   }
 
@@ -60,7 +78,10 @@ export class ContabilidadInventoryOperationsService {
     };
   }
 
-  async listItems(applicationSlug: string | undefined, filters: ListInventoryItemsFilters) {
+  async listItems(
+    applicationSlug: string | undefined,
+    filters: ListInventoryItemsFilters,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     try {
       return await this.inventory.listItems(applicationId, filters);
@@ -73,7 +94,8 @@ export class ContabilidadInventoryOperationsService {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     try {
       const item = await this.inventory.getItem(applicationId, id);
-      if (!item) throw new EntityNotFoundException('ContabilidadInventoryItem', id);
+      if (!item)
+        throw new EntityNotFoundException('ContabilidadInventoryItem', id);
       return item;
     } catch (e) {
       if (e instanceof EntityNotFoundException) throw e;
@@ -81,11 +103,16 @@ export class ContabilidadInventoryOperationsService {
     }
   }
 
-  async createItem(applicationSlug: string | undefined, body: CreateInventoryItemInput) {
+  async createItem(
+    applicationSlug: string | undefined,
+    body: CreateInventoryItemInput,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     if (!body.code?.trim()) throw new BadRequestException('Código obligatorio');
-    if (!body.description?.trim()) throw new BadRequestException('Descripción obligatoria');
-    if (!body.accountId) throw new BadRequestException('Cuenta de inventario obligatoria');
+    if (!body.description?.trim())
+      throw new BadRequestException('Descripción obligatoria');
+    if (!body.accountId)
+      throw new BadRequestException('Cuenta de inventario obligatoria');
     try {
       return await this.inventory.createItem(applicationId, body);
     } catch (e) {
@@ -93,7 +120,11 @@ export class ContabilidadInventoryOperationsService {
     }
   }
 
-  async updateItem(applicationSlug: string | undefined, id: string, body: UpdateInventoryItemInput) {
+  async updateItem(
+    applicationSlug: string | undefined,
+    id: string,
+    body: UpdateInventoryItemInput,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     try {
       return await this.inventory.updateItem(applicationId, id, body);
@@ -102,7 +133,10 @@ export class ContabilidadInventoryOperationsService {
     }
   }
 
-  async listMovements(applicationSlug: string | undefined, filters: ListInventoryMovementsFilters) {
+  async listMovements(
+    applicationSlug: string | undefined,
+    filters: ListInventoryMovementsFilters,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     try {
       return await this.inventory.listMovements(applicationId, filters);
@@ -119,10 +153,16 @@ export class ContabilidadInventoryOperationsService {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     if (!body.itemId) throw new BadRequestException('itemId obligatorio');
     if (!body.periodId) throw new BadRequestException('periodId obligatorio');
-    if (!body.movementType) throw new BadRequestException('movementType obligatorio');
-    if (!body.movementDate) throw new BadRequestException('movementDate obligatorio');
-    const period = await this.periods.findPeriodById(applicationId, body.periodId);
-    if (!period) throw new EntityNotFoundException('ContabilidadPeriod', body.periodId);
+    if (!body.movementType)
+      throw new BadRequestException('movementType obligatorio');
+    if (!body.movementDate)
+      throw new BadRequestException('movementDate obligatorio');
+    const period = await this.periods.findPeriodById(
+      applicationId,
+      body.periodId,
+    );
+    if (!period)
+      throw new EntityNotFoundException('ContabilidadPeriod', body.periodId);
     try {
       return await this.inventory.createMovement(applicationId, body, userId);
     } catch (e) {

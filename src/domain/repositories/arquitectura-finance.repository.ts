@@ -129,8 +129,14 @@ export interface UpdateArquitecturaFinancePaymentPayload {
 }
 
 export interface ArquitecturaFinanceRepository {
-  ensureProjectScope(projectId: string, applicationSlug?: string): Promise<boolean>;
-  getOverview(projectId: string, applicationSlug?: string): Promise<ArquitecturaFinanceOverviewDto | null>;
+  ensureProjectScope(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<boolean>;
+  getOverview(
+    projectId: string,
+    applicationSlug?: string,
+  ): Promise<ArquitecturaFinanceOverviewDto | null>;
 
   createSchedule(
     projectId: string,
@@ -167,4 +173,6 @@ export interface ArquitecturaFinanceRepository {
   ): Promise<void>;
 }
 
-export const ARQUITECTURA_FINANCE_REPOSITORY = Symbol('ArquitecturaFinanceRepository');
+export const ARQUITECTURA_FINANCE_REPOSITORY = Symbol(
+  'ArquitecturaFinanceRepository',
+);

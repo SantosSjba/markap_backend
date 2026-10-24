@@ -22,10 +22,13 @@ import type {
   ListInventoryMovementsFilters,
   UpdateInventoryItemInput,
 } from '@domain/repositories/contabilidad-inventory.repository';
-import { parsePenAmount, roundPenAmount } from '@domain/utils/contabilidad-journal-amounts';
+import {
+  parsePenAmount,
+  roundPenAmount,
+} from '@domain/utils/contabilidad-journal-amounts';
 import { formatDateOnly, parseDateOnly } from '@domain/utils/peru-date.util';
 import type { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma.service';
+import { Atomic, PrismaService } from '../prisma.service';
 
 const itemInclude = {
   account: { select: { id: true, code: true, name: true } },
@@ -94,8 +97,18 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
         ...(filters.search?.trim()
           ? {
               OR: [
-                { code: { contains: filters.search.trim(), mode: 'insensitive' } },
-                { description: { contains: filters.search.trim(), mode: 'insensitive' } },
+                {
+                  code: {
+                    contains: filters.search.trim(),
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  description: {
+                    contains: filters.search.trim(),
+                    mode: 'insensitive',
+                  },
+                },
               ],
             }
           : {}),
@@ -116,7 +129,12 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
 
   async createItem(applicationId: string, input: CreateInventoryItemInput) {
     const account = await this.prisma.contabilidadAccount.findFirst({
-      where: { applicationId, id: input.accountId, isMovement: true, isActive: true },
+      where: {
+        applicationId,
+        id: input.accountId,
+        isMovement: true,
+        isActive: true,
+      },
     });
     if (!account) throw new Error('Cuenta de inventario inválida');
     if (!account.code.startsWith('20') && !account.code.startsWith('21')) {
@@ -130,30 +148,46 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
         description: input.description.trim(),
         accountId: input.accountId,
         unit: input.unit?.trim() || 'UN',
-        costMethod: input.costMethod ?? CONTABILIDAD_INVENTORY_COST_METHOD.PROMEDIO,
+        costMethod:
+          input.costMethod ?? CONTABILIDAD_INVENTORY_COST_METHOD.PROMEDIO,
       },
       include: itemInclude,
     });
     return mapItem(row);
   }
 
-  async updateItem(applicationId: string, id: string, input: UpdateInventoryItemInput) {
+  async updateItem(
+    applicationId: string,
+    id: string,
+    input: UpdateInventoryItemInput,
+  ) {
     const existing = await this.prisma.contabilidadInventoryItem.findFirst({
       where: { applicationId, id },
     });
     if (!existing) throw new Error('Ítem no encontrado');
     if (input.accountId && input.accountId !== existing.accountId) {
-      const movements = await this.prisma.contabilidadInventoryMovement.count({ where: { itemId: id } });
-      if (movements > 0) throw new Error('No se puede cambiar la cuenta con movimientos registrados');
+      const movements = await this.prisma.contabilidadInventoryMovement.count({
+        where: { itemId: id },
+      });
+      if (movements > 0)
+        throw new Error(
+          'No se puede cambiar la cuenta con movimientos registrados',
+        );
     }
 
     const row = await this.prisma.contabilidadInventoryItem.update({
       where: { id },
       data: {
-        ...(input.description !== undefined ? { description: input.description.trim() } : {}),
-        ...(input.accountId !== undefined ? { accountId: input.accountId } : {}),
+        ...(input.description !== undefined
+          ? { description: input.description.trim() }
+          : {}),
+        ...(input.accountId !== undefined
+          ? { accountId: input.accountId }
+          : {}),
         ...(input.unit !== undefined ? { unit: input.unit.trim() } : {}),
-        ...(input.costMethod !== undefined ? { costMethod: input.costMethod } : {}),
+        ...(input.costMethod !== undefined
+          ? { costMethod: input.costMethod }
+          : {}),
         ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
       },
       include: itemInclude,
@@ -161,7 +195,10 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
     return mapItem(row);
   }
 
-  async listMovements(applicationId: string, filters: ListInventoryMovementsFilters) {
+  async listMovements(
+    applicationId: string,
+    filters: ListInventoryMovementsFilters,
+  ) {
     const rows = await this.prisma.contabilidadInventoryMovement.findMany({
       where: {
         applicationId,
@@ -171,8 +208,12 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
         ...(filters.dateFrom || filters.dateTo
           ? {
               movementDate: {
-                ...(filters.dateFrom ? { gte: parseDateOnly(filters.dateFrom) } : {}),
-                ...(filters.dateTo ? { lte: parseDateOnly(filters.dateTo) } : {}),
+                ...(filters.dateFrom
+                  ? { gte: parseDateOnly(filters.dateFrom) }
+                  : {}),
+                ...(filters.dateTo
+                  ? { lte: parseDateOnly(filters.dateTo) }
+                  : {}),
               },
             }
           : {}),
@@ -207,6 +248,7 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
     return { movements };
   }
 
+  @Atomic()
   async createMovement(
     applicationId: string,
     input: CreateInventoryMovementInput,
@@ -220,6 +262,9 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
       throw new Error('El periodo contable está cerrado');
     }
 
+    // Stock y costo promedio se leen bajo bloqueo para no perder movimientos simultáneos.
+    await this.prisma
+      .$queryRaw`SELECT id FROM contabilidad_inventory_items WHERE id = ${input.itemId} FOR UPDATE`;
     const item = await this.prisma.contabilidadInventoryItem.findFirst({
       where: { applicationId, id: input.itemId, isActive: true },
       include: itemInclude,
@@ -227,17 +272,28 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
     if (!item) throw new Error('Ítem de inventario no encontrado');
 
     const movementType = input.movementType.trim().toUpperCase();
-    if (!Object.values(CONTABILIDAD_INVENTORY_MOVEMENT_TYPE).includes(movementType as never)) {
+    if (
+      !Object.values(CONTABILIDAD_INVENTORY_MOVEMENT_TYPE).includes(
+        movementType as never,
+      )
+    ) {
       throw new Error('Tipo de movimiento inválido');
     }
 
     let signedQty = Number(input.quantity);
-    if (!Number.isFinite(signedQty) || signedQty === 0) throw new Error('Cantidad inválida');
+    if (!Number.isFinite(signedQty) || signedQty === 0)
+      throw new Error('Cantidad inválida');
 
-    if (movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.IN && signedQty < 0) {
+    if (
+      movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.IN &&
+      signedQty < 0
+    ) {
       throw new Error('La cantidad de entrada debe ser positiva');
     }
-    if (movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.OUT && signedQty < 0) {
+    if (
+      movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.OUT &&
+      signedQty < 0
+    ) {
       throw new Error('La cantidad de salida debe ser positiva');
     }
     if (movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.OUT) {
@@ -249,13 +305,16 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
 
     const isInbound =
       movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.IN ||
-      (movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST && signedQty > 0);
+      (movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST &&
+        signedQty > 0);
     const isOutbound =
       movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.OUT ||
-      (movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST && signedQty < 0);
+      (movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST &&
+        signedQty < 0);
 
     const absQty = Math.abs(signedQty);
-    let unitCost = input.unitCost !== undefined ? parsePenAmount(String(input.unitCost)) : 0;
+    let unitCost =
+      input.unitCost !== undefined ? parsePenAmount(String(input.unitCost)) : 0;
 
     if (isInbound) {
       if (!Number.isFinite(unitCost) || unitCost <= 0) {
@@ -263,7 +322,11 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
       }
     } else if (isOutbound) {
       if (item.costMethod === CONTABILIDAD_INVENTORY_COST_METHOD.PEPS) {
-        unitCost = await this.resolvePepsOutUnitCost(applicationId, item.id, absQty);
+        unitCost = await this.resolvePepsOutUnitCost(
+          applicationId,
+          item.id,
+          absQty,
+        );
       } else {
         unitCost = Number(item.avgUnitCost);
       }
@@ -286,7 +349,9 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
     );
 
     const storedQty =
-      movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST ? signedQty : absQty;
+      movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST
+        ? signedQty
+        : absQty;
 
     const movement = await this.prisma.$transaction(async (tx) => {
       const created = await tx.contabilidadInventoryMovement.create({
@@ -299,9 +364,14 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
           quantity: storedQty,
           unitCost,
           totalAmount,
-          offsetType: isInbound ? (input.offsetType ?? CONTABILIDAD_INVENTORY_OFFSET_TYPE.PAYABLE) : null,
+          offsetType: isInbound
+            ? (input.offsetType ?? CONTABILIDAD_INVENTORY_OFFSET_TYPE.PAYABLE)
+            : null,
           remainingQty:
-            isInbound && item.costMethod === CONTABILIDAD_INVENTORY_COST_METHOD.PEPS ? absQty : null,
+            isInbound &&
+            item.costMethod === CONTABILIDAD_INVENTORY_COST_METHOD.PEPS
+              ? absQty
+              : null,
           notes: input.notes?.trim() || null,
           journalEntryId: journal.id,
           createdBy: createdBy ?? null,
@@ -317,9 +387,15 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
       if (isInbound) {
         newQty = roundQty(currentQty + absQty);
         if (item.costMethod === CONTABILIDAD_INVENTORY_COST_METHOD.PROMEDIO) {
-          newAvg = newQty > 0 ? roundQty((currentQty * currentAvg + absQty * unitCost) / newQty) : 0;
+          newAvg =
+            newQty > 0
+              ? roundQty((currentQty * currentAvg + absQty * unitCost) / newQty)
+              : 0;
         } else {
-          newAvg = newQty > 0 ? roundQty((currentQty * currentAvg + absQty * unitCost) / newQty) : 0;
+          newAvg =
+            newQty > 0
+              ? roundQty((currentQty * currentAvg + absQty * unitCost) / newQty)
+              : 0;
         }
       } else {
         newQty = roundQty(currentQty - absQty);
@@ -371,7 +447,9 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
   }
 
   async getValuedBalance(applicationId: string) {
-    const { items } = await this.listItems(applicationId, { activeOnly: false });
+    const { items } = await this.listItems(applicationId, {
+      activeOnly: false,
+    });
     const lines: ContabilidadInventoryValuedLineDto[] = items.map((i) => ({
       itemId: i.id,
       itemCode: i.code,
@@ -385,13 +463,18 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
       avgUnitCost: i.avgUnitCost,
       valuedBalance: i.valuedBalance,
     }));
-    const totalValue = formatMoney(lines.reduce((s, l) => s + Number(l.valuedBalance), 0));
+    const totalValue = formatMoney(
+      lines.reduce((s, l) => s + Number(l.valuedBalance), 0),
+    );
     return { lines, totalValue };
   }
 
   async getValuedBalanceByAccount(applicationId: string) {
     const { lines } = await this.getValuedBalance(applicationId);
-    const byAccount = new Map<string, { accountCode: string; accountName: string; balance: number }>();
+    const byAccount = new Map<
+      string,
+      { accountCode: string; accountName: string; balance: number }
+    >();
     for (const line of lines) {
       const key = line.accountCode;
       if (!byAccount.has(key)) {
@@ -410,7 +493,13 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
 
   private async postMovementJournal(
     applicationId: string,
-    item: { id: string; code: string; description: string; accountId: string; account: { code: string } },
+    item: {
+      id: string;
+      code: string;
+      description: string;
+      accountId: string;
+      account: { code: string };
+    },
     input: CreateInventoryMovementInput,
     movementType: string,
     absQty: number,
@@ -420,16 +509,23 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
     createdBy?: string | null,
   ) {
     const inventoryAccountId = item.accountId;
-    const cogsAccountId = await this.resolveAccountId(applicationId, CONTABILIDAD_INVENTORY_COGS_ACCOUNT_CODE);
+    const cogsAccountId = await this.resolveAccountId(
+      applicationId,
+      CONTABILIDAD_INVENTORY_COGS_ACCOUNT_CODE,
+    );
     const description = `${movementType} inventario ${item.code} — ${item.description} (${absQty})`;
 
     if (isInbound) {
-      const offsetType = input.offsetType ?? CONTABILIDAD_INVENTORY_OFFSET_TYPE.PAYABLE;
+      const offsetType =
+        input.offsetType ?? CONTABILIDAD_INVENTORY_OFFSET_TYPE.PAYABLE;
       const offsetCode =
         offsetType === CONTABILIDAD_INVENTORY_OFFSET_TYPE.EXPENSE
           ? CONTABILIDAD_INVENTORY_EXPENSE_ACCOUNT_CODE
           : CONTABILIDAD_PAYABLE_ACCOUNT_CODE;
-      const offsetAccountId = await this.resolveAccountId(applicationId, offsetCode);
+      const offsetAccountId = await this.resolveAccountId(
+        applicationId,
+        offsetCode,
+      );
       return this.journal.createAndPost(
         applicationId,
         {
@@ -460,20 +556,33 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
     );
   }
 
-  private async resolveAccountId(applicationId: string, code: string): Promise<string> {
+  private async resolveAccountId(
+    applicationId: string,
+    code: string,
+  ): Promise<string> {
     const account = await this.prisma.contabilidadAccount.findFirst({
       where: { applicationId, code, isActive: true },
     });
-    if (!account) throw new Error(`Cuenta ${code} no configurada en el plan de cuentas`);
+    if (!account)
+      throw new Error(`Cuenta ${code} no configurada en el plan de cuentas`);
     return account.id;
   }
 
-  private async resolvePepsOutUnitCost(applicationId: string, itemId: string, qtyNeeded: number): Promise<number> {
+  private async resolvePepsOutUnitCost(
+    applicationId: string,
+    itemId: string,
+    qtyNeeded: number,
+  ): Promise<number> {
     const batches = await this.prisma.contabilidadInventoryMovement.findMany({
       where: {
         applicationId,
         itemId,
-        movementType: { in: [CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.IN, CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST] },
+        movementType: {
+          in: [
+            CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.IN,
+            CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST,
+          ],
+        },
         remainingQty: { gt: 0 },
       },
       orderBy: [{ movementDate: 'asc' }, { createdAt: 'asc' }],
@@ -489,7 +598,8 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
       remaining = roundQty(remaining - take);
       if (remaining <= 0.00005) break;
     }
-    if (remaining > 0.00005) throw new Error('Lotes PEPS insuficientes para la salida');
+    if (remaining > 0.00005)
+      throw new Error('Lotes PEPS insuficientes para la salida');
     return roundQty(totalCost / qtyNeeded);
   }
 
@@ -502,7 +612,12 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
     const batches = await tx.contabilidadInventoryMovement.findMany({
       where: {
         itemId,
-        movementType: { in: [CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.IN, CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST] },
+        movementType: {
+          in: [
+            CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.IN,
+            CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST,
+          ],
+        },
         remainingQty: { gt: 0 },
       },
       orderBy: [{ movementDate: 'asc' }, { createdAt: 'asc' }],
@@ -540,7 +655,8 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
       const amount = Number(row.totalAmount);
       const isInbound =
         row.movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.IN ||
-        (row.movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST && qty > 0);
+        (row.movementType === CONTABILIDAD_INVENTORY_MOVEMENT_TYPE.ADJUST &&
+          qty > 0);
       const absQty = Math.abs(qty);
 
       if (isInbound) {

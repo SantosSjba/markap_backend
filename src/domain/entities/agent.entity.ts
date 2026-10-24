@@ -33,11 +33,19 @@ export class AgentListItem {
     public readonly isActive: boolean,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
-    public readonly user: { id: string; firstName: string; lastName: string } | null,
+    public readonly user: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    } | null,
     public readonly documentType: { code: string; name: string } | null,
   ) {}
 
-  static fromAgent(agent: Agent, user: AgentListItem['user'], documentType: AgentListItem['documentType']): AgentListItem {
+  static fromAgent(
+    agent: Agent,
+    user: AgentListItem['user'],
+    documentType: AgentListItem['documentType'],
+  ): AgentListItem {
     return new AgentListItem(
       agent.id,
       agent.applicationId,

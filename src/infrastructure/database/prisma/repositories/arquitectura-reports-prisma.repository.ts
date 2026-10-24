@@ -11,7 +11,11 @@ import type {
   ArquitecturaReportsRentabilidadDto,
   ArquitecturaReportsVentasDto,
 } from '@domain/entities/arquitectura-reports.entity';
-import { formatDateOnly, parseDateOnly, todayDateOnlyLima } from '@domain/utils/peru-date.util';
+import {
+  formatDateOnly,
+  parseDateOnly,
+  todayDateOnlyLima,
+} from '@domain/utils/peru-date.util';
 
 function num(v: unknown): number {
   if (v === null || v === undefined) return 0;
@@ -61,7 +65,7 @@ export class ArquitecturaReportsPrismaRepository implements ArquitecturaReportsR
     const start = dayStartUtc(startStr);
     const end = dayEndUtc(endStr);
 
-    const projectBase = { applicationId: app.id, deletedAt: null as null };
+    const projectBase = { applicationId: app.id, deletedAt: null };
 
     const [
       paymentsAgg,
@@ -233,9 +237,10 @@ export class ArquitecturaReportsPrismaRepository implements ArquitecturaReportsR
     ]);
 
     const tareasTotales = tasksCounts;
-    const tareasHechasSnapshot = await this.prisma.arquitecturaExecutionTask.count({
-      where: { project: projectBase, kanbanStatus: 'DONE' },
-    });
+    const tareasHechasSnapshot =
+      await this.prisma.arquitecturaExecutionTask.count({
+        where: { project: projectBase, kanbanStatus: 'DONE' },
+      });
 
     const cobranzas = num(paymentsAgg._sum.amount);
     const compras = num(purchasesAgg._sum.totalAmount);
@@ -246,11 +251,14 @@ export class ArquitecturaReportsPrismaRepository implements ArquitecturaReportsR
     );
     const margenBruto = volumenAprob - costosEjec - compras;
     const denomVentas = volumenAprob > 0 ? volumenAprob : null;
-    const margenBrutoPct = denomVentas !== null ? (margenBruto / denomVentas) * 100 : null;
+    const margenBrutoPct =
+      denomVentas !== null ? (margenBruto / denomVentas) * 100 : null;
 
     const closedDenom = budgetsApproved + budgetsRejected;
     const tasaCierre =
-      closedDenom > 0 ? Math.round((budgetsApproved / closedDenom) * 1000) / 10 : null;
+      closedDenom > 0
+        ? Math.round((budgetsApproved / closedDenom) * 1000) / 10
+        : null;
 
     const conversion: ArquitecturaReportsConversionDto = {
       proyectosPorEstado: statusGroups.map((g) => ({
@@ -277,11 +285,14 @@ export class ArquitecturaReportsPrismaRepository implements ArquitecturaReportsR
       costosEjecucionPeriodo: costosEjec,
       comprasMaterialesPeriodo: compras,
       margenBrutoEstimado: margenBruto,
-      margenBrutoPct: margenBrutoPct !== null ? Math.round(margenBrutoPct * 10) / 10 : null,
+      margenBrutoPct:
+        margenBrutoPct !== null ? Math.round(margenBrutoPct * 10) / 10 : null,
     };
 
     const pctTareas =
-      tareasTotales > 0 ? Math.round((tareasHechasSnapshot / tareasTotales) * 1000) / 10 : null;
+      tareasTotales > 0
+        ? Math.round((tareasHechasSnapshot / tareasTotales) * 1000) / 10
+        : null;
 
     const productividad: ArquitecturaReportsProductividadDto = {
       tareasTotales,

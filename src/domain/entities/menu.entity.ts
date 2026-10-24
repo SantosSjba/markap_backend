@@ -22,7 +22,17 @@ export class Menu {
     order: number,
     isActive: boolean,
   ): Menu {
-    return new Menu(id, applicationId, parentId, label, icon, path, order, isActive, undefined);
+    return new Menu(
+      id,
+      applicationId,
+      parentId,
+      label,
+      icon,
+      path,
+      order,
+      isActive,
+      undefined,
+    );
   }
 
   withChildren(children: Menu[]): Menu {

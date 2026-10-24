@@ -20,7 +20,9 @@ const SLUG = 'produccion';
 
 function assertProduccion(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug produccion');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug produccion',
+    );
   }
 }
 
@@ -71,10 +73,14 @@ export class CreateProduccionWorkOrderUseCase {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateProduccionWorkOrderPayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateProduccionWorkOrderPayload,
+  ) {
     assertProduccion(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación produccion no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación produccion no encontrada');
     return this.repo.create(app.id, payload);
   }
 }
@@ -86,7 +92,11 @@ export class UpdateProduccionWorkOrderUseCase {
     private readonly repo: ProduccionWorkOrderRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateProduccionWorkOrderPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateProduccionWorkOrderPayload,
+  ) {
     assertProduccion(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Orden de trabajo no encontrada');
@@ -166,7 +176,11 @@ export class ConsumeProduccionWorkOrderMaterialsUseCase {
     private readonly repo: ProduccionWorkOrderRepository,
   ) {}
 
-  async execute(id: string, applicationSlug: string, items: ConsumeProduccionWorkOrderMaterialPayload[]) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    items: ConsumeProduccionWorkOrderMaterialPayload[],
+  ) {
     assertProduccion(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Orden de trabajo no encontrada');

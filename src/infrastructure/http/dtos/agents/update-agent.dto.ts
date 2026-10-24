@@ -2,7 +2,10 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
 
 export class UpdateAgentDto {
-  @ApiPropertyOptional({ description: 'Tipo de agente', enum: ['INTERNAL', 'EXTERNAL'] })
+  @ApiPropertyOptional({
+    description: 'Tipo de agente',
+    enum: ['INTERNAL', 'EXTERNAL'],
+  })
   @IsOptional()
   @IsEnum(['INTERNAL', 'EXTERNAL'])
   type?: 'INTERNAL' | 'EXTERNAL';

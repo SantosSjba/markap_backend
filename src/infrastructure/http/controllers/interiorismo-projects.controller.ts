@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -13,10 +23,7 @@ import {
   ListInteriorProjectsUseCase,
   UpdateInteriorProjectUseCase,
 } from '../../../application/use-cases/interior-projects';
-import type {
-  InteriorProjectStatus,
-  InteriorProjectType,
-} from '@domain/repositories/interior-project.repository';
+import type { InteriorProjectStatus } from '@domain/repositories/interior-project.repository';
 import { CreateInteriorProjectDto } from '../dtos/interiorismo-projects/create-interior-project.dto';
 import { UpdateInteriorProjectDto } from '../dtos/interiorismo-projects/update-interior-project.dto';
 
@@ -48,9 +55,14 @@ export class InteriorismoProjectsController {
   @ApiQuery({
     name: 'inProgressOnly',
     required: false,
-    description: 'true = DESIGN, QUOTE, APPROVED, IN_PROGRESS (proyectos activos)',
+    description:
+      'true = DESIGN, QUOTE, APPROVED, IN_PROGRESS (proyectos activos)',
   })
-  @ApiQuery({ name: 'clientId', required: false, description: 'Filtrar proyectos por cliente' })
+  @ApiQuery({
+    name: 'clientId',
+    required: false,
+    description: 'Filtrar proyectos por cliente',
+  })
   @ApiResponse({ status: 200 })
   async list(
     @Query('applicationSlug') applicationSlug?: string,
@@ -63,8 +75,8 @@ export class InteriorismoProjectsController {
   ) {
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'interiorismo',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(50, Math.max(1, parseInt(limit ?? '10', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
       status,
       inProgressOnly: inProgressOnly === 'true',
@@ -92,8 +104,8 @@ export class InteriorismoProjectsController {
       code: dto.code,
       name: dto.name,
       clientId: dto.clientId,
-      projectType: dto.projectType as InteriorProjectType,
-      status: dto.status as InteriorProjectStatus,
+      projectType: dto.projectType,
+      status: dto.status,
       addressLine: dto.addressLine,
       city: dto.city ?? null,
       interventionLevel: dto.interventionLevel ?? null,
@@ -130,8 +142,8 @@ export class InteriorismoProjectsController {
     return this.updateUc.execute(id, applicationSlug ?? 'interiorismo', {
       name: dto.name,
       clientId: dto.clientId,
-      projectType: dto.projectType as InteriorProjectType | undefined,
-      status: dto.status as InteriorProjectStatus | undefined,
+      projectType: dto.projectType,
+      status: dto.status,
       addressLine: dto.addressLine,
       city: dto.city,
       interventionLevel: dto.interventionLevel,

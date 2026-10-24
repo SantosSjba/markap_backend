@@ -10,9 +10,7 @@ import {
   IsDateString,
 } from 'class-validator';
 
-import {
-  INTERIOR_PROJECT_STATUS_CODES,
-} from '@domain/constants/interior-project-stages.constants';
+import { INTERIOR_PROJECT_STATUS_CODES } from '@domain/constants/interior-project-stages.constants';
 
 const PROJECT_TYPES = [
   'REMODELING',
@@ -24,12 +22,17 @@ const PROJECT_TYPES = [
 const PROJECT_STATUSES = [...INTERIOR_PROJECT_STATUS_CODES] as const;
 
 export class CreateInteriorProjectDto {
-  @ApiPropertyOptional({ description: 'Slug aplicación (debe ser interiorismo)' })
+  @ApiPropertyOptional({
+    description: 'Slug aplicación (debe ser interiorismo)',
+  })
   @IsOptional()
   @IsString()
   applicationSlug?: string;
 
-  @ApiProperty({ description: 'Código único del proyecto', example: 'INT-PRY-001' })
+  @ApiProperty({
+    description: 'Código único del proyecto',
+    example: 'INT-PRY-001',
+  })
   @IsString()
   @MaxLength(80)
   code: string;
@@ -62,7 +65,10 @@ export class CreateInteriorProjectDto {
   @MaxLength(120)
   city?: string | null;
 
-  @ApiPropertyOptional({ enum: ['I', 'II', 'III'], description: 'Nivel de intervención' })
+  @ApiPropertyOptional({
+    enum: ['I', 'II', 'III'],
+    description: 'Nivel de intervención',
+  })
   @IsOptional()
   @IsString()
   @IsIn(['I', 'II', 'III'])

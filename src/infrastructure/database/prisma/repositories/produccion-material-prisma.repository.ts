@@ -1,3 +1,4 @@
+import { lockProduccionMaterials } from './lock-produccion-materials';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
@@ -101,17 +102,25 @@ export class ProduccionMaterialPrismaRepository implements ProduccionMaterialRep
     };
   }
 
-  async list(filters: ListProduccionMaterialsFilters): Promise<ListProduccionMaterialsResult> {
+  async list(
+    filters: ListProduccionMaterialsFilters,
+  ): Promise<ListProduccionMaterialsResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
-    const andParts: Prisma.ProduccionMaterialWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.ProduccionMaterialWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.category?.trim()) {
-      andParts.push({ category: { equals: filters.category.trim(), mode: 'insensitive' } });
+      andParts.push({
+        category: { equals: filters.category.trim(), mode: 'insensitive' },
+      });
     }
-    if (filters.isActive !== undefined) andParts.push({ isActive: filters.isActive });
+    if (filters.isActive !== undefined)
+      andParts.push({ isActive: filters.isActive });
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       andParts.push({
@@ -123,11 +132,16 @@ export class ProduccionMaterialPrismaRepository implements ProduccionMaterialRep
       });
     }
 
-    let where: Prisma.ProduccionMaterialWhereInput = { AND: andParts };
+    const where: Prisma.ProduccionMaterialWhereInput = { AND: andParts };
 
     if (filters.lowStockOnly) {
-      const all = await this.prisma.produccionMaterial.findMany({ where, orderBy: { updatedAt: 'desc' } });
-      const filtered = all.filter((r) => isLowStock(num(r.currentStock), num(r.minStockQty)));
+      const all = await this.prisma.produccionMaterial.findMany({
+        where,
+        orderBy: { updatedAt: 'desc' },
+      });
+      const filtered = all.filter((r) =>
+        isLowStock(num(r.currentStock), num(r.minStockQty)),
+      );
       const page = filters.page;
       const limit = filters.limit;
       const slice = filtered.slice((page - 1) * limit, page * limit);
@@ -161,7 +175,13 @@ export class ProduccionMaterialPrismaRepository implements ProduccionMaterialRep
     const app = await this.prisma.application.findUnique({
       where: { slug: applicationSlug.trim() },
     });
-    if (!app) return { totalMaterials: 0, activeMaterials: 0, lowStockCount: 0, totalStockValue: 0 };
+    if (!app)
+      return {
+        totalMaterials: 0,
+        activeMaterials: 0,
+        lowStockCount: 0,
+        totalStockValue: 0,
+      };
 
     const rows = await this.prisma.produccionMaterial.findMany({
       where: { applicationId: app.id },
@@ -186,22 +206,32 @@ export class ProduccionMaterialPrismaRepository implements ProduccionMaterialRep
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ProduccionMaterialDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionMaterialDetail | null> {
     const row = await this.prisma.produccionMaterial.findUnique({
       where: { id },
       include: { application: { select: { slug: true } } },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
-    const { application: _a, ...mat } = row;
-    return this.mapDetail(mat);
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
+    return this.mapDetail(row);
   }
 
-  async create(applicationId: string, payload: CreateProduccionMaterialPayload) {
+  async create(
+    applicationId: string,
+    payload: CreateProduccionMaterialPayload,
+  ) {
     const dup = await this.prisma.produccionMaterial.findFirst({
       where: { applicationId, code: payload.code.trim() },
     });
-    if (dup) throw new BadRequestException('Ya existe un material con ese código');
+    if (dup)
+      throw new BadRequestException('Ya existe un material con ese código');
 
     const row = await this.prisma.produccionMaterial.create({
       data: {
@@ -222,14 +252,21 @@ export class ProduccionMaterialPrismaRepository implements ProduccionMaterialRep
   async update(id: string, payload: UpdateProduccionMaterialPayload) {
     const patch: Prisma.ProduccionMaterialUncheckedUpdateInput = {};
     if (payload.name !== undefined) patch.name = payload.name.trim();
-    if (payload.category !== undefined) patch.category = payload.category.trim();
+    if (payload.category !== undefined)
+      patch.category = payload.category.trim();
     if (payload.unit !== undefined) patch.unit = payload.unit.trim();
-    if (payload.unitCost !== undefined) patch.unitCost = new Prisma.Decimal(payload.unitCost);
-    if (payload.minStockQty !== undefined) patch.minStockQty = new Prisma.Decimal(payload.minStockQty);
+    if (payload.unitCost !== undefined)
+      patch.unitCost = new Prisma.Decimal(payload.unitCost);
+    if (payload.minStockQty !== undefined)
+      patch.minStockQty = new Prisma.Decimal(payload.minStockQty);
     if (payload.isActive !== undefined) patch.isActive = payload.isActive;
-    if (payload.notes !== undefined) patch.notes = payload.notes?.trim() || null;
+    if (payload.notes !== undefined)
+      patch.notes = payload.notes?.trim() || null;
 
-    const row = await this.prisma.produccionMaterial.update({ where: { id }, data: patch });
+    const row = await this.prisma.produccionMaterial.update({
+      where: { id },
+      data: patch,
+    });
     return this.mapDetail(row);
   }
 
@@ -243,13 +280,15 @@ export class ProduccionMaterialPrismaRepository implements ProduccionMaterialRep
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
     const andParts: Prisma.ProduccionStockMovementWhereInput[] = [
       { material: { applicationId: app.id } },
     ];
     if (filters.materialId) andParts.push({ materialId: filters.materialId });
-    if (filters.movementType) andParts.push({ movementType: filters.movementType });
+    if (filters.movementType)
+      andParts.push({ movementType: filters.movementType });
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       andParts.push({
@@ -288,37 +327,39 @@ export class ProduccionMaterialPrismaRepository implements ProduccionMaterialRep
   ): Promise<ProduccionStockMovementDto> {
     const type = payload.movementType;
     const qty = payload.quantity;
-    if (qty < 0) throw new BadRequestException('La cantidad debe ser positiva');
-
-    const material = await this.prisma.produccionMaterial.findFirst({
-      where: {
-        id: payload.materialId,
-        application: { slug: applicationSlug.trim() },
-      },
-    });
-    if (!material) throw new BadRequestException('Material no encontrado');
-
-    const current = num(material.currentStock);
-    let balanceAfter: number;
-    let movementQty: number;
-
-    if (type === 'IN') {
-      movementQty = qty;
-      balanceAfter = current + qty;
-    } else if (type === 'OUT') {
-      movementQty = qty;
-      balanceAfter = current - qty;
-      if (balanceAfter < 0) {
-        throw new BadRequestException('Stock insuficiente para la salida');
-      }
-    } else if (type === 'ADJUST') {
-      balanceAfter = qty;
-      movementQty = Math.abs(balanceAfter - current);
-    } else {
-      throw new BadRequestException('Tipo de movimiento inválido');
-    }
+    if (!Number.isFinite(qty) || qty < 0)
+      throw new BadRequestException('La cantidad debe ser positiva');
 
     const row = await this.prisma.$transaction(async (tx) => {
+      await lockProduccionMaterials(tx, [payload.materialId]);
+      const material = await tx.produccionMaterial.findFirst({
+        where: {
+          id: payload.materialId,
+          application: { slug: applicationSlug.trim() },
+        },
+      });
+      if (!material) throw new BadRequestException('Material no encontrado');
+
+      const current = num(material.currentStock);
+      let balanceAfter: number;
+      let movementQty: number;
+
+      if (type === 'IN') {
+        movementQty = qty;
+        balanceAfter = current + qty;
+      } else if (type === 'OUT') {
+        movementQty = qty;
+        balanceAfter = current - qty;
+        if (balanceAfter < 0) {
+          throw new BadRequestException('Stock insuficiente para la salida');
+        }
+      } else if (type === 'ADJUST') {
+        balanceAfter = qty;
+        movementQty = Math.abs(balanceAfter - current);
+      } else {
+        throw new BadRequestException('Tipo de movimiento inválido');
+      }
+
       await tx.produccionMaterial.update({
         where: { id: material.id },
         data: { currentStock: new Prisma.Decimal(balanceAfter) },
@@ -330,7 +371,9 @@ export class ProduccionMaterialPrismaRepository implements ProduccionMaterialRep
           quantity: new Prisma.Decimal(movementQty),
           balanceAfter: new Prisma.Decimal(balanceAfter),
           unitCost:
-            payload.unitCost != null ? new Prisma.Decimal(payload.unitCost) : material.unitCost,
+            payload.unitCost != null
+              ? new Prisma.Decimal(payload.unitCost)
+              : material.unitCost,
           reference: payload.reference?.trim() || null,
           notes: payload.notes?.trim() || null,
         },

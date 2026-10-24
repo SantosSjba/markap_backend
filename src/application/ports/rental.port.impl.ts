@@ -16,7 +16,10 @@ import { CreateRentalUseCase } from '../use-cases/rentals/create-rental.use-case
 import { ListRentalsUseCase } from '../use-cases/rentals/list-rentals.use-case';
 import { GetRentalStatsUseCase } from '../use-cases/rentals/get-rental-stats.use-case';
 import { GetRentalByIdUseCase } from '../use-cases/rentals/get-rental-by-id.use-case';
-import { UpdateRentalInput, UpdateRentalUseCase } from '../use-cases/rentals/update-rental.use-case';
+import {
+  UpdateRentalInput,
+  UpdateRentalUseCase,
+} from '../use-cases/rentals/update-rental.use-case';
 import { GetRentalFinancialConfigUseCase } from '../use-cases/rentals/get-rental-financial-config.use-case';
 import { UpsertRentalFinancialConfigUseCase } from '../use-cases/rentals/upsert-rental-financial-config.use-case';
 import { GetRentalFinancialBreakdownUseCase } from '../use-cases/rentals/get-rental-financial-breakdown.use-case';
@@ -57,7 +60,9 @@ export class RentalPortImpl implements RentalPort {
     return this.updateUc.execute(input);
   }
 
-  getRentalFinancialConfig(rentalId: string): Promise<RentalFinancialConfig | null> {
+  getRentalFinancialConfig(
+    rentalId: string,
+  ): Promise<RentalFinancialConfig | null> {
     return this.getFinUc.execute(rentalId);
   }
 

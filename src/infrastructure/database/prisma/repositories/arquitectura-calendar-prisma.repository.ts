@@ -71,7 +71,10 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
     return app?.id ?? null;
   }
 
-  async ensureManualEventScope(eventId: string, applicationSlug: string): Promise<boolean> {
+  async ensureManualEventScope(
+    eventId: string,
+    applicationSlug: string,
+  ): Promise<boolean> {
     const app = await this.prisma.application.findFirst({
       where: { slug: applicationSlug.trim(), deletedAt: null },
       select: { id: true },
@@ -83,7 +86,9 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
     return n > 0;
   }
 
-  async getFeed(filters: ArquitecturaCalendarFeedFilters): Promise<ArquitecturaCalendarFeedItemDto[]> {
+  async getFeed(
+    filters: ArquitecturaCalendarFeedFilters,
+  ): Promise<ArquitecturaCalendarFeedItemDto[]> {
     const slug = filters.applicationSlug.trim() || 'arquitectura';
     const app = await this.prisma.application.findFirst({
       where: { slug, deletedAt: null },
@@ -110,8 +115,12 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
     const manualWhere: Prisma.ArquitecturaCalendarEventWhereInput = {
       applicationId: app.id,
       startsAt: { gte: from, lte: to },
-      ...(filters.projectId?.trim() ? { projectId: filters.projectId.trim() } : {}),
-      ...(filters.agentId?.trim() ? { assignedAgentId: filters.agentId.trim() } : {}),
+      ...(filters.projectId?.trim()
+        ? { projectId: filters.projectId.trim() }
+        : {}),
+      ...(filters.agentId?.trim()
+        ? { assignedAgentId: filters.agentId.trim() }
+        : {}),
     };
 
     const [manualRows, milestones, tasks, financeRows] = await Promise.all([
@@ -136,7 +145,10 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
         : this.prisma.arquitecturaExecutionTask.findMany({
             where: {
               projectId: { in: projectIds },
-              OR: [{ plannedStart: { not: null } }, { plannedEnd: { not: null } }],
+              OR: [
+                { plannedStart: { not: null } },
+                { plannedEnd: { not: null } },
+              ],
             },
           }),
       projectIds.length === 0
@@ -202,7 +214,8 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
                 ? 'TASK_PRODUCTION'
                 : 'TASK_OTHER';
 
-      const overlaps = start.getTime() <= to.getTime() && end.getTime() >= from.getTime();
+      const overlaps =
+        start.getTime() <= to.getTime() && end.getTime() >= from.getTime();
       if (!overlaps) continue;
 
       out.push({
@@ -251,7 +264,9 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
     return out;
   }
 
-  async createEvent(payload: CreateArquitecturaCalendarEventPayload): Promise<ArquitecturaCalendarFeedItemDto> {
+  async createEvent(
+    payload: CreateArquitecturaCalendarEventPayload,
+  ): Promise<ArquitecturaCalendarFeedItemDto> {
     const row = await this.prisma.arquitecturaCalendarEvent.create({
       data: {
         applicationId: payload.applicationId,
@@ -291,10 +306,13 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
         ? { connect: { id: payload.projectId.trim() } }
         : { disconnect: true };
     }
-    if (payload.eventType !== undefined) patch.eventType = payload.eventType.trim();
+    if (payload.eventType !== undefined)
+      patch.eventType = payload.eventType.trim();
     if (payload.title !== undefined) patch.title = payload.title.trim();
-    if (payload.description !== undefined) patch.description = payload.description?.trim() || null;
-    if (payload.location !== undefined) patch.location = payload.location?.trim() || null;
+    if (payload.description !== undefined)
+      patch.description = payload.description?.trim() || null;
+    if (payload.location !== undefined)
+      patch.location = payload.location?.trim() || null;
     if (payload.startsAt !== undefined) patch.startsAt = payload.startsAt;
     if (payload.endsAt !== undefined) patch.endsAt = payload.endsAt ?? null;
     if (payload.allDay !== undefined) patch.allDay = payload.allDay;
@@ -322,6 +340,8 @@ export class ArquitecturaCalendarPrismaRepository implements ArquitecturaCalenda
   async deleteEvent(eventId: string, applicationSlug: string): Promise<void> {
     const ok = await this.ensureManualEventScope(eventId, applicationSlug);
     if (!ok) throw new Error('EVENT_NOT_FOUND');
-    await this.prisma.arquitecturaCalendarEvent.delete({ where: { id: eventId } });
+    await this.prisma.arquitecturaCalendarEvent.delete({
+      where: { id: eventId },
+    });
   }
 }

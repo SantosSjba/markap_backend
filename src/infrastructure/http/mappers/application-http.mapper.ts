@@ -22,6 +22,6 @@ export class ApplicationHttpMapper {
   }
 
   static toResponseList(applications: Application[]): ApplicationResponseDto[] {
-    return applications.map(this.toResponse);
+    return applications.map((row) => this.toResponse(row));
   }
 }

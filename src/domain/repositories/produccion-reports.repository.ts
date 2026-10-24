@@ -1,4 +1,6 @@
-export const PRODUCCION_REPORTS_REPOSITORY = Symbol('ProduccionReportsRepository');
+export const PRODUCCION_REPORTS_REPOSITORY = Symbol(
+  'ProduccionReportsRepository',
+);
 
 export interface ProduccionReportsDateRange {
   startDate: string;
@@ -74,7 +76,10 @@ export interface ProduccionReportsKpisDto {
   pendingPurchaseOrders: number;
 }
 
-export type ProduccionReportsActivityType = 'WORK_ORDER' | 'DELIVERY' | 'STOCK_MOVEMENT';
+export type ProduccionReportsActivityType =
+  | 'WORK_ORDER'
+  | 'DELIVERY'
+  | 'STOCK_MOVEMENT';
 
 export interface ProduccionReportsActivityItem {
   type: ProduccionReportsActivityType;
@@ -98,5 +103,7 @@ export interface ProduccionReportsDashboardDto {
 }
 
 export interface ProduccionReportsRepository {
-  getDashboard(filters: ProduccionReportsFilters): Promise<ProduccionReportsDashboardDto | null>;
+  getDashboard(
+    filters: ProduccionReportsFilters,
+  ): Promise<ProduccionReportsDashboardDto | null>;
 }

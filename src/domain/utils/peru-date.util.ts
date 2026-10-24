@@ -41,7 +41,9 @@ export function parseDateOnly(input: string | Date): Date {
   if (!m) {
     throw new Error(`Invalid date-only value: ${String(input)}`);
   }
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0));
+  return new Date(
+    Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0),
+  );
 }
 
 /**
@@ -90,7 +92,10 @@ export function startOfDayLima(value: Date | string): Date {
 }
 
 /** Inclusive day difference (Lima calendar) between two date-only values. */
-export function diffCalendarDays(from: Date | string, to: Date | string): number {
+export function diffCalendarDays(
+  from: Date | string,
+  to: Date | string,
+): number {
   const a = startOfDayLima(from).getTime();
   const b = startOfDayLima(to).getTime();
   return Math.round((b - a) / 86_400_000);
@@ -103,7 +108,9 @@ export function diffCalendarDays(from: Date | string, to: Date | string): number
 export function startOfLimaDayInstant(ymd: string | Date): Date {
   const s = typeof ymd === 'string' ? formatDateOnly(ymd) : formatDateOnly(ymd);
   const m = s.match(YMD_RE)!;
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 5, 0, 0, 0));
+  return new Date(
+    Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 5, 0, 0, 0),
+  );
 }
 
 /** End of a Lima civil day as a real UTC instant (inclusive). */

@@ -52,7 +52,9 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
     };
   }
 
-  async list(filters: ListInteriorCatalogMaterialsFilters): Promise<ListInteriorCatalogMaterialsResult> {
+  async list(
+    filters: ListInteriorCatalogMaterialsFilters,
+  ): Promise<ListInteriorCatalogMaterialsResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
@@ -60,9 +62,13 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
       return { data: [], total: 0, page: filters.page, limit: filters.limit };
     }
 
-    const andParts: Prisma.InteriorCatalogMaterialWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.InteriorCatalogMaterialWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.category?.trim()) {
-      andParts.push({ category: { equals: filters.category.trim(), mode: 'insensitive' } });
+      andParts.push({
+        category: { equals: filters.category.trim(), mode: 'insensitive' },
+      });
     }
     if (filters.search?.trim()) {
       const q = filters.search.trim();
@@ -108,7 +114,10 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<InteriorCatalogMaterialDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<InteriorCatalogMaterialDetail | null> {
     const row = await this.prisma.interiorCatalogMaterial.findUnique({
       where: { id },
       include: {
@@ -117,9 +126,12 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
       },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
-    const { application: _app, ...mat } = row;
-    return this.mapDetail(mat);
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
+    return this.mapDetail(row);
   }
 
   async create(
@@ -153,14 +165,20 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
     return this.mapDetail(row);
   }
 
-  async update(id: string, payload: UpdateInteriorCatalogMaterialPayload): Promise<InteriorCatalogMaterialDetail> {
+  async update(
+    id: string,
+    payload: UpdateInteriorCatalogMaterialPayload,
+  ): Promise<InteriorCatalogMaterialDetail> {
     const patch: Prisma.InteriorCatalogMaterialUncheckedUpdateInput = {};
     if (payload.name !== undefined) patch.name = payload.name.trim();
-    if (payload.category !== undefined) patch.category = payload.category.trim();
+    if (payload.category !== undefined)
+      patch.category = payload.category.trim();
     if (payload.brand !== undefined) patch.brand = payload.brand.trim();
     if (payload.unit !== undefined) patch.unit = payload.unit.trim();
-    if (payload.price !== undefined) patch.price = new Prisma.Decimal(payload.price);
-    if (payload.stock !== undefined) patch.stock = new Prisma.Decimal(payload.stock);
+    if (payload.price !== undefined)
+      patch.price = new Prisma.Decimal(payload.price);
+    if (payload.stock !== undefined)
+      patch.stock = new Prisma.Decimal(payload.stock);
     if (payload.technicalSheetUrl !== undefined) {
       patch.technicalSheetUrl = payload.technicalSheetUrl?.trim() || null;
     }
@@ -171,7 +189,9 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
         data: patch,
       });
       if (payload.imageUrls !== undefined) {
-        await tx.interiorCatalogMaterialImage.deleteMany({ where: { materialId: id } });
+        await tx.interiorCatalogMaterialImage.deleteMany({
+          where: { materialId: id },
+        });
         const urls = payload.imageUrls.map((u) => u.trim()).filter(Boolean);
         if (urls.length > 0) {
           await tx.interiorCatalogMaterialImage.createMany({

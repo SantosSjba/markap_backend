@@ -62,7 +62,9 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export function computeLineItemPricing(input: LineItemPricingInput): LineItemPricingResult {
+export function computeLineItemPricing(
+  input: LineItemPricingInput,
+): LineItemPricingResult {
   const budgetedCost = Number(input.budgetedCost) || 0;
   const utilityPct = Number(input.utilityPct) || 0;
   const igvPct = Number(input.igvPct) || 0;
@@ -75,7 +77,9 @@ export function computeLineItemPricing(input: LineItemPricingInput): LineItemPri
   return { utilityAmount, totalBeforeIgv, igvAmount, price };
 }
 
-export function computeLineItemPurchase(input: LineItemPurchaseInput): LineItemPurchaseResult {
+export function computeLineItemPurchase(
+  input: LineItemPurchaseInput,
+): LineItemPurchaseResult {
   const totalSupplierPayments = round2(
     input.supplierPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0),
   );
@@ -104,7 +108,9 @@ export function computeEmergencyUtility(
   return round2(Number(budgetedCost) - Number(actualPurchaseCost));
 }
 
-export function computeProjectSettlement(input: ProjectSettlementInput): ProjectSettlementResult {
+export function computeProjectSettlement(
+  input: ProjectSettlementInput,
+): ProjectSettlementResult {
   const budgetTotal = round2(
     input.lineItemPrices.reduce((sum, price) => sum + (Number(price) || 0), 0),
   );
@@ -117,7 +123,9 @@ export function computeProjectSettlement(input: ProjectSettlementInput): Project
     ),
   );
 
-  const paidPayments = input.clientPayments.filter((p) => PAID_STATUSES.has(p.status));
+  const paidPayments = input.clientPayments.filter((p) =>
+    PAID_STATUSES.has(p.status),
+  );
   const depositsOnAccount = round2(
     paidPayments
       .filter((p) => p.paymentType === 'ABONO')

@@ -17,13 +17,17 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
   constructor(private readonly prisma: PrismaService) {}
 
   async ensurePcgeSeed(applicationId: string): Promise<void> {
-    const count = await this.prisma.contabilidadAccount.count({ where: { applicationId } });
+    const count = await this.prisma.contabilidadAccount.count({
+      where: { applicationId },
+    });
     if (count > 0) return;
 
     const idByCode = new Map<string, string>();
 
     for (const row of CONTABILIDAD_PCGE_SEED) {
-      const parentId = row.parentCode ? idByCode.get(row.parentCode) ?? null : null;
+      const parentId = row.parentCode
+        ? (idByCode.get(row.parentCode) ?? null)
+        : null;
       const created = await this.prisma.contabilidadAccount.create({
         data: {
           applicationId,
@@ -41,10 +45,16 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
     }
   }
 
-  async importPcge(applicationId: string, classes: number[]): Promise<ImportPcgeResultDto> {
+  async importPcge(
+    applicationId: string,
+    classes: number[],
+  ): Promise<ImportPcgeResultDto> {
     const catalog = filterPcgeCatalogByClasses(classes);
     const sorted = [...catalog].sort(
-      (a, b) => a.level - b.level || a.code.length - b.code.length || a.code.localeCompare(b.code),
+      (a, b) =>
+        a.level - b.level ||
+        a.code.length - b.code.length ||
+        a.code.localeCompare(b.code),
     );
 
     const existingRows = await this.prisma.contabilidadAccount.findMany({
@@ -64,7 +74,9 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
         continue;
       }
 
-      const parentId = row.parentCode ? idByCode.get(row.parentCode) ?? null : null;
+      const parentId = row.parentCode
+        ? (idByCode.get(row.parentCode) ?? null)
+        : null;
       if (row.parentCode && !parentId) {
         pendingParent += 1;
         continue;
@@ -89,7 +101,9 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
     }
 
     return {
-      classes: [...new Set(classes.filter((c) => c >= 1 && c <= 9))].sort((a, b) => a - b),
+      classes: [...new Set(classes.filter((c) => c >= 1 && c <= 9))].sort(
+        (a, b) => a - b,
+      ),
       created,
       skipped,
       pendingParent,
@@ -97,7 +111,10 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
     };
   }
 
-  async listFlat(applicationId: string, search?: string): Promise<ContabilidadAccountFlatDto[]> {
+  async listFlat(
+    applicationId: string,
+    search?: string,
+  ): Promise<ContabilidadAccountFlatDto[]> {
     const q = search?.trim();
     const where: Prisma.ContabilidadAccountWhereInput = { applicationId };
     if (q) {
@@ -114,12 +131,20 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
     return rows.map((r) => ContabilidadAccountPrismaMapper.toFlat(r));
   }
 
-  async findById(applicationId: string, id: string): Promise<ContabilidadAccountFlatDto | null> {
-    const row = await this.prisma.contabilidadAccount.findFirst({ where: { applicationId, id } });
+  async findById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadAccountFlatDto | null> {
+    const row = await this.prisma.contabilidadAccount.findFirst({
+      where: { applicationId, id },
+    });
     return row ? ContabilidadAccountPrismaMapper.toFlat(row) : null;
   }
 
-  async findByCode(applicationId: string, code: string): Promise<ContabilidadAccountFlatDto | null> {
+  async findByCode(
+    applicationId: string,
+    code: string,
+  ): Promise<ContabilidadAccountFlatDto | null> {
     const row = await this.prisma.contabilidadAccount.findUnique({
       where: { applicationId_code: { applicationId, code } },
     });
@@ -133,7 +158,10 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
     return count > 0;
   }
 
-  async create(applicationId: string, input: CreateContabilidadAccountInput): Promise<ContabilidadAccountFlatDto> {
+  async create(
+    applicationId: string,
+    input: CreateContabilidadAccountInput,
+  ): Promise<ContabilidadAccountFlatDto> {
     const parent = await this.prisma.contabilidadAccount.findFirst({
       where: { applicationId, id: input.parentId },
     });
@@ -161,7 +189,9 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
     id: string,
     input: UpdateContabilidadAccountInput,
   ): Promise<ContabilidadAccountFlatDto> {
-    const existing = await this.prisma.contabilidadAccount.findFirst({ where: { applicationId, id } });
+    const existing = await this.prisma.contabilidadAccount.findFirst({
+      where: { applicationId, id },
+    });
     if (!existing) throw new Error('Account not found');
 
     const data: Prisma.ContabilidadAccountUpdateInput = {};
@@ -172,20 +202,30 @@ export class ContabilidadAccountPrismaRepository implements ContabilidadAccountR
     if (input.isActive !== undefined) data.isActive = input.isActive;
     if (input.code !== undefined) data.code = input.code.trim();
 
-    const row = await this.prisma.contabilidadAccount.update({ where: { id }, data });
+    const row = await this.prisma.contabilidadAccount.update({
+      where: { id },
+      data,
+    });
     return ContabilidadAccountPrismaMapper.toFlat(row);
   }
 
-  async deactivate(applicationId: string, id: string): Promise<ContabilidadAccountFlatDto> {
+  async deactivate(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadAccountFlatDto> {
     const row = await this.prisma.contabilidadAccount.update({
       where: { id },
       data: { isActive: false },
     });
-    if (row.applicationId !== applicationId) throw new Error('Account not found');
+    if (row.applicationId !== applicationId)
+      throw new Error('Account not found');
     return ContabilidadAccountPrismaMapper.toFlat(row);
   }
 
-  async markHasMovements(applicationId: string, accountIds: string[]): Promise<void> {
+  async markHasMovements(
+    applicationId: string,
+    accountIds: string[],
+  ): Promise<void> {
     const unique = [...new Set(accountIds.filter(Boolean))];
     if (!unique.length) return;
     await this.prisma.contabilidadAccount.updateMany({

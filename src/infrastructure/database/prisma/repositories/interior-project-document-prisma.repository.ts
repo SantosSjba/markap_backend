@@ -15,7 +15,14 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
   constructor(private readonly prisma: PrismaService) {}
 
   private mapRow(
-    doc: { id: string; projectId: string; docType: string; title: string; fileUrl: string | null; createdAt: Date },
+    doc: {
+      id: string;
+      projectId: string;
+      docType: string;
+      title: string;
+      fileUrl: string | null;
+      createdAt: Date;
+    },
     project: { code: string; name: string },
   ): InteriorProjectDocumentListItem {
     return {
@@ -30,7 +37,9 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
     };
   }
 
-  async findMany(filters: ListInteriorProjectDocumentsFilters): Promise<ListInteriorProjectDocumentsResult> {
+  async findMany(
+    filters: ListInteriorProjectDocumentsFilters,
+  ): Promise<ListInteriorProjectDocumentsResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug },
     });
@@ -86,7 +95,9 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
     };
   }
 
-  async create(data: CreateInteriorProjectDocumentData): Promise<InteriorProjectDocumentListItem | null> {
+  async create(
+    data: CreateInteriorProjectDocumentData,
+  ): Promise<InteriorProjectDocumentListItem | null> {
     const app = await this.prisma.application.findUnique({
       where: { slug: data.applicationSlug },
     });
@@ -135,7 +146,8 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
 
     const patch: Prisma.InteriorProjectDocumentUncheckedUpdateInput = {};
     if (data.title !== undefined) patch.title = data.title.trim();
-    if (data.fileUrl !== undefined) patch.fileUrl = data.fileUrl?.trim() || null;
+    if (data.fileUrl !== undefined)
+      patch.fileUrl = data.fileUrl?.trim() || null;
     if (data.docType !== undefined) patch.docType = data.docType;
 
     const row = await this.prisma.interiorProjectDocument.update({

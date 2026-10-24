@@ -43,10 +43,14 @@ export class ProduccionExtraCostCatalogPrismaRepository implements ProduccionExt
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
-    const andParts: Prisma.ProduccionExtraCostCatalogWhereInput[] = [{ applicationId: app.id }];
-    if (filters.isActive !== undefined) andParts.push({ isActive: filters.isActive });
+    const andParts: Prisma.ProduccionExtraCostCatalogWhereInput[] = [
+      { applicationId: app.id },
+    ];
+    if (filters.isActive !== undefined)
+      andParts.push({ isActive: filters.isActive });
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       andParts.push({
@@ -76,17 +80,27 @@ export class ProduccionExtraCostCatalogPrismaRepository implements ProduccionExt
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ProduccionExtraCostCatalogDto | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionExtraCostCatalogDto | null> {
     const row = await this.prisma.produccionExtraCostCatalog.findUnique({
       where: { id },
       include: { application: { select: { slug: true } } },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
     return this.map(row);
   }
 
-  async create(applicationId: string, payload: CreateProduccionExtraCostCatalogPayload) {
+  async create(
+    applicationId: string,
+    payload: CreateProduccionExtraCostCatalogPayload,
+  ) {
     const row = await this.prisma.produccionExtraCostCatalog.create({
       data: {
         applicationId,
@@ -105,10 +119,14 @@ export class ProduccionExtraCostCatalogPrismaRepository implements ProduccionExt
     if (payload.defaultAmount !== undefined) {
       patch.defaultAmount = new Prisma.Decimal(payload.defaultAmount);
     }
-    if (payload.description !== undefined) patch.description = payload.description?.trim() || null;
+    if (payload.description !== undefined)
+      patch.description = payload.description?.trim() || null;
     if (payload.isActive !== undefined) patch.isActive = payload.isActive;
 
-    const row = await this.prisma.produccionExtraCostCatalog.update({ where: { id }, data: patch });
+    const row = await this.prisma.produccionExtraCostCatalog.update({
+      where: { id },
+      data: patch,
+    });
     return this.map(row);
   }
 

@@ -39,7 +39,9 @@ async function lookupExchangeRate(
     },
   });
   if (!row) {
-    throw new Error(`No hay tipo de cambio registrado para ${currencyCode} en ${rateDate}`);
+    throw new Error(
+      `No hay tipo de cambio registrado para ${currencyCode} en ${rateDate}`,
+    );
   }
   return parseExchangeRate(Number(row.sellRate));
 }
@@ -75,7 +77,12 @@ export async function resolveInvoiceTaxableBaseInPen(
 
   let exchangeRate = parseExchangeRate(input.exchangeRate);
   if (!Number.isFinite(exchangeRate)) {
-    exchangeRate = await lookupExchangeRate(prisma, applicationId, currencyCode, input.issueDate);
+    exchangeRate = await lookupExchangeRate(
+      prisma,
+      applicationId,
+      currencyCode,
+      input.issueDate,
+    );
   }
 
   return {
@@ -87,7 +94,10 @@ export async function resolveInvoiceTaxableBaseInPen(
 }
 
 export async function resolveTreasuryPenAmount(
-  prisma: Pick<PrismaService, 'contabilidadExchangeRate' | 'contabilidadBankAccount'>,
+  prisma: Pick<
+    PrismaService,
+    'contabilidadExchangeRate' | 'contabilidadBankAccount'
+  >,
   applicationId: string,
   input: {
     sourceType: 'CASH' | 'BANK';
@@ -104,7 +114,8 @@ export async function resolveTreasuryPenAmount(
   exchangeRate: number | null;
 }> {
   const penFromInput = parsePenAmount(input.amount);
-  if (Number.isNaN(penFromInput) || penFromInput <= 0) throw new Error('Invalid amount');
+  if (Number.isNaN(penFromInput) || penFromInput <= 0)
+    throw new Error('Invalid amount');
 
   if (input.sourceType !== 'BANK' || !input.bankAccountId) {
     return {
@@ -131,7 +142,9 @@ export async function resolveTreasuryPenAmount(
   }
 
   const foreignAmount = parsePenAmount(
-    input.foreignAmount != null && input.foreignAmount !== '' ? input.foreignAmount : input.amount,
+    input.foreignAmount != null && input.foreignAmount !== ''
+      ? input.foreignAmount
+      : input.amount,
   );
   if (Number.isNaN(foreignAmount) || foreignAmount <= 0) {
     throw new Error('Importe en moneda extranjera no válido');
@@ -139,7 +152,12 @@ export async function resolveTreasuryPenAmount(
 
   let exchangeRate = parseExchangeRate(input.exchangeRate);
   if (!Number.isFinite(exchangeRate)) {
-    exchangeRate = await lookupExchangeRate(prisma, applicationId, currencyCode, input.movementDate);
+    exchangeRate = await lookupExchangeRate(
+      prisma,
+      applicationId,
+      currencyCode,
+      input.movementDate,
+    );
   }
 
   return {

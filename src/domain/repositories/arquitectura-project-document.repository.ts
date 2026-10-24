@@ -7,7 +7,8 @@ export const ARQUITECTURA_DOCUMENT_TYPES = [
   'ACTA',
 ] as const;
 
-export type ArquitecturaDocumentType = (typeof ARQUITECTURA_DOCUMENT_TYPES)[number];
+export type ArquitecturaDocumentType =
+  (typeof ARQUITECTURA_DOCUMENT_TYPES)[number];
 
 export interface ArquitecturaProjectDocumentListItem {
   id: string;
@@ -65,4 +66,6 @@ export interface ArquitecturaProjectDocumentRepository {
   delete(id: string, applicationSlug: string): Promise<boolean>;
 }
 
-export const ARQUITECTURA_PROJECT_DOCUMENT_REPOSITORY = Symbol('ArquitecturaProjectDocumentRepository');
+export const ARQUITECTURA_PROJECT_DOCUMENT_REPOSITORY = Symbol(
+  'ArquitecturaProjectDocumentRepository',
+);

@@ -1,4 +1,6 @@
-export const CONTABILIDAD_CONFIG_REPOSITORY = Symbol('ContabilidadConfigRepository');
+export const CONTABILIDAD_CONFIG_REPOSITORY = Symbol(
+  'ContabilidadConfigRepository',
+);
 
 export interface ContabilidadCompanyProfileDto {
   ruc: string;
@@ -33,7 +35,9 @@ export interface ContabilidadDocumentSeriesDto {
 
 export interface ContabilidadConfigRepository {
   ensureDefaults(applicationId: string): Promise<void>;
-  getCompanyProfile(applicationId: string): Promise<ContabilidadCompanyProfileDto>;
+  getCompanyProfile(
+    applicationId: string,
+  ): Promise<ContabilidadCompanyProfileDto>;
   updateCompanyProfile(
     applicationId: string,
     data: Partial<ContabilidadCompanyProfileDto>,
@@ -43,11 +47,21 @@ export interface ContabilidadConfigRepository {
     applicationId: string,
     data: Partial<ContabilidadAppSettingsDto>,
   ): Promise<ContabilidadAppSettingsDto>;
-  listDocumentSeries(applicationId: string): Promise<ContabilidadDocumentSeriesDto[]>;
+  listDocumentSeries(
+    applicationId: string,
+  ): Promise<ContabilidadDocumentSeriesDto[]>;
   updateDocumentSeries(
     applicationId: string,
     seriesKey: string,
-    data: { sunatSeries?: string; lastNumber?: number; padLength?: number; isActive?: boolean },
+    data: {
+      sunatSeries?: string;
+      lastNumber?: number;
+      padLength?: number;
+      isActive?: boolean;
+    },
   ): Promise<ContabilidadDocumentSeriesDto>;
-  previewNextDocumentNumber(applicationId: string, seriesKey: string): Promise<string>;
+  previewNextDocumentNumber(
+    applicationId: string,
+    seriesKey: string,
+  ): Promise<string>;
 }

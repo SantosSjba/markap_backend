@@ -1,4 +1,6 @@
-export const PRODUCCION_LABOR_RATE_REPOSITORY = Symbol('ProduccionLaborRateRepository');
+export const PRODUCCION_LABOR_RATE_REPOSITORY = Symbol(
+  'ProduccionLaborRateRepository',
+);
 
 export interface ProduccionLaborRateDto {
   id: string;
@@ -39,9 +41,20 @@ export interface ListProduccionLaborRatesResult {
 }
 
 export interface ProduccionLaborRateRepository {
-  list(filters: ListProduccionLaborRatesFilters): Promise<ListProduccionLaborRatesResult>;
-  findById(id: string, applicationSlug?: string): Promise<ProduccionLaborRateDto | null>;
-  create(applicationId: string, payload: CreateProduccionLaborRatePayload): Promise<ProduccionLaborRateDto>;
-  update(id: string, payload: UpdateProduccionLaborRatePayload): Promise<ProduccionLaborRateDto>;
+  list(
+    filters: ListProduccionLaborRatesFilters,
+  ): Promise<ListProduccionLaborRatesResult>;
+  findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionLaborRateDto | null>;
+  create(
+    applicationId: string,
+    payload: CreateProduccionLaborRatePayload,
+  ): Promise<ProduccionLaborRateDto>;
+  update(
+    id: string,
+    payload: UpdateProduccionLaborRatePayload,
+  ): Promise<ProduccionLaborRateDto>;
   delete(id: string): Promise<void>;
 }

@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import {
   APPLICATION_REPOSITORY,
   CONTABILIDAD_CONFIG_REPOSITORY,
@@ -32,12 +38,21 @@ const CONTABILIDAD_SLUG = 'contabilidad';
 
 function assertContabilidadSlug(slug: string | undefined | null) {
   if (slug?.trim() !== CONTABILIDAD_SLUG) {
-    throw new BadRequestException('Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).');
+    throw new BadRequestException(
+      'Esta operación solo aplica a Contabilidad (applicationSlug=contabilidad).',
+    );
   }
 }
 
 function mapRepoError(error: unknown): never {
-  const message = error instanceof Error ? error.message : 'Operación no válida.';
+  // Conflictos de base de datos y errores HTTP los traduce el filtro global.
+  if (
+    error instanceof HttpException ||
+    error instanceof Prisma.PrismaClientKnownRequestError
+  )
+    throw error;
+  const message =
+    error instanceof Error ? error.message : 'Operación no válida.';
   throw new BadRequestException(message);
 }
 
@@ -61,10 +76,13 @@ export class ContabilidadTaxesOperationsService {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertContabilidadSlug(applicationSlug ?? CONTABILIDAD_SLUG);
     const app = await this.applications.findBySlug(CONTABILIDAD_SLUG);
-    if (!app) throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
+    if (!app)
+      throw new EntityNotFoundException('Application', CONTABILIDAD_SLUG);
     return app.id;
   }
 
@@ -92,7 +110,11 @@ export class ContabilidadTaxesOperationsService {
     }
     const period = await this.periods.findPeriodById(applicationId, periodId);
     if (!period) throw new EntityNotFoundException('Period', periodId);
-    const summary = await this.taxes.getIgvSummary(applicationId, periodId, settings.igvPercent);
+    const summary = await this.taxes.getIgvSummary(
+      applicationId,
+      periodId,
+      settings.igvPercent,
+    );
     return {
       igvPercent: settings.igvPercent,
       isDetractionAgent: settings.isDetractionAgent,
@@ -111,7 +133,11 @@ export class ContabilidadTaxesOperationsService {
     const period = await this.periods.findPeriodById(applicationId, periodId);
     if (!period) throw new EntityNotFoundException('Period', periodId);
     const settings = await this.config.getSettings(applicationId);
-    const summary = await this.taxes.getIgvSummary(applicationId, periodId, settings.igvPercent);
+    const summary = await this.taxes.getIgvSummary(
+      applicationId,
+      periodId,
+      settings.igvPercent,
+    );
     return { summary, igvPercent: settings.igvPercent };
   }
 
@@ -142,17 +168,32 @@ export class ContabilidadTaxesOperationsService {
     return { rates };
   }
 
-  async listDetracciones(applicationSlug?: string, periodId?: string, status?: string) {
+  async listDetracciones(
+    applicationSlug?: string,
+    periodId?: string,
+    status?: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
-    const detracciones = await this.taxes.listDetracciones(applicationId, { periodId, status });
-    return { detracciones, statusLabels: CONTABILIDAD_DETRACTION_STATUS_LABELS };
+    const detracciones = await this.taxes.listDetracciones(applicationId, {
+      periodId,
+      status,
+    });
+    return {
+      detracciones,
+      statusLabels: CONTABILIDAD_DETRACTION_STATUS_LABELS,
+    };
   }
 
-  async createDetraccion(applicationSlug: string | undefined, body: CreateDetraccionInput, userId?: string) {
+  async createDetraccion(
+    applicationSlug: string | undefined,
+    body: CreateDetraccionInput,
+    userId?: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.assertOpenPeriod(applicationId, body.periodId);
     assertRuc(body.supplierRuc);
-    if (!body.certificateNumber?.trim()) throw new BadRequestException('Constancia requerida');
+    if (!body.certificateNumber?.trim())
+      throw new BadRequestException('Constancia requerida');
     try {
       return await this.taxes.createDetraccion(applicationId, body, userId);
     } catch (e) {
@@ -167,11 +208,18 @@ export class ContabilidadTaxesOperationsService {
     userId?: string,
   ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
-    if (!body.description?.trim()) throw new BadRequestException('Glosa requerida');
-    if (body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH && !body.cashBoxId) {
+    if (!body.description?.trim())
+      throw new BadRequestException('Glosa requerida');
+    if (
+      body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH &&
+      !body.cashBoxId
+    ) {
       throw new BadRequestException('Seleccione caja.');
     }
-    if (body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK && !body.bankAccountId) {
+    if (
+      body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK &&
+      !body.bankAccountId
+    ) {
       throw new BadRequestException('Seleccione cuenta bancaria.');
     }
     try {
@@ -181,9 +229,16 @@ export class ContabilidadTaxesOperationsService {
     }
   }
 
-  async listRetentions(applicationSlug?: string, periodId?: string, retentionType?: string) {
+  async listRetentions(
+    applicationSlug?: string,
+    periodId?: string,
+    retentionType?: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
-    const retentions = await this.taxes.listRetentions(applicationId, { periodId, retentionType });
+    const retentions = await this.taxes.listRetentions(applicationId, {
+      periodId,
+      retentionType,
+    });
     return {
       retentions,
       retentionTypeLabels: CONTABILIDAD_RETENTION_TYPE_LABELS,
@@ -191,11 +246,19 @@ export class ContabilidadTaxesOperationsService {
     };
   }
 
-  async createRetention(applicationSlug: string | undefined, body: CreateRetentionInput, userId?: string) {
+  async createRetention(
+    applicationSlug: string | undefined,
+    body: CreateRetentionInput,
+    userId?: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.assertOpenPeriod(applicationId, body.periodId);
     assertRuc(body.counterpartyRuc);
-    if (!Object.values(CONTABILIDAD_RETENTION_TYPE).includes(body.retentionType as 'IGV' | 'RENTA')) {
+    if (
+      !Object.values(CONTABILIDAD_RETENTION_TYPE).includes(
+        body.retentionType as 'IGV' | 'RENTA',
+      )
+    ) {
       throw new BadRequestException('Tipo de retención inválido');
     }
     const rate =
@@ -217,7 +280,9 @@ export class ContabilidadTaxesOperationsService {
 
   async listPerceptions(applicationSlug?: string, periodId?: string) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
-    const perceptions = await this.taxes.listPerceptions(applicationId, { periodId });
+    const perceptions = await this.taxes.listPerceptions(applicationId, {
+      periodId,
+    });
     return {
       perceptions,
       perceptionTypeLabels: CONTABILIDAD_PERCEPTION_TYPE_LABELS,
@@ -225,19 +290,34 @@ export class ContabilidadTaxesOperationsService {
     };
   }
 
-  async createPerception(applicationSlug: string | undefined, body: CreatePerceptionInput, userId?: string) {
+  async createPerception(
+    applicationSlug: string | undefined,
+    body: CreatePerceptionInput,
+    userId?: string,
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.assertOpenPeriod(applicationId, body.periodId);
     assertRuc(body.customerRuc);
-    if (!body.description?.trim()) throw new BadRequestException('Glosa requerida');
-    if (body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH && !body.cashBoxId) {
+    if (!body.description?.trim())
+      throw new BadRequestException('Glosa requerida');
+    if (
+      body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.CASH &&
+      !body.cashBoxId
+    ) {
       throw new BadRequestException('Seleccione caja.');
     }
-    if (body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK && !body.bankAccountId) {
+    if (
+      body.sourceType === CONTABILIDAD_TREASURY_SOURCE_TYPE.BANK &&
+      !body.bankAccountId
+    ) {
       throw new BadRequestException('Seleccione cuenta bancaria.');
     }
-    const rate = body.ratePercent !== undefined ? Number(body.ratePercent) : CONTABILIDAD_DEFAULT_PERCEPTION_RATE;
-    if (parsePenAmount(body.taxableBase) <= 0) throw new BadRequestException('Base imponible inválida');
+    const rate =
+      body.ratePercent !== undefined
+        ? Number(body.ratePercent)
+        : CONTABILIDAD_DEFAULT_PERCEPTION_RATE;
+    if (parsePenAmount(body.taxableBase) <= 0)
+      throw new BadRequestException('Base imponible inválida');
     try {
       return await this.taxes.createPerception(
         applicationId,

@@ -22,7 +22,9 @@ const SLUG = 'arquitectura';
 
 function assertArquitectura(slug: string) {
   if (slug.trim() !== SLUG) {
-    throw new BadRequestException('Solo aplica para applicationSlug arquitectura');
+    throw new BadRequestException(
+      'Solo aplica para applicationSlug arquitectura',
+    );
   }
 }
 
@@ -45,7 +47,10 @@ export class GetArquitecturaMaterialSupplierByIdUseCase {
     private readonly repo: ArquitecturaMaterialSupplierRepository,
   ) {}
 
-  async execute(id: string, applicationSlug?: string): Promise<ArquitecturaSupplierDetail> {
+  async execute(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ArquitecturaSupplierDetail> {
     const row = await this.repo.findById(id, applicationSlug ?? SLUG);
     if (!row) throw new NotFoundException('Proveedor no encontrado');
     return row;
@@ -62,15 +67,20 @@ export class CreateArquitecturaMaterialSupplierUseCase {
     private readonly prisma: PrismaService,
   ) {}
 
-  async execute(applicationSlug: string, payload: CreateArquitecturaMaterialSupplierPayload) {
+  async execute(
+    applicationSlug: string,
+    payload: CreateArquitecturaMaterialSupplierPayload,
+  ) {
     assertArquitectura(applicationSlug);
     const app = await this.applications.findBySlug(SLUG);
-    if (!app?.id) throw new BadRequestException('Aplicación arquitectura no encontrada');
+    if (!app?.id)
+      throw new BadRequestException('Aplicación arquitectura no encontrada');
 
     const dup = await this.prisma.arquitecturaMaterialSupplier.findFirst({
       where: { applicationId: app.id, ruc: payload.ruc.trim() },
     });
-    if (dup) throw new BadRequestException('Ya existe un proveedor con ese RUC');
+    if (dup)
+      throw new BadRequestException('Ya existe un proveedor con ese RUC');
 
     return this.repo.create(app.id, payload);
   }
@@ -84,7 +94,11 @@ export class UpdateArquitecturaMaterialSupplierUseCase {
     private readonly prisma: PrismaService,
   ) {}
 
-  async execute(id: string, applicationSlug: string, payload: UpdateArquitecturaMaterialSupplierPayload) {
+  async execute(
+    id: string,
+    applicationSlug: string,
+    payload: UpdateArquitecturaMaterialSupplierPayload,
+  ) {
     assertArquitectura(applicationSlug);
     const exists = await this.repo.findById(id, SLUG);
     if (!exists) throw new NotFoundException('Proveedor no encontrado');
@@ -103,7 +117,8 @@ export class UpdateArquitecturaMaterialSupplierUseCase {
           NOT: { id },
         },
       });
-      if (dup) throw new BadRequestException('Ya existe otro proveedor con ese RUC');
+      if (dup)
+        throw new BadRequestException('Ya existe otro proveedor con ese RUC');
     }
 
     return this.repo.update(id, payload);
@@ -144,10 +159,20 @@ export class LinkArquitecturaSupplierCatalogMaterialUseCase {
     if (!exists) throw new NotFoundException('Proveedor no encontrado');
 
     try {
-      return await this.repo.linkCatalogMaterial(supplierId, catalogMaterialId, supplierSku, notes);
+      return await this.repo.linkCatalogMaterial(
+        supplierId,
+        catalogMaterialId,
+        supplierSku,
+        notes,
+      );
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-        throw new BadRequestException('Este material ya está vinculado al proveedor');
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          'Este material ya está vinculado al proveedor',
+        );
       }
       throw e;
     }
@@ -166,10 +191,13 @@ export class UnlinkArquitecturaSupplierCatalogMaterialUseCase {
     assertArquitectura(applicationSlug);
     const link = await this.prisma.arquitecturaSupplierCatalogLink.findUnique({
       where: { id: linkId },
-      include: { supplier: { include: { application: { select: { slug: true } } } } },
+      include: {
+        supplier: { include: { application: { select: { slug: true } } } },
+      },
     });
     if (!link) throw new NotFoundException('Vínculo no encontrado');
-    if (link.supplier.application.slug !== SLUG) throw new NotFoundException('Vínculo no encontrado');
+    if (link.supplier.application.slug !== SLUG)
+      throw new NotFoundException('Vínculo no encontrado');
 
     await this.repo.unlinkCatalogMaterial(linkId);
   }
@@ -182,7 +210,11 @@ export class RecordArquitecturaMaterialPurchaseUseCase {
     private readonly repo: ArquitecturaMaterialSupplierRepository,
   ) {}
 
-  async execute(supplierId: string, applicationSlug: string, payload: RecordArquitecturaMaterialPurchasePayload) {
+  async execute(
+    supplierId: string,
+    applicationSlug: string,
+    payload: RecordArquitecturaMaterialPurchasePayload,
+  ) {
     assertArquitectura(applicationSlug);
     const exists = await this.repo.findById(supplierId, SLUG);
     if (!exists) throw new NotFoundException('Proveedor no encontrado');

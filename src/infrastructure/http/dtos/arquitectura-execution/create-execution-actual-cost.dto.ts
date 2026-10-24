@@ -1,5 +1,13 @@
 ﻿import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsNumber, IsOptional, IsString, IsUUID, Min, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class CreateArquitecturaExecutionActualCostDto {
   @ApiProperty({ enum: ['LABOR', 'MATERIAL', 'EXPENSE', 'TRANSPORT'] })

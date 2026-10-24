@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { User } from '@domain/entities/user.entity';
-import { HashService, UserRepository } from '@common/constants/injection-tokens';
+import {
+  HashService,
+  UserRepository,
+} from '@common/constants/injection-tokens';
 import { EmailAlreadyExistsException } from '@domain/exceptions';
 import { Email } from '@domain/value-objects';
 

@@ -4,7 +4,10 @@ import type { ClientDetail } from '@domain/repositories/client.repository';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import { EntityNotFoundException } from '@domain/exceptions';
 
-import { APPLICATION_REPOSITORY, CLIENT_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  CLIENT_REPOSITORY,
+} from '@common/constants/injection-tokens';
 
 @Injectable()
 export class GetClientByIdUseCase {

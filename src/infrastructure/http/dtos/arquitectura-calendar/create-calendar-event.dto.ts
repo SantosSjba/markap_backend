@@ -1,5 +1,5 @@
 ﻿import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+
 import {
   IsBoolean,
   IsDateString,
@@ -11,7 +11,13 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-const TYPES = ['MEETING', 'VISIT', 'INSTALLATION', 'DEADLINE', 'TEAM_BLOCK'] as const;
+const TYPES = [
+  'MEETING',
+  'VISIT',
+  'INSTALLATION',
+  'DEADLINE',
+  'TEAM_BLOCK',
+] as const;
 
 export class CreateArquitecturaCalendarEventDto {
   @ApiProperty({ enum: TYPES })
@@ -19,7 +25,7 @@ export class CreateArquitecturaCalendarEventDto {
   @IsIn(TYPES)
   eventType!: string;
 
-  @ApiProperty({ example: 'RevisiÃ³n avances con cliente' })
+  @ApiProperty({ example: 'Revisión avances con cliente' })
   @IsString()
   @MaxLength(500)
   title!: string;
@@ -50,15 +56,21 @@ export class CreateArquitecturaCalendarEventDto {
   @IsBoolean()
   allDay?: boolean;
 
-  @ApiPropertyOptional({ description: 'Opcional; vacÃ­o = agenda general / equipo' })
+  @ApiPropertyOptional({
+    description: 'Opcional; vacío = agenda general / equipo',
+  })
   @IsOptional()
-  @ValidateIf((_, v) => v !== undefined && v !== null && String(v).trim() !== '')
+  @ValidateIf(
+    (_, v) => v !== undefined && v !== null && String(v).trim() !== '',
+  )
   @IsUUID()
   projectId?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @ValidateIf((_, v) => v !== undefined && v !== null && String(v).trim() !== '')
+  @ValidateIf(
+    (_, v) => v !== undefined && v !== null && String(v).trim() !== '',
+  )
   @IsUUID()
   assignedAgentId?: string | null;
 }

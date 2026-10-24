@@ -1,5 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ContabilidadJournalOperationsService } from '../../../application/services/contabilidad-journal-operations.service';
@@ -54,7 +70,10 @@ export class ContabilidadJournalEntriesController {
   @Get(':id')
   @ApiOperation({ summary: 'Detalle de asiento con líneas' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  getById(@Query('applicationSlug') applicationSlug: string | undefined, @Param('id') id: string) {
+  getById(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('id') id: string,
+  ) {
     return this.journal.getById(applicationSlug, id);
   }
 
@@ -83,7 +102,10 @@ export class ContabilidadJournalEntriesController {
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar asiento en borrador' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  deleteDraft(@Query('applicationSlug') applicationSlug: string | undefined, @Param('id') id: string) {
+  deleteDraft(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Param('id') id: string,
+  ) {
     return this.journal.deleteDraft(applicationSlug, id);
   }
 

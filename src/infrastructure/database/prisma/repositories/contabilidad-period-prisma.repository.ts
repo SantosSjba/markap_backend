@@ -26,14 +26,24 @@ export class ContabilidadPeriodPrismaRepository implements ContabilidadPeriodRep
     for (let month = 1; month <= 12; month++) {
       await this.prisma.contabilidadPeriod.upsert({
         where: { legalEntityId_year_month: { legalEntityId, year, month } },
-        create: { applicationId, legalEntityId, year, month, status: CONTABILIDAD_PERIOD_STATUS.OPEN },
+        create: {
+          applicationId,
+          legalEntityId,
+          year,
+          month,
+          status: CONTABILIDAD_PERIOD_STATUS.OPEN,
+        },
         update: {},
       });
     }
     return this.listPeriods(applicationId, legalEntityId, year);
   }
 
-  async listPeriods(applicationId: string, legalEntityId: string, year: number): Promise<ContabilidadPeriodDto[]> {
+  async listPeriods(
+    applicationId: string,
+    legalEntityId: string,
+    year: number,
+  ): Promise<ContabilidadPeriodDto[]> {
     const rows = await this.prisma.contabilidadPeriod.findMany({
       where: { applicationId, legalEntityId, year },
       orderBy: { month: 'asc' },
@@ -41,22 +51,34 @@ export class ContabilidadPeriodPrismaRepository implements ContabilidadPeriodRep
     return rows.map((r) => ContabilidadPeriodPrismaMapper.toPeriod(r));
   }
 
-  async findPeriodById(applicationId: string, id: string): Promise<ContabilidadPeriodDto | null> {
-    const row = await this.prisma.contabilidadPeriod.findFirst({ where: { applicationId, id } });
+  async findPeriodById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadPeriodDto | null> {
+    const row = await this.prisma.contabilidadPeriod.findFirst({
+      where: { applicationId, id },
+    });
     return row ? ContabilidadPeriodPrismaMapper.toPeriod(row) : null;
   }
 
-  async setPeriodStatus(applicationId: string, id: string, status: string): Promise<ContabilidadPeriodDto> {
+  async setPeriodStatus(
+    applicationId: string,
+    id: string,
+    status: string,
+  ): Promise<ContabilidadPeriodDto> {
     const row = await this.prisma.contabilidadPeriod.update({
       where: { id },
       data: { status },
     });
-    if (row.applicationId !== applicationId) throw new Error('Period not found');
+    if (row.applicationId !== applicationId)
+      throw new Error('Period not found');
     return ContabilidadPeriodPrismaMapper.toPeriod(row);
   }
 
   async ensureDefaultCostCenters(applicationId: string): Promise<void> {
-    const count = await this.prisma.contabilidadCostCenter.count({ where: { applicationId } });
+    const count = await this.prisma.contabilidadCostCenter.count({
+      where: { applicationId },
+    });
     if (count > 0) return;
     await this.prisma.contabilidadCostCenter.createMany({
       data: CONTABILIDAD_DEFAULT_COST_CENTERS.map((c) => ({
@@ -68,7 +90,10 @@ export class ContabilidadPeriodPrismaRepository implements ContabilidadPeriodRep
     });
   }
 
-  async listCostCenters(applicationId: string, search?: string): Promise<ContabilidadCostCenterDto[]> {
+  async listCostCenters(
+    applicationId: string,
+    search?: string,
+  ): Promise<ContabilidadCostCenterDto[]> {
     const q = search?.trim();
     const where: Prisma.ContabilidadCostCenterWhereInput = { applicationId };
     if (q) {
@@ -84,12 +109,20 @@ export class ContabilidadPeriodPrismaRepository implements ContabilidadPeriodRep
     return rows.map((r) => ContabilidadPeriodPrismaMapper.toCostCenter(r));
   }
 
-  async findCostCenterById(applicationId: string, id: string): Promise<ContabilidadCostCenterDto | null> {
-    const row = await this.prisma.contabilidadCostCenter.findFirst({ where: { applicationId, id } });
+  async findCostCenterById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadCostCenterDto | null> {
+    const row = await this.prisma.contabilidadCostCenter.findFirst({
+      where: { applicationId, id },
+    });
     return row ? ContabilidadPeriodPrismaMapper.toCostCenter(row) : null;
   }
 
-  async findCostCenterByCode(applicationId: string, code: string): Promise<ContabilidadCostCenterDto | null> {
+  async findCostCenterByCode(
+    applicationId: string,
+    code: string,
+  ): Promise<ContabilidadCostCenterDto | null> {
     const row = await this.prisma.contabilidadCostCenter.findUnique({
       where: { applicationId_code: { applicationId, code } },
     });
@@ -119,24 +152,38 @@ export class ContabilidadPeriodPrismaRepository implements ContabilidadPeriodRep
     const data: Prisma.ContabilidadCostCenterUpdateInput = {};
     if (input.code !== undefined) data.code = input.code.trim();
     if (input.name !== undefined) data.name = input.name.trim();
-    if (input.parentId !== undefined) data.parent = input.parentId ? { connect: { id: input.parentId } } : { disconnect: true };
+    if (input.parentId !== undefined)
+      data.parent = input.parentId
+        ? { connect: { id: input.parentId } }
+        : { disconnect: true };
     if (input.isActive !== undefined) data.isActive = input.isActive;
 
-    const row = await this.prisma.contabilidadCostCenter.update({ where: { id }, data });
-    if (row.applicationId !== applicationId) throw new Error('Cost center not found');
+    const row = await this.prisma.contabilidadCostCenter.update({
+      where: { id },
+      data,
+    });
+    if (row.applicationId !== applicationId)
+      throw new Error('Cost center not found');
     return ContabilidadPeriodPrismaMapper.toCostCenter(row);
   }
 
-  async deactivateCostCenter(applicationId: string, id: string): Promise<ContabilidadCostCenterDto> {
+  async deactivateCostCenter(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadCostCenterDto> {
     const row = await this.prisma.contabilidadCostCenter.update({
       where: { id },
       data: { isActive: false },
     });
-    if (row.applicationId !== applicationId) throw new Error('Cost center not found');
+    if (row.applicationId !== applicationId)
+      throw new Error('Cost center not found');
     return ContabilidadPeriodPrismaMapper.toCostCenter(row);
   }
 
-  async hasCostCenterChildren(applicationId: string, id: string): Promise<boolean> {
+  async hasCostCenterChildren(
+    applicationId: string,
+    id: string,
+  ): Promise<boolean> {
     const count = await this.prisma.contabilidadCostCenter.count({
       where: { applicationId, parentId: id },
     });

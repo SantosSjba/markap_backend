@@ -1,3 +1,4 @@
+import { AdminGuard } from '../../../common/guards/admin.guard';
 import {
   Controller,
   Get,
@@ -24,7 +25,11 @@ import {
   DeleteApplicationUseCase,
 } from '../../../application/use-cases/applications';
 import { GetMenusByApplicationUseCase } from '../../../application/use-cases/menus';
-import { ApplicationResponseDto, CreateApplicationDto, UpdateApplicationDto } from '../dtos/applications';
+import {
+  ApplicationResponseDto,
+  CreateApplicationDto,
+  UpdateApplicationDto,
+} from '../dtos/applications';
 import { ApplicationHttpMapper } from '../mappers/application-http.mapper';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
@@ -92,6 +97,7 @@ export class ApplicationsController {
   }
 
   @Post()
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Crear aplicación' })
   @ApiResponse({ status: 201 })
   @ApiResponse({ status: 409, description: 'El slug ya existe' })
@@ -112,6 +118,7 @@ export class ApplicationsController {
   }
 
   @Patch(':id')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Actualizar aplicación' })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 404, description: 'Aplicación no encontrada' })
@@ -124,6 +131,7 @@ export class ApplicationsController {
   }
 
   @Delete(':id')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Eliminar aplicación (soft delete)' })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 404, description: 'Aplicación no encontrada' })

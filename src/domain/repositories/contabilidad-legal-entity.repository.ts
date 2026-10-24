@@ -1,4 +1,6 @@
-export const CONTABILIDAD_LEGAL_ENTITY_REPOSITORY = Symbol('ContabilidadLegalEntityRepository');
+export const CONTABILIDAD_LEGAL_ENTITY_REPOSITORY = Symbol(
+  'ContabilidadLegalEntityRepository',
+);
 
 export interface ContabilidadLegalEntityDto {
   id: string;
@@ -19,5 +21,8 @@ export interface ContabilidadLegalEntityRepository {
   ensureDefaults(applicationId: string): Promise<void>;
   list(applicationId: string): Promise<ContabilidadLegalEntityDto[]>;
   getDefault(applicationId: string): Promise<ContabilidadLegalEntityDto | null>;
-  findById(applicationId: string, id: string): Promise<ContabilidadLegalEntityDto | null>;
+  findById(
+    applicationId: string,
+    id: string,
+  ): Promise<ContabilidadLegalEntityDto | null>;
 }

@@ -1,5 +1,8 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { APPLICATION_REPOSITORY, PRODUCCION_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
+import {
+  APPLICATION_REPOSITORY,
+  PRODUCCION_CONFIG_REPOSITORY,
+} from '@common/constants/injection-tokens';
 import type { ApplicationRepository } from '@domain/repositories/application.repository';
 import {
   PRODUCCION_DEFAULT_PRODUCTION_STAGES,
@@ -19,7 +22,9 @@ const PRODUCCION_SLUG = 'produccion';
 
 function assertProduccionSlug(slug: string | undefined | null) {
   if (slug?.trim() !== PRODUCCION_SLUG) {
-    throw new BadRequestException('Esta configuración solo aplica a Producción (applicationSlug=produccion).');
+    throw new BadRequestException(
+      'Esta configuración solo aplica a Producción (applicationSlug=produccion).',
+    );
   }
 }
 
@@ -32,7 +37,9 @@ export class ProduccionConfigOperationsService {
     private readonly applications: ApplicationRepository,
   ) {}
 
-  private async resolveApplicationId(applicationSlug?: string): Promise<string> {
+  private async resolveApplicationId(
+    applicationSlug?: string,
+  ): Promise<string> {
     assertProduccionSlug(applicationSlug ?? PRODUCCION_SLUG);
     const app = await this.applications.findBySlug(PRODUCCION_SLUG);
     if (!app) throw new EntityNotFoundException('Application', PRODUCCION_SLUG);
@@ -43,8 +50,14 @@ export class ProduccionConfigOperationsService {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.config.ensureDefaults(applicationId);
 
-    const [settings, furnitureCategories, materialCategories, productionStages, units, numbering] =
-      await Promise.all([
+    const [
+      settings,
+      furnitureCategories,
+      materialCategories,
+      productionStages,
+      units,
+      numbering,
+    ] = await Promise.all([
       this.config.getSettings(applicationId),
       this.config.listFurnitureCategories(applicationId),
       this.config.listMaterialCategories(applicationId),
@@ -53,22 +66,41 @@ export class ProduccionConfigOperationsService {
       this.config.listNumberingSeries(applicationId),
     ]);
 
-    return { settings, furnitureCategories, materialCategories, productionStages, units, numbering };
+    return {
+      settings,
+      furnitureCategories,
+      materialCategories,
+      productionStages,
+      units,
+      numbering,
+    };
   }
 
   async updateSettings(
     applicationSlug: string | undefined,
-    body: { igvPercent?: number; woodWastePercent?: number; quotationValidDays?: number },
+    body: {
+      igvPercent?: number;
+      woodWastePercent?: number;
+      quotationValidDays?: number;
+    },
   ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
-    if (body.igvPercent !== undefined && (body.igvPercent < 0 || body.igvPercent > 100)) {
+    if (
+      body.igvPercent !== undefined &&
+      (body.igvPercent < 0 || body.igvPercent > 100)
+    ) {
       throw new BadRequestException('IGV debe estar entre 0 y 100.');
     }
-    if (body.woodWastePercent !== undefined && (body.woodWastePercent < 0 || body.woodWastePercent > 100)) {
+    if (
+      body.woodWastePercent !== undefined &&
+      (body.woodWastePercent < 0 || body.woodWastePercent > 100)
+    ) {
       throw new BadRequestException('% desperdicio debe estar entre 0 y 100.');
     }
     if (body.quotationValidDays !== undefined && body.quotationValidDays < 1) {
-      throw new BadRequestException('Vigencia de cotización debe ser al menos 1 día.');
+      throw new BadRequestException(
+        'Vigencia de cotización debe ser al menos 1 día.',
+      );
     }
     return this.config.updateSettings(applicationId, body);
   }
@@ -79,9 +111,12 @@ export class ProduccionConfigOperationsService {
   ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const categories = body.categories ?? [];
-    if (!categories.length) throw new BadRequestException('Debe incluir al menos una categoría.');
+    if (!categories.length)
+      throw new BadRequestException('Debe incluir al menos una categoría.');
     if (!categories.every((c) => c.code?.trim() && c.label?.trim())) {
-      throw new BadRequestException('Cada categoría requiere código y etiqueta.');
+      throw new BadRequestException(
+        'Cada categoría requiere código y etiqueta.',
+      );
     }
     await this.config.replaceFurnitureCategories(
       applicationId,
@@ -101,9 +136,12 @@ export class ProduccionConfigOperationsService {
   ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const categories = body.categories ?? [];
-    if (!categories.length) throw new BadRequestException('Debe incluir al menos una categoría.');
+    if (!categories.length)
+      throw new BadRequestException('Debe incluir al menos una categoría.');
     if (!categories.every((c) => c.code?.trim() && c.label?.trim())) {
-      throw new BadRequestException('Cada categoría requiere código y etiqueta.');
+      throw new BadRequestException(
+        'Cada categoría requiere código y etiqueta.',
+      );
     }
     await this.config.replaceMaterialCategories(
       applicationId,
@@ -135,8 +173,13 @@ export class ProduccionConfigOperationsService {
     if (!stages.every((s) => s.label?.trim())) {
       throw new BadRequestException('Cada etapa requiere una etiqueta.');
     }
-    if (stages.filter((s) => s.isActive !== false).length < PRODUCCION_DEFAULT_PRODUCTION_STAGES.length) {
-      throw new BadRequestException('Las cuatro etapas deben permanecer activas.');
+    if (
+      stages.filter((s) => s.isActive !== false).length <
+      PRODUCCION_DEFAULT_PRODUCTION_STAGES.length
+    ) {
+      throw new BadRequestException(
+        'Las cuatro etapas deben permanecer activas.',
+      );
     }
     await this.config.replaceProductionStages(
       applicationId,
@@ -150,10 +193,14 @@ export class ProduccionConfigOperationsService {
     return this.config.listProductionStages(applicationId);
   }
 
-  async replaceUnits(applicationSlug: string | undefined, body: { units: ProduccionUnitInput[] }) {
+  async replaceUnits(
+    applicationSlug: string | undefined,
+    body: { units: ProduccionUnitInput[] },
+  ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     const units = body.units ?? [];
-    if (!units.length) throw new BadRequestException('Debe incluir al menos una unidad.');
+    if (!units.length)
+      throw new BadRequestException('Debe incluir al menos una unidad.');
     if (!units.every((u) => u.code?.trim() && u.label?.trim())) {
       throw new BadRequestException('Cada unidad requiere código y etiqueta.');
     }
@@ -172,7 +219,12 @@ export class ProduccionConfigOperationsService {
   async patchNumbering(
     applicationSlug: string | undefined,
     seriesKey: string,
-    body: { prefix?: string; lastNumber?: number; padLength?: number; includeYear?: boolean },
+    body: {
+      prefix?: string;
+      lastNumber?: number;
+      padLength?: number;
+      includeYear?: boolean;
+    },
   ) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.config.ensureDefaults(applicationId);
@@ -187,7 +239,10 @@ export class ProduccionConfigOperationsService {
     if (body.lastNumber !== undefined && body.lastNumber < 0) {
       throw new BadRequestException('lastNumber no puede ser negativo.');
     }
-    if (body.padLength !== undefined && (body.padLength < 1 || body.padLength > 8)) {
+    if (
+      body.padLength !== undefined &&
+      (body.padLength < 1 || body.padLength > 8)
+    ) {
       throw new BadRequestException('padLength debe estar entre 1 y 8.');
     }
     if (
@@ -204,6 +259,8 @@ export class ProduccionConfigOperationsService {
 
   async previewCode(applicationSlug: string | undefined, seriesKey: string) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
-    return { code: await this.config.previewNextCode(applicationId, seriesKey) };
+    return {
+      code: await this.config.previewNextCode(applicationId, seriesKey),
+    };
   }
 }

@@ -1,5 +1,9 @@
-export const VENTAS_BUYER_PAYMENT_KINDS = ['DOWN_PAYMENT', 'INSTALLMENT'] as const;
-export type VentasBuyerPaymentKind = (typeof VENTAS_BUYER_PAYMENT_KINDS)[number];
+export const VENTAS_BUYER_PAYMENT_KINDS = [
+  'DOWN_PAYMENT',
+  'INSTALLMENT',
+] as const;
+export type VentasBuyerPaymentKind =
+  (typeof VENTAS_BUYER_PAYMENT_KINDS)[number];
 
 export const VENTAS_DOC_COST_TYPES = ['NOTARY', 'REGISTRY', 'OTHER'] as const;
 export type VentasDocCostType = (typeof VENTAS_DOC_COST_TYPES)[number];
@@ -33,7 +37,10 @@ export interface ListDocCostsFilters {
 export const VENTAS_FINANZAS_REPOSITORY = Symbol('VentasFinanzasRepository');
 
 export interface VentasFinanzasRepository {
-  getAgentCommissionPercent(applicationId: string, agentId: string): Promise<number | null>;
+  getAgentCommissionPercent(
+    applicationId: string,
+    agentId: string,
+  ): Promise<number | null>;
 
   upsertAgentCommissionProfile(data: {
     applicationId: string;
@@ -43,7 +50,9 @@ export interface VentasFinanzasRepository {
 
   listAgentCommissionProfiles(applicationId: string): Promise<unknown[]>;
 
-  listBuyerPayments(filters: ListBuyerPaymentsFilters): Promise<{ data: unknown[]; total: number }>;
+  listBuyerPayments(
+    filters: ListBuyerPaymentsFilters,
+  ): Promise<{ data: unknown[]; total: number }>;
 
   createBuyerPayment(data: {
     applicationId: string;
@@ -55,22 +64,32 @@ export interface VentasFinanzasRepository {
     notes?: string | null;
   }): Promise<{ id: string }>;
 
-  markBuyerPaymentPaid(id: string, applicationId: string, paidAt?: Date): Promise<unknown | null>;
+  markBuyerPaymentPaid(
+    id: string,
+    applicationId: string,
+    paidAt?: Date,
+  ): Promise<unknown>;
 
-  listCommissions(filters: ListCommissionsFilters): Promise<{ data: unknown[]; total: number }>;
+  listCommissions(
+    filters: ListCommissionsFilters,
+  ): Promise<{ data: unknown[]; total: number }>;
 
-  markCommissionPaid(id: string, applicationId: string, paidAt?: Date): Promise<unknown | null>;
+  markCommissionPaid(
+    id: string,
+    applicationId: string,
+    paidAt?: Date,
+  ): Promise<unknown>;
 
   markCommissionPaymentPartPaid(
     partId: string,
     applicationId: string,
     paidAt?: Date,
-  ): Promise<unknown | null>;
+  ): Promise<unknown>;
 
   recalculateCommissionFromProfile(
     commissionId: string,
     applicationId: string,
-  ): Promise<unknown | null>;
+  ): Promise<unknown>;
 
   listDocumentationCosts(
     filters: ListDocCostsFilters,
@@ -86,7 +105,13 @@ export interface VentasFinanzasRepository {
     expenseDate: Date;
   }): Promise<{ id: string }>;
 
-  getClosingProfitability(closingId: string, applicationId: string): Promise<unknown | null>;
+  getClosingProfitability(
+    closingId: string,
+    applicationId: string,
+  ): Promise<unknown>;
 
-  saleClosingBelongsToApplication(saleClosingId: string, applicationId: string): Promise<boolean>;
+  saleClosingBelongsToApplication(
+    saleClosingId: string,
+    applicationId: string,
+  ): Promise<boolean>;
 }

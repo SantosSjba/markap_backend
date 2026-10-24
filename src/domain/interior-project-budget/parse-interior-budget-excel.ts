@@ -17,13 +17,18 @@ export interface ParseInteriorBudgetExcelResult {
 }
 
 function cellStr(value: unknown): string {
-  return String(value ?? '').trim();
+  return typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+    ? String(value).trim()
+    : '';
 }
 
 function parseNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null;
   if (typeof value === 'number' && Number.isFinite(value)) return value;
-  const normalized = String(value).replace(/,/g, '').trim();
+  if (typeof value !== 'string') return null;
+  const normalized = value.replace(/,/g, '').trim();
   if (!normalized) return null;
   const n = Number(normalized);
   return Number.isFinite(n) ? n : null;
@@ -33,7 +38,11 @@ function isEmptyCell(value: unknown): boolean {
   return value === null || value === undefined || cellStr(value) === '';
 }
 
-function rowIsSectionHeader(row: unknown[], descCol: number, costCol: number): boolean {
+function rowIsSectionHeader(
+  row: unknown[],
+  descCol: number,
+  costCol: number,
+): boolean {
   const desc = cellStr(row[descCol]);
   if (!desc) return false;
   if (parseNumber(row[costCol]) !== null) return false;
@@ -66,9 +75,14 @@ function detectColumns(rows: unknown[][]): {
   for (let i = 0; i < Math.min(rows.length, 40); i++) {
     const row = rows[i] ?? [];
     const labels = row.map((c) => cellStr(c).toLowerCase());
-    const descCol = labels.findIndex((c) => c.includes('descrip') || c === 'partida');
+    const descCol = labels.findIndex(
+      (c) => c.includes('descrip') || c === 'partida',
+    );
     const costCol = labels.findIndex(
-      (c) => (c.includes('costo') || c === 'cost') && !c.includes('real') && !c.includes('compra'),
+      (c) =>
+        (c.includes('costo') || c === 'cost') &&
+        !c.includes('real') &&
+        !c.includes('compra'),
     );
     if (descCol >= 0 && costCol >= 0) {
       const igvCol = labels.findIndex((c) => c.includes('igv'));
@@ -78,17 +92,23 @@ function detectColumns(rows: unknown[][]): {
   return { headerIdx: 0, descCol: 0, costCol: 1, igvCol: -1 };
 }
 
-export function parseInteriorBudgetExcel(buffer: Buffer): ParseInteriorBudgetExcelResult {
+export function parseInteriorBudgetExcel(
+  buffer: Buffer,
+): ParseInteriorBudgetExcelResult {
   const workbook = XLSX.read(buffer, { type: 'buffer' });
   const sheetName =
-    workbook.SheetNames.find((name) => /proyecto|presupuesto|hortensias/i.test(name)) ??
-    workbook.SheetNames[0];
+    workbook.SheetNames.find((name) =>
+      /proyecto|presupuesto|hortensias/i.test(name),
+    ) ?? workbook.SheetNames[0];
   if (!sheetName) {
     throw new Error('El archivo Excel no contiene hojas');
   }
 
   const sheet = workbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as unknown[][];
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    header: 1,
+    defval: '',
+  });
   const { headerIdx, descCol, costCol, igvCol } = detectColumns(rows);
 
   let currentSection = 'General';
@@ -126,7 +146,9 @@ export function parseInteriorBudgetExcel(buffer: Buffer): ParseInteriorBudgetExc
     .map(([name, lineItems], sortOrder) => ({ name, sortOrder, lineItems }));
 
   if (!sections.length) {
-    throw new Error('No se encontraron secciones ni partidas válidas en el Excel');
+    throw new Error(
+      'No se encontraron secciones ni partidas válidas en el Excel',
+    );
   }
 
   return {

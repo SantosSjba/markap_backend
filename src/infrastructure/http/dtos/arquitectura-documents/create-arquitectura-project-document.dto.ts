@@ -5,7 +5,9 @@ import {
   type ArquitecturaDocumentType,
 } from '@domain/repositories/arquitectura-project-document.repository';
 
-const DOC_TYPES = [...ARQUITECTURA_DOCUMENT_TYPES] as ArquitecturaDocumentType[];
+const DOC_TYPES = [
+  ...ARQUITECTURA_DOCUMENT_TYPES,
+] as ArquitecturaDocumentType[];
 
 export class CreateArquitecturaProjectDocumentDto {
   @ApiProperty()

@@ -5,7 +5,10 @@ import type {
   ContabilidadTreasuryMovementDto,
 } from '@domain/repositories/contabilidad-treasury.repository';
 import { formatPenAmount } from '@domain/utils/contabilidad-journal-amounts';
-import { formatExchangeRate, FUNCTIONAL_CURRENCY } from '@domain/utils/contabilidad-multicurrency.util';
+import {
+  formatExchangeRate,
+  FUNCTIONAL_CURRENCY,
+} from '@domain/utils/contabilidad-multicurrency.util';
 import { toIsoDate } from '@domain/utils/peru-date.util';
 
 export const ContabilidadTreasuryPrismaMapper = {
@@ -100,8 +103,14 @@ export const ContabilidadTreasuryPrismaMapper = {
       offsetAccountName: row.offsetAccount?.name ?? null,
       transferGroupId: row.transferGroupId,
       currencyCode: row.currencyCode ?? FUNCTIONAL_CURRENCY,
-      foreignAmount: row.foreignAmount != null ? formatPenAmount(Number(row.foreignAmount)) : null,
-      exchangeRate: row.exchangeRate != null ? formatExchangeRate(Number(row.exchangeRate)) : null,
+      foreignAmount:
+        row.foreignAmount != null
+          ? formatPenAmount(Number(row.foreignAmount))
+          : null,
+      exchangeRate:
+        row.exchangeRate != null
+          ? formatExchangeRate(Number(row.exchangeRate))
+          : null,
       amount: formatPenAmount(Number(row.amount)),
       movementDate: toIsoDate(row.movementDate),
       description: row.description,

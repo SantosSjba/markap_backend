@@ -1,6 +1,8 @@
 ﻿import type { ArquitecturaReportsDashboardDto } from '@domain/entities/arquitectura-reports.entity';
 
-export const ARQUITECTURA_REPORTS_REPOSITORY = Symbol('ArquitecturaReportsRepository');
+export const ARQUITECTURA_REPORTS_REPOSITORY = Symbol(
+  'ArquitecturaReportsRepository',
+);
 
 export interface ArquitecturaReportsRepository {
   /**

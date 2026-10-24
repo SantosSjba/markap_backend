@@ -10,7 +10,10 @@ import type {
   ListPropertiesFilters,
   ListPropertiesResult,
 } from '@domain/repositories/property.repository';
-import { PropertyListItem, PropertyStats } from '@domain/entities/property.entity';
+import {
+  PropertyListItem,
+  PropertyStats,
+} from '@domain/entities/property.entity';
 import type { Property } from '@domain/entities/property.entity';
 import { startOfTodayLima } from '@domain/utils/peru-date.util';
 
@@ -25,9 +28,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
       propertyType: { connect: { id: data.propertyTypeId } },
       addressLine: data.addressLine.trim(),
       district: { connect: { id: data.districtId } },
-      locationCustom: PropertyPrismaMapper.locationToJson(data.locationCustom) as
-        | Prisma.InputJsonValue
-        | undefined,
+      locationCustom: PropertyPrismaMapper.locationToJson(data.locationCustom),
       description: data.description?.trim() || null,
       area: data.area ?? null,
       bedrooms: data.bedrooms ?? null,
@@ -47,7 +48,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
       listingStatus: data.listingStatus ?? null,
     };
     if (data.mediaItems !== undefined) {
-      createData.mediaItems = PropertyPrismaMapper.mediaToJson(data.mediaItems) as Prisma.InputJsonValue;
+      createData.mediaItems = PropertyPrismaMapper.mediaToJson(data.mediaItems);
     }
 
     const ownerClientIds = Array.from(
@@ -93,7 +94,9 @@ export class PropertyPrismaRepository implements PropertyRepository {
         owner: { select: { id: true, fullName: true, documentNumber: true } },
         owners: {
           include: {
-            owner: { select: { id: true, fullName: true, documentNumber: true } },
+            owner: {
+              select: { id: true, fullName: true, documentNumber: true },
+            },
           },
           orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }],
         },
@@ -102,7 +105,9 @@ export class PropertyPrismaRepository implements PropertyRepository {
     return property ? PropertyPrismaMapper.toDomain(property) : null;
   }
 
-  async findMany(filters: ListPropertiesFilters): Promise<ListPropertiesResult> {
+  async findMany(
+    filters: ListPropertiesFilters,
+  ): Promise<ListPropertiesResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug },
     });
@@ -119,8 +124,10 @@ export class PropertyPrismaRepository implements PropertyRepository {
       where.listingStatus = filters.listingStatus;
     if (filters.minSalePrice != null || filters.maxSalePrice != null) {
       where.salePrice = {};
-      if (filters.minSalePrice != null) where.salePrice.gte = filters.minSalePrice;
-      if (filters.maxSalePrice != null) where.salePrice.lte = filters.maxSalePrice;
+      if (filters.minSalePrice != null)
+        where.salePrice.gte = filters.minSalePrice;
+      if (filters.maxSalePrice != null)
+        where.salePrice.lte = filters.maxSalePrice;
     }
     if (filters.search?.trim()) {
       const q = filters.search.trim();
@@ -161,14 +168,21 @@ export class PropertyPrismaRepository implements PropertyRepository {
           endDate: { gte: today },
           deletedAt: null,
         },
-        select: { propertyId: true, endDate: true, tenant: { select: { fullName: true } } },
+        select: {
+          propertyId: true,
+          endDate: true,
+          tenant: { select: { fullName: true } },
+        },
       });
       for (const r of rentals) {
         activeRentalPropertyIds.add(r.propertyId);
         const currentEnd = activeRentalEndByPropertyId.get(r.propertyId);
         if (!currentEnd || r.endDate > currentEnd) {
           activeRentalEndByPropertyId.set(r.propertyId, r.endDate);
-          activeRentalTenantByPropertyId.set(r.propertyId, r.tenant?.fullName ?? null);
+          activeRentalTenantByPropertyId.set(
+            r.propertyId,
+            r.tenant?.fullName ?? null,
+          );
         }
       }
     }
@@ -191,8 +205,12 @@ export class PropertyPrismaRepository implements PropertyRepository {
             p.projectName,
             p.listingStatus,
             isVentasList ? false : activeRentalPropertyIds.has(p.id),
-            isVentasList ? null : activeRentalEndByPropertyId.get(p.id) ?? null,
-            isVentasList ? null : activeRentalTenantByPropertyId.get(p.id) ?? null,
+            isVentasList
+              ? null
+              : (activeRentalEndByPropertyId.get(p.id) ?? null),
+            isVentasList
+              ? null
+              : (activeRentalTenantByPropertyId.get(p.id) ?? null),
           ),
       ),
       total,
@@ -226,22 +244,32 @@ export class PropertyPrismaRepository implements PropertyRepository {
       return new PropertyStats(total, 0, available, 0, 0, reserved, sold);
     }
 
-    const [total, rented, available, expiring, maintenance] = await Promise.all([
-      this.prisma.property.count({ where: baseWhere }),
-      this.prisma.property.count({
-        where: { ...baseWhere, listingStatus: 'RENTED' },
-      }),
-      this.prisma.property.count({
-        where: { ...baseWhere, listingStatus: 'AVAILABLE' },
-      }),
-      this.prisma.property.count({
-        where: { ...baseWhere, listingStatus: 'EXPIRING' },
-      }),
-      this.prisma.property.count({
-        where: { ...baseWhere, listingStatus: 'MAINTENANCE' },
-      }),
-    ]);
-    return new PropertyStats(total, rented, available, expiring, maintenance, 0, 0);
+    const [total, rented, available, expiring, maintenance] = await Promise.all(
+      [
+        this.prisma.property.count({ where: baseWhere }),
+        this.prisma.property.count({
+          where: { ...baseWhere, listingStatus: 'RENTED' },
+        }),
+        this.prisma.property.count({
+          where: { ...baseWhere, listingStatus: 'AVAILABLE' },
+        }),
+        this.prisma.property.count({
+          where: { ...baseWhere, listingStatus: 'EXPIRING' },
+        }),
+        this.prisma.property.count({
+          where: { ...baseWhere, listingStatus: 'MAINTENANCE' },
+        }),
+      ],
+    );
+    return new PropertyStats(
+      total,
+      rented,
+      available,
+      expiring,
+      maintenance,
+      0,
+      0,
+    );
   }
 
   async update(data: UpdatePropertyData): Promise<Property> {
@@ -257,37 +285,54 @@ export class PropertyPrismaRepository implements PropertyRepository {
     if (data.code !== undefined) updatePayload.code = data.code.trim();
     if (data.propertyTypeId !== undefined)
       updatePayload.propertyType = { connect: { id: data.propertyTypeId } };
-    if (data.addressLine !== undefined) updatePayload.addressLine = data.addressLine.trim();
-    if (data.districtId !== undefined) updatePayload.district = { connect: { id: data.districtId } };
+    if (data.addressLine !== undefined)
+      updatePayload.addressLine = data.addressLine.trim();
+    if (data.districtId !== undefined)
+      updatePayload.district = { connect: { id: data.districtId } };
     if (data.locationCustom !== undefined) {
       updatePayload.locationCustom = PropertyPrismaMapper.locationToJson(
         data.locationCustom,
-      ) as Prisma.InputJsonValue;
+      );
     }
-    if (data.description !== undefined) updatePayload.description = data.description?.trim() || null;
+    if (data.description !== undefined)
+      updatePayload.description = data.description?.trim() || null;
     if (data.area !== undefined) updatePayload.area = data.area;
     if (data.bedrooms !== undefined) updatePayload.bedrooms = data.bedrooms;
     if (data.bathrooms !== undefined) updatePayload.bathrooms = data.bathrooms;
     if (data.ageYears !== undefined) updatePayload.ageYears = data.ageYears;
-    if (data.floorLevel !== undefined) updatePayload.floorLevel = data.floorLevel?.trim() || null;
-    if (data.parkingSpaces !== undefined) updatePayload.parkingSpaces = data.parkingSpaces;
-    if (data.partida1 !== undefined) updatePayload.partida1 = data.partida1?.trim() || null;
-    if (data.partida2 !== undefined) updatePayload.partida2 = data.partida2?.trim() || null;
-    if (data.partida3 !== undefined) updatePayload.partida3 = data.partida3?.trim() || null;
-    if (data.ownerId !== undefined) updatePayload.owner = { connect: { id: data.ownerId } };
+    if (data.floorLevel !== undefined)
+      updatePayload.floorLevel = data.floorLevel?.trim() || null;
+    if (data.parkingSpaces !== undefined)
+      updatePayload.parkingSpaces = data.parkingSpaces;
+    if (data.partida1 !== undefined)
+      updatePayload.partida1 = data.partida1?.trim() || null;
+    if (data.partida2 !== undefined)
+      updatePayload.partida2 = data.partida2?.trim() || null;
+    if (data.partida3 !== undefined)
+      updatePayload.partida3 = data.partida3?.trim() || null;
+    if (data.ownerId !== undefined)
+      updatePayload.owner = { connect: { id: data.ownerId } };
     const ownerClientIds =
       data.ownerClientIds !== undefined
         ? Array.from(new Set(data.ownerClientIds.filter(Boolean)))
         : undefined;
-    if (data.monthlyRent !== undefined) updatePayload.monthlyRent = data.monthlyRent;
-    if (data.maintenanceAmount !== undefined) updatePayload.maintenanceAmount = data.maintenanceAmount;
-    if (data.depositMonths !== undefined) updatePayload.depositMonths = data.depositMonths;
+    if (data.monthlyRent !== undefined)
+      updatePayload.monthlyRent = data.monthlyRent;
+    if (data.maintenanceAmount !== undefined)
+      updatePayload.maintenanceAmount = data.maintenanceAmount;
+    if (data.depositMonths !== undefined)
+      updatePayload.depositMonths = data.depositMonths;
     if (data.salePrice !== undefined) updatePayload.salePrice = data.salePrice;
-    if (data.saleCurrency !== undefined) updatePayload.saleCurrency = data.saleCurrency;
-    if (data.projectName !== undefined) updatePayload.projectName = data.projectName?.trim() || null;
+    if (data.saleCurrency !== undefined)
+      updatePayload.saleCurrency = data.saleCurrency;
+    if (data.projectName !== undefined)
+      updatePayload.projectName = data.projectName?.trim() || null;
     if (data.mediaItems !== undefined)
-      updatePayload.mediaItems = PropertyPrismaMapper.mediaToJson(data.mediaItems) as Prisma.InputJsonValue;
-    if (data.listingStatus !== undefined) updatePayload.listingStatus = data.listingStatus;
+      updatePayload.mediaItems = PropertyPrismaMapper.mediaToJson(
+        data.mediaItems,
+      );
+    if (data.listingStatus !== undefined)
+      updatePayload.listingStatus = data.listingStatus;
 
     await this.prisma.$transaction(async (tx) => {
       await tx.property.update({
@@ -296,7 +341,9 @@ export class PropertyPrismaRepository implements PropertyRepository {
       });
       if (ownerClientIds !== undefined) {
         const primaryOwnerId = data.ownerId ?? existing.ownerId;
-        await tx.propertyOwnerLink.deleteMany({ where: { propertyId: data.id } });
+        await tx.propertyOwnerLink.deleteMany({
+          where: { propertyId: data.id },
+        });
         if (ownerClientIds.length) {
           await tx.propertyOwnerLink.createMany({
             data: ownerClientIds.map((ownerId, index) => ({
@@ -345,7 +392,10 @@ export class PropertyPrismaRepository implements PropertyRepository {
     });
   }
 
-  async countActiveByOwnerId(ownerId: string, applicationId: string): Promise<number> {
+  async countActiveByOwnerId(
+    ownerId: string,
+    applicationId: string,
+  ): Promise<number> {
     return this.prisma.property.count({
       where: { ownerId, applicationId, deletedAt: null },
     });

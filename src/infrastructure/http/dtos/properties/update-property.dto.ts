@@ -36,9 +36,12 @@ export class UpdatePropertyDto {
   districtId: string;
 
   @ApiPropertyOptional({
-    description: 'Ubicación libre cuando distrito = Otros; null si vuelve a ubigeo peruano',
+    description:
+      'Ubicación libre cuando distrito = Otros; null si vuelve a ubigeo peruano',
   })
-  @ValidateIf((o) => o.districtId === UBIGEO_OTHER_DISTRICT_ID)
+  @ValidateIf(
+    (o: { districtId?: string }) => o.districtId === UBIGEO_OTHER_DISTRICT_ID,
+  )
   @IsObject()
   @ValidateNested()
   @Type(() => LocationCustomDto)
@@ -89,7 +92,9 @@ export class UpdatePropertyDto {
   @Min(0)
   parkingSpaces?: number | null;
 
-  @ApiPropertyOptional({ description: 'Número de partida 1 (máx. 3 por propiedad)' })
+  @ApiPropertyOptional({
+    description: 'Número de partida 1 (máx. 3 por propiedad)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -107,13 +112,16 @@ export class UpdatePropertyDto {
   @MaxLength(100)
   partida3?: string | null;
 
-  @ApiProperty({ description: 'ID del propietario principal (cliente tipo OWNER)' })
+  @ApiProperty({
+    description: 'ID del propietario principal (cliente tipo OWNER)',
+  })
   @IsString()
   @IsUUID()
   ownerId: string;
 
   @ApiPropertyOptional({
-    description: 'IDs de copropietarios / propietarios adicionales (incluye el principal)',
+    description:
+      'IDs de copropietarios / propietarios adicionales (incluye el principal)',
     type: [String],
   })
   @IsOptional()
@@ -149,7 +157,9 @@ export class UpdatePropertyDto {
   @Min(0)
   salePrice?: number | null;
 
-  @ApiPropertyOptional({ description: 'Moneda del precio de venta (código catálogo)' })
+  @ApiPropertyOptional({
+    description: 'Moneda del precio de venta (código catálogo)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(10)

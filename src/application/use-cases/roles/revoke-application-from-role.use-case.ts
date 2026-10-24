@@ -19,6 +19,9 @@ export class RevokeApplicationFromRoleUseCase {
   async execute(input: RevokeApplicationFromRoleInput): Promise<void> {
     const role = await this.roleRepository.findById(input.roleId);
     if (!role) throw new EntityNotFoundException('Role', input.roleId);
-    await this.roleRepository.revokeApplication(input.roleId, input.applicationId);
+    await this.roleRepository.revokeApplication(
+      input.roleId,
+      input.applicationId,
+    );
   }
 }

@@ -16,14 +16,7 @@ export class UpdateListingStatusDto {
     ],
   })
   @IsString()
-  @IsIn([
-    'RENTED',
-    'EXPIRING',
-    'MAINTENANCE',
-    'AVAILABLE',
-    'RESERVED',
-    'SOLD',
-  ])
+  @IsIn(['RENTED', 'EXPIRING', 'MAINTENANCE', 'AVAILABLE', 'RESERVED', 'SOLD'])
   listingStatus:
     | 'RENTED'
     | 'EXPIRING'

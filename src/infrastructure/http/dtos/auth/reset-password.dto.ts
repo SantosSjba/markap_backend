@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MinLength, Length, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  MaxLength,
+  Length,
+  Matches,
+} from 'class-validator';
 
 /**
  * DTO para restablecer contraseña con código
@@ -22,10 +29,15 @@ export class ResetPasswordDto {
   code: string;
 
   @ApiProperty({
-    description: 'Nueva contraseña (mínimo 6 caracteres)',
+    description: 'Nueva contraseña (mínimo 8 caracteres)',
     example: 'NuevaPassword123',
   })
   @IsString()
-  @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
+  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
+  @MaxLength(50)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+    message:
+      'La contraseña debe incluir al menos una mayúscula, una minúscula y un número',
+  })
   newPassword: string;
 }

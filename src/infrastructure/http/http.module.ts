@@ -1,3 +1,5 @@
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { DataChangedInterceptor } from './interceptors/data-changed.interceptor';
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module';
 import { StorageModule } from '../storage/storage.module';
@@ -42,13 +44,13 @@ import {
 import {
   GetUserRolesUseCase,
   GetAllRolesUseCase,
-    GetRoleByIdUseCase,
-    CreateRoleUseCase,
-    UpdateRoleUseCase,
-    DeleteRoleUseCase,
-    AssignApplicationToRoleUseCase,
-    RevokeApplicationFromRoleUseCase,
-    GetApplicationsByRoleUseCase,
+  GetRoleByIdUseCase,
+  CreateRoleUseCase,
+  UpdateRoleUseCase,
+  DeleteRoleUseCase,
+  AssignApplicationToRoleUseCase,
+  RevokeApplicationFromRoleUseCase,
+  GetApplicationsByRoleUseCase,
 } from '../../application/use-cases/roles';
 
 // Use Cases - Users
@@ -403,6 +405,7 @@ import {
 } from '../../application/use-cases/interior-project-documents';
 
 // Guards
+import { AdminGuard } from '../../common/guards/admin.guard';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
 
@@ -515,7 +518,10 @@ import {
 import { NotificationsGateway } from './gateways/notifications.gateway';
 
 // Services - Notifications
-import { NotificationsService, RentalAlertsScheduler } from '../../application/services';
+import {
+  NotificationsService,
+  RentalAlertsScheduler,
+} from '../../application/services';
 
 import {
   AGENT_PORT,
@@ -632,6 +638,8 @@ import {
 
     // Guards
     JwtAuthGuard,
+    AdminGuard,
+    { provide: APP_INTERCEPTOR, useClass: DataChangedInterceptor },
     WsJwtGuard,
 
     // Notifications (WebSocket + REST)
@@ -741,20 +749,20 @@ import {
     ContabilidadTreasuryOperationsService,
     ContabilidadPurchasesOperationsService,
     ContabilidadSalesOperationsService,
-  ContabilidadTaxesOperationsService,
-  ContabilidadPleOperationsService,
-  ContabilidadFinancialStatementsOperationsService,
-  ContabilidadClosingOperationsService,
-  ContabilidadReportsOperationsService,
-  ContabilidadExtensionsOperationsService,
-  ContabilidadInventoryOperationsService,
-  ContabilidadContextService,
-  ContabilidadLegalEntityOperationsService,
-  ContabilidadAuditOperationsService,
-  ContabilidadCpeOperationsService,
-  ContabilidadCpeUblService,
-  ContabilidadCpeEmitterService,
-  ContabilidadSolOperationsService,
+    ContabilidadTaxesOperationsService,
+    ContabilidadPleOperationsService,
+    ContabilidadFinancialStatementsOperationsService,
+    ContabilidadClosingOperationsService,
+    ContabilidadReportsOperationsService,
+    ContabilidadExtensionsOperationsService,
+    ContabilidadInventoryOperationsService,
+    ContabilidadContextService,
+    ContabilidadLegalEntityOperationsService,
+    ContabilidadAuditOperationsService,
+    ContabilidadCpeOperationsService,
+    ContabilidadCpeUblService,
+    ContabilidadCpeEmitterService,
+    ContabilidadSolOperationsService,
 
     ListInteriorProjectsUseCase,
     GetInteriorProjectByIdUseCase,
@@ -849,7 +857,6 @@ import {
     ListInteriorProjectBudgetAttachmentsUseCase,
     UploadInteriorProjectBudgetAttachmentUseCase,
     DeleteInteriorProjectBudgetAttachmentUseCase,
-
 
     ListInteriorCatalogMaterialsUseCase,
     GetInteriorCatalogMaterialByIdUseCase,

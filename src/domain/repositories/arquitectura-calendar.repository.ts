@@ -1,4 +1,8 @@
-﻿export type ArquitecturaCalendarFeedSource = 'MANUAL' | 'MILESTONE' | 'EXECUTION_TASK' | 'FINANCE_SCHEDULE';
+﻿export type ArquitecturaCalendarFeedSource =
+  | 'MANUAL'
+  | 'MILESTONE'
+  | 'EXECUTION_TASK'
+  | 'FINANCE_SCHEDULE';
 
 export interface ArquitecturaCalendarFeedItemDto {
   id: string;
@@ -55,9 +59,16 @@ export interface UpdateArquitecturaCalendarEventPayload {
 
 export interface ArquitecturaCalendarRepository {
   resolveApplicationId(slug: string): Promise<string | null>;
-  ensureManualEventScope(eventId: string, applicationSlug: string): Promise<boolean>;
-  getFeed(filters: ArquitecturaCalendarFeedFilters): Promise<ArquitecturaCalendarFeedItemDto[]>;
-  createEvent(payload: CreateArquitecturaCalendarEventPayload): Promise<ArquitecturaCalendarFeedItemDto>;
+  ensureManualEventScope(
+    eventId: string,
+    applicationSlug: string,
+  ): Promise<boolean>;
+  getFeed(
+    filters: ArquitecturaCalendarFeedFilters,
+  ): Promise<ArquitecturaCalendarFeedItemDto[]>;
+  createEvent(
+    payload: CreateArquitecturaCalendarEventPayload,
+  ): Promise<ArquitecturaCalendarFeedItemDto>;
   updateEvent(
     eventId: string,
     applicationSlug: string,
@@ -66,4 +77,6 @@ export interface ArquitecturaCalendarRepository {
   deleteEvent(eventId: string, applicationSlug: string): Promise<void>;
 }
 
-export const ARQUITECTURA_CALENDAR_REPOSITORY = Symbol('ArquitecturaCalendarRepository');
+export const ARQUITECTURA_CALENDAR_REPOSITORY = Symbol(
+  'ArquitecturaCalendarRepository',
+);

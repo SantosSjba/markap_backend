@@ -1,3 +1,4 @@
+import { lockProduccionMaterials } from './lock-produccion-materials';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PRODUCCION_CONFIG_REPOSITORY } from '@common/constants/injection-tokens';
@@ -41,12 +42,20 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
     private readonly configRepo: ProduccionConfigRepository,
   ) {}
 
-  private async resolveStageDefinitions(applicationId: string) {
+  private async resolveStageDefinitions(
+    applicationId: string,
+  ): Promise<{ stageKey: string; label: string; sortOrder: number }[]> {
     await this.configRepo.ensureDefaults(applicationId);
     const rows = await this.configRepo.listProductionStages(applicationId);
-    const active = rows.filter((s) => s.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
+    const active = rows
+      .filter((s) => s.isActive)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
     if (active.length) {
-      return active.map((s) => ({ stageKey: s.stageKey, label: s.label, sortOrder: s.sortOrder }));
+      return active.map((s) => ({
+        stageKey: s.stageKey,
+        label: s.label,
+        sortOrder: s.sortOrder,
+      }));
     }
     return [...PRODUCCION_DEFAULT_STAGES];
   }
@@ -94,7 +103,9 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
     };
   }
 
-  private async loadDetail(id: string): Promise<ProduccionWorkOrderDetail | null> {
+  private async loadDetail(
+    id: string,
+  ): Promise<ProduccionWorkOrderDetail | null> {
     const row = await this.prisma.produccionWorkOrder.findUnique({
       where: { id },
       include: {
@@ -157,7 +168,9 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
     lines: { furniture: { name: string }; quantity: Prisma.Decimal }[];
     stages: { stageKey: string; label: string; status: string }[];
   }): ProduccionWorkOrderListItem {
-    const currentStage = row.stages.find((s) => s.stageKey === row.currentStageKey);
+    const currentStage = row.stages.find(
+      (s) => s.stageKey === row.currentStageKey,
+    );
     const furnitureSummary = row.lines
       .map((l) => `${l.furniture.name}×${num(l.quantity)}`)
       .join(', ');
@@ -180,13 +193,18 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
     };
   }
 
-  async list(filters: ListProduccionWorkOrdersFilters): Promise<ListProduccionWorkOrdersResult> {
+  async list(
+    filters: ListProduccionWorkOrdersFilters,
+  ): Promise<ListProduccionWorkOrdersResult> {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug.trim() },
     });
-    if (!app) return { data: [], total: 0, page: filters.page, limit: filters.limit };
+    if (!app)
+      return { data: [], total: 0, page: filters.page, limit: filters.limit };
 
-    const andParts: Prisma.ProduccionWorkOrderWhereInput[] = [{ applicationId: app.id }];
+    const andParts: Prisma.ProduccionWorkOrderWhereInput[] = [
+      { applicationId: app.id },
+    ];
     if (filters.status) andParts.push({ status: filters.status });
     if (filters.stageKey) andParts.push({ currentStageKey: filters.stageKey });
     if (filters.clientId) andParts.push({ clientId: filters.clientId });
@@ -198,7 +216,13 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
           { code: { contains: q, mode: 'insensitive' } },
           { assignedTo: { contains: q, mode: 'insensitive' } },
           { client: { fullName: { contains: q, mode: 'insensitive' } } },
-          { lines: { some: { furniture: { name: { contains: q, mode: 'insensitive' } } } } },
+          {
+            lines: {
+              some: {
+                furniture: { name: { contains: q, mode: 'insensitive' } },
+              },
+            },
+          },
         ],
       });
     }
@@ -243,15 +267,26 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
     const byStageMap = new Map<string, number>();
     for (const r of rows) {
       if (r.currentStageKey) {
-        byStageMap.set(r.currentStageKey, (byStageMap.get(r.currentStageKey) ?? 0) + 1);
+        byStageMap.set(
+          r.currentStageKey,
+          (byStageMap.get(r.currentStageKey) ?? 0) + 1,
+        );
       }
     }
 
     const [total, pending, inProgress, completed] = await Promise.all([
-      this.prisma.produccionWorkOrder.count({ where: { applicationId: app.id } }),
-      this.prisma.produccionWorkOrder.count({ where: { applicationId: app.id, status: 'PENDING' } }),
-      this.prisma.produccionWorkOrder.count({ where: { applicationId: app.id, status: 'IN_PROGRESS' } }),
-      this.prisma.produccionWorkOrder.count({ where: { applicationId: app.id, status: 'COMPLETED' } }),
+      this.prisma.produccionWorkOrder.count({
+        where: { applicationId: app.id },
+      }),
+      this.prisma.produccionWorkOrder.count({
+        where: { applicationId: app.id, status: 'PENDING' },
+      }),
+      this.prisma.produccionWorkOrder.count({
+        where: { applicationId: app.id, status: 'IN_PROGRESS' },
+      }),
+      this.prisma.produccionWorkOrder.count({
+        where: { applicationId: app.id, status: 'COMPLETED' },
+      }),
     ]);
 
     const stageDefs = await this.resolveStageDefinitions(app.id);
@@ -269,24 +304,36 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
     };
   }
 
-  async findById(id: string, applicationSlug?: string): Promise<ProduccionWorkOrderDetail | null> {
+  async findById(
+    id: string,
+    applicationSlug?: string,
+  ): Promise<ProduccionWorkOrderDetail | null> {
     const row = await this.prisma.produccionWorkOrder.findUnique({
       where: { id },
       include: { application: { select: { slug: true } } },
     });
     if (!row) return null;
-    if (applicationSlug?.trim() && row.application.slug !== applicationSlug.trim()) return null;
+    if (
+      applicationSlug?.trim() &&
+      row.application.slug !== applicationSlug.trim()
+    )
+      return null;
     return this.loadDetail(id);
   }
 
   private validateLines(lines: { furnitureId: string; quantity?: number }[]) {
-    if (!lines.length) throw new BadRequestException('La OT debe incluir al menos un mueble');
+    if (!lines.length)
+      throw new BadRequestException('La OT debe incluir al menos un mueble');
     for (const l of lines) {
-      if ((l.quantity ?? 1) <= 0) throw new BadRequestException('Cantidad inválida');
+      if ((l.quantity ?? 1) <= 0)
+        throw new BadRequestException('Cantidad inválida');
     }
   }
 
-  async create(applicationId: string, payload: CreateProduccionWorkOrderPayload) {
+  async create(
+    applicationId: string,
+    payload: CreateProduccionWorkOrderPayload,
+  ) {
     this.validateLines(payload.lines);
 
     if (payload.clientId) {
@@ -317,11 +364,15 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
         clientId: payload.clientId?.trim() || null,
         status: 'PENDING',
         priority: payload.priority ?? 'NORMAL',
-        currentStageKey: stageDefs[0]!.stageKey,
+        currentStageKey: stageDefs[0].stageKey,
         progressPercent: new Prisma.Decimal(0),
         assignedTo: payload.assignedTo?.trim() || null,
-        scheduledStart: payload.scheduledStart ? new Date(payload.scheduledStart) : null,
-        scheduledEnd: payload.scheduledEnd ? new Date(payload.scheduledEnd) : null,
+        scheduledStart: payload.scheduledStart
+          ? new Date(payload.scheduledStart)
+          : null,
+        scheduledEnd: payload.scheduledEnd
+          ? new Date(payload.scheduledEnd)
+          : null,
         notes: payload.notes?.trim() || null,
         lines: {
           create: payload.lines.map((l) => ({
@@ -347,7 +398,9 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
   }
 
   async update(id: string, payload: UpdateProduccionWorkOrderPayload) {
-    const order = await this.prisma.produccionWorkOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionWorkOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('OT no encontrada');
     if (order.status !== 'PENDING') {
       throw new BadRequestException('Solo se pueden editar OT pendientes');
@@ -356,21 +409,30 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
 
     await this.prisma.$transaction(async (tx) => {
       const patch: Prisma.ProduccionWorkOrderUncheckedUpdateInput = {};
-      if (payload.clientId !== undefined) patch.clientId = payload.clientId?.trim() || null;
+      if (payload.clientId !== undefined)
+        patch.clientId = payload.clientId?.trim() || null;
       if (payload.priority !== undefined) patch.priority = payload.priority;
-      if (payload.assignedTo !== undefined) patch.assignedTo = payload.assignedTo?.trim() || null;
+      if (payload.assignedTo !== undefined)
+        patch.assignedTo = payload.assignedTo?.trim() || null;
       if (payload.scheduledStart !== undefined) {
-        patch.scheduledStart = payload.scheduledStart ? new Date(payload.scheduledStart) : null;
+        patch.scheduledStart = payload.scheduledStart
+          ? new Date(payload.scheduledStart)
+          : null;
       }
       if (payload.scheduledEnd !== undefined) {
-        patch.scheduledEnd = payload.scheduledEnd ? new Date(payload.scheduledEnd) : null;
+        patch.scheduledEnd = payload.scheduledEnd
+          ? new Date(payload.scheduledEnd)
+          : null;
       }
-      if (payload.notes !== undefined) patch.notes = payload.notes?.trim() || null;
+      if (payload.notes !== undefined)
+        patch.notes = payload.notes?.trim() || null;
 
       await tx.produccionWorkOrder.update({ where: { id }, data: patch });
 
       if (payload.lines) {
-        await tx.produccionWorkOrderLine.deleteMany({ where: { workOrderId: id } });
+        await tx.produccionWorkOrderLine.deleteMany({
+          where: { workOrderId: id },
+        });
         await tx.produccionWorkOrderLine.createMany({
           data: payload.lines.map((l) => ({
             workOrderId: id,
@@ -393,7 +455,8 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
       include: { stages: { orderBy: { sortOrder: 'asc' } } },
     });
     if (!order) throw new BadRequestException('OT no encontrada');
-    if (order.status !== 'PENDING') throw new BadRequestException('La OT ya fue iniciada');
+    if (order.status !== 'PENDING')
+      throw new BadRequestException('La OT ya fue iniciada');
 
     const first = order.stages[0];
     if (!first) throw new BadRequestException('La OT no tiene etapas');
@@ -418,7 +481,11 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
     return detail;
   }
 
-  async updateStage(id: string, stageId: string, payload: UpdateProduccionWorkOrderStagePayload) {
+  async updateStage(
+    id: string,
+    stageId: string,
+    payload: UpdateProduccionWorkOrderStagePayload,
+  ) {
     const order = await this.prisma.produccionWorkOrder.findUnique({
       where: { id },
       include: { stages: { orderBy: { sortOrder: 'asc' } } },
@@ -433,9 +500,12 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
     const stage = order.stages[stageIdx];
 
     await this.prisma.$transaction(async (tx) => {
-      const stagePatch: Prisma.ProduccionWorkOrderStageUncheckedUpdateInput = {};
-      if (payload.assignee !== undefined) stagePatch.assignee = payload.assignee?.trim() || null;
-      if (payload.notes !== undefined) stagePatch.notes = payload.notes?.trim() || null;
+      const stagePatch: Prisma.ProduccionWorkOrderStageUncheckedUpdateInput =
+        {};
+      if (payload.assignee !== undefined)
+        stagePatch.assignee = payload.assignee?.trim() || null;
+      if (payload.notes !== undefined)
+        stagePatch.notes = payload.notes?.trim() || null;
 
       if (payload.markDone) {
         if (stage.status === 'DONE') return;
@@ -458,7 +528,10 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
         stagePatch.startedAt = new Date();
       }
 
-      await tx.produccionWorkOrderStage.update({ where: { id: stageId }, data: stagePatch });
+      await tx.produccionWorkOrderStage.update({
+        where: { id: stageId },
+        data: stagePatch,
+      });
 
       const updatedStages = await tx.produccionWorkOrderStage.findMany({
         where: { workOrderId: id },
@@ -471,7 +544,8 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
 
       const woPatch: Prisma.ProduccionWorkOrderUncheckedUpdateInput = {
         progressPercent: new Prisma.Decimal(progress),
-        currentStageKey: active?.stageKey ?? updatedStages[updatedStages.length - 1]?.stageKey,
+        currentStageKey:
+          active?.stageKey ?? updatedStages[updatedStages.length - 1]?.stageKey,
       };
 
       if (allDone && order.status === 'IN_PROGRESS') {
@@ -526,7 +600,9 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
   }
 
   async cancel(id: string) {
-    const order = await this.prisma.produccionWorkOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionWorkOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('OT no encontrada');
     if (!['PENDING', 'IN_PROGRESS'].includes(order.status)) {
       throw new BadRequestException('No se puede cancelar esta OT');
@@ -542,18 +618,29 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
     return detail;
   }
 
-  async consumeMaterials(id: string, items: ConsumeProduccionWorkOrderMaterialPayload[]) {
-    if (!items.length) throw new BadRequestException('Indique materiales a consumir');
+  async consumeMaterials(
+    id: string,
+    items: ConsumeProduccionWorkOrderMaterialPayload[],
+  ) {
+    if (!items.length)
+      throw new BadRequestException('Indique materiales a consumir');
 
     await this.prisma.$transaction(async (tx) => {
       const order = await tx.produccionWorkOrder.findUnique({ where: { id } });
       if (!order) throw new BadRequestException('OT no encontrada');
       if (!['IN_PROGRESS'].includes(order.status)) {
-        throw new BadRequestException('Solo OT en proceso pueden consumir materiales');
+        throw new BadRequestException(
+          'Solo OT en proceso pueden consumir materiales',
+        );
       }
 
+      await lockProduccionMaterials(
+        tx,
+        items.map((item) => item.materialId),
+      );
       for (const item of items) {
-        if (item.quantity <= 0) throw new BadRequestException('Cantidad inválida');
+        if (item.quantity <= 0)
+          throw new BadRequestException('Cantidad inválida');
 
         const material = await tx.produccionMaterial.findFirst({
           where: { id: item.materialId, applicationId: order.applicationId },
@@ -600,7 +687,9 @@ export class ProduccionWorkOrderPrismaRepository implements ProduccionWorkOrderR
   }
 
   async delete(id: string): Promise<void> {
-    const order = await this.prisma.produccionWorkOrder.findUnique({ where: { id } });
+    const order = await this.prisma.produccionWorkOrder.findUnique({
+      where: { id },
+    });
     if (!order) throw new BadRequestException('OT no encontrada');
     if (order.status !== 'PENDING') {
       throw new BadRequestException('Solo se pueden eliminar OT pendientes');

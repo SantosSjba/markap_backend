@@ -1,10 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import type { ListAgentsFilters, ListAgentsResult, AgentListItem } from '@domain/repositories/agent.repository';
+import type {
+  ListAgentsFilters,
+  ListAgentsResult,
+  AgentListItem,
+} from '@domain/repositories/agent.repository';
 import type { CreateAgentInput } from '../use-cases/agents/create-agent.use-case';
 import { CreateAgentUseCase } from '../use-cases/agents/create-agent.use-case';
 import { ListAgentsUseCase } from '../use-cases/agents/list-agents.use-case';
 import { GetAgentByIdUseCase } from '../use-cases/agents/get-agent-by-id.use-case';
-import { UpdateAgentUseCase, type UpdateAgentInput } from '../use-cases/agents/update-agent.use-case';
+import {
+  UpdateAgentUseCase,
+  type UpdateAgentInput,
+} from '../use-cases/agents/update-agent.use-case';
 import { DeleteAgentUseCase } from '../use-cases/agents/delete-agent.use-case';
 import type { AgentPort } from './agent.port';
 
@@ -33,11 +40,7 @@ export class AgentPortImpl implements AgentPort {
     return this.getByIdUc.execute(id, opts);
   }
 
-  updateAgent(
-    id: string,
-    data: UpdateAgentInput,
-    applicationSlug?: string,
-  ) {
+  updateAgent(id: string, data: UpdateAgentInput, applicationSlug?: string) {
     return this.updateAgentUc.execute(id, data, applicationSlug);
   }
 

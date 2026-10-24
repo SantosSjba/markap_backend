@@ -1,4 +1,5 @@
-﻿import {
+import { parseIntegerQuery } from '../../../common/utils/parse-integer-query.util';
+import {
   Body,
   Controller,
   Delete,
@@ -58,8 +59,8 @@ export class ArquitecturaCatalogMaterialsController {
   ) {
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'arquitectura',
-      page: Math.max(1, parseInt(page ?? '1', 10)),
-      limit: Math.min(100, Math.max(1, parseInt(limit ?? '20', 10))),
+      page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
+      limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       search: search?.trim() || undefined,
       category: category?.trim() || undefined,
     });

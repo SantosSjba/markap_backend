@@ -71,7 +71,12 @@ export class RenderProduccionQuotationHtmlUseCase {
     await this.config.ensureDefaults(app.id);
     const settings = await this.config.getSettings(app.id);
 
-    return this.buildHtml(quotation, client.fullName, client.documentNumber, settings.igvPercent);
+    return this.buildHtml(
+      quotation,
+      client.fullName,
+      client.documentNumber,
+      settings.igvPercent,
+    );
   }
 
   private buildHtml(

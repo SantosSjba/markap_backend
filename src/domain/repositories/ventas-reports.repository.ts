@@ -25,7 +25,9 @@ export interface VentasReportsRepository {
     granularity: VentasReportsGranularity,
   ): Promise<SalesByPeriodRow[]>;
 
-  getAgentPerformance(range: VentasReportsDateRange): Promise<AgentPerformanceRow[]>;
+  getAgentPerformance(
+    range: VentasReportsDateRange,
+  ): Promise<AgentPerformanceRow[]>;
 
   getConversion(range: VentasReportsDateRange): Promise<ConversionReport>;
 

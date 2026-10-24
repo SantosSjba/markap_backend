@@ -43,4 +43,5 @@ export const CONTABILIDAD_CPE_STATUS_LABELS: Record<string, string> = {
 };
 
 export const CONTABILIDAD_CPE_SUNAT_MOCK_ACCEPT_CODE = '0';
-export const CONTABILIDAD_CPE_SUNAT_MOCK_ACCEPT_MESSAGE = 'La Factura ha sido aceptada (simulador MARKAP)';
+export const CONTABILIDAD_CPE_SUNAT_MOCK_ACCEPT_MESSAGE =
+  'La Factura ha sido aceptada (simulador MARKAP)';
