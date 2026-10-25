@@ -1,6 +1,10 @@
 import { Prisma } from '@prisma/client';
 import { seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger(
+  'Script:demo-interiorismo-project-budget-seed',
+);
 
 type DemoLineItem = {
   sortOrder: number;
@@ -22,13 +26,15 @@ const REMODEL_SECTIONS: DemoSection[] = [
     lineItems: [
       {
         sortOrder: 0,
-        description: 'Mobiliario melamina: Módulos inferiores y superiores alto brillo',
+        description:
+          'Mobiliario melamina: Módulos inferiores y superiores alto brillo',
         budgetedCost: 14 * 385,
         hasIgv: true,
       },
       {
         sortOrder: 1,
-        description: 'Mobiliario melamina: Cubiertas cuarzo sintético instaladas',
+        description:
+          'Mobiliario melamina: Cubiertas cuarzo sintético instaladas',
         budgetedCost: 6.2 * 420,
         hasIgv: true,
       },
@@ -86,7 +92,9 @@ async function seedProjectSections(
   projectId: string,
   sections: DemoSection[],
 ): Promise<void> {
-  const existing = await prisma.interiorProjectSection.count({ where: { projectId } });
+  const existing = await prisma.interiorProjectSection.count({
+    where: { projectId },
+  });
   if (existing > 0) return;
 
   for (const section of sections) {
@@ -118,5 +126,8 @@ export async function seedInteriorismoDemoProjectBudgets(
 ): Promise<void> {
   await seedProjectSections(prisma, remodelProjectId, REMODEL_SECTIONS);
   await seedProjectSections(prisma, corpProjectId, CORP_SECTIONS);
-  console.log('   ✅ Presupuestos por proyecto demo interiorismo');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ Presupuestos por proyecto demo interiorismo',
+  );
 }

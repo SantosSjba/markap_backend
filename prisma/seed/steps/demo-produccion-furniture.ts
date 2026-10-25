@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { PRODUCCION_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-produccion-furniture');
 
 const DEMO_BOM_BY_CODE: Record<
   string,
@@ -23,7 +25,10 @@ const DEMO_BOM_BY_CODE: Record<
   ],
 };
 
-async function ensureDemoBomLines(prisma: SeedDb, applicationId: string): Promise<number> {
+async function ensureDemoBomLines(
+  prisma: SeedDb,
+  applicationId: string,
+): Promise<number> {
   let created = 0;
   for (const [code, lines] of Object.entries(DEMO_BOM_BY_CODE)) {
     const furniture = await prisma.produccionFurniture.findFirst({
@@ -61,7 +66,10 @@ export async function seedProduccionFurniture(
 ): Promise<void> {
   const produccionAppId = appIdBySlug[PRODUCCION_APPLICATION_SLUG];
   if (!produccionAppId) {
-    console.log('\n⚠️  produccion app not found — skipping furniture seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  produccion app not found — skipping furniture seed',
+    );
     return;
   }
 
@@ -69,7 +77,10 @@ export async function seedProduccionFurniture(
     where: { applicationId: produccionAppId },
   });
   if (existing === 0) {
-    console.log('\n🪑 Creando catálogo de muebles demo…');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n🪑 Creando catálogo de muebles demo…',
+    );
 
     const items: Prisma.ProduccionFurnitureCreateInput[] = [
       {
@@ -85,7 +96,12 @@ export async function seedProduccionFurniture(
         technicalSheetUrl: null,
         isActive: true,
         images: {
-          create: [{ sortOrder: 0, url: 'https://picsum.photos/seed/markap-mesa-com/480/480' }],
+          create: [
+            {
+              sortOrder: 0,
+              url: 'https://picsum.photos/seed/markap-mesa-com/480/480',
+            },
+          ],
         },
       },
       {
@@ -93,14 +109,20 @@ export async function seedProduccionFurniture(
         code: 'MUE-DOR-002',
         name: seedPrueba('Ropero empotrado 3 cuerpos'),
         category: 'Dormitorio',
-        description: 'Ropero a medida con puertas corredizas y cajonera interna.',
+        description:
+          'Ropero a medida con puertas corredizas y cajonera interna.',
         widthCm: 240,
         depthCm: 60,
         heightCm: 240,
         referencePrice: new Prisma.Decimal('4200'),
         isActive: true,
         images: {
-          create: [{ sortOrder: 0, url: 'https://picsum.photos/seed/markap-ropero/480/480' }],
+          create: [
+            {
+              sortOrder: 0,
+              url: 'https://picsum.photos/seed/markap-ropero/480/480',
+            },
+          ],
         },
       },
       {
@@ -115,7 +137,12 @@ export async function seedProduccionFurniture(
         referencePrice: new Prisma.Decimal('1950'),
         isActive: true,
         images: {
-          create: [{ sortOrder: 0, url: 'https://picsum.photos/seed/markap-escritorio/480/480' }],
+          create: [
+            {
+              sortOrder: 0,
+              url: 'https://picsum.photos/seed/markap-escritorio/480/480',
+            },
+          ],
         },
       },
       {
@@ -148,13 +175,22 @@ export async function seedProduccionFurniture(
       await prisma.produccionFurniture.create({ data });
     }
 
-    console.log(`   ✅ ${items.length} muebles demo en catálogo producción`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ ${items.length} muebles demo en catálogo producción`,
+    );
   } else {
-    console.log('\n🪑 Catálogo muebles producción ya sembrado — omitiendo alta de muebles');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n🪑 Catálogo muebles producción ya sembrado — omitiendo alta de muebles',
+    );
   }
 
   const bomCreated = await ensureDemoBomLines(prisma, produccionAppId);
   if (bomCreated > 0) {
-    console.log(`   ✅ ${bomCreated} líneas BOM demo en catálogo producción`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ ${bomCreated} líneas BOM demo en catálogo producción`,
+    );
   }
 }

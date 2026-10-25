@@ -1,9 +1,7 @@
-import {
-  APPLICATIONS,
-  ROLE_APPLICATION_ASSIGNMENTS,
-  ROLES,
-} from '../data';
+import { APPLICATIONS, ROLE_APPLICATION_ASSIGNMENTS, ROLES } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:roles-applications');
 
 export type RolesApplicationsResult = {
   createdRoles: Record<string, string>;
@@ -12,8 +10,10 @@ export type RolesApplicationsResult = {
   appIdBySlug: Record<string, string>;
 };
 
-export async function seedRolesAndApplications(prisma: SeedDb): Promise<RolesApplicationsResult> {
-  console.log('📋 Creating roles...');
+export async function seedRolesAndApplications(
+  prisma: SeedDb,
+): Promise<RolesApplicationsResult> {
+  logger.info({ event: 'seed.progress' }, '📋 Creating roles...');
   const createdRoles: Record<string, string> = {};
 
   for (const roleData of ROLES) {
@@ -22,16 +22,22 @@ export async function seedRolesAndApplications(prisma: SeedDb): Promise<RolesApp
     });
 
     if (existingRole) {
-      console.log(`   ✓ Role "${roleData.name}" already exists`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✓ Role "${roleData.name}" already exists`,
+      );
       createdRoles[roleData.code] = existingRole.id;
     } else {
       const role = await prisma.role.create({ data: roleData });
-      console.log(`   ✅ Role "${roleData.name}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Role "${roleData.name}" created`,
+      );
       createdRoles[roleData.code] = role.id;
     }
   }
 
-  console.log('\n📱 Creating applications...');
+  logger.info({ event: 'seed.progress' }, '\n📱 Creating applications...');
   const createdApps: string[] = [];
 
   for (const appData of APPLICATIONS) {
@@ -40,16 +46,25 @@ export async function seedRolesAndApplications(prisma: SeedDb): Promise<RolesApp
     });
 
     if (existingApp) {
-      console.log(`   ✓ Application "${appData.name}" already exists`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✓ Application "${appData.name}" already exists`,
+      );
       createdApps.push(existingApp.id);
     } else {
       const app = await prisma.application.create({ data: appData });
-      console.log(`   ✅ Application "${appData.name}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Application "${appData.name}" created`,
+      );
       createdApps.push(app.id);
     }
   }
 
-  console.log('\n🔗 Assigning applications to ADMIN role...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🔗 Assigning applications to ADMIN role...',
+  );
   const adminRoleId = createdRoles['ADMIN'];
   if (!adminRoleId) {
     throw new Error(
@@ -80,7 +95,10 @@ export async function seedRolesAndApplications(prisma: SeedDb): Promise<RolesApp
       });
     }
   }
-  console.log('   ✅ All applications assigned to ADMIN role');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ All applications assigned to ADMIN role',
+  );
 
   const appIdBySlug: Record<string, string> = {};
   for (let i = 0; i < APPLICATIONS.length; i++) {
@@ -115,12 +133,22 @@ export async function seedRolesAndApplications(prisma: SeedDb): Promise<RolesApp
         });
       }
     }
-    console.log(`   ✅ ${roleLabel}: ${slugs.join(', ')}`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ ${roleLabel}: ${slugs.join(', ')}`,
+    );
   };
 
-  console.log('\n🔗 Assigning applications to other roles...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🔗 Assigning applications to other roles...',
+  );
   for (const assignment of ROLE_APPLICATION_ASSIGNMENTS) {
-    await assignAppsToRole(assignment.roleCode, assignment.slugs, assignment.label);
+    await assignAppsToRole(
+      assignment.roleCode,
+      assignment.slugs,
+      assignment.label,
+    );
   }
 
   return { createdRoles, adminRoleId, createdApps, appIdBySlug };

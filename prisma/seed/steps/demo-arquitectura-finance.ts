@@ -1,6 +1,12 @@
 import { Prisma } from '@prisma/client';
-import { ARQUITECTURA_APPLICATION_SLUG, ARQUITECTURA_DEMO_PROJECT_CODES, seedPrueba } from '../data';
+import {
+  ARQUITECTURA_APPLICATION_SLUG,
+  ARQUITECTURA_DEMO_PROJECT_CODES,
+  seedPrueba,
+} from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-arquitectura-finance');
 
 /**
  * Programación de cobranzas y pagos demo (proyecto residencial).
@@ -11,7 +17,10 @@ export async function seedArquitecturaFinance(
 ): Promise<void> {
   const arquitecturaAppId = appIdBySlug[ARQUITECTURA_APPLICATION_SLUG];
   if (!arquitecturaAppId) {
-    console.log('\n⚠️  arquitectura app not found — skipping finance seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  arquitectura app not found — skipping finance seed',
+    );
     return;
   }
 
@@ -23,17 +32,28 @@ export async function seedArquitecturaFinance(
     },
   });
   if (!proj) {
-    console.log('\n⚠️  Proyecto demo ARQ-REM-LIM-001 no encontrado — omitiendo finanzas');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Proyecto demo ARQ-REM-LIM-001 no encontrado — omitiendo finanzas',
+    );
     return;
   }
 
-  const nSch = await prisma.arquitecturaFinanceIncomeSchedule.count({ where: { projectId: proj.id } });
+  const nSch = await prisma.arquitecturaFinanceIncomeSchedule.count({
+    where: { projectId: proj.id },
+  });
   if (nSch > 0) {
-    console.log('\n💰 Finanzas arquitectura demo ya existe — omitiendo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n💰 Finanzas arquitectura demo ya existe — omitiendo',
+    );
     return;
   }
 
-  console.log('\n💰 Sembrando finanzas arquitectura (adelantos, cuotas, pagos)…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n💰 Sembrando finanzas arquitectura (adelantos, cuotas, pagos)…',
+  );
 
   const adv = await prisma.arquitecturaFinanceIncomeSchedule.create({
     data: {
@@ -117,5 +137,8 @@ export async function seedArquitecturaFinance(
     },
   });
 
-  console.log('   ✅ Finanzas arquitectura demo lista');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ Finanzas arquitectura demo lista',
+  );
 }

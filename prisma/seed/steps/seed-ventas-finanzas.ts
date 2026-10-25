@@ -1,5 +1,7 @@
 import { seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:seed-ventas-finanzas');
 
 /**
  * Finanzas Ventas: perfil de comisión del asesor, cuotas demo, costos de documentación.
@@ -11,7 +13,10 @@ export async function seedVentasFinanzas(
 ): Promise<void> {
   const ventasAppId = appIdBySlug['ventas'];
   if (!ventasAppId) {
-    console.log('\n⚠️  Ventas app not found — skipping seed-ventas-finanzas');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Ventas app not found — skipping seed-ventas-finanzas',
+    );
     return;
   }
 
@@ -24,14 +29,19 @@ export async function seedVentasFinanzas(
     },
   });
   const prop = await prisma.property.findFirst({
-    where: { applicationId: ventasAppId, code: 'VNT-SEED-001', deletedAt: null },
+    where: {
+      applicationId: ventasAppId,
+      code: 'VNT-SEED-001',
+      deletedAt: null,
+    },
   });
   const agent = await prisma.agent.findFirst({
     where: { applicationId: ventasAppId, deletedAt: null, isActive: true },
   });
 
   if (!buyer || !prop || !agent) {
-    console.log(
+    logger.info(
+      { event: 'seed.progress' },
       '\n⚠️  seed-ventas-finanzas: falta buyer 40123456, VNT-SEED-001 o agente — omitiendo',
     );
     return;
@@ -46,7 +56,10 @@ export async function seedVentasFinanzas(
   });
 
   if (!closing) {
-    console.log('\n⚠️  seed-ventas-finanzas: no hay cierre demo — ejecute seed-ventas-sales antes');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  seed-ventas-finanzas: no hay cierre demo — ejecute seed-ventas-sales antes',
+    );
     return;
   }
 
@@ -61,7 +74,10 @@ export async function seedVentasFinanzas(
     },
     update: { commissionPercent: 3.5 },
   });
-  console.log('\n   ✓ Perfil de comisión demo (3.5 %) para primer agente activo');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n   ✓ Perfil de comisión demo (3.5 %) para primer agente activo',
+  );
 
   const existingPayments = await prisma.saleBuyerPayment.count({
     where: { saleClosingId: closing.id },
@@ -104,9 +120,15 @@ export async function seedVentasFinanzas(
         },
       ],
     });
-    console.log('   ✓ Pagos comprador demo (inicial pagada + cuota atrasada + pendiente)');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Pagos comprador demo (inicial pagada + cuota atrasada + pendiente)',
+    );
   } else {
-    console.log('   ✓ Pagos comprador ya existen — skip');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Pagos comprador ya existen — skip',
+    );
   }
 
   const existingCosts = await prisma.saleDocumentationCost.count({
@@ -135,8 +157,14 @@ export async function seedVentasFinanzas(
         },
       ],
     });
-    console.log('   ✓ Costos documentación demo (notaría + registros)');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Costos documentación demo (notaría + registros)',
+    );
   } else {
-    console.log('   ✓ Costos documentación ya existen — skip');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Costos documentación ya existen — skip',
+    );
   }
 }

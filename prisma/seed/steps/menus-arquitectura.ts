@@ -4,9 +4,14 @@ import {
   ARQUITECTURA_PARENT_MENUS,
 } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:menus-arquitectura');
 
 export async function seedArquitecturaMenus(prisma: SeedDb): Promise<void> {
-  console.log('\n📂 Creating menus for Arquitectura...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📂 Creating menus for Arquitectura...',
+  );
   const app = await prisma.application.findUnique({
     where: { slug: ARQUITECTURA_APPLICATION_SLUG },
   });
@@ -36,14 +41,20 @@ export async function seedArquitecturaMenus(prisma: SeedDb): Promise<void> {
         },
       });
       menuIds[m.label] = menu.id;
-      console.log(`   ✅ Arquitectura menu "${m.label}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Arquitectura menu "${m.label}" created`,
+      );
     } else {
       await prisma.menu.update({
         where: { id: existingMenu.id },
         data: { label: m.label, icon: m.icon, path: m.path, order: m.order },
       });
       menuIds[m.label] = existingMenu.id;
-      console.log(`   ✅ Arquitectura menu "${m.label}" updated`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Arquitectura menu "${m.label}" updated`,
+      );
     }
   }
 
@@ -70,13 +81,19 @@ export async function seedArquitecturaMenus(prisma: SeedDb): Promise<void> {
           isActive: true,
         },
       });
-      console.log(`   ✅ Arquitectura submenu "${m.label}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Arquitectura submenu "${m.label}" created`,
+      );
     } else {
       await prisma.menu.update({
         where: { id: existing.id },
         data: { path: m.path, order: m.order },
       });
-      console.log(`   ✅ Arquitectura submenu "${m.label}" updated`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Arquitectura submenu "${m.label}" updated`,
+      );
     }
   }
 }

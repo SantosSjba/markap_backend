@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { INTERIORISMO_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-interiorismo-materials');
 
 /**
  * Catálogo de materiales, proveedores, vínculos e historial de compras (Interiorismo).
@@ -11,7 +13,10 @@ export async function seedInteriorismoMaterials(
 ): Promise<void> {
   const interiorAppId = appIdBySlug[INTERIORISMO_APPLICATION_SLUG];
   if (!interiorAppId) {
-    console.log('\n⚠️  interiorismo app not found — skipping materiales seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  interiorismo app not found — skipping materiales seed',
+    );
     return;
   }
 
@@ -19,11 +24,17 @@ export async function seedInteriorismoMaterials(
     where: { applicationId: interiorAppId },
   });
   if (existing > 0) {
-    console.log('\n📦 Materiales interiorismo ya sembrados — omitiendo demo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n📦 Materiales interiorismo ya sembrados — omitiendo demo',
+    );
     return;
   }
 
-  console.log('\n📦 Creando materiales, proveedores y compras demo…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📦 Creando materiales, proveedores y compras demo…',
+  );
 
   const matFloor = await prisma.interiorCatalogMaterial.create({
     data: {
@@ -38,8 +49,14 @@ export async function seedInteriorismoMaterials(
       technicalSheetUrl: 'https://example.com/fichas/alaska-blanco.pdf',
       images: {
         create: [
-          { sortOrder: 0, url: 'https://picsum.photos/seed/markap-piso1/480/480' },
-          { sortOrder: 1, url: 'https://picsum.photos/seed/markap-piso2/480/480' },
+          {
+            sortOrder: 0,
+            url: 'https://picsum.photos/seed/markap-piso1/480/480',
+          },
+          {
+            sortOrder: 1,
+            url: 'https://picsum.photos/seed/markap-piso2/480/480',
+          },
         ],
       },
     },
@@ -57,7 +74,12 @@ export async function seedInteriorismoMaterials(
       stock: new Prisma.Decimal('340'),
       technicalSheetUrl: null,
       images: {
-        create: [{ sortOrder: 0, url: 'https://picsum.photos/seed/markap-pnt1/480/480' }],
+        create: [
+          {
+            sortOrder: 0,
+            url: 'https://picsum.photos/seed/markap-pnt1/480/480',
+          },
+        ],
       },
     },
   });
@@ -142,5 +164,8 @@ export async function seedInteriorismoMaterials(
     ],
   });
 
-  console.log('   ✅ Catálogo (2), proveedores (2), vínculos y compras demo');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ Catálogo (2), proveedores (2), vínculos y compras demo',
+  );
 }

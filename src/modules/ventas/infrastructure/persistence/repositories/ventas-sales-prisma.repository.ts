@@ -1,0 +1,998 @@
+import { Injectable } from '@nestjs/common';
+import { amountToNumber } from '../../../../../shared/domain/utils/amount-to-number.util';
+import { PrismaService } from '../../../../../shared/infrastructure/database/prisma/prisma.service';
+import {
+  computeNetPayable,
+  scaleCommissionPaymentPartsToNet,
+} from '../../../../../shared/utils/sale-commission.util';
+import type {
+  ListSaleClosingsFilters,
+  ListSaleProcessesFilters,
+  ListSaleSeparationsFilters,
+  VentasPaymentType,
+  VentasPipelineStage,
+  VentasSaleProcessStatus,
+  VentasSalesRepository,
+  VentasSeparationStatus,
+} from '../../../domain/repositories/ventas-sales.repository';
+
+@Injectable()
+export class VentasSalesPrismaRepository implements VentasSalesRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async nextProcessCode(applicationId: string): Promise<string> {
+    return this.prisma.$transaction(async (tx) => {
+      let row = await tx.ventasNumberingSeries.findUnique({
+        where: {
+          applicationId_seriesKey: { applicationId, seriesKey: 'SALE_PROCESS' },
+        },
+      });
+      if (!row) {
+        const processCount = await tx.saleProcess.count({
+          where: { applicationId },
+        });
+        row = await tx.ventasNumberingSeries.create({
+          data: {
+            applicationId,
+            seriesKey: 'SALE_PROCESS',
+            prefix: 'VNT-PRC',
+            lastNumber: processCount,
+          },
+        });
+      }
+      const updated = await tx.ventasNumberingSeries.update({
+        where: { id: row.id },
+        data: { lastNumber: { increment: 1 } },
+      });
+      return `${updated.prefix}-${String(updated.lastNumber).padStart(4, '0')}`;
+    });
+  }
+
+  async createSaleProcess(data: {
+    applicationId: string;
+    code: string;
+    buyerClientId: string;
+    buyerClientIds?: string[];
+    propertyId: string;
+    ownerClientIds?: string[];
+    agentId?: string | null;
+    pipelineStage: VentasPipelineStage;
+    title?: string | null;
+    financingChannelId?: string | null;
+    commissions?: {
+      agentId: string;
+      calculationType: 'PERCENT' | 'FIXED';
+      amount: number;
+      percentApplied?: number | null;
+      paymentParts?: {
+        partNumber: number;
+        label: string | null;
+        amount: number;
+        dueDate: Date | null;
+      }[];
+      deductibles?: {
+        deductibleType: string;
+        description: string | null;
+        amount: number;
+      }[];
+    }[];
+  }): Promise<{ id: string }> {
+    const row = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.saleProcess.create({
+        data: {
+          applicationId: data.applicationId,
+          code: data.code,
+          buyerClientId: data.buyerClientId,
+          propertyId: data.propertyId,
+          agentId: data.agentId ?? null,
+          pipelineStage: data.pipelineStage,
+          status: 'ACTIVE',
+          title: data.title?.trim() || null,
+          financingChannelId: data.financingChannelId ?? null,
+        },
+        select: { id: true },
+      });
+
+      const buyers = Array.from(
+        new Set(
+          [data.buyerClientId, ...(data.buyerClientIds ?? [])].filter(Boolean),
+        ),
+      );
+      if (buyers.length) {
+        await tx.saleProcessBuyerLink.createMany({
+          data: buyers.map((buyerId) => ({
+            saleProcessId: created.id,
+            buyerClientId: buyerId,
+            isPrimary: buyerId === data.buyerClientId,
+          })),
+        });
+      }
+
+      const owners = Array.from(
+        new Set((data.ownerClientIds ?? []).filter(Boolean)),
+      );
+      if (owners.length) {
+        await tx.saleProcessOwnerLink.createMany({
+          data: owners.map((ownerId) => ({
+            saleProcessId: created.id,
+            ownerClientId: ownerId,
+          })),
+        });
+      }
+
+      if (data.commissions?.length) {
+        for (const c of data.commissions) {
+          const commission = await tx.saleCommission.create({
+            data: {
+              applicationId: data.applicationId,
+              saleProcessId: created.id,
+              agentId: c.agentId,
+              calculationType: c.calculationType,
+              amount: c.amount,
+              percentApplied: c.percentApplied ?? null,
+              status: 'PENDING',
+            },
+          });
+          if (c.paymentParts?.length) {
+            await tx.saleCommissionPaymentPart.createMany({
+              data: c.paymentParts.map((p) => ({
+                saleCommissionId: commission.id,
+                partNumber: p.partNumber,
+                label: p.label,
+                amount: p.amount,
+                dueDate: p.dueDate,
+                status: 'PENDING',
+              })),
+            });
+          }
+          if (c.deductibles?.length) {
+            await tx.saleCommissionDeductible.createMany({
+              data: c.deductibles.map((d) => ({
+                saleCommissionId: commission.id,
+                deductibleType: d.deductibleType,
+                description: d.description,
+                amount: d.amount,
+              })),
+            });
+          }
+        }
+      }
+
+      return created;
+    });
+    return row;
+  }
+
+  async countProcessCommissions(
+    saleProcessId: string,
+    applicationId: string,
+  ): Promise<number> {
+    return this.prisma.saleCommission.count({
+      where: {
+        saleProcessId,
+        applicationId,
+        status: { notIn: ['CANCELLED'] },
+      },
+    });
+  }
+
+  async listSaleProcesses(
+    filters: ListSaleProcessesFilters,
+  ): Promise<{ data: unknown[]; total: number }> {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: filters.applicationSlug },
+    });
+    if (!app) return { data: [], total: 0 };
+
+    const where: Record<string, unknown> = {
+      applicationId: app.id,
+      deletedAt: null,
+    };
+    if (filters.pipelineStage) where.pipelineStage = filters.pipelineStage;
+    if (filters.status) where.status = filters.status;
+    if (filters.search?.trim()) {
+      const q = filters.search.trim();
+      where.OR = [
+        { code: { contains: q } },
+        { title: { contains: q } },
+        { buyer: { fullName: { contains: q } } },
+        { buyers: { some: { buyer: { fullName: { contains: q } } } } },
+        { owners: { some: { owner: { fullName: { contains: q } } } } },
+        { property: { code: { contains: q } } },
+      ];
+    }
+
+    const [rows, total] = await Promise.all([
+      this.prisma.saleProcess.findMany({
+        where,
+        include: {
+          buyer: { select: { id: true, fullName: true, primaryPhone: true } },
+          buyers: {
+            include: {
+              buyer: {
+                select: { id: true, fullName: true, primaryPhone: true },
+              },
+            },
+            orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+          },
+          owners: {
+            include: { owner: { select: { id: true, fullName: true } } },
+            orderBy: { createdAt: 'asc' },
+          },
+          property: {
+            select: {
+              id: true,
+              code: true,
+              addressLine: true,
+              salePrice: true,
+            },
+          },
+          agent: { select: { id: true, fullName: true } },
+        },
+        orderBy: { updatedAt: 'desc' },
+        skip: (filters.page - 1) * filters.limit,
+        take: filters.limit,
+      }),
+      this.prisma.saleProcess.count({ where }),
+    ]);
+    return {
+      data: rows.map((row) => {
+        const buyers =
+          row.buyers.length > 0
+            ? row.buyers
+            : row.buyer
+              ? [{ isPrimary: true as const, buyer: row.buyer }]
+              : [];
+        return {
+          ...row,
+          buyers,
+          property: row.property
+            ? {
+                ...row.property,
+                salePrice: amountToNumber(row.property.salePrice),
+              }
+            : row.property,
+        };
+      }),
+      total,
+    };
+  }
+
+  async ensureSaleProcessOwnerLinksFromProperty(
+    saleProcessId: string,
+    propertyId: string,
+  ): Promise<void> {
+    const existing = await this.prisma.saleProcessOwnerLink.count({
+      where: { saleProcessId },
+    });
+    if (existing > 0) return;
+
+    const property = await this.prisma.property.findFirst({
+      where: { id: propertyId, deletedAt: null },
+      select: {
+        ownerId: true,
+        owners: { select: { ownerClientId: true } },
+      },
+    });
+    if (!property) return;
+
+    const ownerClientIds = Array.from(
+      new Set(
+        [
+          property.ownerId,
+          ...property.owners.map((o) => o.ownerClientId),
+        ].filter(Boolean),
+      ),
+    );
+    if (!ownerClientIds.length) return;
+
+    await this.prisma.saleProcessOwnerLink.createMany({
+      data: ownerClientIds.map((ownerClientId) => ({
+        saleProcessId,
+        ownerClientId,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  async getSaleProcessById(
+    id: string,
+    applicationId: string,
+  ): Promise<unknown> {
+    return this.prisma.saleProcess.findFirst({
+      where: { id, applicationId, deletedAt: null },
+      include: {
+        buyer: {
+          select: {
+            id: true,
+            fullName: true,
+            documentNumber: true,
+            primaryPhone: true,
+            primaryEmail: true,
+            clientType: true,
+            documentType: { select: { name: true } },
+          },
+        },
+        buyers: {
+          include: {
+            buyer: {
+              select: {
+                id: true,
+                fullName: true,
+                documentNumber: true,
+                primaryPhone: true,
+                primaryEmail: true,
+                clientType: true,
+                documentType: { select: { name: true } },
+              },
+            },
+          },
+          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+        },
+        owners: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                fullName: true,
+                documentNumber: true,
+                primaryPhone: true,
+                primaryEmail: true,
+                clientType: true,
+                documentType: { select: { name: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        property: {
+          select: {
+            id: true,
+            code: true,
+            addressLine: true,
+            salePrice: true,
+            saleCurrency: true,
+            projectName: true,
+            listingStatus: true,
+            area: true,
+            bedrooms: true,
+            bathrooms: true,
+            ownerId: true,
+            propertyType: { select: { name: true } },
+            owner: {
+              select: {
+                id: true,
+                fullName: true,
+                documentNumber: true,
+                primaryPhone: true,
+                primaryEmail: true,
+                clientType: true,
+                documentType: { select: { name: true } },
+              },
+            },
+            owners: {
+              include: {
+                owner: {
+                  select: {
+                    id: true,
+                    fullName: true,
+                    documentNumber: true,
+                    primaryPhone: true,
+                    primaryEmail: true,
+                    clientType: true,
+                    documentType: { select: { name: true } },
+                  },
+                },
+              },
+              orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }],
+            },
+            district: {
+              select: {
+                name: true,
+                province: {
+                  select: {
+                    name: true,
+                    department: { select: { name: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        financingChannel: {
+          select: { id: true, code: true, name: true, category: true },
+        },
+        agent: { select: { id: true, fullName: true } },
+        commissions: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            amount: true,
+            calculationType: true,
+            percentApplied: true,
+            status: true,
+            paidAt: true,
+            saleClosingId: true,
+            agent: { select: { id: true, fullName: true, type: true } },
+            paymentParts: { orderBy: { partNumber: 'asc' } },
+            deductibles: { orderBy: { createdAt: 'asc' } },
+          },
+        },
+        notes: { orderBy: { createdAt: 'desc' } },
+        activities: { orderBy: { createdAt: 'desc' } },
+        reminders: { orderBy: { dueAt: 'asc' } },
+        separations: {
+          where: { status: { not: 'CLOSED' } },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        },
+      },
+    });
+  }
+
+  async updateSaleProcess(
+    id: string,
+    applicationId: string,
+    data: {
+      pipelineStage?: VentasPipelineStage;
+      status?: VentasSaleProcessStatus;
+      agentId?: string | null;
+      title?: string | null;
+      financingChannelId?: string | null;
+      closedAt?: Date | null;
+      lostReason?: string | null;
+    },
+  ): Promise<unknown> {
+    return this.prisma.saleProcess.update({
+      where: { id, applicationId },
+      data: {
+        ...(data.pipelineStage !== undefined && {
+          pipelineStage: data.pipelineStage,
+        }),
+        ...(data.status !== undefined && { status: data.status }),
+        ...(data.agentId !== undefined && { agentId: data.agentId }),
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.financingChannelId !== undefined && {
+          financingChannelId: data.financingChannelId,
+        }),
+        ...(data.closedAt !== undefined && { closedAt: data.closedAt }),
+        ...(data.lostReason !== undefined && { lostReason: data.lostReason }),
+      },
+    });
+  }
+
+  async cancelProcessCommissions(
+    saleProcessId: string,
+    applicationId: string,
+  ): Promise<number> {
+    return this.prisma.$transaction(async (tx) => {
+      const rows = await tx.saleCommission.findMany({
+        where: {
+          saleProcessId,
+          applicationId,
+          status: { notIn: ['PAID', 'CANCELLED'] },
+        },
+        include: { paymentParts: { select: { status: true } } },
+      });
+      let count = 0;
+      for (const row of rows) {
+        const hasPaidPart = row.paymentParts.some((p) => p.status === 'PAID');
+        if (hasPaidPart) continue;
+        await tx.saleCommission.update({
+          where: { id: row.id },
+          data: { status: 'CANCELLED', paidAt: null },
+        });
+        count += 1;
+      }
+      return count;
+    });
+  }
+
+  async applySaleProcessLost(
+    saleProcessId: string,
+    applicationId: string,
+    data: { lostReason: string; closedAt: Date; activityDescription: string },
+  ): Promise<unknown> {
+    const applied = await this.prisma.$transaction(async (tx) => {
+      const proc = await tx.saleProcess.findFirst({
+        where: { id: saleProcessId, applicationId, deletedAt: null },
+      });
+      if (!proc || proc.status !== 'ACTIVE') return false;
+
+      await tx.saleProcess.update({
+        where: { id: saleProcessId },
+        data: {
+          status: 'LOST',
+          lostReason: data.lostReason,
+          closedAt: data.closedAt,
+        },
+      });
+
+      const commissions = await tx.saleCommission.findMany({
+        where: {
+          saleProcessId,
+          applicationId,
+          status: { notIn: ['PAID', 'CANCELLED'] },
+        },
+        include: { paymentParts: { select: { status: true } } },
+      });
+      for (const row of commissions) {
+        const hasPaidPart = row.paymentParts.some((p) => p.status === 'PAID');
+        if (hasPaidPart) continue;
+        await tx.saleCommission.update({
+          where: { id: row.id },
+          data: { status: 'CANCELLED', paidAt: null },
+        });
+      }
+
+      await tx.saleProcessActivity.create({
+        data: {
+          saleProcessId,
+          activityType: 'OTHER',
+          title: 'Venta caída',
+          description: data.activityDescription,
+          completedAt: new Date(),
+        },
+      });
+
+      return true;
+    });
+
+    if (!applied) return null;
+    return this.getSaleProcessById(saleProcessId, applicationId);
+  }
+
+  async listSaleFinancingChannels(): Promise<unknown[]> {
+    return this.prisma.saleFinancingChannel.findMany({
+      where: { isActive: true },
+      orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        category: true,
+        sortOrder: true,
+      },
+    });
+  }
+
+  async addSaleProcessNote(
+    saleProcessId: string,
+    applicationId: string,
+    body: string,
+    createdBy?: string | null,
+  ): Promise<unknown> {
+    const p = await this.prisma.saleProcess.findFirst({
+      where: { id: saleProcessId, applicationId, deletedAt: null },
+    });
+    if (!p) return null;
+    return this.prisma.saleProcessNote.create({
+      data: {
+        saleProcessId,
+        body: body.trim(),
+        createdBy: createdBy ?? null,
+      },
+    });
+  }
+
+  async addSaleProcessActivity(data: {
+    saleProcessId: string;
+    applicationId: string;
+    activityType: string;
+    title: string;
+    description?: string | null;
+    scheduledAt?: Date | null;
+    completedAt?: Date | null;
+  }): Promise<unknown> {
+    const p = await this.prisma.saleProcess.findFirst({
+      where: {
+        id: data.saleProcessId,
+        applicationId: data.applicationId,
+        deletedAt: null,
+      },
+    });
+    if (!p) return null;
+    return this.prisma.saleProcessActivity.create({
+      data: {
+        saleProcessId: data.saleProcessId,
+        activityType: data.activityType,
+        title: data.title.trim(),
+        description: data.description?.trim() || null,
+        scheduledAt: data.scheduledAt ?? null,
+        completedAt: data.completedAt ?? null,
+      },
+    });
+  }
+
+  async addSaleProcessReminder(data: {
+    saleProcessId: string;
+    applicationId: string;
+    title: string;
+    dueAt: Date;
+  }): Promise<unknown> {
+    const p = await this.prisma.saleProcess.findFirst({
+      where: {
+        id: data.saleProcessId,
+        applicationId: data.applicationId,
+        deletedAt: null,
+      },
+    });
+    if (!p) return null;
+    return this.prisma.saleProcessReminder.create({
+      data: {
+        saleProcessId: data.saleProcessId,
+        title: data.title.trim(),
+        dueAt: data.dueAt,
+      },
+    });
+  }
+
+  async completeSaleProcessReminder(
+    reminderId: string,
+    applicationId: string,
+  ): Promise<unknown> {
+    const r = await this.prisma.saleProcessReminder.findFirst({
+      where: {
+        id: reminderId,
+        saleProcess: { is: { applicationId, deletedAt: null } },
+      },
+    });
+    if (!r) return null;
+    return this.prisma.saleProcessReminder.update({
+      where: { id: reminderId },
+      data: { completedAt: new Date() },
+    });
+  }
+
+  async listSaleSeparations(
+    filters: ListSaleSeparationsFilters,
+  ): Promise<{ data: unknown[]; total: number }> {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: filters.applicationSlug },
+    });
+    if (!app) return { data: [], total: 0 };
+
+    const where: Record<string, unknown> = { applicationId: app.id };
+    if (filters.status) where.status = filters.status;
+
+    const [rows, total] = await Promise.all([
+      this.prisma.saleSeparation.findMany({
+        where,
+        include: {
+          buyer: { select: { id: true, fullName: true } },
+          property: { select: { id: true, code: true, addressLine: true } },
+          saleProcess: { select: { id: true, code: true } },
+        },
+        orderBy: { separationDate: 'desc' },
+        skip: (filters.page - 1) * filters.limit,
+        take: filters.limit,
+      }),
+      this.prisma.saleSeparation.count({ where }),
+    ]);
+    return { data: rows, total };
+  }
+
+  async createSaleSeparation(data: {
+    applicationId: string;
+    saleProcessId?: string | null;
+    propertyId: string;
+    buyerClientId: string;
+    amount: number;
+    currency: string;
+    separationDate: Date;
+    expiresAt?: Date | null;
+    notes?: string | null;
+  }): Promise<{ id: string } | null> {
+    const row = await this.prisma.$transaction(async (tx) => {
+      const lock = await tx.property.updateMany({
+        where: {
+          id: data.propertyId,
+          applicationId: data.applicationId,
+          deletedAt: null,
+          listingStatus: 'AVAILABLE',
+        },
+        data: { listingStatus: 'RESERVED' },
+      });
+      if (lock.count === 0) {
+        return null;
+      }
+
+      const sep = await tx.saleSeparation.create({
+        data: {
+          applicationId: data.applicationId,
+          saleProcessId: data.saleProcessId ?? null,
+          propertyId: data.propertyId,
+          buyerClientId: data.buyerClientId,
+          amount: data.amount,
+          currency: data.currency,
+          separationDate: data.separationDate,
+          expiresAt: data.expiresAt ?? null,
+          status: 'ACTIVE',
+          notes: data.notes?.trim() || null,
+        },
+        select: { id: true },
+      });
+      if (data.saleProcessId) {
+        await tx.saleProcess.update({
+          where: { id: data.saleProcessId, applicationId: data.applicationId },
+          data: { pipelineStage: 'SEPARATION' },
+        });
+      }
+      return sep;
+    });
+    return row;
+  }
+
+  async updateSaleSeparation(
+    id: string,
+    applicationId: string,
+    data: {
+      status?: VentasSeparationStatus;
+      receiptFilePath?: string | null;
+      receiptArchivoId?: string | null;
+      notes?: string | null;
+      expiresAt?: Date | null;
+    },
+  ): Promise<unknown> {
+    return this.prisma.saleSeparation.update({
+      where: { id, applicationId },
+      data: {
+        ...(data.status !== undefined && { status: data.status }),
+        ...(data.receiptFilePath !== undefined && {
+          receiptFilePath: data.receiptFilePath,
+        }),
+        ...(data.receiptArchivoId !== undefined && {
+          receiptArchivoId: data.receiptArchivoId,
+        }),
+        ...(data.notes !== undefined && { notes: data.notes }),
+        ...(data.expiresAt !== undefined && { expiresAt: data.expiresAt }),
+      },
+    });
+  }
+
+  async getSaleSeparationById(
+    id: string,
+    applicationId: string,
+  ): Promise<unknown> {
+    return this.prisma.saleSeparation.findFirst({
+      where: { id, applicationId },
+    });
+  }
+
+  async countActiveSeparationsOnProperty(
+    propertyId: string,
+    applicationId: string,
+  ): Promise<number> {
+    return this.prisma.saleSeparation.count({
+      where: {
+        propertyId,
+        applicationId,
+        status: 'ACTIVE',
+      },
+    });
+  }
+
+  async refreshPropertyListingAfterSeparationChange(
+    propertyId: string,
+    applicationId: string,
+  ): Promise<void> {
+    const active = await this.countActiveSeparationsOnProperty(
+      propertyId,
+      applicationId,
+    );
+    if (active === 0) {
+      const prop = await this.prisma.property.findFirst({
+        where: { id: propertyId, applicationId, deletedAt: null },
+      });
+      if (prop && prop.listingStatus === 'RESERVED') {
+        await this.prisma.property.update({
+          where: { id: propertyId },
+          data: { listingStatus: 'AVAILABLE' },
+        });
+      }
+    }
+  }
+
+  async ensurePropertyReservedForSeparation(
+    propertyId: string,
+    applicationId: string,
+  ): Promise<boolean> {
+    const prop = await this.prisma.property.findFirst({
+      where: { id: propertyId, applicationId, deletedAt: null },
+      select: { listingStatus: true },
+    });
+    if (!prop || prop.listingStatus === 'SOLD') return false;
+    if (prop.listingStatus === 'RESERVED') return true;
+
+    const updated = await this.prisma.property.updateMany({
+      where: {
+        id: propertyId,
+        applicationId,
+        deletedAt: null,
+        listingStatus: 'AVAILABLE',
+      },
+      data: { listingStatus: 'RESERVED' },
+    });
+    return updated.count > 0;
+  }
+
+  async getSaleClosingById(
+    closingId: string,
+    applicationId: string,
+  ): Promise<unknown> {
+    return this.prisma.saleClosing.findFirst({
+      where: { id: closingId, applicationId },
+    });
+  }
+
+  async updateSaleClosingContractFile(
+    closingId: string,
+    applicationId: string,
+    file: { filePath: string; archivoId?: string | null },
+  ): Promise<unknown> {
+    return this.prisma.saleClosing.update({
+      where: { id: closingId, applicationId },
+      data: {
+        contractFilePath: file.filePath,
+        contractArchivoId: file.archivoId ?? null,
+      },
+    });
+  }
+
+  async listSaleClosings(
+    filters: ListSaleClosingsFilters,
+  ): Promise<{ data: unknown[]; total: number }> {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: filters.applicationSlug },
+    });
+    if (!app) return { data: [], total: 0 };
+
+    const where = { applicationId: app.id };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.saleClosing.findMany({
+        where,
+        include: {
+          buyer: { select: { id: true, fullName: true } },
+          property: { select: { id: true, code: true, addressLine: true } },
+          agent: { select: { id: true, fullName: true } },
+          commissions: true,
+        },
+        orderBy: { closedAt: 'desc' },
+        skip: (filters.page - 1) * filters.limit,
+        take: filters.limit,
+      }),
+      this.prisma.saleClosing.count({ where }),
+    ]);
+    const data = rows.map((row) => {
+      const r = row as { commissions?: { amount: number; status: string }[] };
+      return {
+        ...row,
+        commission: r.commissions?.[0] ?? null,
+        commissionsTotal: (r.commissions ?? []).reduce(
+          (s, c) => s + c.amount,
+          0,
+        ),
+      };
+    });
+    return { data: data, total };
+  }
+
+  async createSaleClosingWithSideEffects(data: {
+    applicationId: string;
+    saleProcessId?: string | null;
+    saleSeparationId?: string | null;
+    propertyId: string;
+    buyerClientId: string;
+    agentId?: string | null;
+    finalPrice: number;
+    paymentType: VentasPaymentType;
+    contractFilePath?: string | null;
+    notes?: string | null;
+    commissionAgentId?: string | null;
+    commissionAmount: number;
+    commissionPercent?: number | null;
+  }): Promise<{ closingId: string; commissionId: string } | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const lock = await tx.property.updateMany({
+        where: {
+          id: data.propertyId,
+          applicationId: data.applicationId,
+          deletedAt: null,
+          listingStatus: { in: ['AVAILABLE', 'RESERVED'] },
+        },
+        data: { listingStatus: 'SOLD' },
+      });
+      if (lock.count === 0) {
+        return null;
+      }
+
+      const closing = await tx.saleClosing.create({
+        data: {
+          applicationId: data.applicationId,
+          saleProcessId: data.saleProcessId ?? null,
+          saleSeparationId: data.saleSeparationId ?? null,
+          propertyId: data.propertyId,
+          buyerClientId: data.buyerClientId,
+          agentId: data.agentId ?? null,
+          finalPrice: data.finalPrice,
+          paymentType: data.paymentType,
+          contractFilePath: data.contractFilePath ?? null,
+          notes: data.notes?.trim() || null,
+        },
+      });
+
+      let commissionId: string;
+      const processCommissions =
+        data.saleProcessId != null
+          ? await tx.saleCommission.findMany({
+              where: {
+                saleProcessId: data.saleProcessId,
+                applicationId: data.applicationId,
+                status: { notIn: ['CANCELLED'] },
+              },
+            })
+          : [];
+
+      if (processCommissions.length > 0) {
+        for (const row of processCommissions) {
+          let amount = row.amount;
+          if (row.calculationType === 'PERCENT' && row.percentApplied != null) {
+            amount =
+              Math.round(data.finalPrice * (row.percentApplied / 100) * 100) /
+              100;
+          }
+          const deductibles = await tx.saleCommissionDeductible.findMany({
+            where: { saleCommissionId: row.id },
+          });
+          const net = computeNetPayable(amount, deductibles);
+          await tx.saleCommission.update({
+            where: { id: row.id },
+            data: { saleClosingId: closing.id, amount },
+          });
+          await scaleCommissionPaymentPartsToNet(tx, row.id, net);
+        }
+        commissionId = processCommissions[0].id;
+      } else if (data.commissionAgentId) {
+        const created = await tx.saleCommission.create({
+          data: {
+            applicationId: data.applicationId,
+            saleClosingId: closing.id,
+            agentId: data.commissionAgentId,
+            calculationType:
+              data.commissionPercent != null ? 'PERCENT' : 'FIXED',
+            amount: data.commissionAmount,
+            percentApplied: data.commissionPercent ?? null,
+            status: 'PENDING',
+          },
+        });
+        commissionId = created.id;
+      } else {
+        commissionId = '';
+      }
+
+      if (data.saleSeparationId) {
+        await tx.saleSeparation.update({
+          where: {
+            id: data.saleSeparationId,
+            applicationId: data.applicationId,
+          },
+          data: { status: 'CLOSED' },
+        });
+      }
+
+      if (data.saleProcessId) {
+        await tx.saleProcess.update({
+          where: { id: data.saleProcessId, applicationId: data.applicationId },
+          data: {
+            status: 'WON',
+            pipelineStage: 'PUBLIC_DEED',
+            closedAt: new Date(),
+          },
+        });
+      }
+
+      return { closingId: closing.id, commissionId };
+    });
+  }
+}

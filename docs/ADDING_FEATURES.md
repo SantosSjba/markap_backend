@@ -1,149 +1,65 @@
-# Cómo agregar nuevas funcionalidades (Backend)
+# Agregar funcionalidades
 
-Esta guía describe los pasos para extender el backend MARKAP siguiendo **Clean Architecture**. Consulta [ARCHITECTURE.md](./ARCHITECTURE.md) para el contexto de capas y dependencias.
+Consulta [la arquitectura](ARCHITECTURE.md) antes de introducir un módulo nuevo.
 
----
+## Una operación de un área existente
 
-## Resumen rápido
+1. Define entrada, salida y regla en `src/modules/<area>/application/use-cases/<recurso>/`. Los tipos de entrada internos no importan DTOs HTTP.
+2. Usa un contrato existente o amplíalo en `domain/repositories/`. Para una capacidad externa nueva, define un puerto en `application/ports/`.
+3. Implementa persistencia en `infrastructure/persistence/repositories/` o el adaptador externo en `infrastructure/`. Conserva aquí consultas, SQL y librerías del proveedor.
+4. Registra el token del repositorio en `<area>-persistence.module.ts`. Registra el caso de uso y los adaptadores de aplicación en `<area>.module.ts`.
+5. Declara validación y Swagger en `presentation/dtos/`; el controlador delega en el caso de uso o fachada existente.
+6. Añade una prueba de la regla, especialmente para ámbito de aplicación, permisos, dinero o transacciones. Ejecuta `pnpm verify`.
 
-| Quiero agregar… | Dónde | Pasos clave |
-|-----------------|--------|--------------|
-| **Nueva entidad de dominio** | `application/entities/` | Crear clase, exportar en `entities/index.ts`. |
-| **Nuevo recurso (CRUD)** | Repository (puerto) + Use cases + Prisma repo + Controller + DTOs | Ver sección 1. |
-| **Nuevo caso de uso** en un recurso existente | `application/use-cases/<contexto>/` | Crear use case que inyecte repositorios; registrar en HttpModule; llamar desde controller. |
-| **Nuevo endpoint** en un controller existente | Controller + (opcional) use case | Añadir método en controller; si hay lógica, crear use case. |
-| **Nuevo servicio externo** (ej. SMS) | Application (interface) + Infrastructure (impl) | Puerto en application/services; implementación en infrastructure; registrar en HttpModule. |
+## Una capacidad nueva
 
----
+Crea `src/modules/<area>/<area>.module.ts` y únicamente las carpetas necesarias de dominio, aplicación, presentación e infraestructura. Impórtala desde `composition/api.module.ts`. Si utiliza Prisma, registra y exporta su módulo de persistencia desde `shared/infrastructure/database/database.module.ts`.
 
-## 1. Agregar un nuevo recurso (ej. “Productos”)
+Exporta únicamente los proveedores usados por otra capacidad. No dupliques proveedores de un módulo importado. Para compartir la instancia de una implementación, utiliza `useExisting`; para construir un adaptador, `useClass` o una fábrica explícita.
 
-Supón que quieres un módulo completo para **Productos**: listar, crear, obtener por ID, actualizar.
+## Convenciones
 
-### Paso 1.1 — Entidad (si aplica)
+- Archivos y directorios en `kebab-case`; clases y tipos en `PascalCase`.
+- Sufijos por responsabilidad: `.controller.ts`, `.dto.ts`, `.use-case.ts`, `.facade.ts`, `.repository.ts`, `.adapter.ts`, `.mapper.ts`, `.port.ts`, `.module.ts` y `.spec.ts`.
+- No crear `index.ts` para módulos/proveedores. Importar directamente desde el archivo dueño del símbolo.
+- Dominio sin NestJS ni adaptadores; aplicación sin Prisma, SQL, clientes de almacenamiento o transporte.
+- Validaciones compartidas en `shared/application/validation`; cálculos puros comunes en `shared/domain`. Compartir solo cuando existe reutilización real.
+- No propagar consultas Prisma, nombres de tablas o DTOs HTTP mediante un puerto.
+- Mantener el `applicationId` en consultas que verifican pertenencia. No reemplazar estas verificaciones por una búsqueda global por ID.
+- Mantener las reglas de redondeo y fechas existentes; reutilizar las funciones comunes.
+- Coordinar operaciones atómicas mediante un puerto transaccional cuando el caso de uso atraviesa varios repositorios. El adaptador es dueño del SQL y los bloqueos.
+- Errores externos se clasifican mediante un puerto; su respuesta HTTP se traduce con el filtro global. No copiar mensajes internos del ORM al cliente.
 
-Si el recurso tiene modelo de dominio propio:
+## Cambios de contrato HTTP
 
-- Crear `src/application/entities/product.entity.ts`.
-- Exportar en `src/application/entities/index.ts`.
+`test/contracts/http-routes.json` registra los decoradores anteriores a la reorganización. Una nueva ruta o un cambio de autorización requiere actualizar conscientemente el contrato y sus pruebas. No regenerar automáticamente el archivo para ocultar diferencias de una refactorización.
 
-Si reutilizas tipos solo para persistencia, puedes definir interfaces en el repositorio (como en `RentalData` en `rental.repository.ts`).
+## Criterio de finalización
 
-### Paso 1.2 — Puerto del repositorio
+La compilación, los tipos, las reglas de arquitectura, las pruebas de reglas, la composición de Nest y las pruebas HTTP deben pasar. Para cambios de persistencia o integraciones externas, ejecutar además las pruebas de integración correspondientes en un entorno aislado; `verify` no modifica datos reales.
 
-- Crear `src/application/repositories/product.repository.ts`:
-  - Interfaces de datos (CreateProductData, ProductData, ListProductsFilters, etc.).
-  - Interface `ProductRepository` con los métodos: create, findMany, findById, update, delete (según necesidad).
-  - Exportar símbolo: `export const PRODUCT_REPOSITORY = Symbol('ProductRepository');`
+## DTOs y validación con Zod
 
-Regla: el use case **solo** conoce esta interfaz, no Prisma.
+Para un DTO nuevo, usa un esquema como fuente de tipos y validación:
 
-### Paso 1.3 — Use cases
+```ts
+import { createZodDto } from 'nestjs-zod';
+import { z } from 'zod';
 
-- Crear carpeta `src/application/use-cases/products/`.
-- Crear un use case por acción, por ejemplo:
-  - `create-product.use-case.ts` — inyecta `PRODUCT_REPOSITORY`, implementa `execute(input)`.
-  - `list-products.use-case.ts`
-  - `get-product-by-id.use-case.ts`
-  - `update-product.use-case.ts`
-- Crear `index.ts` que exporte todos los use cases del contexto.
+export const CreateProductSchema = z.strictObject({
+  name: z.string().min(1).max(120),
+  active: z.boolean().optional(),
+});
 
-Cada use case debe **inyectar solo puertos** (repositorios/servicios definidos en application), sin importar `infrastructure` ni `prisma`.
+export class CreateProductDto extends createZodDto(CreateProductSchema) {}
+```
 
-### Paso 1.4 — Implementación del repositorio (Prisma)
+En un DTO migrado, modifica su `static schema` y conserva coherentes las propiedades TypeScript y Swagger. No combines el esquema con decoradores de class-validator o class-transformer. Usa los esquemas comunes para entradas multipart y mensajes comunes en español.
 
-- Crear `src/infrastructure/database/prisma/repositories/product-prisma.repository.ts`.
-  - Implementar la interface `ProductRepository`.
-  - Inyectar `PrismaService` y usar el cliente Prisma para las operaciones.
-  - Si hay entidad de dominio, usar un mapper Prisma ↔ entidad (en `mappers/`).
+Distingue `.optional()` (omisión), `.nullable()` (null) y `.nullish()` (ambos). Para formularios contables que permiten vacío utiliza `optionalValue`. No uses `z.coerce.boolean()` con cadenas: `"false"` es una cadena no vacía y se convertiría a `true`. Usa `booleanInput` u `optionalBooleanInput`. Añade pruebas de campos desconocidos, errores anidados y condiciones de negocio relevantes.
 
-### Paso 1.5 — Registrar el repositorio en DatabaseModule
+## Rutas sensibles y tareas programadas
 
-- En `src/infrastructure/database/database.module.ts`:
-  - Importar `ProductRepository`, `PRODUCT_REPOSITORY` y `ProductPrismaRepository`.
-  - Añadir en `providers`: `{ provide: PRODUCT_REPOSITORY, useClass: ProductPrismaRepository }`.
-  - Añadir `PRODUCT_REPOSITORY` en `exports`.
+Las rutas públicas de autenticación usan `@AuthRateLimit` con su política explícita. No registres `ThrottlerGuard` como guard global sin revisar el contrato de las otras rutas. Los casos de uso siguen dependiendo de `TokenService`; la firma JWT se configura en `TokenModule`.
 
-### Paso 1.6 — DTOs HTTP
-
-- Crear `src/infrastructure/http/dtos/products/`:
-  - `create-product.dto.ts`, `update-product.dto.ts` (con class-validator).
-  - `index.ts` que exporte los DTOs.
-
-### Paso 1.7 — Controller
-
-- Crear `src/infrastructure/http/controllers/products.controller.ts`:
-  - Inyectar los use cases (CreateProductUseCase, ListProductsUseCase, etc.).
-  - Definir rutas (GET, POST, PATCH, DELETE) y validación con DTOs.
-  - Usar `JwtAuthGuard` y decoradores de Swagger según el resto del proyecto.
-
-### Paso 1.8 — Registrar controller y use cases en HttpModule
-
-- En `src/infrastructure/http/http.module.ts`:
-  - Añadir `ProductsController` en `controllers`.
-  - Añadir todos los use cases de productos en `providers`.
-
-### Paso 1.9 — Prisma (esquema y migración)
-
-- En `prisma/models/` (o `prisma/schema.prisma` solo para `generator`/`datasource`): definir el modelo `Product` (o el que corresponda).
-- Ejecutar `pnpm exec prisma migrate dev` para crear la migración.
-
----
-
-## 2. Agregar un nuevo caso de uso a un recurso existente
-
-Ejemplo: añadir “Archivar alquiler” (cambiar estado a ARCHIVED).
-
-1. **Definir el contrato en el puerto**  
-   En `src/application/repositories/rental.repository.ts` añadir, por ejemplo:  
-   `archive(id: string): Promise<RentalData>;`
-
-2. **Implementar en el adaptador**  
-   En `src/infrastructure/database/prisma/repositories/rental-prisma.repository.ts` implementar `archive(id)` usando Prisma.
-
-3. **Crear el use case**  
-   Crear `src/application/use-cases/rentals/archive-rental.use-case.ts` que inyecte `RENTAL_REPOSITORY` y llame a `archive(id)`. Exportarlo en `rentals/index.ts`.
-
-4. **Registrar y exponer**  
-   Añadir el use case en `providers` de `HttpModule`. En `RentalsController` añadir un endpoint (ej. PATCH `/:id/archive`) que llame al use case.
-
----
-
-## 3. Agregar un nuevo endpoint sin lógica compleja
-
-Si es solo lectura o delegación a un repositorio existente:
-
-1. En el controller correspondiente, añadir el método (Get, Post, Patch, Delete).
-2. Si hace falta un método nuevo en el repositorio (por ejemplo, un filtro distinto), añadir el método en la **interface** del repositorio (application) y en la **implementación** Prisma (infrastructure).
-3. Inyectar el repositorio en el controller **no** es recomendable en Clean Architecture: los controllers llaman a use cases. Crea un use case fino que delegue al repositorio si hace falta.
-
----
-
-## 4. Agregar un nuevo servicio externo (ej. envío de SMS)
-
-1. **Definir el puerto**  
-   Crear `src/application/services/sms.service.ts` con una interfaz o clase abstracta, por ejemplo:  
-   `send(to: string, message: string): Promise<void>;`
-
-2. **Implementación**  
-   Crear `src/infrastructure/http/services/twilio-sms.service.ts` (o el proveedor que uses) que implemente esa interfaz.
-
-3. **Registro en HttpModule**  
-   En `providers`: `{ provide: SmsService, useClass: TwilioSmsService }` y exportar si otro módulo lo necesita.
-
-4. **Uso en use cases**  
-   Inyectar `SmsService` en el use case que deba enviar SMS; el use case no conoce Twilio ni detalles de infraestructura.
-
----
-
-## 5. Checklist al agregar funcionalidad
-
-- [ ] **Application** no importa de **infrastructure** ni de **prisma**.
-- [ ] Los use cases dependen solo de **puertos** (repositorios/servicios definidos en application).
-- [ ] Nuevos métodos de persistencia: primero en la **interface** del repositorio, luego en la implementación Prisma.
-- [ ] Controller solo llama a **use cases**, no a repositorios directamente.
-- [ ] DTOs en infrastructure con **class-validator** para las entradas HTTP.
-- [ ] Repositorio y use cases registrados en **DatabaseModule** y **HttpModule**.
-- [ ] Si añades modelos nuevos: **Prisma schema** y **migración**.
-
-Con esto el backend se mantiene alineado con Clean Architecture y escalable para nuevas funcionalidades.
+Registra nuevos temporizadores en `SchedulerRegistry` con nombres únicos y verifica su limpieza. Conserva la prevención de solapamientos en trabajos asíncronos. No agregues otro `ScheduleModule.forRoot()` para cada área. Para despliegues con réplicas, define coordinación distribuida antes de duplicar tareas.

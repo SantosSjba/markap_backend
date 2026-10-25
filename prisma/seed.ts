@@ -31,6 +31,8 @@ import {
   seedVentasFinanzas,
   seedVentasConfig,
 } from './seed/steps';
+import { createScriptLogger } from '../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:seed');
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
@@ -38,7 +40,7 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter }) as any;
 
 async function main() {
-  console.log('🌱 Starting seed...\n');
+  logger.info({ event: 'seed.progress' }, '🌱 Starting seed...\n');
 
   const { adminRoleId, appIdBySlug } = await seedRolesAndApplications(prisma);
   await seedAlquileresMenus(prisma);
@@ -69,7 +71,10 @@ async function main() {
   await seedVentasFinanzas(prisma, appIdBySlug);
   await seedVentasConfig(prisma, appIdBySlug);
 
-  console.log('\n✨ Seed completed successfully!\n');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n✨ Seed completed successfully!\n',
+  );
 }
 
 main()
@@ -77,7 +82,7 @@ main()
     await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error('❌ Seed failed:', e);
+    logger.error({ event: 'seed.failed', err: e }, '❌ Seed failed:');
     await prisma.$disconnect();
     process.exit(1);
   });

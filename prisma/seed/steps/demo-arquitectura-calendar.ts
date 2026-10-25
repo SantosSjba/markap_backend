@@ -1,5 +1,11 @@
-import { ARQUITECTURA_APPLICATION_SLUG, ARQUITECTURA_DEMO_PROJECT_CODES, seedPrueba } from '../data';
+import {
+  ARQUITECTURA_APPLICATION_SLUG,
+  ARQUITECTURA_DEMO_PROJECT_CODES,
+  seedPrueba,
+} from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-arquitectura-calendar');
 
 /**
  * Eventos de agenda demo (reuniones, visitas, obra).
@@ -10,7 +16,10 @@ export async function seedArquitecturaCalendar(
 ): Promise<void> {
   const arquitecturaAppId = appIdBySlug[ARQUITECTURA_APPLICATION_SLUG];
   if (!arquitecturaAppId) {
-    console.log('\n⚠️  arquitectura app not found — skipping calendar seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  arquitectura app not found — skipping calendar seed',
+    );
     return;
   }
 
@@ -22,7 +31,10 @@ export async function seedArquitecturaCalendar(
     },
   });
   if (!proj) {
-    console.log('\n⚠️  Proyecto demo no encontrado — omitiendo calendario arquitectura');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Proyecto demo no encontrado — omitiendo calendario arquitectura',
+    );
     return;
   }
 
@@ -30,14 +42,23 @@ export async function seedArquitecturaCalendar(
     where: { applicationId: arquitecturaAppId },
   });
   if (n > 0) {
-    console.log('\n📅 Calendario arquitectura demo ya tiene eventos — omitiendo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n📅 Calendario arquitectura demo ya tiene eventos — omitiendo',
+    );
     return;
   }
 
-  console.log('\n📅 Sembrando eventos de calendario arquitectura…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📅 Sembrando eventos de calendario arquitectura…',
+  );
 
   const designer = proj.designerAgentId
-    ? await prisma.agent.findFirst({ where: { id: proj.designerAgentId }, select: { id: true } })
+    ? await prisma.agent.findFirst({
+        where: { id: proj.designerAgentId },
+        select: { id: true },
+      })
     : null;
 
   await prisma.arquitecturaCalendarEvent.createMany({
@@ -98,5 +119,8 @@ export async function seedArquitecturaCalendar(
     ],
   });
 
-  console.log('   ✅ Calendario arquitectura demo listo');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ Calendario arquitectura demo listo',
+  );
 }

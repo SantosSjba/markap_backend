@@ -13,7 +13,8 @@ export const APPLICATIONS = [
   {
     name: 'MARKAP Ventas Inmobiliarias',
     slug: 'ventas',
-    description: 'Administración de propiedades en venta y seguimiento de clientes',
+    description:
+      'Administración de propiedades en venta y seguimiento de clientes',
     icon: 'home',
     color: '#3B82F6',
     url: '/ventas',

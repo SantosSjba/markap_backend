@@ -1,5 +1,10 @@
-import { ARQUITECTURA_APPLICATION_SLUG, ARQUITECTURA_CONFIG_DEFAULTS } from '../data';
+import {
+  ARQUITECTURA_APPLICATION_SLUG,
+  ARQUITECTURA_CONFIG_DEFAULTS,
+} from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-arquitectura-config');
 
 /**
  * Etapas de ciclo y numeración por defecto para Arquitectura.
@@ -10,11 +15,16 @@ export async function seedArquitecturaConfig(
 ): Promise<void> {
   const appId = appIdBySlug[ARQUITECTURA_APPLICATION_SLUG];
   if (!appId) {
-    console.log('\n⚠️  arquitectura app not found — skipping config seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  arquitectura app not found — skipping config seed',
+    );
     return;
   }
 
-  const stageCount = await prisma.arquitecturaProjectStageConfig.count({ where: { applicationId: appId } });
+  const stageCount = await prisma.arquitecturaProjectStageConfig.count({
+    where: { applicationId: appId },
+  });
   if (stageCount === 0) {
     await prisma.arquitecturaProjectStageConfig.createMany({
       data: ARQUITECTURA_CONFIG_DEFAULTS.projectStages.map((s) => ({
@@ -25,7 +35,10 @@ export async function seedArquitecturaConfig(
         isActive: true,
       })),
     });
-    console.log('   ✅ Etapas de proyecto arquitectura sembradas');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✅ Etapas de proyecto arquitectura sembradas',
+    );
   }
 
   for (const def of ARQUITECTURA_CONFIG_DEFAULTS.numbering) {
@@ -42,5 +55,8 @@ export async function seedArquitecturaConfig(
       },
     });
   }
-  console.log('   ✅ Numeración arquitectura lista');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ Numeración arquitectura lista',
+  );
 }

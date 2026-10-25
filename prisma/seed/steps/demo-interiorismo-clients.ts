@@ -4,8 +4,15 @@ import {
   SAMPLE_INTERIOR_RESIDENTIAL_CLIENT,
 } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-interiorismo-clients');
 
-type AdminUser = { id: string; email: string; firstName: string; lastName: string };
+type AdminUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+};
 
 /**
  * Clientes demo para Interiorismo (RESIDENTIAL / CORPORATE), ligados a applicationId interiorismo.
@@ -17,18 +24,31 @@ export async function seedInteriorismoClients(
 ): Promise<void> {
   const interiorAppId = appIdBySlug[INTERIORISMO_APPLICATION_SLUG];
   if (!interiorAppId) {
-    console.log('\n⚠️  interiorismo app not found — skipping seed interiorismo clients');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  interiorismo app not found — skipping seed interiorismo clients',
+    );
     return;
   }
 
-  const dniType = await prisma.documentType.findUnique({ where: { code: 'DNI' } });
-  const rucType = await prisma.documentType.findUnique({ where: { code: 'RUC' } });
+  const dniType = await prisma.documentType.findUnique({
+    where: { code: 'DNI' },
+  });
+  const rucType = await prisma.documentType.findUnique({
+    where: { code: 'RUC' },
+  });
   if (!dniType || !rucType) {
-    console.log('\n⚠️  DNI/RUC document types not found — skipping seed interiorismo clients');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  DNI/RUC document types not found — skipping seed interiorismo clients',
+    );
     return;
   }
 
-  console.log('\n🎨 Creating Interiorismo sample clients...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🎨 Creating Interiorismo sample clients...',
+  );
 
   let residential = await prisma.client.findFirst({
     where: {
@@ -47,9 +67,15 @@ export async function seedInteriorismoClients(
         createdBy: adminUser.id,
       },
     });
-    console.log(`   ✅ Residencial "${SAMPLE_INTERIOR_RESIDENTIAL_CLIENT.fullName}" created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Residencial "${SAMPLE_INTERIOR_RESIDENTIAL_CLIENT.fullName}" created`,
+    );
   } else {
-    console.log('   ✓ Residencial seed already exists');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Residencial seed already exists',
+    );
   }
 
   let corporate = await prisma.client.findFirst({
@@ -69,8 +95,14 @@ export async function seedInteriorismoClients(
         createdBy: adminUser.id,
       },
     });
-    console.log(`   ✅ Corporativo "${SAMPLE_INTERIOR_CORPORATE_CLIENT.fullName}" created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Corporativo "${SAMPLE_INTERIOR_CORPORATE_CLIENT.fullName}" created`,
+    );
   } else {
-    console.log('   ✓ Corporativo seed already exists');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Corporativo seed already exists',
+    );
   }
 }

@@ -5,7 +5,12 @@ export const PRODUCCION_APPLICATION_SLUG = 'produccion';
  * Cliente → Catálogo → Costos → Compras → Inventario → Producción → Ventas → Reportes → Config
  */
 export const PRODUCCION_PARENT_MENUS = [
-  { label: 'Dashboard', icon: 'layout-dashboard', path: '/produccion', order: 0 },
+  {
+    label: 'Dashboard',
+    icon: 'layout-dashboard',
+    path: '/produccion',
+    order: 0,
+  },
   { label: 'Clientes', icon: 'users', path: null, order: 1 },
   { label: 'Catálogo de muebles', icon: 'boxes', path: null, order: 2 },
   { label: 'Costos', icon: 'calculator', path: null, order: 3 },
@@ -13,8 +18,18 @@ export const PRODUCCION_PARENT_MENUS = [
   { label: 'Inventario', icon: 'warehouse', path: null, order: 5 },
   { label: 'Producción', icon: 'kanban', path: null, order: 6 },
   { label: 'Ventas', icon: 'receipt', path: null, order: 7 },
-  { label: 'Reportes', icon: 'bar-chart', path: '/produccion/reportes', order: 8 },
-  { label: 'Configuración', icon: 'settings', path: '/produccion/configuracion', order: 9 },
+  {
+    label: 'Reportes',
+    icon: 'bar-chart',
+    path: '/produccion/reportes',
+    order: 8,
+  },
+  {
+    label: 'Configuración',
+    icon: 'settings',
+    path: '/produccion/configuracion',
+    order: 9,
+  },
 ];
 
 export const PRODUCCION_CHILD_MENUS = [

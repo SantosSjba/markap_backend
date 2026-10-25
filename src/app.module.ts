@@ -1,26 +1,25 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { envConfig, envValidationSchema } from './config';
-import { DatabaseModule } from './infrastructure/database';
-import { HttpModule } from './infrastructure/http';
-import { StorageModule } from './infrastructure/storage/storage.module';
+import { ApiModule } from './composition/api.module';
+import { envConfig, validateEnvironment } from './config/env.config';
+import { DatabaseModule } from './shared/infrastructure/database/database.module';
+import { LoggingModule } from './shared/infrastructure/logging/logging.module';
+import { StorageModule } from './shared/infrastructure/storage/storage.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [envConfig],
-      validationSchema: envValidationSchema,
-      validationOptions: {
-        allowUnknown: true, // ignore vars not declared in the schema
-        abortEarly: false, // report ALL missing vars at once, not just the first
-      },
+      validate: validateEnvironment,
     }),
+
+    LoggingModule,
 
     // Infrastructure modules
     DatabaseModule,
     StorageModule,
-    HttpModule,
+    ApiModule,
   ],
   controllers: [],
   providers: [],

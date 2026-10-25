@@ -6,8 +6,15 @@ import { seedArquitecturaMaterials } from './demo-arquitectura-materials';
 import { seedArquitecturaExecution } from './demo-arquitectura-execution';
 import { seedArquitecturaFinance } from './demo-arquitectura-finance';
 import { seedArquitecturaCalendar } from './demo-arquitectura-calendar';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-arquitectura');
 
-type AdminUser = { id: string; email: string; firstName: string; lastName: string };
+type AdminUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+};
 
 /**
  * Datos demo del módulo Arquitectura (sin menús; ejecutar seedArquitecturaMenus aparte).
@@ -18,7 +25,7 @@ export async function seedDemoArquitectura(
   appIdBySlug: Record<string, string>,
   adminUser: AdminUser,
 ): Promise<void> {
-  console.log('\n🏛️  Demo Arquitectura…');
+  logger.info({ event: 'seed.progress' }, '\n🏛️  Demo Arquitectura…');
   await seedArquitecturaConfig(prisma, appIdBySlug);
   await seedArquitecturaClients(prisma, appIdBySlug, adminUser);
   await seedArquitecturaProjects(prisma, appIdBySlug, adminUser);
@@ -26,5 +33,5 @@ export async function seedDemoArquitectura(
   await seedArquitecturaExecution(prisma, appIdBySlug);
   await seedArquitecturaFinance(prisma, appIdBySlug);
   await seedArquitecturaCalendar(prisma, appIdBySlug);
-  console.log('   ✅ Demo Arquitectura completado');
+  logger.info({ event: 'seed.progress' }, '   ✅ Demo Arquitectura completado');
 }

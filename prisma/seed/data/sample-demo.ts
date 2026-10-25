@@ -73,6 +73,8 @@ export const SAMPLE_RENTAL_ATTACHMENT = {
 export const SAMPLE_NOTIFICATION = {
   type: 'RENTAL_CREATED' as const,
   title: seedPrueba('Bienvenido al sistema'),
-  body: seedPrueba('Mensaje de ejemplo. El seed ha creado datos básicos en todas las tablas.'),
+  body: seedPrueba(
+    'Mensaje de ejemplo. El seed ha creado datos básicos en todas las tablas.',
+  ),
   data: { source: 'seed' },
 };

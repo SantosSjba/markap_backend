@@ -5,7 +5,12 @@ export const CONTABILIDAD_APPLICATION_SLUG = 'contabilidad';
  * Contabilidad → Tesorería → Compras/Ventas → Tributos → Libros electrónicos → Reportes
  */
 export const CONTABILIDAD_PARENT_MENUS = [
-  { label: 'Dashboard', icon: 'layout-dashboard', path: '/contabilidad', order: 0 },
+  {
+    label: 'Dashboard',
+    icon: 'layout-dashboard',
+    path: '/contabilidad',
+    order: 0,
+  },
   { label: 'Contabilidad', icon: 'book-open', path: null, order: 1 },
   { label: 'Tesorería', icon: 'landmark', path: null, order: 2 },
   { label: 'Compras', icon: 'shopping-cart', path: null, order: 3 },
@@ -14,7 +19,12 @@ export const CONTABILIDAD_PARENT_MENUS = [
   { label: 'Inventario permanente', icon: 'package', path: null, order: 6 },
   { label: 'Libros electrónicos', icon: 'library', path: null, order: 7 },
   { label: 'Reportes financieros', icon: 'pie-chart', path: null, order: 8 },
-  { label: 'Configuración', icon: 'settings', path: '/contabilidad/configuracion', order: 9 },
+  {
+    label: 'Configuración',
+    icon: 'settings',
+    path: '/contabilidad/configuracion',
+    order: 9,
+  },
 ];
 
 export const CONTABILIDAD_CHILD_MENUS = [

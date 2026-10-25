@@ -14,13 +14,13 @@ export const VENTAS_SAMPLE_EXTERNAL_AGENT = {
  * assignedAgent: 'internal' | 'external' | null — resuelto en el step según agentes creados.
  */
 export const VENTAS_SAMPLE_BUYER_CLIENTS: {
-  documentNumber: string
-  fullName: string
-  primaryPhone: string
-  primaryEmail: string
-  salesStatus: 'PROSPECT' | 'INTERESTED' | 'CLIENT'
-  leadOrigin: string
-  assignedAgent: 'internal' | 'external' | null
+  documentNumber: string;
+  fullName: string;
+  primaryPhone: string;
+  primaryEmail: string;
+  salesStatus: 'PROSPECT' | 'INTERESTED' | 'CLIENT';
+  leadOrigin: string;
+  assignedAgent: 'internal' | 'external' | null;
 }[] = [
   {
     documentNumber: '40123456',
@@ -53,10 +53,10 @@ export const VENTAS_SAMPLE_BUYER_CLIENTS: {
 
 /** Propietarios para inventario de propiedades en Ventas (clientType OWNER). */
 export const VENTAS_SAMPLE_PROPERTY_OWNERS: {
-  documentNumber: string
-  fullName: string
-  primaryPhone: string
-  primaryEmail: string
+  documentNumber: string;
+  fullName: string;
+  primaryPhone: string;
+  primaryEmail: string;
 }[] = [
   {
     documentNumber: '41888999',
@@ -74,23 +74,25 @@ export const VENTAS_SAMPLE_PROPERTY_OWNERS: {
 
 /** Propiedades en venta (application ventas). `propertyTypeCode` debe existir en seed (ej. DEP). */
 export const VENTAS_SAMPLE_PROPERTIES: {
-  code: string
-  addressLine: string
-  description: string
-  area: number
-  bedrooms: number
-  bathrooms: number
-  projectName: string | null
-  salePrice: number
-  listingStatus: 'AVAILABLE' | 'RESERVED' | 'SOLD'
-  propertyTypeCode: string
-  ownerDocumentNumber: string
-  mediaItems: { url: string; kind: 'photo' | 'plan' }[]
+  code: string;
+  addressLine: string;
+  description: string;
+  area: number;
+  bedrooms: number;
+  bathrooms: number;
+  projectName: string | null;
+  salePrice: number;
+  listingStatus: 'AVAILABLE' | 'RESERVED' | 'SOLD';
+  propertyTypeCode: string;
+  ownerDocumentNumber: string;
+  mediaItems: { url: string; kind: 'photo' | 'plan' }[];
 }[] = [
   {
     code: 'VNT-SEED-001',
     addressLine: seedPrueba('Av. Pardo 420, Miraflores'),
-    description: seedPrueba('Departamento con vista al mar, acabados de primera.'),
+    description: seedPrueba(
+      'Departamento con vista al mar, acabados de primera.',
+    ),
     area: 118.5,
     bedrooms: 3,
     bathrooms: 2,
@@ -144,7 +146,9 @@ export const VENTAS_SAMPLE_PROPERTIES: {
   {
     code: 'VNT-SEED-CRM',
     addressLine: seedPrueba('Jr. Lima 210, Barranco'),
-    description: seedPrueba('Demo pipeline: oportunidad activa en contrato de arras.'),
+    description: seedPrueba(
+      'Demo pipeline: oportunidad activa en contrato de arras.',
+    ),
     area: 72,
     bedrooms: 2,
     bathrooms: 1,

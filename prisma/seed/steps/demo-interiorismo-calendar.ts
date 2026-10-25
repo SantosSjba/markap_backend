@@ -1,23 +1,38 @@
 import { INTERIORISMO_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-interiorismo-calendar');
 
 const DEMO_PROJECT_CODE = 'INT-REM-LIM-001';
 
 /**
  * Eventos de agenda demo (reuniones, visitas, equipo).
  */
-export async function seedInteriorismoCalendar(prisma: SeedDb, appIdBySlug: Record<string, string>): Promise<void> {
+export async function seedInteriorismoCalendar(
+  prisma: SeedDb,
+  appIdBySlug: Record<string, string>,
+): Promise<void> {
   const interiorAppId = appIdBySlug[INTERIORISMO_APPLICATION_SLUG];
   if (!interiorAppId) {
-    console.log('\n⚠️  interiorismo app not found — skipping calendar seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  interiorismo app not found — skipping calendar seed',
+    );
     return;
   }
 
   const proj = await prisma.interiorProject.findFirst({
-    where: { applicationId: interiorAppId, code: DEMO_PROJECT_CODE, deletedAt: null },
+    where: {
+      applicationId: interiorAppId,
+      code: DEMO_PROJECT_CODE,
+      deletedAt: null,
+    },
   });
   if (!proj) {
-    console.log('\n⚠️  Proyecto demo no encontrado — omitiendo calendario');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Proyecto demo no encontrado — omitiendo calendario',
+    );
     return;
   }
 
@@ -25,14 +40,23 @@ export async function seedInteriorismoCalendar(prisma: SeedDb, appIdBySlug: Reco
     where: { applicationId: interiorAppId },
   });
   if (n > 0) {
-    console.log('\n📅 Calendario demo ya tiene eventos — omitiendo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n📅 Calendario demo ya tiene eventos — omitiendo',
+    );
     return;
   }
 
-  console.log('\n📅 Sembrando eventos de calendario…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📅 Sembrando eventos de calendario…',
+  );
 
   const designer = proj.designerAgentId
-    ? await prisma.agent.findFirst({ where: { id: proj.designerAgentId }, select: { id: true } })
+    ? await prisma.agent.findFirst({
+        where: { id: proj.designerAgentId },
+        select: { id: true },
+      })
     : null;
 
   await prisma.interiorCalendarEvent.createMany({
@@ -93,5 +117,5 @@ export async function seedInteriorismoCalendar(prisma: SeedDb, appIdBySlug: Reco
     ],
   });
 
-  console.log('   ✅ Calendario demo listo');
+  logger.info({ event: 'seed.progress' }, '   ✅ Calendario demo listo');
 }

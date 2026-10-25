@@ -1,0 +1,175 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  FileStoragePort,
+  type GenArchivoRecord,
+  type StoreFileInput,
+  type UploadedFileBuffer,
+} from '../../application/ports/file-storage.port';
+import { buildStorageObjectKey } from '../../utils/build-storage-object-key.util';
+import { safeFilename } from '../../utils/safe-filename.util';
+import { PrismaService } from '../database/prisma/prisma.service';
+import { MinioObjectStorageService } from './minio-object-storage.service';
+
+export type {
+  GenArchivoRecord,
+  StoreFileInput,
+  UploadedFileBuffer,
+} from '../../application/ports/file-storage.port';
+
+@Injectable()
+export class GenArchivoService extends FileStoragePort {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: MinioObjectStorageService,
+  ) {
+    super();
+  }
+
+  async resolveApplicationId(slug: string): Promise<string | null> {
+    const app = await this.prisma.application.findFirst({
+      where: { slug, deletedAt: null },
+      select: { id: true },
+    });
+    return app?.id ?? null;
+  }
+
+  async upload(
+    input: StoreFileInput,
+    file: UploadedFileBuffer,
+  ): Promise<GenArchivoRecord> {
+    if (!file.buffer?.length) {
+      throw new Error('Archivo vacío');
+    }
+
+    const originalFileName = safeFilename(file.originalname);
+    const objectKey = buildStorageObjectKey({
+      ...input,
+      originalFileName,
+    });
+    const bucket = this.storage.getBucket();
+
+    await this.storage.putObject(objectKey, file.buffer, file.mimetype);
+
+    const applicationId =
+      input.applicationId ??
+      (await this.resolveApplicationId(input.applicationSlug));
+
+    const row = await this.prisma.genArchivo.create({
+      data: {
+        applicationId,
+        applicationSlug: input.applicationSlug,
+        module: input.module,
+        entityType: input.entityType,
+        entityId: input.entityId,
+        category: input.category ?? null,
+        bucket,
+        objectKey,
+        originalFileName,
+        mimeType: file.mimetype ?? null,
+        sizeBytes: file.buffer.length,
+        createdBy: input.createdBy ?? null,
+      },
+    });
+
+    return {
+      id: row.id,
+      bucket: row.bucket,
+      objectKey: row.objectKey,
+      originalFileName: row.originalFileName,
+      mimeType: row.mimeType,
+      sizeBytes: row.sizeBytes,
+      legacyFilePath: row.legacyFilePath,
+    };
+  }
+
+  async findById(id: string): Promise<GenArchivoRecord | null> {
+    const row = await this.prisma.genArchivo.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!row) return null;
+    return {
+      id: row.id,
+      bucket: row.bucket,
+      objectKey: row.objectKey,
+      originalFileName: row.originalFileName,
+      mimeType: row.mimeType,
+      sizeBytes: row.sizeBytes,
+      legacyFilePath: row.legacyFilePath,
+    };
+  }
+
+  async findByIdWithMeta(id: string) {
+    return this.prisma.genArchivo.findFirst({
+      where: { id, deletedAt: null },
+    });
+  }
+
+  async listByEntity(
+    module: string,
+    entityType: string,
+    entityId: string,
+    filters?: { category?: string },
+  ) {
+    return this.prisma.genArchivo.findMany({
+      where: {
+        module,
+        entityType,
+        entityId,
+        deletedAt: null,
+        ...(filters?.category ? { category: filters.category } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getPresignedDownloadUrl(
+    archivoId: string,
+    expiresInSeconds = 3600,
+  ): Promise<string> {
+    const archivo = await this.findById(archivoId);
+    if (!archivo) {
+      throw new NotFoundException('Archivo no encontrado');
+    }
+    return this.storage.getPresignedDownloadUrl(
+      archivo.objectKey,
+      expiresInSeconds,
+    );
+  }
+
+  /** URL de descarga para respuestas API (MinIO o legacy /uploads). */
+  async resolveDownloadUrl(
+    archivoId: string | null | undefined,
+    legacyFilePath: string | null | undefined,
+    expiresInSeconds = 3600,
+  ): Promise<string | null> {
+    if (archivoId) {
+      return this.getPresignedDownloadUrl(archivoId, expiresInSeconds);
+    }
+    const path = legacyFilePath?.trim();
+    if (!path) return null;
+    if (/^https?:\/\//i.test(path)) return path;
+
+    const byKey = await this.prisma.genArchivo.findFirst({
+      where: { objectKey: path, deletedAt: null },
+      select: { id: true },
+    });
+    if (byKey) {
+      return this.getPresignedDownloadUrl(byKey.id, expiresInSeconds);
+    }
+
+    const base =
+      process.env.API_PUBLIC_URL?.replace(/\/$/, '') ||
+      `http://localhost:${process.env.PORT ?? 4001}`;
+    return `${base}/uploads/${path.replace(/^uploads\//, '')}`;
+  }
+
+  async softDelete(archivoId: string): Promise<void> {
+    const archivo = await this.findById(archivoId);
+    if (!archivo) return;
+    await this.storage.deleteObject(archivo.objectKey);
+    await this.prisma.genArchivo.update({
+      where: { id: archivoId },
+      data: { deletedAt: new Date() },
+    });
+  }
+}

@@ -1,0 +1,118 @@
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { BusinessReferencePort } from '../../../../../shared/application/ports/business-reference.port';
+import { assertClientAddressLocation } from '../../../../crm/application/validators/client-address-location.validator';
+import type { ApplicationRepository } from '../../../../identity/domain/repositories/application.repository';
+import { assertActiveSaleCurrency } from '../../../../ventas/application/validators/sale-currency.validator';
+import type { Property } from '../../../domain/entities/property.entity';
+import type {
+  PropertyRepository,
+  UpdatePropertyData,
+} from '../../../domain/repositories/property.repository';
+
+import { APPLICATION_REPOSITORY } from '../../../../identity/domain/repositories/application.repository';
+import { PROPERTY_REPOSITORY } from '../../../domain/repositories/property.repository';
+
+const VENTAS_LISTING = new Set(['AVAILABLE', 'RESERVED', 'SOLD']);
+const ALQUILERES_LISTING = new Set([
+  'AVAILABLE',
+  'RENTED',
+  'EXPIRING',
+  'MAINTENANCE',
+]);
+
+@Injectable()
+export class UpdatePropertyUseCase {
+  constructor(
+    @Inject(PROPERTY_REPOSITORY)
+    private readonly propertyRepository: PropertyRepository,
+    @Inject(APPLICATION_REPOSITORY)
+    private readonly applicationRepository: ApplicationRepository,
+    private readonly references: BusinessReferencePort,
+  ) {}
+
+  async execute(
+    data: UpdatePropertyData,
+    expectedApplicationSlug?: string,
+  ): Promise<Property> {
+    const existing = await this.propertyRepository.findById(data.id);
+    if (!existing) {
+      throw new NotFoundException(`Propiedad con id ${data.id} no encontrada`);
+    }
+    if (expectedApplicationSlug?.trim()) {
+      const app = await this.applicationRepository.findById(
+        existing.applicationId,
+      );
+      if (!app || app.slug !== expectedApplicationSlug.trim()) {
+        throw new NotFoundException(
+          `Propiedad con id ${data.id} no encontrada`,
+        );
+      }
+    }
+    if (data.listingStatus !== undefined && data.listingStatus !== null) {
+      const app = await this.applicationRepository.findById(
+        existing.applicationId,
+      );
+      const slug = app?.slug ?? '';
+      const ls = data.listingStatus;
+      if (slug === 'ventas') {
+        if (!VENTAS_LISTING.has(ls)) {
+          throw new BadRequestException(
+            'En Ventas el estado comercial debe ser AVAILABLE, RESERVED o SOLD.',
+          );
+        }
+      } else if (!ALQUILERES_LISTING.has(ls)) {
+        throw new BadRequestException(
+          'Estado de listado no válido para esta aplicación.',
+        );
+      }
+    }
+    const districtId = data.districtId ?? existing.districtId;
+    const locationInput =
+      data.locationCustom !== undefined
+        ? data.locationCustom
+        : existing.locationCustom;
+    const locationCustom = assertClientAddressLocation(
+      districtId,
+      locationInput,
+    );
+
+    let saleCurrency: string | undefined;
+    if (data.saleCurrency !== undefined) {
+      saleCurrency = await assertActiveSaleCurrency(
+        this.references,
+        data.saleCurrency,
+      );
+    }
+
+    let ownerPatch: Pick<UpdatePropertyData, 'ownerId' | 'ownerClientIds'> = {};
+    if (data.ownerClientIds !== undefined || data.ownerId !== undefined) {
+      const primary = data.ownerId ?? existing.ownerId;
+      const ownerClientIds = Array.from(
+        new Set(
+          [
+            primary,
+            ...(data.ownerClientIds ?? existing.owners.map((o) => o.id)),
+          ].filter(Boolean),
+        ),
+      );
+      if (!ownerClientIds.length) {
+        throw new BadRequestException('Debe indicar al menos un propietario.');
+      }
+      ownerPatch = { ownerId: ownerClientIds[0], ownerClientIds };
+    }
+
+    return this.propertyRepository.update({
+      ...data,
+      ...ownerPatch,
+      ...(saleCurrency !== undefined ? { saleCurrency } : {}),
+      ...(data.districtId !== undefined || data.locationCustom !== undefined
+        ? { locationCustom }
+        : {}),
+    });
+  }
+}

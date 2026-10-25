@@ -4,9 +4,14 @@ import {
   SEED_PRIMARY_APPLICATION_SLUG,
 } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:menus-alquileres');
 
 export async function seedAlquileresMenus(prisma: SeedDb): Promise<void> {
-  console.log('\n📂 Creating menus for Alquileres...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📂 Creating menus for Alquileres...',
+  );
   const alquileresApp = await prisma.application.findUnique({
     where: { slug: SEED_PRIMARY_APPLICATION_SLUG },
   });
@@ -36,14 +41,20 @@ export async function seedAlquileresMenus(prisma: SeedDb): Promise<void> {
         },
       });
       createdMenuIds[m.label] = menu.id;
-      console.log(`   ✅ Menu "${m.label}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Menu "${m.label}" created`,
+      );
     } else {
       await prisma.menu.update({
         where: { id: existingMenu.id },
         data: { label: m.label, icon: m.icon, path: m.path, order: m.order },
       });
       createdMenuIds[m.label] = existingMenu.id;
-      console.log(`   ✅ Menu "${m.label}" updated`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Menu "${m.label}" updated`,
+      );
     }
   }
 
@@ -70,7 +81,10 @@ export async function seedAlquileresMenus(prisma: SeedDb): Promise<void> {
           isActive: true,
         },
       });
-      console.log(`   ✅ Submenu "${m.label}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Submenu "${m.label}" created`,
+      );
     }
   }
 }

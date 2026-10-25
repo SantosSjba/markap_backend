@@ -11,21 +11,81 @@ export const VENTAS_PARENT_MENUS = [
   { label: 'Agentes', icon: 'user-check', path: null, order: 3 },
   { label: 'Ventas', icon: 'file-text', path: null, order: 4 },
   { label: 'Reportes', icon: 'bar-chart', path: '/ventas/reportes', order: 5 },
-  { label: 'Configuración', icon: 'settings', path: '/ventas/configuracion', order: 6 },
+  {
+    label: 'Configuración',
+    icon: 'settings',
+    path: '/ventas/configuracion',
+    order: 6,
+  },
 ];
 
 export const VENTAS_CHILD_MENUS = [
   // Propietarios primero: el inventario pertenece a un dueño
-  { label: 'Propietarios', path: '/ventas/clientes/propietarios', order: 0, parentLabel: 'Clientes' },
-  { label: 'Listado de Clientes', path: '/ventas/clientes', order: 1, parentLabel: 'Clientes' },
-  { label: 'Nuevo Cliente', path: '/ventas/clientes/nuevo', order: 2, parentLabel: 'Clientes' },
-  { label: 'Listado de Propiedades', path: '/ventas/propiedades', order: 0, parentLabel: 'Propiedades' },
-  { label: 'Nueva Propiedad', path: '/ventas/propiedades/nueva', order: 1, parentLabel: 'Propiedades' },
-  { label: 'Listado de Agentes', path: '/ventas/agentes', order: 0, parentLabel: 'Agentes' },
-  { label: 'Nuevo Agente', path: '/ventas/agentes/nuevo', order: 1, parentLabel: 'Agentes' },
+  {
+    label: 'Propietarios',
+    path: '/ventas/clientes/propietarios',
+    order: 0,
+    parentLabel: 'Clientes',
+  },
+  {
+    label: 'Listado de Clientes',
+    path: '/ventas/clientes',
+    order: 1,
+    parentLabel: 'Clientes',
+  },
+  {
+    label: 'Nuevo Cliente',
+    path: '/ventas/clientes/nuevo',
+    order: 2,
+    parentLabel: 'Clientes',
+  },
+  {
+    label: 'Listado de Propiedades',
+    path: '/ventas/propiedades',
+    order: 0,
+    parentLabel: 'Propiedades',
+  },
+  {
+    label: 'Nueva Propiedad',
+    path: '/ventas/propiedades/nueva',
+    order: 1,
+    parentLabel: 'Propiedades',
+  },
+  {
+    label: 'Listado de Agentes',
+    path: '/ventas/agentes',
+    order: 0,
+    parentLabel: 'Agentes',
+  },
+  {
+    label: 'Nuevo Agente',
+    path: '/ventas/agentes/nuevo',
+    order: 1,
+    parentLabel: 'Agentes',
+  },
   // Pipeline comercial en orden natural
-  { label: 'Procesos de Venta', path: '/ventas/procesos', order: 0, parentLabel: 'Ventas' },
-  { label: 'Separaciones', path: '/ventas/separaciones', order: 1, parentLabel: 'Ventas' },
-  { label: 'Cierres', path: '/ventas/cierres', order: 2, parentLabel: 'Ventas' },
-  { label: 'Comisiones', path: '/ventas/comisiones', order: 3, parentLabel: 'Ventas' },
+  {
+    label: 'Procesos de Venta',
+    path: '/ventas/procesos',
+    order: 0,
+    parentLabel: 'Ventas',
+  },
+  {
+    label: 'Separaciones',
+    path: '/ventas/separaciones',
+    order: 1,
+    parentLabel: 'Ventas',
+  },
+  {
+    label: 'Cierres',
+    path: '/ventas/cierres',
+    order: 2,
+    parentLabel: 'Ventas',
+  },
+  {
+    label: 'Comisiones',
+    path: '/ventas/comisiones',
+    order: 3,
+    parentLabel: 'Ventas',
+  },
 ];

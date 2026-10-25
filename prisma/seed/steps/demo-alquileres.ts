@@ -12,17 +12,26 @@ import {
   SEED_PRIMARY_APPLICATION_SLUG,
 } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-alquileres');
 
-type AdminUser = { id: string; email: string; firstName: string; lastName: string };
+type AdminUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+};
 
 export async function seedDemoAlquileres(
   prisma: SeedDb,
   appIdBySlug: Record<string, string>,
   adminUser: AdminUser,
 ): Promise<void> {
-  console.log('\n👥 Creating sample clients...');
+  logger.info({ event: 'seed.progress' }, '\n👥 Creating sample clients...');
   const alquileresAppId = appIdBySlug[SEED_PRIMARY_APPLICATION_SLUG];
-  const dniType = await prisma.documentType.findUnique({ where: { code: 'DNI' } });
+  const dniType = await prisma.documentType.findUnique({
+    where: { code: 'DNI' },
+  });
   if (!dniType) throw new Error('DocumentType DNI not found');
 
   let ownerClient = await prisma.client.findFirst({
@@ -38,9 +47,12 @@ export async function seedDemoAlquileres(
         createdBy: adminUser.id,
       },
     });
-    console.log(`   ✅ Owner client "${SAMPLE_OWNER_CLIENT.fullName}" created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Owner client "${SAMPLE_OWNER_CLIENT.fullName}" created`,
+    );
   } else {
-    console.log('   ✓ Owner client already exists');
+    logger.info({ event: 'seed.progress' }, '   ✓ Owner client already exists');
   }
 
   let tenantClient = await prisma.client.findFirst({
@@ -56,13 +68,21 @@ export async function seedDemoAlquileres(
         createdBy: adminUser.id,
       },
     });
-    console.log(`   ✅ Tenant client "${SAMPLE_TENANT_CLIENT.fullName}" created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Tenant client "${SAMPLE_TENANT_CLIENT.fullName}" created`,
+    );
   } else {
-    console.log('   ✓ Tenant client already exists');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Tenant client already exists',
+    );
   }
 
-  console.log('\n📍 Creating sample address...');
-  const districtLima = await prisma.district.findUnique({ where: { id: SAMPLE_DISTRICT_ID_LIMA } });
+  logger.info({ event: 'seed.progress' }, '\n📍 Creating sample address...');
+  const districtLima = await prisma.district.findUnique({
+    where: { id: SAMPLE_DISTRICT_ID_LIMA },
+  });
   if (districtLima) {
     const existingAddress = await prisma.address.findFirst({
       where: { clientId: ownerClient.id },
@@ -75,14 +95,22 @@ export async function seedDemoAlquileres(
           districtId: districtLima.id,
         },
       });
-      console.log('   ✅ Address for owner created');
+      logger.info(
+        { event: 'seed.progress' },
+        '   ✅ Address for owner created',
+      );
     } else {
-      console.log('   ✓ Address for owner already exists');
+      logger.info(
+        { event: 'seed.progress' },
+        '   ✓ Address for owner already exists',
+      );
     }
   }
 
-  console.log('\n🏡 Creating sample property...');
-  const depType = await prisma.propertyType.findUnique({ where: { code: 'DEP' } });
+  logger.info({ event: 'seed.progress' }, '\n🏡 Creating sample property...');
+  const depType = await prisma.propertyType.findUnique({
+    where: { code: 'DEP' },
+  });
   if (!depType) throw new Error('PropertyType DEP not found');
 
   let sampleProperty = await prisma.property.findFirst({
@@ -99,12 +127,18 @@ export async function seedDemoAlquileres(
         createdBy: adminUser.id,
       },
     });
-    console.log(`   ✅ Property "${SAMPLE_PROPERTY.code}" created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Property "${SAMPLE_PROPERTY.code}" created`,
+    );
   } else {
-    console.log('   ✓ Sample property already exists');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Sample property already exists',
+    );
   }
 
-  console.log('\n📋 Creating sample rental...');
+  logger.info({ event: 'seed.progress' }, '\n📋 Creating sample rental...');
   let sampleRental: { id: string } | null = null;
   if (sampleProperty) {
     sampleRental = await prisma.rental.findFirst({
@@ -127,13 +161,19 @@ export async function seedDemoAlquileres(
         },
         select: { id: true },
       });
-      console.log('   ✅ Sample rental (contract) created');
+      logger.info(
+        { event: 'seed.progress' },
+        '   ✅ Sample rental (contract) created',
+      );
     } else {
-      console.log('   ✓ Sample rental already exists');
+      logger.info(
+        { event: 'seed.progress' },
+        '   ✓ Sample rental already exists',
+      );
     }
   }
 
-  console.log('\n🤝 Creating sample agents...');
+  logger.info({ event: 'seed.progress' }, '\n🤝 Creating sample agents...');
   let internalAgent = await prisma.agent.findFirst({
     where: { applicationId: alquileresAppId, type: 'INTERNAL' },
   });
@@ -148,12 +188,20 @@ export async function seedDemoAlquileres(
         isActive: true,
       },
     });
-    console.log('   ✅ Internal agent (admin user) created');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✅ Internal agent (admin user) created',
+    );
   } else {
-    console.log('   ✓ Internal agent already exists');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Internal agent already exists',
+    );
   }
 
-  const rucType = await prisma.documentType.findUnique({ where: { code: 'RUC' } });
+  const rucType = await prisma.documentType.findUnique({
+    where: { code: 'RUC' },
+  });
   let externalAgent = await prisma.agent.findFirst({
     where: { applicationId: alquileresAppId, type: 'EXTERNAL' },
   });
@@ -172,13 +220,22 @@ export async function seedDemoAlquileres(
         isActive: true,
       },
     });
-    console.log(`   ✅ External agent "${SAMPLE_EXTERNAL_AGENT.fullName}" created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ External agent "${SAMPLE_EXTERNAL_AGENT.fullName}" created`,
+    );
   } else {
-    console.log('   ✓ External agent already exists');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ External agent already exists',
+    );
   }
 
   if (sampleRental) {
-    console.log('\n💰 Creating rental financial config...');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n💰 Creating rental financial config...',
+    );
     const existingConfig = await prisma.rentalFinancialConfig.findUnique({
       where: { rentalId: sampleRental.id },
     });
@@ -191,12 +248,21 @@ export async function seedDemoAlquileres(
           internalAgentId: internalAgent.id,
         },
       });
-      console.log('   ✅ Rental financial config created');
+      logger.info(
+        { event: 'seed.progress' },
+        '   ✅ Rental financial config created',
+      );
     } else {
-      console.log('   ✓ Rental financial config already exists');
+      logger.info(
+        { event: 'seed.progress' },
+        '   ✓ Rental financial config already exists',
+      );
     }
 
-    console.log('\n📎 Creating sample rental attachment...');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n📎 Creating sample rental attachment...',
+    );
     const existingAttachment = await prisma.rentalAttachment.findFirst({
       where: { rentalId: sampleRental.id },
     });
@@ -207,13 +273,22 @@ export async function seedDemoAlquileres(
           ...SAMPLE_RENTAL_ATTACHMENT,
         },
       });
-      console.log('   ✅ Sample rental attachment (placeholder) created');
+      logger.info(
+        { event: 'seed.progress' },
+        '   ✅ Sample rental attachment (placeholder) created',
+      );
     } else {
-      console.log('   ✓ Sample rental attachment already exists');
+      logger.info(
+        { event: 'seed.progress' },
+        '   ✓ Sample rental attachment already exists',
+      );
     }
   }
 
-  console.log('\n🔔 Creating sample notification...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🔔 Creating sample notification...',
+  );
   const existingNotification = await prisma.notification.findFirst({
     where: { userId: adminUser.id },
   });
@@ -224,8 +299,14 @@ export async function seedDemoAlquileres(
         ...SAMPLE_NOTIFICATION,
       },
     });
-    console.log('   ✅ Sample notification created');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✅ Sample notification created',
+    );
   } else {
-    console.log('   ✓ Sample notification already exists');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Sample notification already exists',
+    );
   }
 }

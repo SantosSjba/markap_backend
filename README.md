@@ -1,9 +1,13 @@
 # Markap Backend
 
-El proyecto sigue **Clean Architecture** con NestJS y Prisma.
+Monolito modular con NestJS y Prisma, organizado por áreas de negocio, capas y puertos/adaptadores.
 
 - **[Arquitectura](docs/ARCHITECTURE.md)** — Capas (domain, application, infrastructure), puertos y adaptadores.
 - **[Cómo agregar funcionalidades](docs/ADDING_FEATURES.md)** — Pasos para nuevos recursos, use cases y servicios.
+
+- **[Logging](docs/LOGGING.md)** — Pino, request IDs, niveles, eventos y datos sensibles.
+
+- **[Autenticación y planificación](docs/AUTH_AND_SCHEDULING.md)** — JWT, límites por IP y tareas programadas.
 
 ## Requisitos
 
@@ -33,7 +37,7 @@ pnpm run prisma:seed
 pnpm run start:dev
 ```
 
-La API estará disponible en `http://localhost:3000/api`
+La API estará disponible en `http://localhost:4001/api`
 
 ---
 
@@ -64,8 +68,16 @@ pnpm exec prisma migrate dev --name nombre_descriptivo
 
 ### Resumen
 
-| Comando                      | Uso                                                                 |
-|------------------------------|---------------------------------------------------------------------|
-| `pnpm exec prisma db push`   | Sincronizar schema con la BD sin historial de migraciones.          |
-| `pnpm exec prisma migrate dev` | Crear y aplicar migraciones en desarrollo con shadow DB.          |
-| `pnpm exec prisma generate`  | Regenerar el cliente Prisma tras cambiar el schema.                 |
+| Comando                        | Uso                                                        |
+| ------------------------------ | ---------------------------------------------------------- |
+| `pnpm exec prisma db push`     | Sincronizar schema con la BD sin historial de migraciones. |
+| `pnpm exec prisma migrate dev` | Crear y aplicar migraciones en desarrollo con shadow DB.   |
+| `pnpm exec prisma generate`    | Regenerar el cliente Prisma tras cambiar el schema.        |
+
+## Verificación
+
+```bash
+pnpm verify
+```
+
+Comprueba arquitectura, tipos, compilación, pruebas unitarias, composición de módulos y endpoints de health. Las integraciones con PostgreSQL, MinIO y SMTP requieren un entorno de pruebas propio.

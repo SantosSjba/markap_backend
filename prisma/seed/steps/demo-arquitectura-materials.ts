@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { ARQUITECTURA_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-arquitectura-materials');
 
 /**
  * Catálogo de materiales, proveedores, vínculos e historial de compras (Arquitectura).
@@ -11,7 +13,10 @@ export async function seedArquitecturaMaterials(
 ): Promise<void> {
   const arquitecturaAppId = appIdBySlug[ARQUITECTURA_APPLICATION_SLUG];
   if (!arquitecturaAppId) {
-    console.log('\n⚠️  arquitectura app not found — skipping materiales seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  arquitectura app not found — skipping materiales seed',
+    );
     return;
   }
 
@@ -19,11 +24,17 @@ export async function seedArquitecturaMaterials(
     where: { applicationId: arquitecturaAppId },
   });
   if (existing > 0) {
-    console.log('\n📦 Materiales arquitectura ya sembrados — omitiendo demo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n📦 Materiales arquitectura ya sembrados — omitiendo demo',
+    );
     return;
   }
 
-  console.log('\n📦 Creando materiales, proveedores y compras demo (arquitectura)…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📦 Creando materiales, proveedores y compras demo (arquitectura)…',
+  );
 
   const matCement = await prisma.arquitecturaCatalogMaterial.create({
     data: {
@@ -37,7 +48,12 @@ export async function seedArquitecturaMaterials(
       stock: new Prisma.Decimal('850'),
       technicalSheetUrl: 'https://example.com/fichas/cemento-sol-i.pdf',
       images: {
-        create: [{ sortOrder: 0, url: 'https://picsum.photos/seed/markap-arq-cem/480/480' }],
+        create: [
+          {
+            sortOrder: 0,
+            url: 'https://picsum.photos/seed/markap-arq-cem/480/480',
+          },
+        ],
       },
     },
   });
@@ -54,7 +70,12 @@ export async function seedArquitecturaMaterials(
       stock: new Prisma.Decimal('1200'),
       technicalSheetUrl: null,
       images: {
-        create: [{ sortOrder: 0, url: 'https://picsum.photos/seed/markap-arq-steel/480/480' }],
+        create: [
+          {
+            sortOrder: 0,
+            url: 'https://picsum.photos/seed/markap-arq-steel/480/480',
+          },
+        ],
       },
     },
   });
@@ -139,5 +160,8 @@ export async function seedArquitecturaMaterials(
     ],
   });
 
-  console.log('   ✅ Catálogo (2), proveedores (2), vínculos y compras demo');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ Catálogo (2), proveedores (2), vínculos y compras demo',
+  );
 }

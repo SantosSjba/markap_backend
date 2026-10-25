@@ -1,6 +1,12 @@
 import { Prisma } from '@prisma/client';
-import { ARQUITECTURA_APPLICATION_SLUG, ARQUITECTURA_DEMO_PROJECT_CODES, seedPrueba } from '../data';
+import {
+  ARQUITECTURA_APPLICATION_SLUG,
+  ARQUITECTURA_DEMO_PROJECT_CODES,
+  seedPrueba,
+} from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-arquitectura-execution');
 
 /**
  * Tareas Kanban, evidencias, incidencias y costos reales demo (proyecto residencial).
@@ -11,7 +17,10 @@ export async function seedArquitecturaExecution(
 ): Promise<void> {
   const arquitecturaAppId = appIdBySlug[ARQUITECTURA_APPLICATION_SLUG];
   if (!arquitecturaAppId) {
-    console.log('\n⚠️  arquitectura app not found — skipping execution seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  arquitectura app not found — skipping execution seed',
+    );
     return;
   }
 
@@ -23,17 +32,28 @@ export async function seedArquitecturaExecution(
     },
   });
   if (!proj) {
-    console.log('\n⚠️  Proyecto demo ARQ-REM-LIM-001 no encontrado — omitiendo ejecución');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Proyecto demo ARQ-REM-LIM-001 no encontrado — omitiendo ejecución',
+    );
     return;
   }
 
-  const nTasks = await prisma.arquitecturaExecutionTask.count({ where: { projectId: proj.id } });
+  const nTasks = await prisma.arquitecturaExecutionTask.count({
+    where: { projectId: proj.id },
+  });
   if (nTasks > 0) {
-    console.log('\n🔧 Ejecución arquitectura demo ya existe — omitiendo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n🔧 Ejecución arquitectura demo ya existe — omitiendo',
+    );
     return;
   }
 
-  console.log('\n🔧 Sembrando ejecución arquitectura (tareas, evidencias, incidencias, costos)…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🔧 Sembrando ejecución arquitectura (tareas, evidencias, incidencias, costos)…',
+  );
 
   const mat = await prisma.arquitecturaCatalogMaterial.findFirst({
     where: { applicationId: arquitecturaAppId, code: 'ARQ-CEM-001' },
@@ -159,7 +179,9 @@ export async function seedArquitecturaExecution(
       {
         projectId: proj.id,
         costCategory: 'MATERIAL',
-        concept: seedPrueba(mat ? 'Compra cemento referencia catálogo' : 'Compra cemento obra'),
+        concept: seedPrueba(
+          mat ? 'Compra cemento referencia catálogo' : 'Compra cemento obra',
+        ),
         amount: new Prisma.Decimal('8480'),
         occurredAt: new Date('2026-03-10'),
         catalogMaterialId: mat?.id ?? null,
@@ -175,5 +197,8 @@ export async function seedArquitecturaExecution(
     ],
   });
 
-  console.log('   ✅ Ejecución arquitectura demo lista');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ Ejecución arquitectura demo lista',
+  );
 }

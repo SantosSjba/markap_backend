@@ -6,9 +6,14 @@ import {
   INTERIORISMO_PARENT_MENUS,
 } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:menus-interiorismo');
 
 export async function seedInteriorismoMenus(prisma: SeedDb): Promise<void> {
-  console.log('\n📂 Creating menus for Interiorismo...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📂 Creating menus for Interiorismo...',
+  );
   const app = await prisma.application.findUnique({
     where: { slug: INTERIORISMO_APPLICATION_SLUG },
   });
@@ -38,14 +43,20 @@ export async function seedInteriorismoMenus(prisma: SeedDb): Promise<void> {
         },
       });
       menuIds[m.label] = menu.id;
-      console.log(`   ✅ Interiorismo menu "${m.label}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Interiorismo menu "${m.label}" created`,
+      );
     } else {
       await prisma.menu.update({
         where: { id: existingMenu.id },
         data: { label: m.label, icon: m.icon, path: m.path, order: m.order },
       });
       menuIds[m.label] = existingMenu.id;
-      console.log(`   ✅ Interiorismo menu "${m.label}" updated`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Interiorismo menu "${m.label}" updated`,
+      );
     }
   }
 
@@ -72,13 +83,19 @@ export async function seedInteriorismoMenus(prisma: SeedDb): Promise<void> {
           isActive: true,
         },
       });
-      console.log(`   ✅ Interiorismo submenu "${m.label}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Interiorismo submenu "${m.label}" created`,
+      );
     } else {
       await prisma.menu.update({
         where: { id: existing.id },
         data: { path: m.path, order: m.order },
       });
-      console.log(`   ✅ Interiorismo submenu "${m.label}" updated`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Interiorismo submenu "${m.label}" updated`,
+      );
     }
   }
 
@@ -94,7 +111,10 @@ export async function seedInteriorismoMenus(prisma: SeedDb): Promise<void> {
     data: { isActive: false },
   });
   if (pathDeactivated.count > 0) {
-    console.log(`   ✅ ${pathDeactivated.count} menú(es) obsoleto(s) por ruta desactivado(s)`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ ${pathDeactivated.count} menú(es) obsoleto(s) por ruta desactivado(s)`,
+    );
   }
 
   for (const label of INTERIORISMO_OBSOLETE_PARENT_LABELS) {
@@ -113,7 +133,8 @@ export async function seedInteriorismoMenus(prisma: SeedDb): Promise<void> {
         where: { id: parent.id },
         data: { isActive: false },
       });
-      console.log(
+      logger.info(
+        { event: 'seed.progress' },
         `   ✅ Menú obsoleto "${label}" desactivado${childDeactivated.count ? ` (+${childDeactivated.count} hijo(s))` : ''}`,
       );
     }

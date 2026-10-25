@@ -1,5 +1,7 @@
 import { seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:seed-ventas-sales');
 
 const CODE_CRM_ACTIVE = 'VNT-PRC-SEED-CRM';
 const CODE_CLOSED_JOURNEY = 'VNT-PRC-SEED-001';
@@ -17,7 +19,10 @@ export async function seedVentasSales(
 ): Promise<void> {
   const ventasAppId = appIdBySlug['ventas'];
   if (!ventasAppId) {
-    console.log('\n⚠️  Ventas app not found — skipping seed-ventas-sales');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Ventas app not found — skipping seed-ventas-sales',
+    );
     return;
   }
 
@@ -25,12 +30,18 @@ export async function seedVentasSales(
   await seedClosedJourneyDemo(prisma, ventasAppId);
 }
 
-async function seedCrmActiveProcess(prisma: SeedDb, ventasAppId: string): Promise<void> {
+async function seedCrmActiveProcess(
+  prisma: SeedDb,
+  ventasAppId: string,
+): Promise<void> {
   const existing = await prisma.saleProcess.findFirst({
     where: { applicationId: ventasAppId, code: CODE_CRM_ACTIVE },
   });
   if (existing) {
-    console.log(`\n   ✓ Ventas CRM seed (${CODE_CRM_ACTIVE}) already exists`);
+    logger.info(
+      { event: 'seed.progress' },
+      `\n   ✓ Ventas CRM seed (${CODE_CRM_ACTIVE}) already exists`,
+    );
     return;
   }
 
@@ -43,23 +54,32 @@ async function seedCrmActiveProcess(prisma: SeedDb, ventasAppId: string): Promis
     },
   });
   const prop = await prisma.property.findFirst({
-    where: { applicationId: ventasAppId, code: 'VNT-SEED-CRM', deletedAt: null },
+    where: {
+      applicationId: ventasAppId,
+      code: 'VNT-SEED-CRM',
+      deletedAt: null,
+    },
   });
   const agent = await prisma.agent.findFirst({
     where: { applicationId: ventasAppId, deletedAt: null, isActive: true },
   });
 
   if (!buyer || !prop || !agent) {
-    console.log(
+    logger.info(
+      { event: 'seed.progress' },
       '\n⚠️  seed-ventas-sales (pipeline ACTIVE): falta comprador DNI 40234567, propiedad VNT-SEED-CRM o agente.',
     );
-    console.log(
+    logger.info(
+      { event: 'seed.progress' },
       '   → Ejecute el seed completo: pnpm run prisma:seed (asegure demo-ventas + nueva fila VNT-SEED-CRM en sample-ventas).',
     );
     return;
   }
 
-  console.log(`\n📌 Seeding Ventas CRM — proceso ACTIVE para pipeline (${CODE_CRM_ACTIVE})...`);
+  logger.info(
+    { event: 'seed.progress' },
+    `\n📌 Seeding Ventas CRM — proceso ACTIVE para pipeline (${CODE_CRM_ACTIVE})...`,
+  );
 
   await prisma.$transaction(async (tx) => {
     const process = await tx.saleProcess.create({
@@ -78,7 +98,9 @@ async function seedCrmActiveProcess(prisma: SeedDb, ventasAppId: string): Promis
     await tx.saleProcessNote.create({
       data: {
         saleProcessId: process.id,
-        body: seedPrueba('Cliente pide descuento por pago al contado. Enviar propuesta antes del viernes.'),
+        body: seedPrueba(
+          'Cliente pide descuento por pago al contado. Enviar propuesta antes del viernes.',
+        ),
       },
     });
     await tx.saleProcessActivity.create({
@@ -100,15 +122,24 @@ async function seedCrmActiveProcess(prisma: SeedDb, ventasAppId: string): Promis
     });
   });
 
-  console.log(`   ✅ ${CODE_CRM_ACTIVE} — ACTIVE / ARRAS (visible en pipeline y listado)`);
+  logger.info(
+    { event: 'seed.progress' },
+    `   ✅ ${CODE_CRM_ACTIVE} — ACTIVE / ARRAS (visible en pipeline y listado)`,
+  );
 }
 
-async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promise<void> {
+async function seedClosedJourneyDemo(
+  prisma: SeedDb,
+  ventasAppId: string,
+): Promise<void> {
   const existing = await prisma.saleProcess.findFirst({
     where: { applicationId: ventasAppId, code: CODE_CLOSED_JOURNEY },
   });
   if (existing) {
-    console.log(`\n   ✓ Ventas CRM seed (${CODE_CLOSED_JOURNEY}) already exists`);
+    logger.info(
+      { event: 'seed.progress' },
+      `\n   ✓ Ventas CRM seed (${CODE_CLOSED_JOURNEY}) already exists`,
+    );
     return;
   }
 
@@ -121,20 +152,28 @@ async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promi
     },
   });
   const propAvailable = await prisma.property.findFirst({
-    where: { applicationId: ventasAppId, code: 'VNT-SEED-001', deletedAt: null },
+    where: {
+      applicationId: ventasAppId,
+      code: 'VNT-SEED-001',
+      deletedAt: null,
+    },
   });
   const agent = await prisma.agent.findFirst({
     where: { applicationId: ventasAppId, deletedAt: null, isActive: true },
   });
 
   if (!buyer || !propAvailable || !agent) {
-    console.log(
+    logger.info(
+      { event: 'seed.progress' },
       '\n⚠️  seed-ventas-sales (cierre demo): falta buyer DNI 40123456, propiedad VNT-SEED-001 o agente — omitiendo cierre demo',
     );
     return;
   }
 
-  console.log('\n📊 Seeding Ventas CRM (proceso → separación → cierre → WON)...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📊 Seeding Ventas CRM (proceso → separación → cierre → WON)...',
+  );
 
   await prisma.$transaction(async (tx) => {
     const process = await tx.saleProcess.create({
@@ -153,7 +192,9 @@ async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promi
     await tx.saleProcessNote.create({
       data: {
         saleProcessId: process.id,
-        body: seedPrueba('Cliente interesado en visitar planta 8. Coordinar con portero.'),
+        body: seedPrueba(
+          'Cliente interesado en visitar planta 8. Coordinar con portero.',
+        ),
       },
     });
     await tx.saleProcessActivity.create({
@@ -244,7 +285,8 @@ async function seedClosedJourneyDemo(prisma: SeedDb, ventasAppId: string): Promi
     });
   });
 
-  console.log(
+  logger.info(
+    { event: 'seed.progress' },
     `   ✅ ${CODE_CLOSED_JOURNEY} + separación + cierre + comisión (estado WON — no en Kanban ACTIVE)`,
   );
 }

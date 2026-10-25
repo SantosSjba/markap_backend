@@ -6,9 +6,14 @@ import {
   PRODUCCION_PARENT_MENUS,
 } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:menus-produccion');
 
 export async function seedProduccionMenus(prisma: SeedDb): Promise<void> {
-  console.log('\n📂 Creating menus for Producción de Muebles...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📂 Creating menus for Producción de Muebles...',
+  );
   const app = await prisma.application.findUnique({
     where: { slug: PRODUCCION_APPLICATION_SLUG },
   });
@@ -38,7 +43,10 @@ export async function seedProduccionMenus(prisma: SeedDb): Promise<void> {
         },
       });
       menuIds[m.label] = menu.id;
-      console.log(`   ✅ Producción menu "${m.label}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Producción menu "${m.label}" created`,
+      );
     } else {
       await prisma.menu.update({
         where: { id: existingMenu.id },
@@ -51,7 +59,10 @@ export async function seedProduccionMenus(prisma: SeedDb): Promise<void> {
         },
       });
       menuIds[m.label] = existingMenu.id;
-      console.log(`   ✅ Producción menu "${m.label}" updated`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Producción menu "${m.label}" updated`,
+      );
     }
   }
 
@@ -77,7 +88,10 @@ export async function seedProduccionMenus(prisma: SeedDb): Promise<void> {
           isActive: true,
         },
       });
-      console.log(`   ✅ Producción submenu "${m.label}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Producción submenu "${m.label}" created`,
+      );
     } else {
       await prisma.menu.update({
         where: { id: existing.id },
@@ -89,7 +103,10 @@ export async function seedProduccionMenus(prisma: SeedDb): Promise<void> {
           isActive: true,
         },
       });
-      console.log(`   ✅ Producción submenu "${m.label}" updated`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Producción submenu "${m.label}" updated`,
+      );
     }
   }
 
@@ -101,7 +118,10 @@ export async function seedProduccionMenus(prisma: SeedDb): Promise<void> {
     data: { isActive: false },
   });
   if (deactivatedPaths.count > 0) {
-    console.log(`   ✅ ${deactivatedPaths.count} ruta(s) obsoleta(s) desactivada(s)`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ ${deactivatedPaths.count} ruta(s) obsoleta(s) desactivada(s)`,
+    );
   }
 
   for (const label of PRODUCCION_DEPRECATED_PARENT_LABELS) {
@@ -117,7 +137,10 @@ export async function seedProduccionMenus(prisma: SeedDb): Promise<void> {
         where: { parentId: obsolete.id },
         data: { isActive: false },
       });
-      console.log(`   ✅ Menú padre obsoleto "${label}" desactivado`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Menú padre obsoleto "${label}" desactivado`,
+      );
     }
   }
 }

@@ -7,7 +7,9 @@ export const SAMPLE_ARQUITECTURA_RESIDENTIAL_CLIENT = {
   fullName: seedPrueba('Luis Herrera Campos'),
   primaryPhone: '987112200',
   primaryEmail: 'luis.herrera.prueba@ejemplo.com',
-  notes: seedPrueba('Cliente residencial demo. Proyecto vivienda unifamiliar en etapa de obra.'),
+  notes: seedPrueba(
+    'Cliente residencial demo. Proyecto vivienda unifamiliar en etapa de obra.',
+  ),
 };
 
 export const SAMPLE_ARQUITECTURA_CORPORATE_CLIENT = {
@@ -17,7 +19,9 @@ export const SAMPLE_ARQUITECTURA_CORPORATE_CLIENT = {
   legalRepresentativePosition: 'Directora General',
   primaryPhone: '014567890',
   primaryEmail: 'proyectos.prueba@cmpacifico.ejemplo.com',
-  notes: seedPrueba('Cliente institucional demo. Ampliación clínica ambulatoria.'),
+  notes: seedPrueba(
+    'Cliente institucional demo. Ampliación clínica ambulatoria.',
+  ),
 };
 
 export const ARQUITECTURA_DEMO_PROJECT_CODES = {

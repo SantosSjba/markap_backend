@@ -5,8 +5,12 @@
  * Uso: pnpm run prisma:migrate:interior-budgets
  */
 import { PrismaClient } from '@prisma/client';
-import { computeLineItemPricing } from '../../src/domain/interior-project-budget/interior-project-budget-calculations';
-import { getProjectBudgetPriceTotal } from '../../src/infrastructure/database/prisma/helpers/project-budget-query.helper';
+import { computeLineItemPricing } from '../../src/shared/domain/budgets/project-budget-calculations';
+import { getProjectBudgetPriceTotal } from '../../src/shared/infrastructure/database/prisma/helpers/project-budget-query.helper';
+import { createScriptLogger } from '../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger(
+  'Script:migrate-interior-budgets-to-project-budget',
+);
 
 const prisma = new PrismaClient();
 
@@ -16,14 +20,24 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function sectionName(levelName: string, envName: string, levelCount: number, envCount: number): string {
-  if (levelCount === 1 && envCount === 1) return levelName.trim() || envName.trim();
+function sectionName(
+  levelName: string,
+  envName: string,
+  levelCount: number,
+  envCount: number,
+): string {
+  if (levelCount === 1 && envCount === 1)
+    return levelName.trim() || envName.trim();
   if (envCount === 1) return levelName.trim();
-  if (levelName.trim().toLowerCase() === envName.trim().toLowerCase()) return levelName.trim();
+  if (levelName.trim().toLowerCase() === envName.trim().toLowerCase())
+    return levelName.trim();
   return `${levelName.trim()} — ${envName.trim()}`;
 }
 
-function lineDescription(categoryName: string, itemDescription: string): string {
+function lineDescription(
+  categoryName: string,
+  itemDescription: string,
+): string {
   const cat = categoryName.trim();
   const desc = itemDescription.trim();
   if (!cat || cat.toLowerCase() === 'general' || cat === desc) return desc;
@@ -35,7 +49,9 @@ async function migrateProjectBudgets(projectId: string): Promise<{
   skipped: number;
   lineItems: number;
 }> {
-  const existingSections = await prisma.interiorProjectSection.count({ where: { projectId } });
+  const existingSections = await prisma.interiorProjectSection.count({
+    where: { projectId },
+  });
   if (existingSections > 0) {
     return { migrated: 0, skipped: 1, lineItems: 0 };
   }
@@ -65,11 +81,14 @@ async function migrateProjectBudgets(projectId: string): Promise<{
 
   const approved = budgets.find((b) => b.status === 'APPROVED');
   const selected = approved ?? budgets[0];
-  const project = await prisma.interiorProject.findUnique({ where: { id: projectId } });
+  const project = await prisma.interiorProject.findUnique({
+    where: { id: projectId },
+  });
   if (!project) return { migrated: 0, skipped: 1, lineItems: 0 };
 
   const utilityPct = num(project.defaultUtilityPct) || 20;
-  const igvPct = num(project.defaultIgvPct) || num(selected.defaultIgvPct) || 18;
+  const igvPct =
+    num(project.defaultIgvPct) || num(selected.defaultIgvPct) || 18;
 
   let sectionOrder = 0;
   let lineItems = 0;
@@ -81,7 +100,12 @@ async function migrateProjectBudgets(projectId: string): Promise<{
         const section = await prisma.interiorProjectSection.create({
           data: {
             projectId,
-            name: sectionName(level.name, env.name, levelCount, level.environments.length),
+            name: sectionName(
+              level.name,
+              env.name,
+              levelCount,
+              level.environments.length,
+            ),
             sortOrder: sectionOrder++,
           },
         });
@@ -89,7 +113,8 @@ async function migrateProjectBudgets(projectId: string): Promise<{
         let itemOrder = 0;
         for (const category of env.categories) {
           for (const item of category.items) {
-            const budgetedCost = Math.round(num(item.quantity) * num(item.unitPrice) * 100) / 100;
+            const budgetedCost =
+              Math.round(num(item.quantity) * num(item.unitPrice) * 100) / 100;
             await prisma.interiorProjectLineItem.create({
               data: {
                 sectionId: section.id,
@@ -118,7 +143,10 @@ async function migrateProjectBudgets(projectId: string): Promise<{
 }
 
 async function main() {
-  console.log('\n🔄 Migrando InteriorBudget → presupuesto por proyecto...\n');
+  logger.info(
+    { event: 'migration.progress' },
+    '\n🔄 Migrando InteriorBudget → presupuesto por proyecto...\n',
+  );
 
   const projects = await prisma.interiorProject.findMany({
     where: { deletedAt: null },
@@ -132,7 +160,9 @@ async function main() {
   let newGrandAfter = 0;
 
   for (const project of projects) {
-    const legacyCount = await (prisma as any).interiorBudget.count({ where: { projectId: project.id } });
+    const legacyCount = await (prisma as any).interiorBudget.count({
+      where: { projectId: project.id },
+    });
     if (!legacyCount) continue;
 
     const ref = await (prisma as any).interiorBudget.findFirst({
@@ -152,25 +182,49 @@ async function main() {
       migratedProjects++;
       totalLineItems += result.lineItems;
       newGrandAfter += await getProjectBudgetPriceTotal(prisma, project.id);
-      console.log(`   ✅ ${project.code} — ${result.lineItems} partidas`);
+      logger.info(
+        { event: 'migration.progress' },
+        `   ✅ ${project.code} — ${result.lineItems} partidas`,
+      );
     } else if (result.skipped) {
       skippedProjects++;
-      console.log(`   ⏭️  ${project.code} — ya tiene secciones`);
+      logger.info(
+        { event: 'migration.progress' },
+        `   ⏭️  ${project.code} — ya tiene secciones`,
+      );
     }
   }
 
-  console.log('\n📊 Resumen');
-  console.log(`   Proyectos migrados: ${migratedProjects}`);
-  console.log(`   Proyectos omitidos: ${skippedProjects}`);
-  console.log(`   Partidas creadas:   ${totalLineItems}`);
-  console.log(`   Total legacy (ref): S/ ${legacyGrandBefore.toFixed(2)}`);
-  console.log(`   Total nuevo modelo: S/ ${newGrandAfter.toFixed(2)}`);
-  console.log('\n✅ Migración completada.\n');
+  logger.info({ event: 'migration.progress' }, '\n📊 Resumen');
+  logger.info(
+    { event: 'migration.progress' },
+    `   Proyectos migrados: ${migratedProjects}`,
+  );
+  logger.info(
+    { event: 'migration.progress' },
+    `   Proyectos omitidos: ${skippedProjects}`,
+  );
+  logger.info(
+    { event: 'migration.progress' },
+    `   Partidas creadas:   ${totalLineItems}`,
+  );
+  logger.info(
+    { event: 'migration.progress' },
+    `   Total legacy (ref): S/ ${legacyGrandBefore.toFixed(2)}`,
+  );
+  logger.info(
+    { event: 'migration.progress' },
+    `   Total nuevo modelo: S/ ${newGrandAfter.toFixed(2)}`,
+  );
+  logger.info({ event: 'migration.progress' }, '\n✅ Migración completada.\n');
 }
 
 main()
   .catch((err) => {
-    console.error(err);
+    logger.error(
+      { event: 'migration.failed', err: err },
+      'Operación del script fallida',
+    );
     process.exit(1);
   })
   .finally(async () => {

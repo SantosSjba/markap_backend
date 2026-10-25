@@ -3,7 +3,8 @@ export const SAMPLE_PRODUCCION_RESIDENTIAL_CLIENT = {
   documentNumber: '45892136',
   primaryEmail: 'rios.muebles@example.com',
   primaryPhone: '+51 987 654 321',
-  notes: 'Cliente residencial demo — muebles a medida para comedor y dormitorio.',
+  notes:
+    'Cliente residencial demo — muebles a medida para comedor y dormitorio.',
 } as const;
 
 export const SAMPLE_PRODUCCION_CORPORATE_CLIENT = {

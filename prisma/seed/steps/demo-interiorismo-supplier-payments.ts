@@ -2,9 +2,14 @@ import { Prisma } from '@prisma/client';
 import { HORTENSIAS_PROJECT_CODE } from '../data/sample-interiorismo-hortensias';
 import { INTERIORISMO_APPLICATION_SLUG } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-interiorismo-supplier-payments');
 
 /** Abonos demo al proveedor (partidas con costo real en Hortensias). */
-export async function seedHortensiasSupplierPayments(prisma: SeedDb, appIdBySlug: Record<string, string>) {
+export async function seedHortensiasSupplierPayments(
+  prisma: SeedDb,
+  appIdBySlug: Record<string, string>,
+) {
   const interiorAppId = appIdBySlug[INTERIORISMO_APPLICATION_SLUG];
   if (!interiorAppId) return;
 
@@ -44,6 +49,9 @@ export async function seedHortensiasSupplierPayments(prisma: SeedDb, appIdBySlug
   }
 
   if (created > 0) {
-    console.log(`   ✅ Abonos proveedor demo Hortensias (${created} partidas)`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Abonos proveedor demo Hortensias (${created} partidas)`,
+    );
   }
 }

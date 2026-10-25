@@ -1,6 +1,10 @@
 import { Prisma } from '@prisma/client';
 import { seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger(
+  'Script:demo-arquitectura-project-budget-seed',
+);
 
 type DemoLineItem = {
   sortOrder: number;
@@ -92,7 +96,9 @@ async function seedProjectSections(
   projectId: string,
   sections: DemoSection[],
 ): Promise<void> {
-  const existing = await prisma.arquitecturaProjectSection.count({ where: { projectId } });
+  const existing = await prisma.arquitecturaProjectSection.count({
+    where: { projectId },
+  });
   if (existing > 0) return;
 
   for (const section of sections) {
@@ -124,5 +130,8 @@ export async function seedArquitecturaDemoProjectBudgets(
 ): Promise<void> {
   await seedProjectSections(prisma, residentialProjectId, RESIDENTIAL_SECTIONS);
   await seedProjectSections(prisma, commercialProjectId, COMMERCIAL_SECTIONS);
-  console.log('   ✅ Presupuestos por proyecto demo arquitectura');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ Presupuestos por proyecto demo arquitectura',
+  );
 }

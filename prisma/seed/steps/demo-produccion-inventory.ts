@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { PRODUCCION_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-produccion-inventory');
 
 /**
  * Materiales de inventario demo y movimientos iniciales de kardex.
@@ -11,17 +13,28 @@ export async function seedProduccionInventory(
 ): Promise<void> {
   const appId = appIdBySlug[PRODUCCION_APPLICATION_SLUG];
   if (!appId) {
-    console.log('\n⚠️  produccion app not found — skipping inventory seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  produccion app not found — skipping inventory seed',
+    );
     return;
   }
 
-  const count = await prisma.produccionMaterial.count({ where: { applicationId: appId } });
+  const count = await prisma.produccionMaterial.count({
+    where: { applicationId: appId },
+  });
   if (count > 0) {
-    console.log('\n📦 Inventario producción ya tiene materiales — omitiendo seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n📦 Inventario producción ya tiene materiales — omitiendo seed',
+    );
     return;
   }
 
-  console.log('\n📦 Creando materiales de inventario demo…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📦 Creando materiales de inventario demo…',
+  );
 
   const materials = [
     {
@@ -99,5 +112,8 @@ export async function seedProduccionInventory(
     });
   }
 
-  console.log(`   ✅ ${materials.length} materiales demo con movimiento inicial`);
+  logger.info(
+    { event: 'seed.progress' },
+    `   ✅ ${materials.length} materiales demo con movimiento inicial`,
+  );
 }

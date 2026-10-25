@@ -1,24 +1,37 @@
-import 'dotenv/config';
-// Calendar math and legacy `setHours` must use Peru time (no DST).
-process.env.TZ = process.env.TZ || 'America/Lima';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
-import { IoAdapter } from '@nestjs/platform-socket.io';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/filters';
-import { validationExceptionFactory } from './common/pipes/validation-messages';
+import 'dotenv/config';
 import { mkdir } from 'fs/promises';
+import { Logger, PinoLogger } from 'nestjs-pino';
+import { cleanupOpenApiDoc } from 'nestjs-zod';
 import { join } from 'path';
+import pino from 'pino';
+import { AppModule } from './app.module';
+import { createLoggerOptions } from './shared/infrastructure/logging/logger.config';
+import { AllExceptionsFilter } from './shared/presentation/filters/http-exception.filter';
+import { ZodValidationPipe } from './shared/presentation/pipes/zod-validation.pipe';
+// Calendar math and legacy `setHours` must use Peru time (no DST).
+process.env.TZ = process.env.TZ || 'America/Lima';
 
 async function bootstrap() {
   // Ensure base uploads directory exists before any request is served
   const uploadsDir = join(process.cwd(), 'uploads');
   await mkdir(uploadsDir, { recursive: true });
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+    abortOnError: false,
+  });
+  app.useLogger(app.get(Logger));
+  app.enableShutdownHooks();
+  app.set(
+    'trust proxy',
+    app.get(ConfigService).getOrThrow<string | boolean>('http.trustProxy'),
+  );
 
   app.useWebSocketAdapter(new IoAdapter(app));
 
@@ -39,20 +52,17 @@ async function bootstrap() {
   app.enableCors({
     origin: allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins,
     credentials: true,
+    exposedHeaders: [
+      'X-Request-Id',
+      'Retry-After',
+      'X-RateLimit-Limit',
+      'X-RateLimit-Remaining',
+      'X-RateLimit-Reset',
+    ],
   });
 
   // Global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-      exceptionFactory: validationExceptionFactory,
-    }),
-  );
+  app.useGlobalPipes(new ZodValidationPipe());
 
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
@@ -76,7 +86,7 @@ async function bootstrap() {
     .addTag('Health', 'Endpoints de estado del sistema')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));
 
   // Scalar API Reference - Modern API documentation UI
   app.use(
@@ -92,15 +102,38 @@ async function bootstrap() {
     jsonDocumentUrl: '/api-json',
   });
 
-  const port = process.env.PORT ?? 3000;
+  const port = Number(process.env.PORT ?? 3000);
   await app.listen(port, process.env.HOST || '0.0.0.0');
 
-  console.log(`🚀 Application is running on: http://localhost:${port}/api`);
-  console.log(`📚 API Documentation (Scalar): http://localhost:${port}/docs`);
-  console.log(`📄 Swagger UI: http://localhost:${port}/api-docs`);
+  const logger = await app.resolve(PinoLogger);
+  logger.setContext('Bootstrap');
+  logger.info(
+    {
+      event: 'application.started',
+      port,
+      apiPrefix: '/api',
+      documentation: {
+        scalar: '/docs',
+        swagger: '/api-docs',
+        openapi: '/api-json',
+      },
+    },
+    'API iniciada',
+  );
 }
 
 bootstrap().catch((error: unknown) => {
-  console.error('No se pudo iniciar la API', error);
+  const logger = pino(
+    createLoggerOptions({
+      ...process.env,
+      LOG_PRETTY: 'false',
+      LOG_LEVEL: 'fatal',
+    }),
+    pino.destination({ dest: 2, sync: true }),
+  );
+  logger.fatal(
+    { event: 'application.startup.failed', context: 'Bootstrap', err: error },
+    'No se pudo iniciar la API',
+  );
   process.exit(1);
 });

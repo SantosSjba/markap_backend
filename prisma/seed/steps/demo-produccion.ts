@@ -7,8 +7,15 @@ import { seedProduccionInventory } from './demo-produccion-inventory';
 import { seedProduccionPurchases } from './demo-produccion-purchases';
 import { seedProduccionWorkOrders } from './demo-produccion-work-orders';
 import { seedProduccionSales } from './demo-produccion-sales';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-produccion');
 
-type AdminUser = { id: string; email: string; firstName: string; lastName: string };
+type AdminUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+};
 
 /**
  * Datos demo del módulo Producción (sin menús; ejecutar seedProduccionMenus aparte).
@@ -19,7 +26,7 @@ export async function seedDemoProduccion(
   appIdBySlug: Record<string, string>,
   adminUser: AdminUser,
 ): Promise<void> {
-  console.log('\n🏭 Demo Producción de muebles...');
+  logger.info({ event: 'seed.progress' }, '\n🏭 Demo Producción de muebles...');
   await seedProduccionConfig(prisma, appIdBySlug);
   await seedProduccionClients(prisma, appIdBySlug, adminUser);
   await seedProduccionFurniture(prisma, appIdBySlug);
@@ -28,5 +35,5 @@ export async function seedDemoProduccion(
   await seedProduccionPurchases(prisma, appIdBySlug);
   await seedProduccionWorkOrders(prisma, appIdBySlug);
   await seedProduccionSales(prisma, appIdBySlug);
-  console.log('   ✅ Demo Producción completado');
+  logger.info({ event: 'seed.progress' }, '   ✅ Demo Producción completado');
 }

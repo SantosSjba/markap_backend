@@ -4,11 +4,13 @@ import {
   VENTAS_PARENT_MENUS,
 } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:menus-ventas');
 
 const DEPRECATED_MENU_PATHS = ['/ventas/pagos', '/ventas/costos-documentacion'];
 
 export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
-  console.log('\n📂 Creating menus for Ventas...');
+  logger.info({ event: 'seed.progress' }, '\n📂 Creating menus for Ventas...');
   const ventasApp = await prisma.application.findUnique({
     where: { slug: VENTAS_APPLICATION_SLUG },
   });
@@ -38,14 +40,26 @@ export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
         },
       });
       ventasMenuIds[m.label] = menu.id;
-      console.log(`   ✅ Ventas menu "${m.label}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Ventas menu "${m.label}" created`,
+      );
     } else {
       await prisma.menu.update({
         where: { id: existingMenu.id },
-        data: { label: m.label, icon: m.icon, path: m.path, order: m.order, isActive: true },
+        data: {
+          label: m.label,
+          icon: m.icon,
+          path: m.path,
+          order: m.order,
+          isActive: true,
+        },
       });
       ventasMenuIds[m.label] = existingMenu.id;
-      console.log(`   ✅ Ventas menu "${m.label}" updated`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Ventas menu "${m.label}" updated`,
+      );
     }
   }
 
@@ -71,7 +85,10 @@ export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
           isActive: true,
         },
       });
-      console.log(`   ✅ Ventas submenu "${m.label}" created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Ventas submenu "${m.label}" created`,
+      );
     } else {
       await prisma.menu.update({
         where: { id: existing.id },
@@ -83,7 +100,10 @@ export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
           isActive: true,
         },
       });
-      console.log(`   ✅ Ventas submenu "${m.label}" updated`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Ventas submenu "${m.label}" updated`,
+      );
     }
   }
 
@@ -95,7 +115,10 @@ export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
     data: { isActive: false },
   });
   if (deactivated.count > 0) {
-    console.log(`   ✅ ${deactivated.count} menú(es) obsoleto(s) desactivado(s)`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ ${deactivated.count} menú(es) obsoleto(s) desactivado(s)`,
+    );
   }
 
   const finanzasParent = await prisma.menu.findFirst({
@@ -106,6 +129,9 @@ export async function seedVentasMenus(prisma: SeedDb): Promise<void> {
       where: { id: finanzasParent.id },
       data: { isActive: false },
     });
-    console.log('   ✅ Menú padre "Finanzas" desactivado');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✅ Menú padre "Finanzas" desactivado',
+    );
   }
 }

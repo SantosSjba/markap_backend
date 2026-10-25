@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { PRODUCCION_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-produccion-purchases');
 
 /**
  * Proveedores demo, vínculos con materiales y una OC de ejemplo.
@@ -11,17 +13,28 @@ export async function seedProduccionPurchases(
 ): Promise<void> {
   const appId = appIdBySlug[PRODUCCION_APPLICATION_SLUG];
   if (!appId) {
-    console.log('\n⚠️  produccion app not found — skipping purchases seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  produccion app not found — skipping purchases seed',
+    );
     return;
   }
 
-  const supplierCount = await prisma.produccionSupplier.count({ where: { applicationId: appId } });
+  const supplierCount = await prisma.produccionSupplier.count({
+    where: { applicationId: appId },
+  });
   if (supplierCount > 0) {
-    console.log('\n🛒 Compras producción ya sembradas — omitiendo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n🛒 Compras producción ya sembradas — omitiendo',
+    );
     return;
   }
 
-  console.log('\n🛒 Creando proveedores y OC demo…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🛒 Creando proveedores y OC demo…',
+  );
 
   const tableros = await prisma.produccionSupplier.create({
     data: {
@@ -118,8 +131,14 @@ export async function seedProduccionPurchases(
       },
     });
 
-    console.log(`   ✅ 2 proveedores, vínculos y OC demo (${order.code} enviada)`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ 2 proveedores, vínculos y OC demo (${order.code} enviada)`,
+    );
   } else {
-    console.log('   ✅ 2 proveedores demo (sin materiales para OC)');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✅ 2 proveedores demo (sin materiales para OC)',
+    );
   }
 }

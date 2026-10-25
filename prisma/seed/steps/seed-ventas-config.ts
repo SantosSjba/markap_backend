@@ -1,10 +1,17 @@
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:seed-ventas-config');
 
 const PIPELINE_STAGES = [
   { code: 'SEPARATION', label: 'Separación', sortOrder: 0, isActive: true },
   { code: 'ARRAS', label: 'Contrato de arras', sortOrder: 1, isActive: true },
   { code: 'MINUTA', label: 'Minuta', sortOrder: 2, isActive: true },
-  { code: 'PUBLIC_DEED', label: 'Escritura pública', sortOrder: 3, isActive: true },
+  {
+    code: 'PUBLIC_DEED',
+    label: 'Escritura pública',
+    sortOrder: 3,
+    isActive: true,
+  },
 ] as const;
 
 /**
@@ -17,7 +24,10 @@ export async function seedVentasConfig(
 ): Promise<void> {
   const ventasAppId = appIdBySlug['ventas'];
   if (!ventasAppId) {
-    console.log('\n⚠️  Ventas app not found — skipping seed-ventas-config');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Ventas app not found — skipping seed-ventas-config',
+    );
     return;
   }
 
@@ -33,7 +43,10 @@ export async function seedVentasConfig(
       isActive: s.isActive,
     })),
   });
-  console.log('\n   ✓ ventas-config: etapas de pipeline (Separación → Escritura pública)');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n   ✓ ventas-config: etapas de pipeline (Separación → Escritura pública)',
+  );
 
   // Migrar procesos con etapas antiguas del embudo CRM previo
   await prisma.$executeRaw`
@@ -54,7 +67,9 @@ export async function seedVentasConfig(
     where: { applicationId: ventasAppId, seriesKey: 'SALE_PROCESS' },
   });
   if (nSeries === 0) {
-    const processCount = await prisma.saleProcess.count({ where: { applicationId: ventasAppId } });
+    const processCount = await prisma.saleProcess.count({
+      where: { applicationId: ventasAppId },
+    });
     await prisma.ventasNumberingSeries.create({
       data: {
         applicationId: ventasAppId,
@@ -63,8 +78,14 @@ export async function seedVentasConfig(
         lastNumber: processCount,
       },
     });
-    console.log('   ✓ ventas-config: serie SALE_PROCESS (prefijo VNT-PRC, correlativo sincronizado)');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ ventas-config: serie SALE_PROCESS (prefijo VNT-PRC, correlativo sincronizado)',
+    );
   } else {
-    console.log('   ✓ ventas-config: numeración ya existe — skip');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ ventas-config: numeración ya existe — skip',
+    );
   }
 }

@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { PRODUCCION_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-produccion-work-orders');
 
 const STAGES = [
   { stageKey: 'planificacion', label: 'Planificación', sortOrder: 0 },
@@ -18,13 +20,21 @@ export async function seedProduccionWorkOrders(
 ): Promise<void> {
   const appId = appIdBySlug[PRODUCCION_APPLICATION_SLUG];
   if (!appId) {
-    console.log('\n⚠️  produccion app not found — skipping work orders seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  produccion app not found — skipping work orders seed',
+    );
     return;
   }
 
-  const count = await prisma.produccionWorkOrder.count({ where: { applicationId: appId } });
+  const count = await prisma.produccionWorkOrder.count({
+    where: { applicationId: appId },
+  });
   if (count > 0) {
-    console.log('\n🔧 OT producción ya sembradas — omitiendo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n🔧 OT producción ya sembradas — omitiendo',
+    );
     return;
   }
 
@@ -35,7 +45,10 @@ export async function seedProduccionWorkOrders(
     where: { applicationId: appId, code: 'MUE-ESC-001' },
   });
   if (!mesa) {
-    console.log('\n⚠️  Sin muebles demo — omitiendo seed OT');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Sin muebles demo — omitiendo seed OT',
+    );
     return;
   }
 
@@ -44,7 +57,10 @@ export async function seedProduccionWorkOrders(
     orderBy: { createdAt: 'asc' },
   });
 
-  console.log('\n🔧 Creando órdenes de trabajo demo…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🔧 Creando órdenes de trabajo demo…',
+  );
 
   const year = new Date().getFullYear();
 
@@ -103,8 +119,12 @@ export async function seedProduccionWorkOrders(
           label: s.label,
           sortOrder: s.sortOrder,
           status: i === 0 ? 'DONE' : i === 1 ? 'IN_PROGRESS' : 'PENDING',
-          startedAt: i <= 1 ? new Date(Date.now() - (2 - i) * 24 * 60 * 60 * 1000) : null,
-          completedAt: i === 0 ? new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) : null,
+          startedAt:
+            i <= 1
+              ? new Date(Date.now() - (2 - i) * 24 * 60 * 60 * 1000)
+              : null,
+          completedAt:
+            i === 0 ? new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) : null,
           assignee: i === 1 ? seedPrueba('Operario corte') : null,
         })),
       },
@@ -125,7 +145,9 @@ export async function seedProduccionWorkOrders(
         startedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
         completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         lines: {
-          create: [{ furnitureId: escritorio.id, quantity: new Prisma.Decimal(1) }],
+          create: [
+            { furnitureId: escritorio.id, quantity: new Prisma.Decimal(1) },
+          ],
         },
         stages: {
           create: STAGES.map((s) => ({
@@ -141,5 +163,8 @@ export async function seedProduccionWorkOrders(
     });
   }
 
-  console.log(`   ✅ 3 OT demo (pendiente, en proceso ${wo2.code}, terminada)`);
+  logger.info(
+    { event: 'seed.progress' },
+    `   ✅ 3 OT demo (pendiente, en proceso ${wo2.code}, terminada)`,
+  );
 }

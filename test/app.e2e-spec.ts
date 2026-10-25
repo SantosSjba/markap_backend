@@ -1,8 +1,8 @@
-import type { Server } from 'node:http';
-import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import type { Server } from 'node:http';
 import request from 'supertest';
-import { HealthController } from '../src/infrastructure/http/controllers/health.controller';
+import { HealthController } from '../src/shared/presentation/controllers/health.controller';
 
 describe('Health HTTP', () => {
   let app: INestApplication<Server>;
@@ -13,7 +13,7 @@ describe('Health HTTP', () => {
     }).compile();
     app = module.createNestApplication();
     app.setGlobalPrefix('api');
-    await app.init();
+    await app.listen(0, '127.0.0.1');
   });
 
   afterAll(async () => {

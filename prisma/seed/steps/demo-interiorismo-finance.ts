@@ -1,34 +1,57 @@
 import { Prisma } from '@prisma/client';
 import { INTERIORISMO_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-interiorismo-finance');
 
 const DEMO_PROJECT_CODE = 'INT-REM-LIM-001';
 
 /**
  * Programación de cobranzas y pagos demo (proyecto remodelación).
  */
-export async function seedInteriorismoFinance(prisma: SeedDb, appIdBySlug: Record<string, string>): Promise<void> {
+export async function seedInteriorismoFinance(
+  prisma: SeedDb,
+  appIdBySlug: Record<string, string>,
+): Promise<void> {
   const interiorAppId = appIdBySlug[INTERIORISMO_APPLICATION_SLUG];
   if (!interiorAppId) {
-    console.log('\n⚠️  interiorismo app not found — skipping finance seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  interiorismo app not found — skipping finance seed',
+    );
     return;
   }
 
   const proj = await prisma.interiorProject.findFirst({
-    where: { applicationId: interiorAppId, code: DEMO_PROJECT_CODE, deletedAt: null },
+    where: {
+      applicationId: interiorAppId,
+      code: DEMO_PROJECT_CODE,
+      deletedAt: null,
+    },
   });
   if (!proj) {
-    console.log('\n⚠️  Proyecto demo INT-REM-LIM-001 no encontrado — omitiendo finanzas');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Proyecto demo INT-REM-LIM-001 no encontrado — omitiendo finanzas',
+    );
     return;
   }
 
-  const nSch = await prisma.interiorFinanceIncomeSchedule.count({ where: { projectId: proj.id } });
+  const nSch = await prisma.interiorFinanceIncomeSchedule.count({
+    where: { projectId: proj.id },
+  });
   if (nSch > 0) {
-    console.log('\n💰 Finanzas demo ya existe — omitiendo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n💰 Finanzas demo ya existe — omitiendo',
+    );
     return;
   }
 
-  console.log('\n💰 Sembrando finanzas (adelantos, cuotas, pagos)…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n💰 Sembrando finanzas (adelantos, cuotas, pagos)…',
+  );
 
   const adv = await prisma.interiorFinanceIncomeSchedule.create({
     data: {
@@ -109,5 +132,5 @@ export async function seedInteriorismoFinance(prisma: SeedDb, appIdBySlug: Recor
     },
   });
 
-  console.log('   ✅ Finanzas demo lista');
+  logger.info({ event: 'seed.progress' }, '   ✅ Finanzas demo lista');
 }

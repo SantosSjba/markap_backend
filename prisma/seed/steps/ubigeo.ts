@@ -1,13 +1,17 @@
 import { DEPARTMENTS, DISTRICTS, PROVINCES } from '../data';
 import { UBIGEO_OTHER_SEED } from '../data/ubigeo-other';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:ubigeo');
 
 export async function seedUbigeo(prisma: SeedDb): Promise<void> {
-  console.log('\n🗺️ Creating ubigeo (all Peru)...');
+  logger.info({ event: 'seed.progress' }, '\n🗺️ Creating ubigeo (all Peru)...');
   // Keep transactions small to avoid timeout/rollback errors in remote MySQL.
   const CHUNK = 100;
 
-  async function bulkUpsertDepartments(rows: readonly { id: string; name: string }[]) {
+  async function bulkUpsertDepartments(
+    rows: readonly { id: string; name: string }[],
+  ) {
     for (let i = 0; i < rows.length; i += CHUNK) {
       const chunk = rows.slice(i, i + CHUNK);
       for (const row of chunk) {
@@ -29,7 +33,11 @@ export async function seedUbigeo(prisma: SeedDb): Promise<void> {
         await prisma.province.upsert({
           where: { id: row.id },
           update: { departmentId: row.departmentId, name: row.name },
-          create: { id: row.id, departmentId: row.departmentId, name: row.name },
+          create: {
+            id: row.id,
+            departmentId: row.departmentId,
+            name: row.name,
+          },
         });
       }
     }
@@ -47,18 +55,30 @@ export async function seedUbigeo(prisma: SeedDb): Promise<void> {
           create: { id: row.id, provinceId: row.provinceId, name: row.name },
         });
       }
-      console.log(`   ... districts ${i + 1}–${Math.min(i + CHUNK, rows.length)} done`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ... districts ${i + 1}–${Math.min(i + CHUNK, rows.length)} done`,
+      );
     }
   }
 
   await bulkUpsertDepartments(DEPARTMENTS);
-  console.log(`   ✅ ${DEPARTMENTS.length} departments`);
+  logger.info(
+    { event: 'seed.progress' },
+    `   ✅ ${DEPARTMENTS.length} departments`,
+  );
 
   await bulkUpsertProvinces(PROVINCES);
-  console.log(`   ✅ ${PROVINCES.length} provinces`);
+  logger.info(
+    { event: 'seed.progress' },
+    `   ✅ ${PROVINCES.length} provinces`,
+  );
 
   await bulkUpsertDistricts(DISTRICTS);
-  console.log(`   ✅ ${DISTRICTS.length} districts`);
+  logger.info(
+    { event: 'seed.progress' },
+    `   ✅ ${DISTRICTS.length} districts`,
+  );
 
   const o = UBIGEO_OTHER_SEED;
   await prisma.department.upsert({
@@ -76,5 +96,8 @@ export async function seedUbigeo(prisma: SeedDb): Promise<void> {
     update: { provinceId: o.district.provinceId, name: o.district.name },
     create: o.district,
   });
-  console.log(`   ✅ Ubigeo "${o.department.name}" (extranjero / sin ubigeo)`);
+  logger.info(
+    { event: 'seed.progress' },
+    `   ✅ Ubigeo "${o.department.name}" (extranjero / sin ubigeo)`,
+  );
 }

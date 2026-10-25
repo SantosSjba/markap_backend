@@ -1,7 +1,10 @@
 export const INTERIORISMO_APPLICATION_SLUG = 'interiorismo';
 
 /** Retirados del sidebar: presupuesto, compras y liquidación viven en el detalle de Proyecto. */
-export const INTERIORISMO_OBSOLETE_PARENT_LABELS = ['Presupuestos', 'Finanzas'] as const;
+export const INTERIORISMO_OBSOLETE_PARENT_LABELS = [
+  'Presupuestos',
+  'Finanzas',
+] as const;
 
 export const INTERIORISMO_OBSOLETE_MENU_PATH_PREFIXES = [
   '/interiorismo/finanzas',
@@ -13,15 +16,40 @@ export const INTERIORISMO_OBSOLETE_MENU_PATH_PREFIXES = [
  * Cliente → Proyecto (presupuesto/compras/liquidación) → Materiales → Ejecución → Calendario → Documentos → Reportes → Config
  */
 export const INTERIORISMO_PARENT_MENUS = [
-  { label: 'Dashboard', icon: 'layout-dashboard', path: '/interiorismo', order: 0 },
+  {
+    label: 'Dashboard',
+    icon: 'layout-dashboard',
+    path: '/interiorismo',
+    order: 0,
+  },
   { label: 'Clientes', icon: 'users', path: null, order: 1 },
   { label: 'Proyectos', icon: 'folder-kanban', path: null, order: 2 },
   { label: 'Materiales', icon: 'layers', path: null, order: 3 },
-  { label: 'Ejecución', icon: 'flame', path: '/interiorismo/ejecucion', order: 4 },
-  { label: 'Calendario', icon: 'calendar', path: '/interiorismo/calendario', order: 5 },
+  {
+    label: 'Ejecución',
+    icon: 'flame',
+    path: '/interiorismo/ejecucion',
+    order: 4,
+  },
+  {
+    label: 'Calendario',
+    icon: 'calendar',
+    path: '/interiorismo/calendario',
+    order: 5,
+  },
   { label: 'Documentos', icon: 'files', path: null, order: 6 },
-  { label: 'Reportes', icon: 'bar-chart', path: '/interiorismo/reportes', order: 7 },
-  { label: 'Configuración', icon: 'settings', path: '/interiorismo/configuracion', order: 8 },
+  {
+    label: 'Reportes',
+    icon: 'bar-chart',
+    path: '/interiorismo/reportes',
+    order: 7,
+  },
+  {
+    label: 'Configuración',
+    icon: 'settings',
+    path: '/interiorismo/configuracion',
+    order: 8,
+  },
 ];
 
 export const INTERIORISMO_CHILD_MENUS = [

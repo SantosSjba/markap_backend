@@ -7,8 +7,15 @@ import {
 } from '../data';
 import type { SeedDb } from '../types';
 import { seedArquitecturaDemoProjectBudgets } from './demo-arquitectura-project-budget-seed';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-arquitectura-projects');
 
-type AdminUser = { id: string; email: string; firstName: string; lastName: string };
+type AdminUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+};
 
 /**
  * Proyectos demo Arquitectura con documentos, pagos, hitos y presupuestos por sección.
@@ -20,7 +27,10 @@ export async function seedArquitecturaProjects(
 ): Promise<void> {
   const arquitecturaAppId = appIdBySlug[ARQUITECTURA_APPLICATION_SLUG];
   if (!arquitecturaAppId) {
-    console.log('\n⚠️  arquitectura app not found — skipping seed arquitectura projects');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  arquitectura app not found — skipping seed arquitectura projects',
+    );
     return;
   }
 
@@ -42,14 +52,24 @@ export async function seedArquitecturaProjects(
   });
 
   if (!residential || !corporate) {
-    console.log('\n⚠️  Arquitectura clients missing — run seed arquitectura clients first');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Arquitectura clients missing — run seed arquitectura clients first',
+    );
     return;
   }
 
-  console.log('\n📐 Creating Arquitectura sample agents & projects...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📐 Creating Arquitectura sample agents & projects...',
+  );
 
   let internalAgent = await prisma.agent.findFirst({
-    where: { applicationId: arquitecturaAppId, type: 'INTERNAL', userId: adminUser.id },
+    where: {
+      applicationId: arquitecturaAppId,
+      type: 'INTERNAL',
+      userId: adminUser.id,
+    },
   });
   if (!internalAgent) {
     internalAgent = await prisma.agent.create({
@@ -62,12 +82,19 @@ export async function seedArquitecturaProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Agente interno arquitectura');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✅ Agente interno arquitectura',
+    );
   }
 
   const designerName = seedPrueba('Valeria Soto Paredes');
   let designer = await prisma.agent.findFirst({
-    where: { applicationId: arquitecturaAppId, type: 'EXTERNAL', fullName: designerName },
+    where: {
+      applicationId: arquitecturaAppId,
+      type: 'EXTERNAL',
+      fullName: designerName,
+    },
   });
   if (!designer) {
     designer = await prisma.agent.create({
@@ -80,12 +107,16 @@ export async function seedArquitecturaProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Diseñadora exterior');
+    logger.info({ event: 'seed.progress' }, '   ✅ Diseñadora exterior');
   }
 
   const architectJrName = seedPrueba('Diego Ríos Montalvo');
   let architectJr = await prisma.agent.findFirst({
-    where: { applicationId: arquitecturaAppId, type: 'EXTERNAL', fullName: architectJrName },
+    where: {
+      applicationId: arquitecturaAppId,
+      type: 'EXTERNAL',
+      fullName: architectJrName,
+    },
   });
   if (!architectJr) {
     architectJr = await prisma.agent.create({
@@ -98,12 +129,16 @@ export async function seedArquitecturaProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Arquitecto Jr exterior');
+    logger.info({ event: 'seed.progress' }, '   ✅ Arquitecto Jr exterior');
   }
 
   const architectSrName = seedPrueba('Elena Vargas Quispe');
   let architectSr = await prisma.agent.findFirst({
-    where: { applicationId: arquitecturaAppId, type: 'EXTERNAL', fullName: architectSrName },
+    where: {
+      applicationId: arquitecturaAppId,
+      type: 'EXTERNAL',
+      fullName: architectSrName,
+    },
   });
   if (!architectSr) {
     architectSr = await prisma.agent.create({
@@ -116,12 +151,16 @@ export async function seedArquitecturaProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Arquitecto Sr exterior');
+    logger.info({ event: 'seed.progress' }, '   ✅ Arquitecto Sr exterior');
   }
 
   const supervisorName = seedPrueba('Miguel Ángel Cruz Vega');
   let supervisor = await prisma.agent.findFirst({
-    where: { applicationId: arquitecturaAppId, type: 'EXTERNAL', fullName: supervisorName },
+    where: {
+      applicationId: arquitecturaAppId,
+      type: 'EXTERNAL',
+      fullName: supervisorName,
+    },
   });
   if (!supervisor) {
     supervisor = await prisma.agent.create({
@@ -134,12 +173,19 @@ export async function seedArquitecturaProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Supervisor de obra exterior');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✅ Supervisor de obra exterior',
+    );
   }
 
   const commercialName = seedPrueba('Andrea Flores Méndez');
   let commercial = await prisma.agent.findFirst({
-    where: { applicationId: arquitecturaAppId, type: 'EXTERNAL', fullName: commercialName },
+    where: {
+      applicationId: arquitecturaAppId,
+      type: 'EXTERNAL',
+      fullName: commercialName,
+    },
   });
   if (!commercial) {
     commercial = await prisma.agent.create({
@@ -152,12 +198,16 @@ export async function seedArquitecturaProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Asesora comercial exterior');
+    logger.info({ event: 'seed.progress' }, '   ✅ Asesora comercial exterior');
   }
 
   const codeResidential = ARQUITECTURA_DEMO_PROJECT_CODES.residential;
   let projResidential = await prisma.arquitecturaProject.findFirst({
-    where: { applicationId: arquitecturaAppId, code: codeResidential, deletedAt: null },
+    where: {
+      applicationId: arquitecturaAppId,
+      code: codeResidential,
+      deletedAt: null,
+    },
   });
 
   if (!projResidential) {
@@ -175,7 +225,8 @@ export async function seedArquitecturaProjects(
         executionTimeNote: '120 DÍAS HÁBILES',
         areaSqm: 220,
         levelsCount: 2,
-        environmentsNote: 'Sala, comedor, cocina, 3 dormitorios, 2.5 baños, terraza y cochera.',
+        environmentsNote:
+          'Sala, comedor, cocina, 3 dormitorios, 2.5 baños, terraza y cochera.',
         startDate: new Date('2026-02-15'),
         estimatedEndDate: new Date('2026-10-30'),
         designerAgentId: designer.id,
@@ -235,14 +286,24 @@ export async function seedArquitecturaProjects(
         },
       },
     });
-    console.log(`   ✅ Proyecto "${projResidential.name}"`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Proyecto "${projResidential.name}"`,
+    );
   } else {
-    console.log('   ✓ Proyecto residencial demo ya existe');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Proyecto residencial demo ya existe',
+    );
   }
 
   const codeCommercial = ARQUITECTURA_DEMO_PROJECT_CODES.commercial;
   let projCommercial = await prisma.arquitecturaProject.findFirst({
-    where: { applicationId: arquitecturaAppId, code: codeCommercial, deletedAt: null },
+    where: {
+      applicationId: arquitecturaAppId,
+      code: codeCommercial,
+      deletedAt: null,
+    },
   });
 
   if (!projCommercial) {
@@ -259,7 +320,8 @@ export async function seedArquitecturaProjects(
         interventionLevel: 'I',
         areaSqm: 480,
         levelsCount: 1,
-        environmentsNote: '6 consultorios, sala de espera, recepción y baños accesibles.',
+        environmentsNote:
+          '6 consultorios, sala de espera, recepción y baños accesibles.',
         startDate: new Date('2026-07-01'),
         estimatedEndDate: new Date('2026-12-15'),
         designerAgentId: designer.id,
@@ -302,16 +364,31 @@ export async function seedArquitecturaProjects(
         },
       },
     });
-    console.log(`   ✅ Proyecto "${projCommercial.name}"`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Proyecto "${projCommercial.name}"`,
+    );
   } else {
-    console.log('   ✓ Proyecto institucional demo ya existe');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Proyecto institucional demo ya existe',
+    );
   }
 
-  await seedArquitecturaDemoProjectBudgets(prisma, projResidential!.id, projCommercial!.id);
+  await seedArquitecturaDemoProjectBudgets(
+    prisma,
+    projResidential!.id,
+    projCommercial!.id,
+  );
 
-  const projectCount = await prisma.arquitecturaProject.count({ where: { applicationId: arquitecturaAppId } });
+  const projectCount = await prisma.arquitecturaProject.count({
+    where: { applicationId: arquitecturaAppId },
+  });
   await prisma.arquitecturaNumberingSeries.updateMany({
-    where: { applicationId: arquitecturaAppId, seriesKey: 'ARQUITECTURA_PROJECT' },
+    where: {
+      applicationId: arquitecturaAppId,
+      seriesKey: 'ARQUITECTURA_PROJECT',
+    },
     data: { lastNumber: projectCount },
   });
 }

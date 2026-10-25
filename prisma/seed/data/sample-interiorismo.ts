@@ -7,7 +7,9 @@ export const SAMPLE_INTERIOR_RESIDENTIAL_CLIENT = {
   fullName: seedPrueba('Ana Torres Vidal'),
   primaryPhone: '987001122',
   primaryEmail: 'ana.torres.prueba@ejemplo.com',
-  notes: seedPrueba('Cliente residencial de ejemplo. Prefiere reunión en mañana.'),
+  notes: seedPrueba(
+    'Cliente residencial de ejemplo. Prefiere reunión en mañana.',
+  ),
 };
 
 export const SAMPLE_INTERIOR_CORPORATE_CLIENT = {
@@ -17,5 +19,7 @@ export const SAMPLE_INTERIOR_CORPORATE_CLIENT = {
   legalRepresentativePosition: 'Gerente General',
   primaryPhone: '014012300',
   primaryEmail: 'proyectos.prueba@oficinasdelsur.ejemplo.com',
-  notes: seedPrueba('Cliente corporativo de ejemplo. Contacto comercial vía email.'),
+  notes: seedPrueba(
+    'Cliente corporativo de ejemplo. Contacto comercial vía email.',
+  ),
 };

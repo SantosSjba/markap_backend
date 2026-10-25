@@ -1,0 +1,27 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { EntityNotFoundException } from '../../../../../shared/domain/exceptions/domain.exception';
+import type { RoleRepository } from '../../../domain/repositories/role.repository';
+
+import { ROLE_REPOSITORY } from '../../../domain/repositories/role.repository';
+
+export interface RevokeApplicationFromRoleInput {
+  roleId: string;
+  applicationId: string;
+}
+
+@Injectable()
+export class RevokeApplicationFromRoleUseCase {
+  constructor(
+    @Inject(ROLE_REPOSITORY)
+    private readonly roleRepository: RoleRepository,
+  ) {}
+
+  async execute(input: RevokeApplicationFromRoleInput): Promise<void> {
+    const role = await this.roleRepository.findById(input.roleId);
+    if (!role) throw new EntityNotFoundException('Role', input.roleId);
+    await this.roleRepository.revokeApplication(
+      input.roleId,
+      input.applicationId,
+    );
+  }
+}

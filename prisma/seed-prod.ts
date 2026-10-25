@@ -27,6 +27,8 @@ import {
   seedVentasFinanzas,
   seedVentasConfig,
 } from './seed/steps';
+import { createScriptLogger } from '../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:seed-prod');
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,8 +40,14 @@ async function main() {
     throw new Error('DATABASE_URL no está definida en .env');
   }
 
-  console.log('🌱 Seed PRODUCCIÓN (sin demo Alquileres / Interiorismo)\n');
-  console.log('   Conexión:', url.replace(/:[^:@/]+@/, ':****@').slice(0, 80) + '...\n');
+  logger.info(
+    { event: 'seed.progress' },
+    '🌱 Seed PRODUCCIÓN (sin demo Alquileres / Interiorismo)\n',
+  );
+  logger.info(
+    { event: 'seed.database.selected' },
+    'Base de datos de destino configurada',
+  );
 
   const { adminRoleId, appIdBySlug } = await seedRolesAndApplications(prisma);
   await seedAlquileresMenus(prisma);
@@ -48,7 +56,7 @@ async function main() {
   await seedArquitecturaMenus(prisma);
   await seedProduccionMenus(prisma);
   await seedContabilidadMenus(prisma);
-  const { adminUser } = await seedAdminUser(prisma, adminRoleId);
+  await seedAdminUser(prisma, adminRoleId);
   await seedDocumentTypes(prisma);
   await seedCurrencies(prisma);
   await seedSaleFinancingChannels(prisma);
@@ -59,9 +67,12 @@ async function main() {
   await seedVentasFinanzas(prisma, appIdBySlug);
   await seedVentasConfig(prisma, appIdBySlug);
 
-  console.log('\n✨ Seed producción completado.');
-  console.log('   Admin:', adminUser.email);
-  console.log('   Omitido: seedDemoAlquileres, interiorismo demo, seedDemoVentas\n');
+  logger.info({ event: 'seed.progress' }, '\n✨ Seed producción completado.');
+  logger.info({ event: 'seed.admin.ready' }, 'Usuario administrador preparado');
+  logger.info(
+    { event: 'seed.progress' },
+    '   Omitido: seedDemoAlquileres, interiorismo demo, seedDemoVentas\n',
+  );
 }
 
 main()
@@ -69,7 +80,7 @@ main()
     await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error('❌ Seed producción falló:', e);
+    logger.error({ event: 'seed.failed', err: e }, '❌ Seed producción falló:');
     await prisma.$disconnect();
     process.exit(1);
   });

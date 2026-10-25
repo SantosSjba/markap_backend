@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { PRODUCCION_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-produccion-costs');
 
 /**
  * Tarifas MO, catálogo de gastos y costos demo en muebles existentes.
@@ -11,18 +13,34 @@ export async function seedProduccionCosts(
 ): Promise<void> {
   const appId = appIdBySlug[PRODUCCION_APPLICATION_SLUG];
   if (!appId) {
-    console.log('\n⚠️  produccion app not found — skipping costs seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  produccion app not found — skipping costs seed',
+    );
     return;
   }
 
-  const laborCount = await prisma.produccionLaborRate.count({ where: { applicationId: appId } });
+  const laborCount = await prisma.produccionLaborRate.count({
+    where: { applicationId: appId },
+  });
   if (laborCount === 0) {
-    console.log('\n💰 Creando tarifas de mano de obra demo…');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n💰 Creando tarifas de mano de obra demo…',
+    );
     const rates = [
       { name: seedPrueba('Operario corte'), stage: 'Corte', hourlyRate: '28' },
       { name: seedPrueba('Ensamblador'), stage: 'Ensamble', hourlyRate: '32' },
-      { name: seedPrueba('Acabados y barnizado'), stage: 'Acabados', hourlyRate: '35' },
-      { name: seedPrueba('Supervisor taller'), stage: 'General', hourlyRate: '45' },
+      {
+        name: seedPrueba('Acabados y barnizado'),
+        stage: 'Acabados',
+        hourlyRate: '35',
+      },
+      {
+        name: seedPrueba('Supervisor taller'),
+        stage: 'General',
+        hourlyRate: '45',
+      },
     ];
     for (const r of rates) {
       await prisma.produccionLaborRate.create({
@@ -35,18 +53,36 @@ export async function seedProduccionCosts(
         },
       });
     }
-    console.log(`   ✅ ${rates.length} tarifas MO demo`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ ${rates.length} tarifas MO demo`,
+    );
   }
 
   const extraCount = await prisma.produccionExtraCostCatalog.count({
     where: { applicationId: appId },
   });
   if (extraCount === 0) {
-    console.log('\n💰 Creando catálogo de gastos adicionales demo…');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n💰 Creando catálogo de gastos adicionales demo…',
+    );
     const extras = [
-      { name: seedPrueba('Transporte local'), defaultAmount: '120', description: 'Entrega en Lima metropolitana' },
-      { name: seedPrueba('Embalaje y protección'), defaultAmount: '85', description: 'Film, cartón y esquineros' },
-      { name: seedPrueba('Instalación en sitio'), defaultAmount: '250', description: 'Mano de obra en domicilio del cliente' },
+      {
+        name: seedPrueba('Transporte local'),
+        defaultAmount: '120',
+        description: 'Entrega en Lima metropolitana',
+      },
+      {
+        name: seedPrueba('Embalaje y protección'),
+        defaultAmount: '85',
+        description: 'Film, cartón y esquineros',
+      },
+      {
+        name: seedPrueba('Instalación en sitio'),
+        defaultAmount: '250',
+        description: 'Mano de obra en domicilio del cliente',
+      },
     ];
     for (const e of extras) {
       await prisma.produccionExtraCostCatalog.create({
@@ -59,7 +95,10 @@ export async function seedProduccionCosts(
         },
       });
     }
-    console.log(`   ✅ ${extras.length} tipos de gasto demo`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ ${extras.length} tipos de gasto demo`,
+    );
   }
 
   const mesa = await prisma.produccionFurniture.findFirst({
@@ -94,7 +133,10 @@ export async function seedProduccionCosts(
     }
 
     const transporte = await prisma.produccionExtraCostCatalog.findFirst({
-      where: { applicationId: appId, name: { contains: 'Transporte', mode: 'insensitive' } },
+      where: {
+        applicationId: appId,
+        name: { contains: 'Transporte', mode: 'insensitive' },
+      },
     });
     if (transporte) {
       await prisma.produccionFurnitureExtraExpense.create({
@@ -107,6 +149,9 @@ export async function seedProduccionCosts(
         },
       });
     }
-    console.log('   ✅ Costeo demo aplicado a MUE-COM-001');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✅ Costeo demo aplicado a MUE-COM-001',
+    );
   }
 }

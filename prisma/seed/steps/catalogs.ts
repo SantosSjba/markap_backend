@@ -1,8 +1,15 @@
-import { CURRENCIES, DOCUMENT_TYPES, PROPERTY_TYPES, SALE_FINANCING_CHANNELS } from '../data';
+import {
+  CURRENCIES,
+  DOCUMENT_TYPES,
+  PROPERTY_TYPES,
+  SALE_FINANCING_CHANNELS,
+} from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:catalogs');
 
 export async function seedDocumentTypes(prisma: SeedDb): Promise<void> {
-  console.log('\n📄 Creating document types...');
+  logger.info({ event: 'seed.progress' }, '\n📄 Creating document types...');
   for (const dt of DOCUMENT_TYPES) {
     await prisma.documentType.upsert({
       where: { code: dt.code },
@@ -10,11 +17,11 @@ export async function seedDocumentTypes(prisma: SeedDb): Promise<void> {
       update: {},
     });
   }
-  console.log('   ✅ Document types created');
+  logger.info({ event: 'seed.progress' }, '   ✅ Document types created');
 }
 
 export async function seedPropertyTypes(prisma: SeedDb): Promise<void> {
-  console.log('\n🏠 Creating property types...');
+  logger.info({ event: 'seed.progress' }, '\n🏠 Creating property types...');
   for (const pt of PROPERTY_TYPES) {
     await prisma.propertyType.upsert({
       where: { code: pt.code },
@@ -22,11 +29,11 @@ export async function seedPropertyTypes(prisma: SeedDb): Promise<void> {
       update: {},
     });
   }
-  console.log('   ✅ Property types created');
+  logger.info({ event: 'seed.progress' }, '   ✅ Property types created');
 }
 
 export async function seedCurrencies(prisma: SeedDb): Promise<void> {
-  console.log('\n💱 Creating currencies...');
+  logger.info({ event: 'seed.progress' }, '\n💱 Creating currencies...');
   for (const c of CURRENCIES) {
     await prisma.currency.upsert({
       where: { code: c.code },
@@ -45,11 +52,14 @@ export async function seedCurrencies(prisma: SeedDb): Promise<void> {
       },
     });
   }
-  console.log('   ✅ Currencies created');
+  logger.info({ event: 'seed.progress' }, '   ✅ Currencies created');
 }
 
 export async function seedSaleFinancingChannels(prisma: SeedDb): Promise<void> {
-  console.log('\n🏦 Creating sale financing channels (banks / payment methods)...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🏦 Creating sale financing channels (banks / payment methods)...',
+  );
   for (const row of SALE_FINANCING_CHANNELS) {
     await prisma.saleFinancingChannel.upsert({
       where: { code: row.code },
@@ -68,5 +78,8 @@ export async function seedSaleFinancingChannels(prisma: SeedDb): Promise<void> {
       },
     });
   }
-  console.log('   ✅ Sale financing channels created');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ Sale financing channels created',
+  );
 }

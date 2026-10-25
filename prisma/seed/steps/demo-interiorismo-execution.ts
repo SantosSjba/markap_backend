@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { INTERIORISMO_APPLICATION_SLUG, seedPrueba } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-interiorismo-execution');
 
 const DEMO_PROJECT_CODE = 'INT-REM-LIM-001';
 
@@ -13,25 +15,43 @@ export async function seedInteriorismoExecution(
 ): Promise<void> {
   const interiorAppId = appIdBySlug[INTERIORISMO_APPLICATION_SLUG];
   if (!interiorAppId) {
-    console.log('\n⚠️  interiorismo app not found — skipping execution seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  interiorismo app not found — skipping execution seed',
+    );
     return;
   }
 
   const proj = await prisma.interiorProject.findFirst({
-    where: { applicationId: interiorAppId, code: DEMO_PROJECT_CODE, deletedAt: null },
+    where: {
+      applicationId: interiorAppId,
+      code: DEMO_PROJECT_CODE,
+      deletedAt: null,
+    },
   });
   if (!proj) {
-    console.log('\n⚠️  Proyecto demo INT-REM-LIM-001 no encontrado — omitiendo ejecución');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Proyecto demo INT-REM-LIM-001 no encontrado — omitiendo ejecución',
+    );
     return;
   }
 
-  const nTasks = await prisma.interiorExecutionTask.count({ where: { projectId: proj.id } });
+  const nTasks = await prisma.interiorExecutionTask.count({
+    where: { projectId: proj.id },
+  });
   if (nTasks > 0) {
-    console.log('\n🔧 Ejecución demo ya existe — omitiendo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n🔧 Ejecución demo ya existe — omitiendo',
+    );
     return;
   }
 
-  console.log('\n🔧 Sembrando datos de ejecución (tareas, evidencias, incidencias, costos)…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🔧 Sembrando datos de ejecución (tareas, evidencias, incidencias, costos)…',
+  );
 
   const mat = await prisma.interiorCatalogMaterial.findFirst({
     where: { applicationId: interiorAppId, code: 'MAT-PISO-001' },
@@ -157,7 +177,11 @@ export async function seedInteriorismoExecution(
       {
         projectId: proj.id,
         costCategory: 'MATERIAL',
-        concept: seedPrueba(mat ? 'Compra porcelanato referencia catálogo' : 'Compra porcelanato obra'),
+        concept: seedPrueba(
+          mat
+            ? 'Compra porcelanato referencia catálogo'
+            : 'Compra porcelanato obra',
+        ),
         amount: new Prisma.Decimal('3850.5'),
         occurredAt: new Date('2026-04-03'),
         catalogMaterialId: mat?.id ?? null,
@@ -173,5 +197,5 @@ export async function seedInteriorismoExecution(
     ],
   });
 
-  console.log('   ✅ Ejecución demo lista');
+  logger.info({ event: 'seed.progress' }, '   ✅ Ejecución demo lista');
 }

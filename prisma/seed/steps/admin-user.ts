@@ -1,18 +1,24 @@
 import * as bcrypt from 'bcrypt';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:admin-user');
 
 export async function seedAdminUser(
   prisma: SeedDb,
   adminRoleId: string,
-): Promise<{ adminUser: { id: string; email: string; firstName: string; lastName: string } }> {
+): Promise<{
+  adminUser: { id: string; email: string; firstName: string; lastName: string };
+}> {
   if (!adminRoleId) {
     throw new Error(
       'seedAdminUser: adminRoleId vacío. Debe ejecutarse seedRolesAndApplications antes.',
     );
   }
 
-  console.log('\n👤 Creating admin user...');
-  const adminEmail = (process.env.ADMIN_EMAIL || 'sistemas@markaphomes.com').toLowerCase().trim();
+  logger.info({ event: 'seed.progress' }, '\n👤 Creating admin user...');
+  const adminEmail = (process.env.ADMIN_EMAIL || 'sistemas@markaphomes.com')
+    .toLowerCase()
+    .trim();
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123';
   const adminFirstName = process.env.ADMIN_FIRST_NAME || 'Sistemas';
   const adminLastName = process.env.ADMIN_LAST_NAME || 'Markap Homes';
@@ -22,7 +28,10 @@ export async function seedAdminUser(
   });
 
   if (adminUser) {
-    console.log(`   ✓ Admin user already exists: ${adminEmail}`);
+    logger.info(
+      { event: 'seed.admin.exists' },
+      'El usuario administrador ya existe',
+    );
   } else {
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     adminUser = await prisma.user.create({
@@ -35,11 +44,16 @@ export async function seedAdminUser(
         createdBy: 'system',
       },
     });
-    console.log(`   ✅ Admin user created: ${adminEmail}`);
-    console.log(`   🔑 Password: ${adminPassword}`);
+    logger.info(
+      { event: 'seed.admin.created' },
+      'Usuario administrador creado',
+    );
   }
 
-  console.log('\n🔐 Assigning ADMIN role to admin user...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🔐 Assigning ADMIN role to admin user...',
+  );
   await prisma.userRole.upsert({
     where: {
       userId_roleId: {
@@ -60,7 +74,10 @@ export async function seedAdminUser(
       assignedBy: 'system',
     },
   });
-  console.log('   ✅ ADMIN role asegurado para el usuario admin (activo, no revocado)');
+  logger.info(
+    { event: 'seed.progress' },
+    '   ✅ ADMIN role asegurado para el usuario admin (activo, no revocado)',
+  );
 
   return { adminUser };
 }

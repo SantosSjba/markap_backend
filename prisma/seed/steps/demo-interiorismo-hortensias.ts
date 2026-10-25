@@ -4,8 +4,13 @@ import {
   HORTENSIAS_CLIENT_DEPOSIT,
   HORTENSIAS_PROJECT_CODE,
 } from '../data/sample-interiorismo-hortensias';
-import { INTERIORISMO_APPLICATION_SLUG, SAMPLE_INTERIOR_RESIDENTIAL_CLIENT } from '../data';
+import {
+  INTERIORISMO_APPLICATION_SLUG,
+  SAMPLE_INTERIOR_RESIDENTIAL_CLIENT,
+} from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-interiorismo-hortensias');
 
 /**
  * Proyecto demo Hortensias con presupuesto modelo Excel (secciones + partidas + abono cliente).
@@ -26,7 +31,10 @@ export async function seedInteriorismoHortensiasProject(
     },
   });
   if (!client) {
-    console.log('   ⚠️  Cliente residencial no encontrado — omitiendo Hortensias');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ⚠️  Cliente residencial no encontrado — omitiendo Hortensias',
+    );
     return;
   }
 
@@ -34,7 +42,10 @@ export async function seedInteriorismoHortensiasProject(
     where: { applicationId: interiorAppId, code: HORTENSIAS_PROJECT_CODE },
   });
   if (exists) {
-    console.log('   ⏭️  Proyecto Hortensias ya existe');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ⏭️  Proyecto Hortensias ya existe',
+    );
     return;
   }
 
@@ -86,5 +97,8 @@ export async function seedInteriorismoHortensiasProject(
     },
   });
 
-  console.log(`   ✅ Proyecto Hortensias (${project.code}) con presupuesto Excel`);
+  logger.info(
+    { event: 'seed.progress' },
+    `   ✅ Proyecto Hortensias (${project.code}) con presupuesto Excel`,
+  );
 }

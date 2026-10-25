@@ -6,8 +6,15 @@ import {
 } from '../data/sample-ventas';
 import { SAMPLE_DISTRICT_ID_LIMA } from '../data/sample-demo';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-ventas');
 
-type AdminUser = { id: string; email: string; firstName: string; lastName: string };
+type AdminUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+};
 
 /**
  * Demo: agentes y clientes (leads/compradores) para la aplicación Ventas.
@@ -19,16 +26,28 @@ export async function seedDemoVentas(
 ): Promise<void> {
   const ventasAppId = appIdBySlug['ventas'];
   if (!ventasAppId) {
-    console.log('\n⚠️  Ventas app not found in appIdBySlug — skipping demo-ventas');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Ventas app not found in appIdBySlug — skipping demo-ventas',
+    );
     return;
   }
 
-  const dniType = await prisma.documentType.findUnique({ where: { code: 'DNI' } });
+  const dniType = await prisma.documentType.findUnique({
+    where: { code: 'DNI' },
+  });
   if (!dniType) throw new Error('DocumentType DNI not found');
 
-  console.log('\n🤝 Creating Ventas sample agents...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🤝 Creating Ventas sample agents...',
+  );
   let internalVentasAgent = await prisma.agent.findFirst({
-    where: { applicationId: ventasAppId, type: 'INTERNAL', userId: adminUser.id },
+    where: {
+      applicationId: ventasAppId,
+      type: 'INTERNAL',
+      userId: adminUser.id,
+    },
   });
   if (!internalVentasAgent) {
     internalVentasAgent = await prisma.agent.create({
@@ -41,12 +60,20 @@ export async function seedDemoVentas(
         isActive: true,
       },
     });
-    console.log('   ✅ Ventas internal agent (admin) created');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✅ Ventas internal agent (admin) created',
+    );
   } else {
-    console.log('   ✓ Ventas internal agent already exists');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Ventas internal agent already exists',
+    );
   }
 
-  const rucType = await prisma.documentType.findUnique({ where: { code: 'RUC' } });
+  const rucType = await prisma.documentType.findUnique({
+    where: { code: 'RUC' },
+  });
   let externalVentasAgent = await prisma.agent.findFirst({
     where: {
       applicationId: ventasAppId,
@@ -69,12 +96,21 @@ export async function seedDemoVentas(
         isActive: true,
       },
     });
-    console.log(`   ✅ Ventas external agent "${VENTAS_SAMPLE_EXTERNAL_AGENT.fullName}" created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Ventas external agent "${VENTAS_SAMPLE_EXTERNAL_AGENT.fullName}" created`,
+    );
   } else {
-    console.log('   ✓ Ventas external agent already exists');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Ventas external agent already exists',
+    );
   }
 
-  console.log('\n👥 Creating Ventas sample clients (BUYER / CRM)...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n👥 Creating Ventas sample clients (BUYER / CRM)...',
+  );
   for (const sample of VENTAS_SAMPLE_BUYER_CLIENTS) {
     const existing = await prisma.client.findFirst({
       where: {
@@ -85,13 +121,18 @@ export async function seedDemoVentas(
       },
     });
     if (existing) {
-      console.log(`   ✓ Buyer client "${sample.fullName}" already exists`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✓ Buyer client "${sample.fullName}" already exists`,
+      );
       continue;
     }
 
     let assignedAgentId: string | null = null;
-    if (sample.assignedAgent === 'internal') assignedAgentId = internalVentasAgent.id;
-    if (sample.assignedAgent === 'external') assignedAgentId = externalVentasAgent.id;
+    if (sample.assignedAgent === 'internal')
+      assignedAgentId = internalVentasAgent.id;
+    if (sample.assignedAgent === 'external')
+      assignedAgentId = externalVentasAgent.id;
 
     await prisma.client.create({
       data: {
@@ -109,10 +150,16 @@ export async function seedDemoVentas(
         createdBy: adminUser.id,
       },
     });
-    console.log(`   ✅ Buyer client "${sample.fullName}" (${sample.salesStatus}) created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Buyer client "${sample.fullName}" (${sample.salesStatus}) created`,
+    );
   }
 
-  console.log('\n👤 Creating Ventas property owners (OWNER) for inventory...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n👤 Creating Ventas property owners (OWNER) for inventory...',
+  );
   const ownerIdByDocument = new Map<string, string>();
   for (const o of VENTAS_SAMPLE_PROPERTY_OWNERS) {
     const existingOwner = await prisma.client.findFirst({
@@ -125,7 +172,10 @@ export async function seedDemoVentas(
     });
     if (existingOwner) {
       ownerIdByDocument.set(o.documentNumber, existingOwner.id);
-      console.log(`   ✓ Owner "${o.fullName}" already exists`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✓ Owner "${o.fullName}" already exists`,
+      );
       continue;
     }
     const createdOwner = await prisma.client.create({
@@ -142,34 +192,52 @@ export async function seedDemoVentas(
       },
     });
     ownerIdByDocument.set(o.documentNumber, createdOwner.id);
-    console.log(`   ✅ Owner "${o.fullName}" created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Owner "${o.fullName}" created`,
+    );
   }
 
-  console.log('\n🏠 Creating Ventas sample properties (inventory)...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🏠 Creating Ventas sample properties (inventory)...',
+  );
   const districtLima = await prisma.district.findUnique({
     where: { id: SAMPLE_DISTRICT_ID_LIMA },
   });
   if (!districtLima) {
-    console.log('   ⚠️  District SAMPLE not found — skipping Ventas properties');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ⚠️  District SAMPLE not found — skipping Ventas properties',
+    );
   } else {
     for (const p of VENTAS_SAMPLE_PROPERTIES) {
       const existsProp = await prisma.property.findFirst({
         where: { applicationId: ventasAppId, code: p.code, deletedAt: null },
       });
       if (existsProp) {
-        console.log(`   ✓ Property "${p.code}" already exists`);
+        logger.info(
+          { event: 'seed.progress' },
+          `   ✓ Property "${p.code}" already exists`,
+        );
         continue;
       }
       const pt = await prisma.propertyType.findUnique({
         where: { code: p.propertyTypeCode },
       });
       if (!pt) {
-        console.log(`   ⚠️  PropertyType ${p.propertyTypeCode} not found — skip ${p.code}`);
+        logger.info(
+          { event: 'seed.progress' },
+          `   ⚠️  PropertyType ${p.propertyTypeCode} not found — skip ${p.code}`,
+        );
         continue;
       }
       const ownerId = ownerIdByDocument.get(p.ownerDocumentNumber);
       if (!ownerId) {
-        console.log(`   ⚠️  Owner doc ${p.ownerDocumentNumber} not found — skip ${p.code}`);
+        logger.info(
+          { event: 'seed.progress' },
+          `   ⚠️  Owner doc ${p.ownerDocumentNumber} not found — skip ${p.code}`,
+        );
         continue;
       }
       await prisma.property.create({
@@ -191,7 +259,10 @@ export async function seedDemoVentas(
           createdBy: adminUser.id,
         },
       });
-      console.log(`   ✅ Property "${p.code}" (${p.listingStatus}) created`);
+      logger.info(
+        { event: 'seed.progress' },
+        `   ✅ Property "${p.code}" (${p.listingStatus}) created`,
+      );
     }
   }
 }

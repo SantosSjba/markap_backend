@@ -6,8 +6,15 @@ import {
 } from '../data';
 import type { SeedDb } from '../types';
 import { seedInteriorismoDemoProjectBudgets } from './demo-interiorismo-project-budget-seed';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-interiorismo-projects');
 
-type AdminUser = { id: string; email: string; firstName: string; lastName: string };
+type AdminUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+};
 
 /**
  * Proyectos demo Interiorismo con presupuestos, materiales, cronograma, documentos, pagos y actividad.
@@ -19,7 +26,10 @@ export async function seedInteriorismoProjects(
 ): Promise<void> {
   const interiorAppId = appIdBySlug[INTERIORISMO_APPLICATION_SLUG];
   if (!interiorAppId) {
-    console.log('\n⚠️  interiorismo app not found — skipping seed interiorismo projects');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  interiorismo app not found — skipping seed interiorismo projects',
+    );
     return;
   }
 
@@ -41,14 +51,24 @@ export async function seedInteriorismoProjects(
   });
 
   if (!residential || !corporate) {
-    console.log('\n⚠️  Interiorismo clients missing — run seed interiorismo clients first');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Interiorismo clients missing — run seed interiorismo clients first',
+    );
     return;
   }
 
-  console.log('\n📐 Creating Interiorismo sample agents & projects...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n📐 Creating Interiorismo sample agents & projects...',
+  );
 
   let internalAgent = await prisma.agent.findFirst({
-    where: { applicationId: interiorAppId, type: 'INTERNAL', userId: adminUser.id },
+    where: {
+      applicationId: interiorAppId,
+      type: 'INTERNAL',
+      userId: adminUser.id,
+    },
   });
   if (!internalAgent) {
     internalAgent = await prisma.agent.create({
@@ -61,7 +81,10 @@ export async function seedInteriorismoProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Agente interno interiorismo');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✅ Agente interno interiorismo',
+    );
   }
 
   const designerName = seedPrueba('Elena Rivas Prieto');
@@ -83,7 +106,7 @@ export async function seedInteriorismoProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Diseñadora exterior');
+    logger.info({ event: 'seed.progress' }, '   ✅ Diseñadora exterior');
   }
 
   const architectJrName = seedPrueba('Sofía Mendoza Arce');
@@ -105,7 +128,7 @@ export async function seedInteriorismoProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Arquitecto Jr exterior');
+    logger.info({ event: 'seed.progress' }, '   ✅ Arquitecto Jr exterior');
   }
 
   const architectSrName = seedPrueba('Marco Luna Quispe');
@@ -127,7 +150,7 @@ export async function seedInteriorismoProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Arquitecto Sr exterior');
+    logger.info({ event: 'seed.progress' }, '   ✅ Arquitecto Sr exterior');
   }
 
   const supervisorName = seedPrueba('Juliana Costa Vega');
@@ -149,7 +172,7 @@ export async function seedInteriorismoProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Supervisora exterior');
+    logger.info({ event: 'seed.progress' }, '   ✅ Supervisora exterior');
   }
 
   const commercialName = seedPrueba('Pedro Salinas Méndez');
@@ -171,7 +194,7 @@ export async function seedInteriorismoProjects(
         isActive: true,
       },
     });
-    console.log('   ✅ Asesor comercial exterior');
+    logger.info({ event: 'seed.progress' }, '   ✅ Asesor comercial exterior');
   }
 
   const codeRemodel = 'INT-REM-LIM-001';
@@ -191,7 +214,8 @@ export async function seedInteriorismoProjects(
         addressLine: 'Av. Larco 1450, Dpto 402',
         areaSqm: 118,
         levelsCount: 1,
-        environmentsNote: 'Living-comedor, cocina abierta, dormitorio principal y baño social.',
+        environmentsNote:
+          'Living-comedor, cocina abierta, dormitorio principal y baño social.',
         startDate: new Date('2026-03-01'),
         estimatedEndDate: new Date('2026-08-30'),
         designerAgentId: designer.id,
@@ -254,7 +278,9 @@ export async function seedInteriorismoProjects(
             {
               activityType: 'NOTE',
               title: seedPrueba('Kick-off con cliente'),
-              description: seedPrueba('Definidos materiales preferentes y ventanas de obra.'),
+              description: seedPrueba(
+                'Definidos materiales preferentes y ventanas de obra.',
+              ),
               occurredAt: new Date('2026-03-02T10:00:00Z'),
             },
             {
@@ -281,9 +307,15 @@ export async function seedInteriorismoProjects(
         },
       },
     });
-    console.log(`   ✅ Proyecto "${projRemodel.name}"`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Proyecto "${projRemodel.name}"`,
+    );
   } else {
-    console.log('   ✓ Proyecto remodelación demo ya existe');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Proyecto remodelación demo ya existe',
+    );
   }
 
   const codeCorp = 'INT-DIS-LIM-002';
@@ -303,7 +335,8 @@ export async function seedInteriorismoProjects(
         addressLine: 'Av. Javier Prado Este 4200, piso 12',
         areaSqm: 340,
         levelsCount: 2,
-        environmentsNote: 'Recepción, sala reuniones A/B, open office 40 puestos, café ejecutivo.',
+        environmentsNote:
+          'Recepción, sala reuniones A/B, open office 40 puestos, café ejecutivo.',
         startDate: new Date('2026-06-01'),
         estimatedEndDate: new Date('2026-11-15'),
         designerAgentId: designer.id,
@@ -349,7 +382,9 @@ export async function seedInteriorismoProjects(
             {
               activityType: 'MEETING',
               title: seedPrueba('Presentación moodboard gerencia'),
-              description: seedPrueba('Lineamiento materiales nobles y paleta institucional.'),
+              description: seedPrueba(
+                'Lineamiento materiales nobles y paleta institucional.',
+              ),
               occurredAt: new Date('2026-05-22T14:00:00Z'),
             },
           ],
@@ -365,10 +400,20 @@ export async function seedInteriorismoProjects(
         },
       },
     });
-    console.log(`   ✅ Proyecto "${projCorp.name}"`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Proyecto "${projCorp.name}"`,
+    );
   } else {
-    console.log('   ✓ Proyecto corporativo demo ya existe');
+    logger.info(
+      { event: 'seed.progress' },
+      '   ✓ Proyecto corporativo demo ya existe',
+    );
   }
 
-  await seedInteriorismoDemoProjectBudgets(prisma, projRemodel!.id, projCorp!.id);
+  await seedInteriorismoDemoProjectBudgets(
+    prisma,
+    projRemodel!.id,
+    projCorp!.id,
+  );
 }

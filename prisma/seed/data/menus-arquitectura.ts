@@ -5,16 +5,41 @@ export const ARQUITECTURA_APPLICATION_SLUG = 'arquitectura';
  * Cliente → Proyecto → Presupuesto → Cronograma → Documentos → Reportes → Config
  */
 export const ARQUITECTURA_PARENT_MENUS = [
-  { label: 'Dashboard', icon: 'layout-dashboard', path: '/arquitectura', order: 0 },
+  {
+    label: 'Dashboard',
+    icon: 'layout-dashboard',
+    path: '/arquitectura',
+    order: 0,
+  },
   { label: 'Clientes', icon: 'users', path: null, order: 1 },
   { label: 'Proyectos', icon: 'folder-kanban', path: null, order: 2 },
   { label: 'Presupuestos', icon: 'file-text', path: null, order: 3 },
-  { label: 'Cronograma', icon: 'calendar-range', path: '/arquitectura/cronograma', order: 4 },
+  {
+    label: 'Cronograma',
+    icon: 'calendar-range',
+    path: '/arquitectura/cronograma',
+    order: 4,
+  },
   { label: 'Documentos', icon: 'files', path: null, order: 5 },
   { label: 'Materiales', icon: 'layers', path: null, order: 6 },
-  { label: 'Ejecución', icon: 'hard-hat', path: '/arquitectura/ejecucion', order: 7 },
-  { label: 'Reportes', icon: 'bar-chart', path: '/arquitectura/reportes', order: 8 },
-  { label: 'Configuración', icon: 'settings', path: '/arquitectura/configuracion', order: 9 },
+  {
+    label: 'Ejecución',
+    icon: 'hard-hat',
+    path: '/arquitectura/ejecucion',
+    order: 7,
+  },
+  {
+    label: 'Reportes',
+    icon: 'bar-chart',
+    path: '/arquitectura/reportes',
+    order: 8,
+  },
+  {
+    label: 'Configuración',
+    icon: 'settings',
+    path: '/arquitectura/configuracion',
+    order: 9,
+  },
 ];
 
 export const ARQUITECTURA_CHILD_MENUS = [
@@ -60,17 +85,52 @@ export const ARQUITECTURA_CHILD_MENUS = [
     order: 1,
     parentLabel: 'Presupuestos',
   },
-  { label: 'Contratos', path: '/arquitectura/documentos/contratos', order: 0, parentLabel: 'Documentos' },
-  { label: 'Planos', path: '/arquitectura/documentos/planos', order: 1, parentLabel: 'Documentos' },
-  { label: 'Renders', path: '/arquitectura/documentos/renders', order: 2, parentLabel: 'Documentos' },
+  {
+    label: 'Contratos',
+    path: '/arquitectura/documentos/contratos',
+    order: 0,
+    parentLabel: 'Documentos',
+  },
+  {
+    label: 'Planos',
+    path: '/arquitectura/documentos/planos',
+    order: 1,
+    parentLabel: 'Documentos',
+  },
+  {
+    label: 'Renders',
+    path: '/arquitectura/documentos/renders',
+    order: 2,
+    parentLabel: 'Documentos',
+  },
   {
     label: 'Memoria descriptiva',
     path: '/arquitectura/documentos/memoria-descriptiva',
     order: 3,
     parentLabel: 'Documentos',
   },
-  { label: 'Facturas', path: '/arquitectura/documentos/facturas', order: 4, parentLabel: 'Documentos' },
-  { label: 'Actas', path: '/arquitectura/documentos/actas', order: 5, parentLabel: 'Documentos' },
-  { label: 'Catálogo', path: '/arquitectura/materiales/catalogo', order: 0, parentLabel: 'Materiales' },
-  { label: 'Proveedores', path: '/arquitectura/materiales/proveedores', order: 1, parentLabel: 'Materiales' },
+  {
+    label: 'Facturas',
+    path: '/arquitectura/documentos/facturas',
+    order: 4,
+    parentLabel: 'Documentos',
+  },
+  {
+    label: 'Actas',
+    path: '/arquitectura/documentos/actas',
+    order: 5,
+    parentLabel: 'Documentos',
+  },
+  {
+    label: 'Catálogo',
+    path: '/arquitectura/materiales/catalogo',
+    order: 0,
+    parentLabel: 'Materiales',
+  },
+  {
+    label: 'Proveedores',
+    path: '/arquitectura/materiales/proveedores',
+    order: 1,
+    parentLabel: 'Materiales',
+  },
 ];

@@ -6,6 +6,8 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { UBIGEO_OTHER_SEED } from '../seed/data/ubigeo-other';
+import { createScriptLogger } from '../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:seed-ubigeo-other');
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -27,13 +29,19 @@ async function main() {
     update: { provinceId: o.district.provinceId, name: o.district.name },
     create: o.district,
   });
-  console.log('✅ Ubigeo "Otros" listo (departamento 99, provincia 9999, distrito 999999)');
+  logger.info(
+    { event: 'seed.progress' },
+    '✅ Ubigeo "Otros" listo (departamento 99, provincia 9999, distrito 999999)',
+  );
 }
 
 main()
   .then(() => prisma.$disconnect())
   .catch((e) => {
-    console.error(e);
+    logger.error(
+      { event: 'seed.failed', err: e },
+      'Operación del script fallida',
+    );
     void prisma.$disconnect();
     process.exit(1);
   });

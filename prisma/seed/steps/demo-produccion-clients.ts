@@ -4,8 +4,15 @@ import {
   SAMPLE_PRODUCCION_RESIDENTIAL_CLIENT,
 } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-produccion-clients');
 
-type AdminUser = { id: string; email: string; firstName: string; lastName: string };
+type AdminUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+};
 
 /**
  * Clientes demo para Producción (RESIDENTIAL / CORPORATE).
@@ -17,18 +24,31 @@ export async function seedProduccionClients(
 ): Promise<void> {
   const appId = appIdBySlug[PRODUCCION_APPLICATION_SLUG];
   if (!appId) {
-    console.log('\n⚠️  produccion app not found — skipping seed produccion clients');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  produccion app not found — skipping seed produccion clients',
+    );
     return;
   }
 
-  const dniType = await prisma.documentType.findUnique({ where: { code: 'DNI' } });
-  const rucType = await prisma.documentType.findUnique({ where: { code: 'RUC' } });
+  const dniType = await prisma.documentType.findUnique({
+    where: { code: 'DNI' },
+  });
+  const rucType = await prisma.documentType.findUnique({
+    where: { code: 'RUC' },
+  });
   if (!dniType || !rucType) {
-    console.log('\n⚠️  DNI/RUC document types not found — skipping seed produccion clients');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  DNI/RUC document types not found — skipping seed produccion clients',
+    );
     return;
   }
 
-  console.log('\n🪑 Creating Producción sample clients...');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n🪑 Creating Producción sample clients...',
+  );
 
   const residentialExists = await prisma.client.findFirst({
     where: {
@@ -47,7 +67,10 @@ export async function seedProduccionClients(
         createdBy: adminUser.id,
       },
     });
-    console.log(`   ✅ Residencial "${SAMPLE_PRODUCCION_RESIDENTIAL_CLIENT.fullName}" created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Residencial "${SAMPLE_PRODUCCION_RESIDENTIAL_CLIENT.fullName}" created`,
+    );
   }
 
   const corporateExists = await prisma.client.findFirst({
@@ -67,6 +90,9 @@ export async function seedProduccionClients(
         createdBy: adminUser.id,
       },
     });
-    console.log(`   ✅ Corporativo "${SAMPLE_PRODUCCION_CORPORATE_CLIENT.fullName}" created`);
+    logger.info(
+      { event: 'seed.progress' },
+      `   ✅ Corporativo "${SAMPLE_PRODUCCION_CORPORATE_CLIENT.fullName}" created`,
+    );
   }
 }

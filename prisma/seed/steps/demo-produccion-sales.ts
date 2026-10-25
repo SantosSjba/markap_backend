@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { PRODUCCION_APPLICATION_SLUG } from '../data';
 import type { SeedDb } from '../types';
+import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
+const logger = createScriptLogger('Script:demo-produccion-sales');
 
 /**
  * Cotizaciones, pedidos y entregas demo.
@@ -11,13 +13,21 @@ export async function seedProduccionSales(
 ): Promise<void> {
   const appId = appIdBySlug[PRODUCCION_APPLICATION_SLUG];
   if (!appId) {
-    console.log('\n⚠️  produccion app not found — skipping sales seed');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  produccion app not found — skipping sales seed',
+    );
     return;
   }
 
-  const count = await prisma.produccionQuotation.count({ where: { applicationId: appId } });
+  const count = await prisma.produccionQuotation.count({
+    where: { applicationId: appId },
+  });
   if (count > 0) {
-    console.log('\n💼 Ventas producción ya sembradas — omitiendo');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n💼 Ventas producción ya sembradas — omitiendo',
+    );
     return;
   }
 
@@ -28,7 +38,10 @@ export async function seedProduccionSales(
     where: { applicationId: appId, code: 'MUE-ESC-001' },
   });
   if (!mesa) {
-    console.log('\n⚠️  Sin muebles demo — omitiendo seed ventas');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Sin muebles demo — omitiendo seed ventas',
+    );
     return;
   }
 
@@ -37,11 +50,17 @@ export async function seedProduccionSales(
     orderBy: { createdAt: 'asc' },
   });
   if (!client) {
-    console.log('\n⚠️  Sin clientes demo — omitiendo seed ventas');
+    logger.info(
+      { event: 'seed.progress' },
+      '\n⚠️  Sin clientes demo — omitiendo seed ventas',
+    );
     return;
   }
 
-  console.log('\n💼 Creando cotizaciones y pedidos demo…');
+  logger.info(
+    { event: 'seed.progress' },
+    '\n💼 Creando cotizaciones y pedidos demo…',
+  );
 
   const year = new Date().getFullYear();
   const validUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
