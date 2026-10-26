@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import {
   formatDateOnly,
   parseDateOnly,
+  startOfDayLima,
   startOfTodayLima,
   todayDateOnlyLima,
 } from '../../../../../shared/domain/utils/peru-date.util';
@@ -13,6 +14,7 @@ import type {
   PropertyWithoutContractItem,
 } from '../../../domain/entities/report.entity';
 import {
+  ActiveClientContract,
   ActiveClientReportItem,
   ContractStatusSummary,
   FinancialDistributionReportItem,
@@ -175,12 +177,31 @@ export class ReportPrismaRepository implements ReportRepository {
       },
       include: {
         owner: { select: { fullName: true } },
+        propertyType: { select: { name: true } },
+        district: { select: { name: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
 
+    // Fin del último contrato de cada propiedad (cuánto tiempo lleva libre)
+    const lastContracts = await this.prisma.rental.groupBy({
+      by: ['propertyId'],
+      where: {
+        applicationId: app.id,
+        deletedAt: null,
+        propertyId: { in: properties.map((p) => p.id) },
+      },
+      _max: { endDate: true },
+    });
+    const lastEndByProperty = new Map(
+      lastContracts.map((r) => [r.propertyId, r._max.endDate]),
+    );
+
     return properties.map((p) =>
-      ReportPrismaMapper.toPropertyWithoutContractItem(p),
+      ReportPrismaMapper.toPropertyWithoutContractItem(
+        p,
+        lastEndByProperty.get(p.id) ?? null,
+      ),
     );
   }
 
@@ -192,24 +213,82 @@ export class ReportPrismaRepository implements ReportRepository {
     });
     if (!app) return [];
 
-    const countByTenant = await this.activeTenantContractCounts(app.id);
+    const today = startOfTodayLima();
+    const rentals = await this.prisma.rental.findMany({
+      where: {
+        applicationId: app.id,
+        deletedAt: null,
+        status: 'ACTIVE',
+        endDate: { gte: today },
+      },
+      include: {
+        tenants: { select: { clientId: true } },
+        property: {
+          select: {
+            addressLine: true,
+            owner: { select: { fullName: true } },
+          },
+        },
+      },
+      orderBy: { endDate: 'asc' },
+    });
+    // Contratos vigentes de cada inquilino (titular o co-inquilino)
+    const contractsByTenant = new Map<string, ActiveClientContract[]>();
+    for (const r of rentals) {
+      const tenantIds = new Set([
+        r.tenantId,
+        ...r.tenants.map((t) => t.clientId),
+      ]);
+      const daysLeft = Math.round(
+        (startOfDayLima(r.endDate).getTime() - today.getTime()) / 86_400_000,
+      );
+      for (const tenantId of tenantIds) {
+        const list = contractsByTenant.get(tenantId) ?? [];
+        list.push(
+          new ActiveClientContract(
+            r.id,
+            r.code ?? legacyRentalCode(r.id, r.startDate),
+            r.property.addressLine,
+            r.property.owner.fullName,
+            r.startDate,
+            r.endDate,
+            daysLeft,
+            r.currency,
+            Number(r.monthlyAmount),
+            tenantId === r.tenantId,
+          ),
+        );
+        contractsByTenant.set(tenantId, list);
+      }
+    }
+
     const clients = await this.prisma.client.findMany({
       where: {
-        id: { in: [...countByTenant.keys()] },
+        id: { in: [...contractsByTenant.keys()] },
         applicationId: app.id,
         deletedAt: null,
       },
-      select: { id: true, fullName: true },
-      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        fullName: true,
+        documentNumber: true,
+        primaryPhone: true,
+        primaryEmail: true,
+      },
+      orderBy: { fullName: 'asc' },
     });
-    return clients.map(
-      (client) =>
-        new ActiveClientReportItem(
-          client.id,
-          client.fullName,
-          countByTenant.get(client.id) ?? 0,
-        ),
-    );
+    return clients.map((client) => {
+      const contracts = contractsByTenant.get(client.id) ?? [];
+      return new ActiveClientReportItem(
+        client.id,
+        client.fullName,
+        contracts.length,
+        client.documentNumber || null,
+        client.primaryPhone || null,
+        client.primaryEmail || null,
+        contracts,
+      );
+    });
   }
 
   async getContractStatusSummary(
@@ -518,11 +597,11 @@ export class ReportPrismaRepository implements ReportRepository {
       const cfg = r.financialConfig;
       const monthlyAmount = Number(r.monthlyAmount);
       // Totales en la moneda del contrato (los montos fijos en otra moneda no se convierten)
-      const totals = computeRentalFinancialBreakdown(
+      const [totals, ...otherCurrencyTotals] = computeRentalFinancialBreakdown(
         monthlyAmount,
         cfg ?? undefined,
         r.currency,
-      ).totalsByCurrency[0];
+      ).totalsByCurrency;
 
       const rentalCode = r.code ?? legacyRentalCode(r.id, r.startDate);
 
@@ -551,6 +630,7 @@ export class ReportPrismaRepository implements ReportRepository {
         formatDateOnly(r.startDate),
         r.commissionStatus,
         r.commissionPaidDate ? formatDateOnly(r.commissionPaidDate) : null,
+        otherCurrencyTotals,
       );
     });
   }
@@ -561,14 +641,15 @@ export class ReportPrismaRepository implements ReportRepository {
     const app = await this.prisma.application.findUnique({
       where: { slug: filters.applicationSlug },
     });
-    if (!app) return new RentalCommissionsList([], []);
+    if (!app)
+      return new RentalCommissionsList([], [], 0, filters.page, filters.limit);
 
     const q = filters.search?.trim();
     const rentals = await this.prisma.rental.findMany({
       where: {
         applicationId: app.id,
         deletedAt: null,
-        ...(filters.status ? { commissionStatus: filters.status } : {}),
+        // Sin filtro de estado: los totales pendientes/cobrados cuentan todo; el estado filtra las filas
         ...(q
           ? {
               OR: [
@@ -597,7 +678,8 @@ export class ReportPrismaRepository implements ReportRepository {
       },
       // Pendientes primero por fecha estimada; luego los cobrados más recientes
       orderBy: [
-        { commissionStatus: 'asc' },
+        // 'PENDING' > 'PAID': pendientes primero
+        { commissionStatus: 'desc' },
         { commissionDueDate: { sort: 'asc', nulls: 'last' } },
         { commissionPaidDate: { sort: 'desc', nulls: 'last' } },
         { startDate: 'desc' },
@@ -656,8 +738,14 @@ export class ReportPrismaRepository implements ReportRepository {
       );
     });
 
+    const visible = filters.status
+      ? items.filter((item) => item.status === filters.status)
+      : items;
     return new RentalCommissionsList(
-      items,
+      visible.slice(
+        (filters.page - 1) * filters.limit,
+        filters.page * filters.limit,
+      ),
       [...totals.values()]
         .sort((a, b) => a.currency.localeCompare(b.currency))
         .map(
@@ -670,6 +758,9 @@ export class ReportPrismaRepository implements ReportRepository {
               t.paidAmount,
             ),
         ),
+      visible.length,
+      filters.page,
+      filters.limit,
     );
   }
 

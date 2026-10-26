@@ -54,6 +54,17 @@ function resolveTenantClients(r: {
   return [];
 }
 
+/** El contrato se pacta en la moneda de alquiler de la propiedad. */
+function assertSameCurrencyAsProperty(
+  rentalCurrency: string,
+  propertyCurrency: string,
+): void {
+  if (rentalCurrency !== propertyCurrency)
+    throw new BadRequestException(
+      `La propiedad tiene su alquiler en ${propertyCurrency}; el contrato debe estar en la misma moneda.`,
+    );
+}
+
 /** Reglas del cobro de la comisión como error 400 para el cliente. */
 function resolveCommission(
   current: RentalCommissionState,
@@ -109,6 +120,7 @@ export class RentalPrismaRepository implements RentalRepository {
         throw new BadRequestException(
           'La propiedad no pertenece a la aplicación o no está disponible',
         );
+      assertSameCurrencyAsProperty(data.currency, property.rentCurrency);
       const tenantCount = await tx.client.count({
         where: {
           id: { in: data.tenantIds },
@@ -307,6 +319,7 @@ export class RentalPrismaRepository implements RentalRepository {
             code: true,
             addressLine: true,
             ownerId: true,
+            rentCurrency: true,
             owner: { select: { id: true, fullName: true } },
           },
         },
@@ -364,6 +377,7 @@ export class RentalPrismaRepository implements RentalRepository {
         code: r.property.code,
         addressLine: r.property.addressLine,
         ownerId: r.property.ownerId,
+        rentCurrency: r.property.rentCurrency,
         owner: { id: r.property.owner.id, fullName: r.property.owner.fullName },
       },
       tenantClients[0] ?? { id: r.tenant.id, fullName: r.tenant.fullName },
@@ -449,8 +463,22 @@ export class RentalPrismaRepository implements RentalRepository {
           })),
         };
       }
-      const current = await tx.rental.findUnique({ where: { id } });
+      const current = await tx.rental.findUnique({
+        where: { id },
+        include: { property: { select: { rentCurrency: true } } },
+      });
       if (!current) throw new NotFoundException('Contrato no encontrado');
+      if (data.currency != null && data.currency !== current.currency) {
+        assertSameCurrencyAsProperty(
+          data.currency,
+          current.property.rentCurrency,
+        );
+        // La distribución financiera acompaña a la moneda del contrato
+        await tx.rentalFinancialConfig.updateMany({
+          where: { rentalId: id },
+          data: { currency: data.currency },
+        });
+      }
       const startDate = data.startDate ?? current.startDate;
       const endDate = data.endDate ?? current.endDate;
       if (endDate < startDate)

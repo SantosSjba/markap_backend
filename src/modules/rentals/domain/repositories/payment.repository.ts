@@ -4,8 +4,10 @@
 // ============================================================
 
 import type {
+  OverdueSummary,
   OverduePaymentItem,
   Payment,
+  PaymentCurrencyAmount,
   PaymentHistoryItem,
   PaymentMethod,
   PaymentStats,
@@ -14,8 +16,10 @@ import type {
 } from '../entities/payment.entity';
 
 export type {
+  OverdueSummary,
   OverduePaymentItem,
   Payment,
+  PaymentCurrencyAmount,
   PaymentHistoryItem,
   PaymentMethod,
   PaymentStats,
@@ -36,6 +40,32 @@ export interface ListPendingPaymentsFilters {
   applicationSlug: string;
   search?: string;
   status?: PaymentStatus | 'ALL';
+  /** Solo las cuotas de un contrato (cobro desde Atrasos) */
+  rentalId?: string;
+  page: number;
+  limit: number;
+}
+
+export interface ListPendingPaymentsResult {
+  data: PendingPaymentItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface ListOverduePaymentsFilters {
+  applicationSlug: string;
+  search?: string;
+  page: number;
+  limit: number;
+}
+
+export interface ListOverduePaymentsResult {
+  data: OverduePaymentItem[];
+  total: number;
+  page: number;
+  limit: number;
+  summary: OverdueSummary;
 }
 
 export interface ListPaymentHistoryFilters {
@@ -51,7 +81,9 @@ export interface ListPaymentHistoryFilters {
 export interface ListPaymentHistoryResult {
   data: PaymentHistoryItem[];
   total: number;
+  /** Suma de todas las monedas (compatibilidad); usar `totalsByCurrency` */
   totalAmount: number;
+  totalsByCurrency: PaymentCurrencyAmount[];
   page: number;
   limit: number;
 }
@@ -61,7 +93,7 @@ export interface PaymentRepository {
 
   listPending(
     filters: ListPendingPaymentsFilters,
-  ): Promise<PendingPaymentItem[]>;
+  ): Promise<ListPendingPaymentsResult>;
 
   registerPayment(
     paymentId: string,
@@ -73,9 +105,8 @@ export interface PaymentRepository {
   ): Promise<ListPaymentHistoryResult>;
 
   listOverdue(
-    applicationSlug: string,
-    search?: string,
-  ): Promise<OverduePaymentItem[]>;
+    filters: ListOverduePaymentsFilters,
+  ): Promise<ListOverduePaymentsResult>;
 
   getStats(applicationSlug: string): Promise<PaymentStats>;
 

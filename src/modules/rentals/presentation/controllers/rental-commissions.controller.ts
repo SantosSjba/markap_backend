@@ -16,6 +16,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.guard';
+import { parseIntegerQuery } from '../../../../shared/utils/parse-integer-query.util';
 import { ListRentalCommissionsUseCase } from '../../application/use-cases/commissions/list-rental-commissions.use-case';
 import { UpdateRentalCommissionUseCase } from '../../application/use-cases/commissions/update-rental-commission.use-case';
 import { UpdateRentalCommissionDto } from '../dtos/rentals/update-rental-commission.dto';
@@ -41,16 +42,23 @@ export class RentalCommissionsController {
     required: false,
     description: 'Código, propiedad, propietario o inquilino',
   })
+  @ApiQuery({ name: 'page', required: false, description: 'Página (1-based)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Filas por página' })
   @ApiResponse({ status: 200 })
   async list(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('status') status?: string,
     @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'alquileres',
       status: status === 'PENDING' || status === 'PAID' ? status : undefined,
       search: search?.trim() || undefined,
+      page: parseIntegerQuery(page, 1, 1, 1_000_000),
+      // Tope alto para que la exportación a Excel traiga todo
+      limit: parseIntegerQuery(limit, 10, 1, 10_000),
     });
   }
 

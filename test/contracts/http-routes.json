@@ -6975,6 +6975,8 @@
       "ApiQuery({ name: 'applicationSlug', required: false })",
       "ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'PAID'] })",
       "ApiQuery({\n    name: 'search',\n    required: false,\n    description: 'Código, propiedad, propietario o inquilino',\n  })",
+      "ApiQuery({ name: 'page', required: false, description: 'Página (1-based)' })",
+      "ApiQuery({ name: 'limit', required: false, description: 'Filas por página' })",
       "ApiResponse({ status: 200 })"
     ]
   },

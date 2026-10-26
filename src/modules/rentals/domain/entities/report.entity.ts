@@ -1,3 +1,5 @@
+import type { RentalFinancialCurrencyTotals } from '../utils/rental-financial-breakdown.util';
+
 /** Resumen numérico de indicadores de reportes. */
 export class ReportsSummary {
   constructor(
@@ -17,6 +19,9 @@ export class ContractExpiringItem {
     public readonly ownerName: string,
     public readonly endDate: Date,
     public readonly daysLeft: number,
+    public readonly startDate: Date,
+    public readonly currency: string,
+    public readonly monthlyAmount: number,
   ) {}
 }
 
@@ -26,6 +31,31 @@ export class PropertyWithoutContractItem {
     public readonly code: string,
     public readonly addressLine: string,
     public readonly ownerName: string,
+    public readonly propertyType: string,
+    public readonly district: string | null,
+    /** Renta de referencia de la propiedad */
+    public readonly monthlyRent: number | null,
+    public readonly rentCurrency: string,
+    public readonly listingStatus: string | null,
+    /** Fin del último contrato (null si nunca tuvo uno) */
+    public readonly lastContractEndDate: Date | null,
+  ) {}
+}
+
+/** Contrato vigente de un cliente activo. */
+export class ActiveClientContract {
+  constructor(
+    public readonly rentalId: string,
+    public readonly code: string,
+    public readonly propertyAddress: string,
+    public readonly ownerName: string,
+    public readonly startDate: Date,
+    public readonly endDate: Date,
+    public readonly daysLeft: number,
+    public readonly currency: string,
+    public readonly monthlyAmount: number,
+    /** Titular del contrato o co-inquilino */
+    public readonly isPrimaryTenant: boolean,
   ) {}
 }
 
@@ -34,6 +64,10 @@ export class ActiveClientReportItem {
     public readonly id: string,
     public readonly fullName: string,
     public readonly contractsCount: number,
+    public readonly documentNumber: string | null,
+    public readonly phone: string | null,
+    public readonly email: string | null,
+    public readonly contracts: ActiveClientContract[],
   ) {}
 }
 
@@ -118,8 +152,13 @@ export class RentalCommissionCurrencyTotals {
 
 export class RentalCommissionsList {
   constructor(
+    /** Página pedida */
     public readonly items: RentalCommissionItem[],
+    /** Totales de todas las comisiones del filtro (no solo la página) */
     public readonly totalsByCurrency: RentalCommissionCurrencyTotals[],
+    public readonly total: number,
+    public readonly page: number,
+    public readonly limit: number,
   ) {}
 }
 
@@ -144,5 +183,7 @@ export class FinancialDistributionReportItem {
     public readonly contractStartDate: string,
     public readonly commissionStatus: string,
     public readonly commissionPaidDate: string | null,
+    /** Montos fijos en otra moneda (p. ej. agente en S/ de un contrato en US$); se suman en su moneda */
+    public readonly otherCurrencyTotals: RentalFinancialCurrencyTotals[] = [],
   ) {}
 }

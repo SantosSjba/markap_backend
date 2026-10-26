@@ -29,6 +29,8 @@ export interface ListRentalCommissionsFilters {
   applicationSlug: string;
   status?: 'PENDING' | 'PAID';
   search?: string;
+  page: number;
+  limit: number;
 }
 
 export const REPORT_REPOSITORY = Symbol('ReportRepository');

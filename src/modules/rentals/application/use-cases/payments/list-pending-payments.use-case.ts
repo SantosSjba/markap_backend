@@ -1,13 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { PaymentStatus } from '../../../domain/entities/payment.entity';
 import type {
-  PaymentStatus,
-  PendingPaymentItem,
-} from '../../../domain/entities/payment.entity';
-import type {
-  ListPendingPaymentsFilters,
+  ListPendingPaymentsResult,
   PaymentRepository,
 } from '../../../domain/repositories/payment.repository';
 import { PAYMENT_REPOSITORY } from '../../../domain/repositories/payment.repository';
+
+export interface ListPendingPaymentsInput {
+  applicationSlug: string;
+  search?: string;
+  status?: string;
+  rentalId?: string;
+  page?: number;
+  limit?: number;
+}
 
 @Injectable()
 export class ListPendingPaymentsUseCase {
@@ -16,21 +22,18 @@ export class ListPendingPaymentsUseCase {
     private readonly paymentRepository: PaymentRepository,
   ) {}
 
-  async execute(filters: {
-    applicationSlug: string;
-    search?: string;
-    status?: string;
-  }): Promise<PendingPaymentItem[]> {
-    await this.paymentRepository.generateMonthlyPending(
-      filters.applicationSlug,
-    );
+  async execute(
+    input: ListPendingPaymentsInput,
+  ): Promise<ListPendingPaymentsResult> {
+    await this.paymentRepository.generateMonthlyPending(input.applicationSlug);
 
-    const normalized: ListPendingPaymentsFilters = {
-      applicationSlug: filters.applicationSlug,
-      search: filters.search,
-      status: (filters.status as PaymentStatus | 'ALL') || 'ALL',
-    };
-
-    return this.paymentRepository.listPending(normalized);
+    return this.paymentRepository.listPending({
+      applicationSlug: input.applicationSlug,
+      search: input.search,
+      status: (input.status as PaymentStatus | 'ALL') || 'ALL',
+      rentalId: input.rentalId,
+      page: input.page ?? 1,
+      limit: input.limit ?? 20,
+    });
   }
 }

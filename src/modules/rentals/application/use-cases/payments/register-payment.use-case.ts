@@ -1,4 +1,10 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { startOfTodayLima } from '../../../../../shared/domain/utils/peru-date.util';
 import { Money } from '../../../../../shared/domain/value-objects/money.value-object';
 import type {
   Payment,
@@ -30,6 +36,13 @@ export class RegisterPaymentUseCase {
       throw new NotFoundException(
         `Pago con id ${input.paymentId} no encontrado`,
       );
+    }
+
+    if (payment.status === 'PAID') {
+      throw new BadRequestException('Esta cuota ya está pagada.');
+    }
+    if (input.paidDate > startOfTodayLima()) {
+      throw new BadRequestException('La fecha de pago no puede ser futura.');
     }
 
     const paid = Money.create(input.paidAmount, payment.currency);

@@ -95,13 +95,37 @@ export class OverduePaymentItem {
   ) {}
 }
 
+/** Monto en una moneda (soles y dólares no se suman). */
+export class PaymentCurrencyAmount {
+  constructor(
+    public readonly currency: string,
+    public readonly amount: number,
+    public readonly count: number,
+  ) {}
+}
+
 /** Totales de cobranza del período actual. */
 export class PaymentStats {
   constructor(
+    /** Totales de la moneda principal (compatibilidad); el detalle va en `*ByCurrency` */
     public readonly totalPending: number,
     public readonly totalCollected: number,
     public readonly pendingCount: number,
     public readonly overdueCount: number,
     public readonly currency: string,
+    /** Saldo por cobrar de las cuotas del mes, por moneda */
+    public readonly pendingByCurrency: PaymentCurrencyAmount[] = [],
+    /** Cobrado en las cuotas del mes, por moneda */
+    public readonly collectedByCurrency: PaymentCurrencyAmount[] = [],
+  ) {}
+}
+
+/** Resumen de todos los contratos con atraso (no solo la página). */
+export class OverdueSummary {
+  constructor(
+    public readonly owedByCurrency: PaymentCurrencyAmount[],
+    public readonly criticalCount: number,
+    /** Contratos con atraso que ya tienen una nota de comunicación */
+    public readonly withCommunicationCount: number,
   ) {}
 }

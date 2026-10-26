@@ -1,4 +1,7 @@
-import { computeRentalFinancialBreakdown } from './rental-financial-breakdown.util';
+import {
+  computeRentalFinancialBreakdown,
+  invalidPercentLines,
+} from './rental-financial-breakdown.util';
 
 describe('computeRentalFinancialBreakdown', () => {
   it('calcula comisiones porcentuales sobre base neta (ingreso − gastos − impuestos)', () => {
@@ -80,5 +83,20 @@ describe('computeRentalFinancialBreakdown', () => {
     );
     expect(result.currencies.tax).toBe('USD');
     expect(result.totalsByCurrency).toHaveLength(1);
+  });
+});
+
+describe('invalidPercentLines', () => {
+  it('señala los porcentajes mayores a 100 y deja pasar los montos fijos', () => {
+    expect(
+      invalidPercentLines({
+        taxType: 'PERCENT',
+        taxValue: 150,
+        externalAgentType: 'PERCENT',
+        externalAgentValue: 100,
+        expenseType: 'FIXED',
+        expenseValue: 5000,
+      }),
+    ).toEqual(['impuestos']);
   });
 });

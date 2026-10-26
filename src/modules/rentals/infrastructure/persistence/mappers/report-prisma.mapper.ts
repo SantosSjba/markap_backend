@@ -11,6 +11,8 @@ export class ReportPrismaMapper {
       code: string | null;
       startDate: Date;
       endDate: Date;
+      currency: string;
+      monthlyAmount: number;
       tenant: { fullName: string };
       property: {
         addressLine: string;
@@ -31,20 +33,37 @@ export class ReportPrismaMapper {
       r.property.owner.fullName,
       r.endDate,
       daysLeft,
+      r.startDate,
+      r.currency,
+      r.monthlyAmount,
     );
   }
 
-  static toPropertyWithoutContractItem(p: {
-    id: string;
-    code: string;
-    addressLine: string;
-    owner: { fullName: string };
-  }): PropertyWithoutContractItem {
+  static toPropertyWithoutContractItem(
+    p: {
+      id: string;
+      code: string;
+      addressLine: string;
+      monthlyRent: number | null;
+      rentCurrency: string;
+      listingStatus: string | null;
+      owner: { fullName: string };
+      propertyType: { name: string };
+      district: { name: string } | null;
+    },
+    lastContractEndDate: Date | null,
+  ): PropertyWithoutContractItem {
     return new PropertyWithoutContractItem(
       p.id,
       p.code,
       p.addressLine,
       p.owner.fullName,
+      p.propertyType.name,
+      p.district?.name ?? null,
+      p.monthlyRent,
+      p.rentCurrency,
+      p.listingStatus,
+      lastContractEndDate,
     );
   }
 }

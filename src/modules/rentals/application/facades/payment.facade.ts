@@ -2,17 +2,26 @@ import { Injectable } from '@nestjs/common';
 import type {
   Payment,
   PaymentStats,
-  PendingPaymentItem,
 } from '../../domain/entities/payment.entity';
-import type { ListPaymentHistoryResult } from '../../domain/repositories/payment.repository';
+import type {
+  ListOverduePaymentsResult,
+  ListPaymentHistoryResult,
+  ListPendingPaymentsResult,
+} from '../../domain/repositories/payment.repository';
 import type { PaymentPort } from '../ports/payment.port';
 import { GetPaymentStatsUseCase } from '../use-cases/payments/get-payment-stats.use-case';
-import { ListOverduePaymentsUseCase } from '../use-cases/payments/list-overdue-payments.use-case';
+import {
+  ListOverduePaymentsUseCase,
+  type ListOverduePaymentsInput,
+} from '../use-cases/payments/list-overdue-payments.use-case';
 import {
   ListPaymentHistoryUseCase,
   type ListPaymentHistoryInput,
 } from '../use-cases/payments/list-payment-history.use-case';
-import { ListPendingPaymentsUseCase } from '../use-cases/payments/list-pending-payments.use-case';
+import {
+  ListPendingPaymentsUseCase,
+  type ListPendingPaymentsInput,
+} from '../use-cases/payments/list-pending-payments.use-case';
 import {
   RegisterPaymentUseCase,
   type RegisterPaymentInput,
@@ -32,12 +41,10 @@ export class PaymentFacade implements PaymentPort {
     return this.statsUc.execute(applicationSlug);
   }
 
-  listPending(filters: {
-    applicationSlug: string;
-    search?: string;
-    status?: string;
-  }): Promise<PendingPaymentItem[]> {
-    return this.pendingUc.execute(filters);
+  listPending(
+    input: ListPendingPaymentsInput,
+  ): Promise<ListPendingPaymentsResult> {
+    return this.pendingUc.execute(input);
   }
 
   registerPayment(input: RegisterPaymentInput): Promise<Payment> {
@@ -50,7 +57,9 @@ export class PaymentFacade implements PaymentPort {
     return this.historyUc.execute(input);
   }
 
-  listOverdue(applicationSlug: string, search?: string) {
-    return this.overdueUc.execute(applicationSlug, search);
+  listOverdue(
+    input: ListOverduePaymentsInput,
+  ): Promise<ListOverduePaymentsResult> {
+    return this.overdueUc.execute(input);
   }
 }

@@ -47,6 +47,23 @@ export interface RentalFinancialBreakdownCalc {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+const PERCENT_LINES = [
+  ['expenseType', 'expenseValue', 'gastos'],
+  ['taxType', 'taxValue', 'impuestos'],
+  ['externalAgentType', 'externalAgentValue', 'agente externo'],
+  ['internalAgentType', 'internalAgentValue', 'agente interno'],
+] as const;
+
+/** Conceptos con porcentaje fuera de 0–100 (nombres para el mensaje de error). */
+export function invalidPercentLines(
+  config: Partial<RentalFinancialConfigCalcInput>,
+): string[] {
+  return PERCENT_LINES.filter(
+    ([type, value]) =>
+      config[type] === 'PERCENT' && Number(config[value] ?? 0) > 100,
+  ).map(([, , label]) => label);
+}
+
 export function computeLineAmount(
   type: string,
   value: number,

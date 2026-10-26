@@ -67,6 +67,8 @@ export class RentalDetail extends Rental {
       code: string;
       addressLine: string;
       ownerId: string;
+      /** Moneda de alquiler de la propiedad (el contrato debe coincidir) */
+      rentCurrency: string;
       owner: { id: string; fullName: string };
     },
     public readonly tenant: { id: string; fullName: string },
