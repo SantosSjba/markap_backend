@@ -46,6 +46,13 @@ export async function seedRolesAndApplications(
     });
 
     if (existingApp) {
+      // Mantener la marca MOCZ también al volver a ejecutar el seed.
+      if (appData.slug === 'produccion' && existingApp.name !== appData.name) {
+        await prisma.application.update({
+          where: { id: existingApp.id },
+          data: { name: appData.name },
+        });
+      }
       logger.info(
         { event: 'seed.progress' },
         `   ✓ Application "${appData.name}" already exists`,

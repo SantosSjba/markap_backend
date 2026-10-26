@@ -45,7 +45,7 @@ export const APPLICATIONS = [
     order: 4,
   },
   {
-    name: 'Producción de Muebles',
+    name: 'MOCZ · Muebles Orgánicos CZ',
     slug: 'produccion',
     description: 'Control de producción, inventario y órdenes de trabajo',
     icon: 'package',
