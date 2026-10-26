@@ -1,3 +1,4 @@
+import { SkipApplicationAccess } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -31,6 +32,7 @@ import { UpdateUserDto } from '../dtos/users/update-user.dto';
 import { UserHttpMapper } from '../mappers/user-http.mapper';
 
 @ApiTags('Users')
+@SkipApplicationAccess()
 @Controller('users')
 @UseGuards(JwtAuthGuard, AdminGuard)
 @ApiBearerAuth('JWT-auth')

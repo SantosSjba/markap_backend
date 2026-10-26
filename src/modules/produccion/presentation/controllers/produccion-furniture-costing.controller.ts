@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -27,6 +28,7 @@ import {
 } from '../dtos/produccion-costs/furniture-costing.dto';
 
 @ApiTags('Producción — Costeo de muebles')
+@RequiresApplication('produccion')
 @Controller('produccion-furniture-costing')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

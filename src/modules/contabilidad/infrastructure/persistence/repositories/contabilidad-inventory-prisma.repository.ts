@@ -269,7 +269,8 @@ export class ContabilidadInventoryPrismaRepository implements ContabilidadInvent
     }
 
     // Stock y costo promedio se leen bajo bloqueo para no perder movimientos simultáneos.
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$queryRaw`SELECT id FROM contabilidad_inventory_items WHERE id = ${input.itemId} FOR UPDATE`;
     const item = await this.prisma.contabilidadInventoryItem.findFirst({
       where: { applicationId, id: input.itemId, isActive: true },

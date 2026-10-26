@@ -11,12 +11,6 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import {
   seedAdminUser,
-  seedVentasMenus,
-  seedAlquileresMenus,
-  seedInteriorismoMenus,
-  seedArquitecturaMenus,
-  seedProduccionMenus,
-  seedContabilidadMenus,
   seedDocumentTypes,
   seedCurrencies,
   seedSaleFinancingChannels,
@@ -27,6 +21,10 @@ import {
   seedVentasFinanzas,
   seedVentasConfig,
 } from './seed/steps';
+import {
+  AuditContext,
+  SYSTEM_CONTEXT,
+} from '../src/shared/infrastructure/audit/audit-context';
 import { createScriptLogger } from '../src/shared/infrastructure/logging/script-logger';
 const logger = createScriptLogger('Script:seed-prod');
 
@@ -50,12 +48,6 @@ async function main() {
   );
 
   const { adminRoleId, appIdBySlug } = await seedRolesAndApplications(prisma);
-  await seedAlquileresMenus(prisma);
-  await seedVentasMenus(prisma);
-  await seedInteriorismoMenus(prisma);
-  await seedArquitecturaMenus(prisma);
-  await seedProduccionMenus(prisma);
-  await seedContabilidadMenus(prisma);
   await seedAdminUser(prisma, adminRoleId);
   await seedDocumentTypes(prisma);
   await seedCurrencies(prisma);
@@ -75,7 +67,7 @@ async function main() {
   );
 }
 
-main()
+AuditContext.run({ ...SYSTEM_CONTEXT, source: 'SEED' }, () => main())
   .then(async () => {
     await prisma.$disconnect();
   })

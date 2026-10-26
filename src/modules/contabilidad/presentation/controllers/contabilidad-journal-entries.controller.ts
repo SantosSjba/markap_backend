@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -26,6 +27,7 @@ import {
 } from '../dtos/contabilidad/contabilidad-journal.dto';
 
 @ApiTags('Contabilidad — Asientos contables')
+@RequiresApplication('contabilidad')
 @Controller('contabilidad-journal-entries')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

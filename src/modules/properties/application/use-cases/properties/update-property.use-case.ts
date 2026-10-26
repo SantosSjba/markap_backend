@@ -8,6 +8,7 @@ import { BusinessReferencePort } from '../../../../../shared/application/ports/b
 import { assertClientAddressLocation } from '../../../../crm/application/validators/client-address-location.validator';
 import type { ApplicationRepository } from '../../../../identity/domain/repositories/application.repository';
 import { assertActiveSaleCurrency } from '../../../../ventas/application/validators/sale-currency.validator';
+import { assertActiveCurrency } from '../../../../../shared/application/validation/currency.validator';
 import type { Property } from '../../../domain/entities/property.entity';
 import type {
   PropertyRepository,
@@ -89,6 +90,14 @@ export class UpdatePropertyUseCase {
       );
     }
 
+    let rentCurrency: string | undefined;
+    if (data.rentCurrency !== undefined) {
+      rentCurrency = await assertActiveCurrency(
+        this.references,
+        data.rentCurrency,
+      );
+    }
+
     let ownerPatch: Pick<UpdatePropertyData, 'ownerId' | 'ownerClientIds'> = {};
     if (data.ownerClientIds !== undefined || data.ownerId !== undefined) {
       const primary = data.ownerId ?? existing.ownerId;
@@ -110,6 +119,7 @@ export class UpdatePropertyUseCase {
       ...data,
       ...ownerPatch,
       ...(saleCurrency !== undefined ? { saleCurrency } : {}),
+      ...(rentCurrency !== undefined ? { rentCurrency } : {}),
       ...(data.districtId !== undefined || data.locationCustom !== undefined
         ? { locationCustom }
         : {}),

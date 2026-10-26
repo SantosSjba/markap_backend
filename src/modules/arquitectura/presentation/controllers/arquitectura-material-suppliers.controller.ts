@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   BadRequestException,
   Body,
@@ -37,6 +38,7 @@ import { RecordArquitecturaMaterialPurchaseDto } from '../dtos/arquitectura-mate
 import { UpdateArquitecturaMaterialSupplierDto } from '../dtos/arquitectura-material-suppliers/update-material-supplier.dto';
 
 @ApiTags('Arquitectura — Materiales (proveedores)')
+@RequiresApplication('arquitectura')
 @Controller('arquitectura-material-suppliers')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

@@ -18,7 +18,7 @@ type AdminUser = {
 };
 
 /**
- * Datos demo del módulo Producción (sin menús; ejecutar seedProduccionMenus aparte).
+ * Datos demo del módulo Producción.
  * Orden: config → clientes → catálogo → costos → inventario → compras → OT → ventas.
  */
 export async function seedDemoProduccion(

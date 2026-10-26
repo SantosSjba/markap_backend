@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -26,6 +27,7 @@ import { ContabilidadPleOperationsService } from '../../application/services/con
 import { PleBookCodesDto } from '../dtos/contabilidad/contabilidad-ple.dto';
 
 @ApiTags('Contabilidad — PLE / Libros electrónicos')
+@RequiresApplication('contabilidad')
 @Controller('contabilidad-ple')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { BusinessReferencePort } from '../../../../../shared/application/ports/business-reference.port';
+import { assertActiveCurrency } from '../../../../../shared/application/validation/currency.validator';
 import { EntityNotFoundException } from '../../../../../shared/domain/exceptions/domain.exception';
 import { parseDateOnly } from '../../../../../shared/domain/utils/peru-date.util';
 import { Money } from '../../../../../shared/domain/value-objects/money.value-object';
@@ -30,6 +32,7 @@ export class CreateRentalUseCase {
     private readonly rentalRepository: RentalRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
+    private readonly references: BusinessReferencePort,
   ) {}
 
   async execute(input: CreateRentalInput) {
@@ -46,7 +49,11 @@ export class CreateRentalUseCase {
     if (!applicationId) {
       throw new Error('Falta indicar la aplicación (applicationSlug).');
     }
-    const monthly = Money.create(Number(input.monthlyAmount), input.currency);
+    const currency = await assertActiveCurrency(
+      this.references,
+      input.currency,
+    );
+    const monthly = Money.create(Number(input.monthlyAmount), currency);
     const security =
       input.securityDeposit != null
         ? Money.create(Number(input.securityDeposit), monthly.currency)

@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -21,6 +22,7 @@ import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.gu
 import { InteriorismoConfigOperationsService } from '../../application/services/interiorismo-config-operations.service';
 
 @ApiTags('Interiorismo — Configuración')
+@RequiresApplication('interiorismo')
 @Controller('interiorismo-config')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   BadRequestException,
   Body,
@@ -48,6 +49,7 @@ import { UpsertRentalFinancialConfigDto } from '../dtos/rentals/upsert-rental-fi
 type RentalFileField = 'contractFile' | 'deliveryActFile';
 
 @ApiTags('Rentals')
+@RequiresApplication('alquileres')
 @Controller('rentals')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
@@ -146,17 +148,21 @@ export class RentalsController {
       expenseType: dto.expenseType,
       expenseValue: dto.expenseValue,
       expenseDetail: dto.expenseDetail,
+      expenseCurrency: dto.expenseCurrency,
       taxType: dto.taxType,
       taxValue: dto.taxValue,
       taxDetail: dto.taxDetail,
+      taxCurrency: dto.taxCurrency,
       externalAgentId: dto.externalAgentId,
       externalAgentType: dto.externalAgentType,
       externalAgentValue: dto.externalAgentValue,
       externalAgentName: dto.externalAgentName,
+      externalAgentCurrency: dto.externalAgentCurrency,
       internalAgentId: dto.internalAgentId,
       internalAgentType: dto.internalAgentType,
       internalAgentValue: dto.internalAgentValue,
       internalAgentName: dto.internalAgentName,
+      internalAgentCurrency: dto.internalAgentCurrency,
     });
   }
 

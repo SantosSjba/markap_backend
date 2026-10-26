@@ -22,6 +22,9 @@ model AlertConfig {
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@unique([applicationId, userId])
   @@index([applicationId])
   @@index([userId])

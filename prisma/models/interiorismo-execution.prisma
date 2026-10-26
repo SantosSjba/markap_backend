@@ -3,23 +3,26 @@
 /// DESIGN | PURCHASES | PRODUCTION | INSTALLATION
 /// BACKLOG | IN_PROGRESS | DONE | BLOCKED
 model InteriorExecutionTask {
-  id            String    @id @default(uuid())
-  projectId     String    @map("project_id")
-  phase         String    @map("phase")
-  title         String    @map("title")
-  description   String?   @map("description") @db.Text
-  kanbanStatus  String    @default("BACKLOG") @map("kanban_status")
-  sortOrder     Int       @default(0) @map("sort_order")
-  plannedStart  DateTime? @map("planned_start") @db.Date
-  plannedEnd    DateTime? @map("planned_end") @db.Date
+  id           String    @id @default(uuid())
+  projectId    String    @map("project_id")
+  phase        String    @map("phase")
+  title        String    @map("title")
+  description  String?   @map("description") @db.Text
+  kanbanStatus String    @default("BACKLOG") @map("kanban_status")
+  sortOrder    Int       @default(0) @map("sort_order")
+  plannedStart DateTime? @map("planned_start") @db.Date
+  plannedEnd   DateTime? @map("planned_end") @db.Date
   /// Avance de la tarea 0–100 (opcional; Kanban puede bastar)
-  progressPct   Decimal   @default(0) @map("progress_pct") @db.Decimal(5, 2)
+  progressPct  Decimal   @default(0) @map("progress_pct") @db.Decimal(5, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  project    InteriorProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  evidences  InteriorExecutionEvidence[]
+  project   InteriorProject             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  evidences InteriorExecutionEvidence[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([projectId])
   @@index([projectId, phase])
@@ -29,21 +32,25 @@ model InteriorExecutionTask {
 
 /// PHOTO | DOCUMENT | OTHER
 model InteriorExecutionEvidence {
-  id          String   @id @default(uuid())
-  projectId   String   @map("project_id")
-  taskId      String?  @map("task_id")
-  kind        String   @map("kind")
-  title       String   @map("title")
+  id         String   @id @default(uuid())
+  projectId  String   @map("project_id")
+  taskId     String?  @map("task_id")
+  kind       String   @map("kind")
+  title      String   @map("title")
   /// objectKey (MinIO) o URL legacy http(s)
-  fileUrl     String   @map("file_url") @db.Text
-  archivoId   String?  @map("archivo_id")
-  capturedAt  DateTime @map("captured_at")
+  fileUrl    String   @map("file_url") @db.Text
+  archivoId  String?  @map("archivo_id")
+  capturedAt DateTime @map("captured_at")
 
   createdAt DateTime @default(now()) @map("created_at")
 
   project InteriorProject        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   task    InteriorExecutionTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
   archivo GenArchivo?            @relation("InteriorExecutionEvidenceArchivo", fields: [archivoId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([projectId])
   @@index([taskId])
@@ -67,6 +74,9 @@ model InteriorExecutionIncident {
 
   project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@index([projectId])
   @@index([projectId, status])
   @@map("interior_execution_incidents")
@@ -86,6 +96,10 @@ model InteriorExecutionActualCost {
 
   project         InteriorProject          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   catalogMaterial InteriorCatalogMaterial? @relation(fields: [catalogMaterialId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([projectId])
   @@index([projectId, costCategory])

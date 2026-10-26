@@ -52,6 +52,7 @@ export interface CreatePropertyData {
   ownerId: string;
   ownerClientIds?: string[];
   monthlyRent?: number | null;
+  rentCurrency?: string;
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
   salePrice?: number | null;
@@ -81,6 +82,7 @@ export interface UpdatePropertyData {
   ownerId?: string;
   ownerClientIds?: string[];
   monthlyRent?: number | null;
+  rentCurrency?: string;
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
   salePrice?: number | null;

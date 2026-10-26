@@ -14,6 +14,9 @@ model ContabilidadExchangeRate {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@unique([applicationId, rateDate, currencyCode])
   @@index([applicationId])
   @@map("contabilidad_exchange_rates")
@@ -29,26 +32,34 @@ model ContabilidadJournalTemplate {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application Application                       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   lines       ContabilidadJournalTemplateLine[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@map("contabilidad_journal_templates")
 }
 
 model ContabilidadJournalTemplateLine {
-  id           String  @id @default(uuid())
-  templateId   String  @map("template_id")
-  lineNumber   Int     @map("line_number")
-  accountId    String  @map("account_id")
-  defaultDebit Decimal @default(0) @map("default_debit") @db.Decimal(14, 2)
+  id            String  @id @default(uuid())
+  templateId    String  @map("template_id")
+  lineNumber    Int     @map("line_number")
+  accountId     String  @map("account_id")
+  defaultDebit  Decimal @default(0) @map("default_debit") @db.Decimal(14, 2)
   defaultCredit Decimal @default(0) @map("default_credit") @db.Decimal(14, 2)
-  costCenterId String? @map("cost_center_id")
-  description  String?
+  costCenterId  String? @map("cost_center_id")
+  description   String?
 
   template   ContabilidadJournalTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
   account    ContabilidadAccount         @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  costCenter ContabilidadCostCenter?   @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+  costCenter ContabilidadCostCenter?     @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([templateId])
   @@map("contabilidad_journal_template_lines")
@@ -66,9 +77,13 @@ model ContabilidadInventoryBalanceSnapshot {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  application Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  period      ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  application Application         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period      ContabilidadPeriod  @relation(fields: [periodId], references: [id], onDelete: Cascade)
   account     ContabilidadAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@unique([applicationId, periodId, accountId])
   @@index([applicationId])
@@ -77,32 +92,35 @@ model ContabilidadInventoryBalanceSnapshot {
 
 /// Metadatos CPE electrónico — trazabilidad local y respuesta OSE/PSE (Fase 21).
 model ContabilidadElectronicDocumentLog {
-  id             String  @id @default(uuid())
-  applicationId  String  @map("application_id")
-  legalEntityId  String? @map("legal_entity_id")
-  periodId       String? @map("period_id")
-  sourceType     String? @map("source_type")
-  sourceId       String? @map("source_id")
-  documentKind   String  @map("document_kind")
-  documentRef    String  @map("document_ref")
-  sunatStatus    String  @default("DRAFT") @map("sunat_status")
-  sunatResponseCode    String? @map("sunat_response_code")
-  sunatResponseMessage String? @map("sunat_response_message")
-  xmlHash        String? @map("xml_hash")
-  xmlContent     String? @map("xml_content") @db.Text
-  cdrReference   String? @map("cdr_reference")
-  cdrContent     String? @map("cdr_content") @db.Text
-  notes          String?
-  sentAt         DateTime? @map("sent_at")
-  acceptedAt     DateTime? @map("accepted_at")
+  id                   String    @id @default(uuid())
+  applicationId        String    @map("application_id")
+  legalEntityId        String?   @map("legal_entity_id")
+  periodId             String?   @map("period_id")
+  sourceType           String?   @map("source_type")
+  sourceId             String?   @map("source_id")
+  documentKind         String    @map("document_kind")
+  documentRef          String    @map("document_ref")
+  sunatStatus          String    @default("DRAFT") @map("sunat_status")
+  sunatResponseCode    String?   @map("sunat_response_code")
+  sunatResponseMessage String?   @map("sunat_response_message")
+  xmlHash              String?   @map("xml_hash")
+  xmlContent           String?   @map("xml_content") @db.Text
+  cdrReference         String?   @map("cdr_reference")
+  cdrContent           String?   @map("cdr_content") @db.Text
+  notes                String?
+  sentAt               DateTime? @map("sent_at")
+  acceptedAt           DateTime? @map("accepted_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application              @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  legalEntity ContabilidadLegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: SetNull)
-  period      ContabilidadPeriod?      @relation(fields: [periodId], references: [id], onDelete: SetNull)
+  application  Application               @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  legalEntity  ContabilidadLegalEntity?  @relation(fields: [legalEntityId], references: [id], onDelete: SetNull)
+  period       ContabilidadPeriod?       @relation(fields: [periodId], references: [id], onDelete: SetNull)
   salesInvoice ContabilidadSalesInvoice? @relation("SalesInvoiceElectronicLog")
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@index([legalEntityId])
@@ -130,6 +148,9 @@ model ContabilidadIncomeTaxPeriodSummary {
   application Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   period      ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@unique([applicationId, periodId])
   @@index([applicationId])
   @@map("contabilidad_income_tax_period_summaries")
@@ -153,6 +174,10 @@ model ContabilidadPleExportLog {
 
   application Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   period      ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([applicationId])
   @@index([periodId])

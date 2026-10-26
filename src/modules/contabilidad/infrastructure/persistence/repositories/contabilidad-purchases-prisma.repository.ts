@@ -425,7 +425,8 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     applicationId: string,
     id: string,
   ): Promise<ContabilidadPurchaseInvoiceDto> {
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$queryRaw`SELECT id FROM contabilidad_purchase_invoices WHERE id = ${id} FOR UPDATE`;
     const existing = await this.prisma.contabilidadPurchaseInvoice.findFirst({
       where: { applicationId, id },
@@ -747,7 +748,8 @@ export class ContabilidadPurchasesPrismaRepository implements ContabilidadPurcha
     payableAccountId: string,
     createdBy?: string | null,
   ): Promise<ContabilidadPurchasePaymentDto> {
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$queryRaw`SELECT id FROM contabilidad_purchase_invoices WHERE id = ${input.invoiceId} FOR UPDATE`;
     const invoice = await this.prisma.contabilidadPurchaseInvoice.findFirst({
       where: { applicationId, id: input.invoiceId },

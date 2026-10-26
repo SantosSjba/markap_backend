@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -20,6 +21,7 @@ import { ContabilidadClosingOperationsService } from '../../application/services
 import { ClosePeriodDto } from '../dtos/contabilidad/contabilidad-closing.dto';
 
 @ApiTags('Contabilidad — Cierre mensual')
+@RequiresApplication('contabilidad')
 @Controller('contabilidad-closing')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

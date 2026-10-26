@@ -1,3 +1,4 @@
+import { SkipApplicationAccess } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Controller,
   ForbiddenException,
@@ -22,6 +23,7 @@ import { parseIntegerQuery } from '../../../../shared/utils/parse-integer-query.
 import { NotificationsService } from '../../application/services/notifications.service';
 
 @ApiTags('Notifications')
+@SkipApplicationAccess()
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

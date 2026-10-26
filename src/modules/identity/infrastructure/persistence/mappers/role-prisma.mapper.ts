@@ -21,7 +21,10 @@ export class RolePrismaMapper {
 
   static toPrisma(
     role: Role,
-  ): Omit<PrismaRole, 'id' | 'createdAt' | 'updatedAt'> {
+  ): Omit<
+    PrismaRole,
+    'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'
+  > {
     return {
       name: role.name,
       code: role.code,

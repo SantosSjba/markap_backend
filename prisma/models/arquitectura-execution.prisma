@@ -3,22 +3,25 @@
 /// DESIGN | PURCHASES | PRODUCTION | INSTALLATION
 /// BACKLOG | IN_PROGRESS | DONE | BLOCKED
 model ArquitecturaExecutionTask {
-  id            String    @id @default(uuid())
-  projectId     String    @map("project_id")
-  phase         String    @map("phase")
-  title         String    @map("title")
-  description   String?   @map("description") @db.Text
-  kanbanStatus  String    @default("BACKLOG") @map("kanban_status")
-  sortOrder     Int       @default(0) @map("sort_order")
-  plannedStart  DateTime? @map("planned_start") @db.Date
-  plannedEnd    DateTime? @map("planned_end") @db.Date
-  progressPct   Decimal   @default(0) @map("progress_pct") @db.Decimal(5, 2)
+  id           String    @id @default(uuid())
+  projectId    String    @map("project_id")
+  phase        String    @map("phase")
+  title        String    @map("title")
+  description  String?   @map("description") @db.Text
+  kanbanStatus String    @default("BACKLOG") @map("kanban_status")
+  sortOrder    Int       @default(0) @map("sort_order")
+  plannedStart DateTime? @map("planned_start") @db.Date
+  plannedEnd   DateTime? @map("planned_end") @db.Date
+  progressPct  Decimal   @default(0) @map("progress_pct") @db.Decimal(5, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  project   ArquitecturaProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   ArquitecturaProject             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   evidences ArquitecturaExecutionEvidence[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([projectId])
   @@index([projectId, phase])
@@ -42,7 +45,11 @@ model ArquitecturaExecutionEvidence {
 
   project ArquitecturaProject        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   task    ArquitecturaExecutionTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  archivo GenArchivo?               @relation("ArquitecturaExecutionEvidenceArchivo", fields: [archivoId], references: [id], onDelete: SetNull)
+  archivo GenArchivo?                @relation("ArquitecturaExecutionEvidenceArchivo", fields: [archivoId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([projectId])
   @@index([taskId])
@@ -66,6 +73,9 @@ model ArquitecturaExecutionIncident {
 
   project ArquitecturaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@index([projectId])
   @@index([projectId, status])
   @@map("arquitectura_execution_incidents")
@@ -85,6 +95,10 @@ model ArquitecturaExecutionActualCost {
 
   project         ArquitecturaProject          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   catalogMaterial ArquitecturaCatalogMaterial? @relation(fields: [catalogMaterialId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([projectId])
   @@index([projectId, costCategory])

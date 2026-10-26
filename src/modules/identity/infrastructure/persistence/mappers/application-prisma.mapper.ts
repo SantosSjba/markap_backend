@@ -27,7 +27,10 @@ export class ApplicationPrismaMapper {
 
   static toPrisma(
     app: Application,
-  ): Omit<PrismaApplication, 'id' | 'createdAt' | 'updatedAt'> {
+  ): Omit<
+    PrismaApplication,
+    'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'
+  > {
     return {
       name: app.name,
       slug: app.slug,

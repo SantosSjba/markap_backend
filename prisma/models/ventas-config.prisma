@@ -1,18 +1,21 @@
 // Parametrización específica de la aplicación Ventas (pipeline, numeración)
 
 model VentasPipelineStageConfig {
-  id            String @id @default(uuid())
-  applicationId String @map("application_id")
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
   /// Código fijo alineado con backend (SEPARATION, ARRAS, MINUTA, PUBLIC_DEED)
   code          String
   label         String
-  sortOrder     Int    @map("sort_order")
+  sortOrder     Int     @map("sort_order")
   isActive      Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -31,6 +34,9 @@ model VentasNumberingSeries {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, seriesKey])
   @@index([applicationId])

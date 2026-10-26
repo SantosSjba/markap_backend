@@ -24,7 +24,6 @@ const ENTITY_LABELS: Record<string, string> = {
   Role: 'El rol',
   ContabilidadJournalEntry: 'El asiento contable',
   SaleClosing: 'El cierre de venta',
-  Menu: 'El menú',
   ContabilidadAccount: 'La cuenta contable',
   Rental: 'El contrato de alquiler',
   InteriorProject: 'El proyecto',

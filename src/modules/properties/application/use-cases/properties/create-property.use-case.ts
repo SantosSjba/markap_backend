@@ -4,6 +4,7 @@ import { EntityNotFoundException } from '../../../../../shared/domain/exceptions
 import { assertClientAddressLocation } from '../../../../crm/application/validators/client-address-location.validator';
 import type { ApplicationRepository } from '../../../../identity/domain/repositories/application.repository';
 import { assertActiveSaleCurrency } from '../../../../ventas/application/validators/sale-currency.validator';
+import { assertActiveCurrency } from '../../../../../shared/application/validation/currency.validator';
 import type { PropertyLocationCustom } from '../../../domain/entities/property.entity';
 import type { PropertyRepository } from '../../../domain/repositories/property.repository';
 
@@ -39,6 +40,7 @@ export interface CreatePropertyInput {
   ownerId: string;
   ownerClientIds?: string[];
   monthlyRent?: number | null;
+  rentCurrency?: string;
   maintenanceAmount?: number | null;
   depositMonths?: number | null;
   salePrice?: number | null;
@@ -99,6 +101,10 @@ export class CreatePropertyUseCase {
       this.references,
       input.saleCurrency,
     );
+    const rentCurrency = await assertActiveCurrency(
+      this.references,
+      input.rentCurrency,
+    );
 
     const ownerClientIds = Array.from(
       new Set([input.ownerId, ...(input.ownerClientIds ?? [])].filter(Boolean)),
@@ -127,6 +133,7 @@ export class CreatePropertyUseCase {
       ownerId: ownerClientIds[0],
       ownerClientIds,
       monthlyRent: input.monthlyRent,
+      rentCurrency,
       maintenanceAmount: input.maintenanceAmount,
       depositMonths: input.depositMonths,
       salePrice: input.salePrice,

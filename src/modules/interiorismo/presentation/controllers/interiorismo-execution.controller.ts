@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   BadRequestException,
   Body,
@@ -58,6 +59,7 @@ function parseIsoDate(s?: string | null): Date | null | undefined {
 }
 
 @ApiTags('Interiorismo — Ejecución')
+@RequiresApplication('interiorismo')
 @Controller('interiorismo-execution')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

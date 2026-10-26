@@ -7,6 +7,7 @@ export async function lockProduccionMaterials(
 ): Promise<void> {
   const ids = [...new Set(materialIds)].sort();
   if (!ids.length) return;
+  // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
   await tx.$queryRaw`
     SELECT id FROM produccion_materials
     WHERE id IN (${Prisma.join(ids)})

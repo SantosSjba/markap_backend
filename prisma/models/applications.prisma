@@ -19,89 +19,91 @@ model Application {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  roleApplications RoleApplication[]
-  menus            Menu[]
-  clients          Client[]
-  properties       Property[]
-  rentals          Rental[]
-  agents           Agent[]
-  alertConfigs     AlertConfig[]
-  saleProcesses    SaleProcess[]
-  saleSeparations  SaleSeparation[]
-  saleClosings     SaleClosing[]
-  saleCommissions  SaleCommission[]
-  saleDocumentationCosts       SaleDocumentationCost[]
-  saleComplianceChecklists      SaleComplianceChecklist[]
-  ventasAgentCommissionProfiles VentasAgentCommissionProfile[]
-  ventasPipelineStageConfigs    VentasPipelineStageConfig[]
-  ventasNumberingSeries         VentasNumberingSeries[]
-  interiorismoProjectStageConfigs InteriorismoProjectStageConfig[]
-  interiorismoNumberingSeries     InteriorismoNumberingSeries[]
-  interiorProjects             InteriorProject[]
-  arquitecturaProjectStageConfigs ArquitecturaProjectStageConfig[]
-  arquitecturaNumberingSeries     ArquitecturaNumberingSeries[]
-  arquitecturaProjects             ArquitecturaProject[]
-  arquitecturaCalendarEvents     ArquitecturaCalendarEvent[]
-  arquitecturaCatalogMaterials   ArquitecturaCatalogMaterial[]
-  arquitecturaMaterialSuppliers  ArquitecturaMaterialSupplier[]
-  interiorCatalogMaterials     InteriorCatalogMaterial[]
-  produccionFurniture          ProduccionFurniture[]
-  produccionLaborRates       ProduccionLaborRate[]
-  produccionExtraCostCatalog ProduccionExtraCostCatalog[]
-  produccionMaterials        ProduccionMaterial[]
-  produccionSuppliers        ProduccionSupplier[]
-  produccionPurchaseOrders   ProduccionPurchaseOrder[]
-  produccionWorkOrders       ProduccionWorkOrder[]
-  produccionQuotations       ProduccionQuotation[]
-  produccionOrders           ProduccionOrder[]
-  produccionDeliveries       ProduccionDelivery[]
-  produccionAppSettings      ProduccionAppSettings?
-  produccionFurnitureCategories ProduccionFurnitureCategoryConfig[]
-  produccionMaterialCategories  ProduccionMaterialCategoryConfig[]
-  produccionProductionStages ProduccionProductionStageConfig[]
-  produccionUnitConfigs      ProduccionUnitConfig[]
-  produccionNumberingSeries  ProduccionNumberingSeries[]
-  interiorMaterialSuppliers    InteriorMaterialSupplier[]
-  interiorCalendarEvents       InteriorCalendarEvent[]
-  genArchivos                  GenArchivo[]
-  contabilidadCompanyProfile   ContabilidadCompanyProfile?
-  contabilidadLegalEntities    ContabilidadLegalEntity[]
-  contabilidadAuditLogs        ContabilidadAuditLog[]
-  contabilidadAppSettings      ContabilidadAppSettings?
-  contabilidadDocumentSeries   ContabilidadDocumentSeries[]
-  contabilidadAccounts         ContabilidadAccount[]
-  contabilidadPeriods          ContabilidadPeriod[]
-  contabilidadCostCenters      ContabilidadCostCenter[]
-  contabilidadJournalEntries   ContabilidadJournalEntry[]
-  contabilidadCashBoxes        ContabilidadCashBox[]
-  contabilidadBankAccounts     ContabilidadBankAccount[]
-  contabilidadTreasuryMovements ContabilidadTreasuryMovement[]
-  contabilidadBankReconciliations ContabilidadBankReconciliation[]
-  contabilidadSuppliers          ContabilidadSupplier[]
-  contabilidadPurchaseInvoices   ContabilidadPurchaseInvoice[]
-  contabilidadPurchaseCreditNotes ContabilidadPurchaseCreditNote[]
-  contabilidadPurchaseDebitNotes  ContabilidadPurchaseDebitNote[]
-  contabilidadPurchasePayments   ContabilidadPurchasePayment[]
-  contabilidadCustomers          ContabilidadCustomer[]
-  contabilidadSalesInvoices      ContabilidadSalesInvoice[]
-  contabilidadSalesCreditNotes   ContabilidadSalesCreditNote[]
-  contabilidadSalesDebitNotes    ContabilidadSalesDebitNote[]
-  contabilidadSalesCollections   ContabilidadSalesCollection[]
-  contabilidadExchangeRates      ContabilidadExchangeRate[]
-  contabilidadJournalTemplates   ContabilidadJournalTemplate[]
+  roleApplications                      RoleApplication[]
+  clients                               Client[]
+  properties                            Property[]
+  rentals                               Rental[]
+  agents                                Agent[]
+  alertConfigs                          AlertConfig[]
+  saleProcesses                         SaleProcess[]
+  saleSeparations                       SaleSeparation[]
+  saleClosings                          SaleClosing[]
+  saleCommissions                       SaleCommission[]
+  saleDocumentationCosts                SaleDocumentationCost[]
+  saleComplianceChecklists              SaleComplianceChecklist[]
+  ventasAgentCommissionProfiles         VentasAgentCommissionProfile[]
+  ventasPipelineStageConfigs            VentasPipelineStageConfig[]
+  ventasNumberingSeries                 VentasNumberingSeries[]
+  interiorismoProjectStageConfigs       InteriorismoProjectStageConfig[]
+  interiorismoNumberingSeries           InteriorismoNumberingSeries[]
+  interiorProjects                      InteriorProject[]
+  arquitecturaProjectStageConfigs       ArquitecturaProjectStageConfig[]
+  arquitecturaNumberingSeries           ArquitecturaNumberingSeries[]
+  arquitecturaProjects                  ArquitecturaProject[]
+  arquitecturaCalendarEvents            ArquitecturaCalendarEvent[]
+  arquitecturaCatalogMaterials          ArquitecturaCatalogMaterial[]
+  arquitecturaMaterialSuppliers         ArquitecturaMaterialSupplier[]
+  interiorCatalogMaterials              InteriorCatalogMaterial[]
+  produccionFurniture                   ProduccionFurniture[]
+  produccionLaborRates                  ProduccionLaborRate[]
+  produccionExtraCostCatalog            ProduccionExtraCostCatalog[]
+  produccionMaterials                   ProduccionMaterial[]
+  produccionSuppliers                   ProduccionSupplier[]
+  produccionPurchaseOrders              ProduccionPurchaseOrder[]
+  produccionWorkOrders                  ProduccionWorkOrder[]
+  produccionQuotations                  ProduccionQuotation[]
+  produccionOrders                      ProduccionOrder[]
+  produccionDeliveries                  ProduccionDelivery[]
+  produccionAppSettings                 ProduccionAppSettings?
+  produccionFurnitureCategories         ProduccionFurnitureCategoryConfig[]
+  produccionMaterialCategories          ProduccionMaterialCategoryConfig[]
+  produccionProductionStages            ProduccionProductionStageConfig[]
+  produccionUnitConfigs                 ProduccionUnitConfig[]
+  produccionNumberingSeries             ProduccionNumberingSeries[]
+  interiorMaterialSuppliers             InteriorMaterialSupplier[]
+  interiorCalendarEvents                InteriorCalendarEvent[]
+  genArchivos                           GenArchivo[]
+  contabilidadCompanyProfile            ContabilidadCompanyProfile?
+  contabilidadLegalEntities             ContabilidadLegalEntity[]
+  contabilidadAuditLogs                 ContabilidadAuditLog[]
+  contabilidadAppSettings               ContabilidadAppSettings?
+  contabilidadDocumentSeries            ContabilidadDocumentSeries[]
+  contabilidadAccounts                  ContabilidadAccount[]
+  contabilidadPeriods                   ContabilidadPeriod[]
+  contabilidadCostCenters               ContabilidadCostCenter[]
+  contabilidadJournalEntries            ContabilidadJournalEntry[]
+  contabilidadCashBoxes                 ContabilidadCashBox[]
+  contabilidadBankAccounts              ContabilidadBankAccount[]
+  contabilidadTreasuryMovements         ContabilidadTreasuryMovement[]
+  contabilidadBankReconciliations       ContabilidadBankReconciliation[]
+  contabilidadSuppliers                 ContabilidadSupplier[]
+  contabilidadPurchaseInvoices          ContabilidadPurchaseInvoice[]
+  contabilidadPurchaseCreditNotes       ContabilidadPurchaseCreditNote[]
+  contabilidadPurchaseDebitNotes        ContabilidadPurchaseDebitNote[]
+  contabilidadPurchasePayments          ContabilidadPurchasePayment[]
+  contabilidadCustomers                 ContabilidadCustomer[]
+  contabilidadSalesInvoices             ContabilidadSalesInvoice[]
+  contabilidadSalesCreditNotes          ContabilidadSalesCreditNote[]
+  contabilidadSalesDebitNotes           ContabilidadSalesDebitNote[]
+  contabilidadSalesCollections          ContabilidadSalesCollection[]
+  contabilidadExchangeRates             ContabilidadExchangeRate[]
+  contabilidadJournalTemplates          ContabilidadJournalTemplate[]
   contabilidadInventoryBalanceSnapshots ContabilidadInventoryBalanceSnapshot[]
-  contabilidadElectronicDocumentLogs ContabilidadElectronicDocumentLog[]
-  contabilidadCpeProviderConfigs     ContabilidadCpeProviderConfig[]
-  contabilidadSolCredentials         ContabilidadSolCredentials[]
-  contabilidadSunatDeclarationLogs   ContabilidadSunatDeclarationLog[]
-  contabilidadIncomeTaxPeriodSummaries ContabilidadIncomeTaxPeriodSummary[]
-  contabilidadPleExportLogs            ContabilidadPleExportLog[]
-  contabilidadInventoryItems           ContabilidadInventoryItem[]
-  contabilidadInventoryMovements       ContabilidadInventoryMovement[]
-  contabilidadDetraccionRates    ContabilidadDetraccionRate[]
-  contabilidadDetracciones       ContabilidadDetraccion[]
-  contabilidadRetentions         ContabilidadRetention[]
-  contabilidadPerceptions        ContabilidadPerception[]
+  contabilidadElectronicDocumentLogs    ContabilidadElectronicDocumentLog[]
+  contabilidadCpeProviderConfigs        ContabilidadCpeProviderConfig[]
+  contabilidadSolCredentials            ContabilidadSolCredentials[]
+  contabilidadSunatDeclarationLogs      ContabilidadSunatDeclarationLog[]
+  contabilidadIncomeTaxPeriodSummaries  ContabilidadIncomeTaxPeriodSummary[]
+  contabilidadPleExportLogs             ContabilidadPleExportLog[]
+  contabilidadInventoryItems            ContabilidadInventoryItem[]
+  contabilidadInventoryMovements        ContabilidadInventoryMovement[]
+  contabilidadDetraccionRates           ContabilidadDetraccionRate[]
+  contabilidadDetracciones              ContabilidadDetraccion[]
+  contabilidadRetentions                ContabilidadRetention[]
+  contabilidadPerceptions               ContabilidadPerception[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([slug])
   @@index([isActive])
@@ -109,38 +111,12 @@ model Application {
   @@map("applications")
 }
 
-model Menu {
-  id            String  @id @default(uuid())
-  applicationId String  @map("application_id")
-  parentId      String? @map("parent_id")
-  label         String
-  icon          String?
-  path          String?
-  order         Int     @default(0) @map("order")
-  isActive      Boolean @default(true) @map("is_active")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  parent      Menu?       @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children    Menu[]      @relation("MenuHierarchy")
-
-  @@index([applicationId])
-  @@index([parentId])
-  @@index([order])
-  @@map("menus")
-}
-
 model RoleApplication {
   id            String @id @default(uuid())
   roleId        String @map("role_id")
   applicationId String @map("application_id")
 
-  canRead   Boolean @default(true) @map("can_read")
-  canWrite  Boolean @default(false) @map("can_write")
-  canDelete Boolean @default(false) @map("can_delete")
-  canAdmin  Boolean @default(false) @map("can_admin")
+  accessLevel ApplicationAccessLevel @default(READ) @map("access_level")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -148,8 +124,17 @@ model RoleApplication {
   role        Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@unique([roleId, applicationId])
   @@index([roleId])
   @@index([applicationId])
   @@map("role_applications")
+}
+
+enum ApplicationAccessLevel {
+ READ
+ WRITE
+ ADMIN
 }

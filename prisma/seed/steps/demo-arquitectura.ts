@@ -17,7 +17,7 @@ type AdminUser = {
 };
 
 /**
- * Datos demo del módulo Arquitectura (sin menús; ejecutar seedArquitecturaMenus aparte).
+ * Datos demo del módulo Arquitectura.
  * Orden: config → clientes → proyectos → materiales → ejecución → finanzas → calendario.
  */
 export async function seedDemoArquitectura(

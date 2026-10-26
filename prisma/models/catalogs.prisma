@@ -13,6 +13,9 @@ model DocumentType {
   clients Client[]
   agents  Agent[]
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@map("document_types")
 }
 
@@ -26,6 +29,9 @@ model PropertyType {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   properties Property[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@map("property_types")
 }
@@ -42,23 +48,29 @@ model Currency {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@map("currencies")
 }
 
 /// Medio de financiamiento / banco del proceso de venta (Ventas)
 model SaleFinancingChannel {
-  id        String @id @default(uuid())
+  id        String  @id @default(uuid())
   /// BANK | PAYMENT_METHOD | OWN_FUNDS | OTHER
   category  String
-  code      String @unique
+  code      String  @unique
   name      String
-  sortOrder Int    @default(0) @map("sort_order")
+  sortOrder Int     @default(0) @map("sort_order")
   isActive  Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   saleProcesses SaleProcess[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([category])
   @@index([isActive])

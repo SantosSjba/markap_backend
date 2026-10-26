@@ -12,6 +12,9 @@ model ArquitecturaProjectSection {
   project   ArquitecturaProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   lineItems ArquitecturaProjectLineItem[]
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@index([projectId])
   @@map("arquitectura_project_sections")
 }
@@ -36,6 +39,9 @@ model ArquitecturaProjectLineItem {
   materialSupplier ArquitecturaMaterialSupplier?         @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   supplierPayments ArquitecturaLineItemSupplierPayment[]
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@index([sectionId])
   @@map("arquitectura_project_line_items")
 }
@@ -51,6 +57,9 @@ model ArquitecturaLineItemSupplierPayment {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   lineItem ArquitecturaProjectLineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([lineItemId, paymentNumber])
   @@index([lineItemId])

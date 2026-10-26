@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -28,6 +29,7 @@ import {
 } from '../dtos/contabilidad/contabilidad-purchases.dto';
 
 @ApiTags('Contabilidad — Compras')
+@RequiresApplication('contabilidad')
 @Controller('contabilidad-purchases')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

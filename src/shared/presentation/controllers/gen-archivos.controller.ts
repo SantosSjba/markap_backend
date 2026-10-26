@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../decorators/application-access.decorators';
 import {
   BadRequestException,
   Controller,
@@ -18,6 +19,17 @@ import { parseIntegerQuery } from '../../utils/parse-integer-query.util';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @ApiTags('Archivos')
+@RequiresApplication({
+  fromRequest: true,
+  fallback: [
+    'alquileres',
+    'ventas',
+    'arquitectura',
+    'interiorismo',
+    'produccion',
+    'contabilidad',
+  ],
+})
 @Controller('gen-archivos')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

@@ -15,11 +15,14 @@ model ArquitecturaCatalogMaterial {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application          Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application          Application                        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   images               ArquitecturaCatalogMaterialImage[]
   supplierLinks        ArquitecturaSupplierCatalogLink[]
   purchases            ArquitecturaMaterialPurchase[]
   executionActualCosts ArquitecturaExecutionActualCost[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -34,6 +37,11 @@ model ArquitecturaCatalogMaterialImage {
   url        String @map("url") @db.Text
 
   material ArquitecturaCatalogMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([materialId])
   @@map("arquitectura_catalog_material_images")
@@ -51,10 +59,13 @@ model ArquitecturaMaterialSupplier {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application     Application                       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   catalogLinks    ArquitecturaSupplierCatalogLink[]
   purchases       ArquitecturaMaterialPurchase[]
   budgetLineItems ArquitecturaProjectLineItem[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, ruc])
   @@index([applicationId])
@@ -71,6 +82,11 @@ model ArquitecturaSupplierCatalogLink {
 
   supplier        ArquitecturaMaterialSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   catalogMaterial ArquitecturaCatalogMaterial  @relation(fields: [catalogMaterialId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@unique([supplierId, catalogMaterialId])
   @@index([supplierId])
@@ -91,8 +107,12 @@ model ArquitecturaMaterialPurchase {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  supplier        ArquitecturaMaterialSupplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplier        ArquitecturaMaterialSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   catalogMaterial ArquitecturaCatalogMaterial? @relation(fields: [catalogMaterialId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([supplierId])
   @@index([catalogMaterialId])

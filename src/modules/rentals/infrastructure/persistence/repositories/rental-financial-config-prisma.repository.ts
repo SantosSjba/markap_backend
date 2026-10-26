@@ -38,17 +38,21 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
         expenseType: data.expenseType ?? 'FIXED',
         expenseValue: data.expenseValue ?? 0,
         expenseDetail: data.expenseDetail ?? null,
+        expenseCurrency: data.expenseCurrency ?? null,
         taxType: data.taxType ?? 'FIXED',
         taxValue: data.taxValue ?? 0,
         taxDetail: data.taxDetail ?? null,
+        taxCurrency: data.taxCurrency ?? null,
         externalAgentId: data.externalAgentId ?? null,
         externalAgentType: data.externalAgentType ?? 'FIXED',
         externalAgentValue: data.externalAgentValue ?? 0,
         externalAgentName: data.externalAgentName ?? null,
+        externalAgentCurrency: data.externalAgentCurrency ?? null,
         internalAgentId: data.internalAgentId ?? null,
         internalAgentType: data.internalAgentType ?? 'FIXED',
         internalAgentValue: data.internalAgentValue ?? 0,
         internalAgentName: data.internalAgentName ?? null,
+        internalAgentCurrency: data.internalAgentCurrency ?? null,
       },
       update: {
         ...(data.currency != null && { currency: data.currency }),
@@ -57,6 +61,18 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
         ...(data.expenseValue != null && { expenseValue: data.expenseValue }),
         ...(data.expenseDetail !== undefined && {
           expenseDetail: data.expenseDetail,
+        }),
+        ...(data.expenseCurrency !== undefined && {
+          expenseCurrency: data.expenseCurrency,
+        }),
+        ...(data.taxCurrency !== undefined && {
+          taxCurrency: data.taxCurrency,
+        }),
+        ...(data.externalAgentCurrency !== undefined && {
+          externalAgentCurrency: data.externalAgentCurrency,
+        }),
+        ...(data.internalAgentCurrency !== undefined && {
+          internalAgentCurrency: data.internalAgentCurrency,
         }),
         ...(data.taxType != null && { taxType: data.taxType }),
         ...(data.taxValue != null && { taxValue: data.taxValue }),
@@ -103,6 +119,7 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
     const breakdown = computeRentalFinancialBreakdown(
       monthlyAmount,
       config ?? undefined,
+      currency,
     );
 
     return new RentalFinancialBreakdown(
@@ -115,6 +132,8 @@ export class RentalFinancialConfigPrismaRepository implements RentalFinancialCon
       breakdown.internalAgentCommission,
       breakdown.utility,
       config,
+      breakdown.currencies,
+      breakdown.totalsByCurrency,
     );
   }
 }

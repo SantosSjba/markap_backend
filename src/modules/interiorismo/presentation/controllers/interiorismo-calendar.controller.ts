@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -36,6 +37,7 @@ function parseIsoDateTime(s?: string | null): Date | null | undefined {
 }
 
 @ApiTags('Interiorismo — Calendario')
+@RequiresApplication('interiorismo')
 @Controller('interiorismo-calendar')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

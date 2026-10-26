@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -24,6 +25,7 @@ import {
 } from '../dtos/contabilidad/contabilidad-cost-centers.dto';
 
 @ApiTags('Contabilidad — Periodos y centros de costo')
+@RequiresApplication('contabilidad')
 @Controller()
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

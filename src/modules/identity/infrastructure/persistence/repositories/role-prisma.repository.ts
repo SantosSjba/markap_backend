@@ -1,3 +1,5 @@
+import { invalidateAccessCache } from '../../../../../shared/application/ports/application-access.port';
+import type { AccessLevel } from '../../../../../shared/domain/access-level';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../../shared/infrastructure/database/prisma/prisma.service';
 import { Role } from '../../../domain/entities/role.entity';
@@ -92,6 +94,8 @@ export class RolePrismaRepository implements RoleRepository {
         isActive: data.isActive,
       },
     });
+    // Tras escribir: si se invalida antes, una lectura concurrente puede cachear el valor viejo
+    invalidateAccessCache();
 
     return RolePrismaMapper.toDomain(role);
   }
@@ -101,6 +105,7 @@ export class RolePrismaRepository implements RoleRepository {
       where: { id },
       data: { deletedAt: new Date() },
     });
+    invalidateAccessCache();
   }
 
   async assignToUser(
@@ -125,6 +130,7 @@ export class RolePrismaRepository implements RoleRepository {
         assignedBy,
       },
     });
+    invalidateAccessCache();
   }
 
   async revokeFromUser(
@@ -142,22 +148,44 @@ export class RolePrismaRepository implements RoleRepository {
         revokedBy,
       },
     });
+    invalidateAccessCache();
   }
 
   async assignApplication(
     roleId: string,
     applicationId: string,
   ): Promise<void> {
+    return this.setApplicationAccess(roleId, applicationId, 'WRITE');
+  }
+
+  async setApplicationAccess(
+    roleId: string,
+    applicationId: string,
+    level: AccessLevel,
+  ): Promise<void> {
     await this.prisma.roleApplication.upsert({
-      where: {
-        roleId_applicationId: { roleId, applicationId },
-      },
-      create: {
-        roleId,
-        applicationId,
-      },
-      update: {},
+      where: { roleId_applicationId: { roleId, applicationId } },
+      create: { roleId, applicationId, accessLevel: level },
+      update: { accessLevel: level },
     });
+    invalidateAccessCache();
+  }
+  async getApplicationsMatrix() {
+    const [roles, applications, rows] = await Promise.all([
+      this.findAll(),
+      this.prisma.application.findMany({
+        where: { isActive: true, deletedAt: null },
+        orderBy: { order: 'asc' },
+        select: { id: true, name: true, slug: true },
+      }),
+      this.prisma.roleApplication.findMany(),
+    ]);
+    const access: Record<string, Record<string, AccessLevel>> = {};
+    for (const row of rows) {
+      access[row.roleId] ??= {};
+      access[row.roleId][row.applicationId] = row.accessLevel;
+    }
+    return { roles, applications, access };
   }
 
   async revokeApplication(
@@ -169,5 +197,6 @@ export class RolePrismaRepository implements RoleRepository {
         roleId_applicationId: { roleId, applicationId },
       },
     });
+    invalidateAccessCache();
   }
 }

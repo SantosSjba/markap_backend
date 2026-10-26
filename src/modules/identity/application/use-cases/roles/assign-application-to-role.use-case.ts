@@ -5,7 +5,9 @@ import { APPLICATION_REPOSITORY } from '../../../domain/repositories/application
 import type { RoleRepository } from '../../../domain/repositories/role.repository';
 import { ROLE_REPOSITORY } from '../../../domain/repositories/role.repository';
 
+import type { AccessLevel } from '../../../../../shared/domain/access-level';
 export interface AssignApplicationToRoleInput {
+  accessLevel?: AccessLevel;
   roleId: string;
   applicationId: string;
 }
@@ -27,9 +29,10 @@ export class AssignApplicationToRoleUseCase {
     if (!role) throw new EntityNotFoundException('Role', input.roleId);
     if (!application)
       throw new EntityNotFoundException('Application', input.applicationId);
-    await this.roleRepository.assignApplication(
+    await this.roleRepository.setApplicationAccess(
       input.roleId,
       input.applicationId,
+      input.accessLevel ?? 'WRITE',
     );
   }
 }

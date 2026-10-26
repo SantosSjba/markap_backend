@@ -11,6 +11,11 @@ import {
 import { PrismaService } from '../../../../../shared/infrastructure/database/prisma/prisma.service';
 import { GenArchivoService } from '../../../../../shared/infrastructure/storage/gen-archivo.service';
 import { containsI } from '../../../../../shared/utils/prisma-contains-insensitive.util';
+import {
+  buildRentalCode,
+  legacyRentalCode,
+  withUniqueSuffix,
+} from '../../../domain/utils/rental-code.util';
 import type { Rental } from '../../../domain/entities/rental.entity';
 import {
   RentalAttachment,
@@ -64,6 +69,7 @@ export class RentalPrismaRepository implements RentalRepository {
       );
     const primaryTenantId = data.tenantIds[0];
     const rental = await this.prisma.$transaction(async (tx) => {
+      // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
       await tx.$queryRaw`SELECT id FROM properties WHERE id = ${data.propertyId} FOR UPDATE`;
       const property = await tx.property.findFirst({
         where: {
@@ -103,11 +109,28 @@ export class RentalPrismaRepository implements RentalRepository {
         throw new BadRequestException(
           'La propiedad ya tiene un contrato activo en ese rango de fechas',
         );
+      // Código descriptivo a partir del de la propiedad y el año de inicio (único por aplicación)
+      const baseCode = buildRentalCode(
+        property.code,
+        dateOnlyYear(data.startDate),
+      );
+      const usedCodes = await tx.rental.findMany({
+        where: {
+          applicationId: data.applicationId,
+          code: { startsWith: baseCode },
+        },
+        select: { code: true },
+      });
+      const code = withUniqueSuffix(
+        baseCode,
+        usedCodes.map((r) => r.code).filter((c): c is string => !!c),
+      );
       const created = await tx.rental.create({
         data: {
           applicationId: data.applicationId,
           propertyId: data.propertyId,
           tenantId: primaryTenantId,
+          code,
           startDate: data.startDate,
           endDate: data.endDate,
           currency: data.currency,
@@ -160,6 +183,7 @@ export class RentalPrismaRepository implements RentalRepository {
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       where.OR = [
+        { code: containsI(q) },
         { property: { code: containsI(q) } },
         { property: { addressLine: containsI(q) } },
         { tenant: { fullName: containsI(q) } },
@@ -275,8 +299,6 @@ export class RentalPrismaRepository implements RentalRepository {
     });
     if (!r) return null;
     const tenantClients = resolveTenantClients(r);
-    const year = dateOnlyYear(r.startDate);
-    const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
     const attachmentRows: Array<{
       id: string;
       type: string;
@@ -309,7 +331,7 @@ export class RentalPrismaRepository implements RentalRepository {
     const base = RentalPrismaMapper.toDomain(r);
     return new RentalDetail(
       base,
-      `ALQ-${year}-${shortId}`,
+      r.code ?? legacyRentalCode(r.id, r.startDate),
       {
         id: r.property.id,
         code: r.property.code,
@@ -434,6 +456,7 @@ export class RentalPrismaRepository implements RentalRepository {
     tx: Prisma.TransactionClient,
     propertyId: string,
   ): Promise<void> {
+    // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
     await tx.$queryRaw`SELECT id FROM properties WHERE id = ${propertyId} FOR UPDATE`;
     const property = await tx.property.findUnique({
       where: { id: propertyId },

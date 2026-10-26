@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -35,6 +36,7 @@ function parseIsoDateTime(s?: string | null): Date | null | undefined {
 }
 
 @ApiTags('arquitectura — Calendario')
+@RequiresApplication('arquitectura')
 @Controller('arquitectura-calendar')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

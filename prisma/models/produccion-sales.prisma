@@ -13,10 +13,13 @@ model ProduccionQuotation {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  client      Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  application Application               @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  client      Client                    @relation(fields: [clientId], references: [id], onDelete: Restrict)
   lines       ProduccionQuotationLine[]
   order       ProduccionOrder?
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -26,15 +29,20 @@ model ProduccionQuotation {
 }
 
 model ProduccionQuotationLine {
-  id           String  @id @default(uuid())
-  quotationId  String  @map("quotation_id")
-  furnitureId  String  @map("furniture_id")
-  quantity     Decimal @map("quantity") @db.Decimal(14, 4)
-  unitPrice    Decimal @map("unit_price") @db.Decimal(14, 2)
-  notes        String? @db.Text
+  id          String  @id @default(uuid())
+  quotationId String  @map("quotation_id")
+  furnitureId String  @map("furniture_id")
+  quantity    Decimal @map("quantity") @db.Decimal(14, 4)
+  unitPrice   Decimal @map("unit_price") @db.Decimal(14, 2)
+  notes       String? @db.Text
 
   quotation ProduccionQuotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
   furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([quotationId])
   @@index([furnitureId])
@@ -42,25 +50,28 @@ model ProduccionQuotationLine {
 }
 
 model ProduccionOrder {
-  id            String    @id @default(uuid())
-  applicationId String    @map("application_id")
-  clientId      String    @map("client_id")
-  quotationId   String?   @unique @map("quotation_id")
-  workOrderId   String?   @unique @map("work_order_id")
-  code          String    @map("code")
-  status        String    @map("status")
-  orderedAt     DateTime  @map("ordered_at")
-  notes         String?   @db.Text
+  id            String   @id @default(uuid())
+  applicationId String   @map("application_id")
+  clientId      String   @map("client_id")
+  quotationId   String?  @unique @map("quotation_id")
+  workOrderId   String?  @unique @map("work_order_id")
+  code          String   @map("code")
+  status        String   @map("status")
+  orderedAt     DateTime @map("ordered_at")
+  notes         String?  @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  client      Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
-  quotation   ProduccionQuotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
-  workOrder   ProduccionWorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
+  application Application           @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  client      Client                @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  quotation   ProduccionQuotation?  @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  workOrder   ProduccionWorkOrder?  @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
   lines       ProduccionOrderLine[]
   deliveries  ProduccionDelivery[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -79,6 +90,11 @@ model ProduccionOrderLine {
 
   order     ProduccionOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([orderId])
   @@index([furnitureId])
@@ -102,6 +118,9 @@ model ProduccionDelivery {
 
   application Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   order       ProduccionOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])

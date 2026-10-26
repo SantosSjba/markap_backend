@@ -6,6 +6,11 @@ model Department {
 
   provinces Province[]
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
   @@map("departments")
 }
 
@@ -16,6 +21,11 @@ model Province {
 
   department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   districts  District[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([departmentId])
   @@map("provinces")
@@ -29,6 +39,11 @@ model District {
   province   Province   @relation(fields: [provinceId], references: [id], onDelete: Cascade)
   addresses  Address[]
   properties Property[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([provinceId])
   @@map("districts")

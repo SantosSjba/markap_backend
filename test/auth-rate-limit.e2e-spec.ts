@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
+import { AUDIT_RECORDER } from '../src/shared/application/ports/audit-recorder.port';
 import { AUTH_PORT } from '../src/modules/identity/application/ports/auth.port';
 import { AuthController } from '../src/modules/identity/presentation/controllers/auth.controller';
 import { AuthRateLimitModule } from '../src/shared/infrastructure/security/auth-rate-limit.module';
@@ -52,7 +53,10 @@ describe('límites de intentos en las rutas reales de autenticación', () => {
         AuthRateLimitModule,
       ],
       controllers: [AuthController, UnrestrictedController],
-      providers: [{ provide: AUTH_PORT, useValue: auth }],
+      providers: [
+        { provide: AUDIT_RECORDER, useValue: { record: jest.fn() } },
+        { provide: AUTH_PORT, useValue: auth },
+      ],
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: () => true })

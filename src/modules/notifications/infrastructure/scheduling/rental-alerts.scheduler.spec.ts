@@ -3,6 +3,7 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import type { PinoLogger } from 'nestjs-pino';
 import type { EnvConfig } from '../../../../config/env.config';
 import type { NotificationsService } from '../../application/services/notifications.service';
+import { AuditContext } from '../../../../shared/infrastructure/audit/audit-context';
 import { RentalAlertsScheduler } from './rental-alerts.scheduler';
 
 describe('planificación de alertas con SchedulerRegistry', () => {
@@ -52,6 +53,20 @@ describe('planificación de alertas con SchedulerRegistry', () => {
     scheduler.onModuleDestroy();
     expect(registry.getIntervals()).toEqual([]);
     expect(registry.getTimeouts()).toEqual([]);
+  });
+  it('el job corre con source JOB', async () => {
+    let source: string | undefined;
+    processAlerts.mockImplementation(() => {
+      source = AuditContext.get().source;
+      return Promise.resolve({
+        expiring: 0,
+        pendingPayments: 0,
+        overduePayments: 0,
+      });
+    });
+    start();
+    await jest.advanceTimersByTimeAsync(15_000);
+    expect(source).toBe('JOB');
   });
   it('no registra ni ejecuta tareas cuando las alertas están desactivadas', async () => {
     start(false);

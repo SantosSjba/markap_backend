@@ -29,6 +29,7 @@ import type {
 } from '../../../domain/repositories/payment.repository';
 import { rentalPaymentState } from '../../../domain/utils/rental-payment-state.util';
 import { PaymentPrismaMapper } from '../mappers/payment-prisma.mapper';
+import { legacyRentalCode } from '../../../domain/utils/rental-code.util';
 
 const MONTH_NAMES_ES = [
   'Enero',
@@ -192,7 +193,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
       return new PendingPaymentItem(
         p.id,
         p.rentalId,
-        `ALQ-${p.rentalId.slice(-6).toUpperCase()}`,
+        p.rental.code ?? legacyRentalCode(p.rentalId, p.rental.startDate),
         p.rental.tenant.id,
         p.rental.tenant.fullName,
         p.rental.tenant.notes ?? null,
@@ -218,6 +219,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
     data: RegisterPaymentData,
   ): Promise<Payment> {
     const updated = await this.prisma.$transaction(async (tx) => {
+      // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
       await tx.$queryRaw`SELECT id FROM payments WHERE id = ${paymentId} FOR UPDATE`;
       const payment = await tx.payment.findUnique({ where: { id: paymentId } });
       if (!payment) throw new NotFoundException('Cuota no encontrada');
@@ -323,7 +325,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
         new PaymentHistoryItem(
           p.id,
           p.rentalId,
-          `ALQ-${p.rentalId.slice(-6).toUpperCase()}`,
+          p.rental.code ?? legacyRentalCode(p.rentalId, p.rental.startDate),
           p.rental.tenant.fullName,
           `${p.rental.property.addressLine}, ${p.rental.property.district?.name ?? ''}`
             .trim()

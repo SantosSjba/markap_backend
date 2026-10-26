@@ -3,7 +3,6 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import {
   seedAdminUser,
-  seedAlquileresMenus,
   seedDemoAlquileres,
   seedInteriorismoClients,
   seedInteriorismoProjects,
@@ -20,17 +19,16 @@ import {
   seedPropertyTypes,
   seedRolesAndApplications,
   seedUbigeo,
-  seedVentasMenus,
-  seedInteriorismoMenus,
-  seedArquitecturaMenus,
   seedDemoArquitectura,
-  seedProduccionMenus,
   seedDemoProduccion,
-  seedContabilidadMenus,
   seedVentasSales,
   seedVentasFinanzas,
   seedVentasConfig,
 } from './seed/steps';
+import {
+  AuditContext,
+  SYSTEM_CONTEXT,
+} from '../src/shared/infrastructure/audit/audit-context';
 import { createScriptLogger } from '../src/shared/infrastructure/logging/script-logger';
 const logger = createScriptLogger('Script:seed');
 
@@ -43,12 +41,6 @@ async function main() {
   logger.info({ event: 'seed.progress' }, '🌱 Starting seed...\n');
 
   const { adminRoleId, appIdBySlug } = await seedRolesAndApplications(prisma);
-  await seedAlquileresMenus(prisma);
-  await seedVentasMenus(prisma);
-  await seedInteriorismoMenus(prisma);
-  await seedArquitecturaMenus(prisma);
-  await seedProduccionMenus(prisma);
-  await seedContabilidadMenus(prisma);
   const { adminUser } = await seedAdminUser(prisma, adminRoleId);
   await seedDocumentTypes(prisma);
   await seedCurrencies(prisma);
@@ -77,7 +69,7 @@ async function main() {
   );
 }
 
-main()
+AuditContext.run({ ...SYSTEM_CONTEXT, source: 'SEED' }, () => main())
   .then(async () => {
     await prisma.$disconnect();
   })

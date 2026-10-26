@@ -19,12 +19,15 @@ model ProduccionWorkOrder {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  client      Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  lines       ProduccionWorkOrderLine[]
-  stages      ProduccionWorkOrderStage[]
+  application  Application                              @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  client       Client?                                  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  lines        ProduccionWorkOrderLine[]
+  stages       ProduccionWorkOrderStage[]
   consumptions ProduccionWorkOrderMaterialConsumption[]
   order        ProduccionOrder?
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -44,6 +47,11 @@ model ProduccionWorkOrderLine {
 
   workOrder ProduccionWorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
   furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([workOrderId])
   @@index([furnitureId])
@@ -65,6 +73,11 @@ model ProduccionWorkOrderStage {
 
   workOrder ProduccionWorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
   @@unique([workOrderId, stageKey])
   @@index([workOrderId])
   @@index([status])
@@ -82,6 +95,11 @@ model ProduccionWorkOrderMaterialConsumption {
 
   workOrder ProduccionWorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
   material  ProduccionMaterial  @relation(fields: [materialId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([workOrderId])
   @@index([materialId])

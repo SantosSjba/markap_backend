@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -17,6 +18,7 @@ import { GetRentalsByMonthUseCase } from '../../application/use-cases/reports/ge
 import { GetReportsSummaryUseCase } from '../../application/use-cases/reports/get-reports-summary.use-case';
 
 @ApiTags('Reports')
+@RequiresApplication('alquileres')
 @Controller('reports')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

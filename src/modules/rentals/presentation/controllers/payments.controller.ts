@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -22,6 +23,7 @@ import {
 import { RegisterPaymentDto } from '../dtos/payments/register-payment.dto';
 
 @UseGuards(JwtAuthGuard)
+@RequiresApplication('alquileres')
 @Controller('payments')
 export class PaymentsController {
   constructor(@Inject(PAYMENT_PORT) private readonly payments: PaymentPort) {}

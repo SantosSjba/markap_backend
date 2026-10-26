@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -21,6 +22,7 @@ import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.gu
 import { VentasConfigOperationsService } from '../../application/services/ventas-config-operations.service';
 
 @ApiTags('Ventas — Configuración')
+@RequiresApplication('ventas')
 @Controller('ventas-config')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

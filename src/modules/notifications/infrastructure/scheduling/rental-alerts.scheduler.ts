@@ -8,6 +8,10 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { PinoLogger } from 'nestjs-pino';
 import { randomUUID } from 'node:crypto';
 import type { EnvConfig } from '../../../../config/env.config';
+import {
+  AuditContext,
+  SYSTEM_CONTEXT,
+} from '../../../../shared/infrastructure/audit/audit-context';
 import { NotificationsService } from '../../application/services/notifications.service';
 
 const STARTUP_DELAY_MS = 15_000;
@@ -78,8 +82,10 @@ export class RentalAlertsScheduler
     const runId = randomUUID();
     const startedAt = Date.now();
     try {
-      const result =
-        await this.notificationsService.processScheduledRentalAlerts();
+      const result = await AuditContext.run(
+        { ...SYSTEM_CONTEXT, source: 'JOB' },
+        () => this.notificationsService.processScheduledRentalAlerts(),
+      );
       if (
         result.expiring + result.pendingPayments + result.overduePayments >
         0

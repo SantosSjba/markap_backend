@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -32,6 +33,7 @@ import {
 } from '../dtos/produccion-costs/labor-rate.dto';
 
 @ApiTags('Producción — Mano de obra')
+@RequiresApplication('produccion')
 @Controller('produccion-labor-rates')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

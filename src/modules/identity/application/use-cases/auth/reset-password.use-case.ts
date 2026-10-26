@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   InvalidPasswordResetCodeException,
   UserNotFoundException,
@@ -19,9 +19,14 @@ export interface ResetPasswordInput {
  *
  * Valida el código de recuperación y actualiza la contraseña del usuario.
  */
+import {
+  AUDIT_RECORDER,
+  type AuditRecorder,
+} from '../../../../../shared/application/ports/audit-recorder.port';
 @Injectable()
 export class ResetPasswordUseCase {
   constructor(
+    @Inject(AUDIT_RECORDER) private readonly audit: AuditRecorder,
     private readonly userRepository: UserRepository,
     private readonly passwordResetCodeRepository: PasswordResetCodeRepository,
     private readonly hashService: HashService,
@@ -54,5 +59,10 @@ export class ResetPasswordUseCase {
     });
 
     await this.passwordResetCodeRepository.markAsUsed(resetCode.id);
+    await this.audit.record({
+      action: 'PASSWORD_RESET',
+      userId: user.id,
+      metadata: { step: 'CONFIRM' },
+    });
   }
 }

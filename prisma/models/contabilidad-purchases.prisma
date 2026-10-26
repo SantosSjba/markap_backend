@@ -1,25 +1,28 @@
 /// Compras contables: proveedores, facturas, notas de crédito y pagos.
 
 model ContabilidadSupplier {
-  id            String  @id @default(uuid())
-  applicationId String  @map("application_id")
-  ruc           String
-  businessName  String  @map("business_name")
-  countryCode   String  @default("PE") @map("country_code")
+  id             String  @id @default(uuid())
+  applicationId  String  @map("application_id")
+  ruc            String
+  businessName   String  @map("business_name")
+  countryCode    String  @default("PE") @map("country_code")
   isNonDomiciled Boolean @default(false) @map("is_non_domiciled")
-  tradeName     String? @map("trade_name")
-  address       String?
-  email         String?
-  phone         String?
-  isActive      Boolean @default(true) @map("is_active")
+  tradeName      String? @map("trade_name")
+  address        String?
+  email          String?
+  phone          String?
+  isActive       Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  invoices     ContabilidadPurchaseInvoice[]
-  creditNotes  ContabilidadPurchaseCreditNote[]
-  debitNotes   ContabilidadPurchaseDebitNote[]
+  application Application                      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  invoices    ContabilidadPurchaseInvoice[]
+  creditNotes ContabilidadPurchaseCreditNote[]
+  debitNotes  ContabilidadPurchaseDebitNote[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, ruc])
   @@index([applicationId])
@@ -27,44 +30,46 @@ model ContabilidadSupplier {
 }
 
 model ContabilidadPurchaseInvoice {
-  id               String   @id @default(uuid())
-  applicationId    String   @map("application_id")
-  supplierId       String   @map("supplier_id")
-  periodId         String   @map("period_id")
-  documentType     String   @map("document_type")
-  series           String
-  number           String
-  issueDate        DateTime @map("issue_date") @db.Date
-  dueDate          DateTime? @map("due_date") @db.Date
-  taxAffectation   String   @map("tax_affectation")
-  currencyCode     String   @default("PEN") @map("currency_code")
-  exchangeRate     Decimal? @map("exchange_rate") @db.Decimal(12, 6)
-  foreignTaxableBase Decimal? @map("foreign_taxable_base") @db.Decimal(14, 2)
-  expenseAccountId String   @map("expense_account_id")
-  taxableBase      Decimal  @map("taxable_base") @db.Decimal(14, 2)
-  igvAmount        Decimal  @map("igv_amount") @db.Decimal(14, 2)
-  totalAmount      Decimal  @map("total_amount") @db.Decimal(14, 2)
-  detraccionAmount Decimal  @default(0) @map("detraccion_amount") @db.Decimal(14, 2)
-  paidAmount       Decimal  @default(0) @map("paid_amount") @db.Decimal(14, 2)
-  status           String   @default("PENDING")
-  notes            String?
-  journalEntryId   String?  @map("journal_entry_id")
-  cancelledAt      DateTime? @map("cancelled_at")
-  createdBy        String?  @map("created_by")
+  id                 String    @id @default(uuid())
+  applicationId      String    @map("application_id")
+  supplierId         String    @map("supplier_id")
+  periodId           String    @map("period_id")
+  documentType       String    @map("document_type")
+  series             String
+  number             String
+  issueDate          DateTime  @map("issue_date") @db.Date
+  dueDate            DateTime? @map("due_date") @db.Date
+  taxAffectation     String    @map("tax_affectation")
+  currencyCode       String    @default("PEN") @map("currency_code")
+  exchangeRate       Decimal?  @map("exchange_rate") @db.Decimal(12, 6)
+  foreignTaxableBase Decimal?  @map("foreign_taxable_base") @db.Decimal(14, 2)
+  expenseAccountId   String    @map("expense_account_id")
+  taxableBase        Decimal   @map("taxable_base") @db.Decimal(14, 2)
+  igvAmount          Decimal   @map("igv_amount") @db.Decimal(14, 2)
+  totalAmount        Decimal   @map("total_amount") @db.Decimal(14, 2)
+  detraccionAmount   Decimal   @default(0) @map("detraccion_amount") @db.Decimal(14, 2)
+  paidAmount         Decimal   @default(0) @map("paid_amount") @db.Decimal(14, 2)
+  status             String    @default("PENDING")
+  notes              String?
+  journalEntryId     String?   @map("journal_entry_id")
+  cancelledAt        DateTime? @map("cancelled_at")
+  createdBy          String?   @map("created_by")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  supplier       ContabilidadSupplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
-  period         ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
-  expenseAccount ContabilidadAccount @relation("PurchaseExpenseAccount", fields: [expenseAccountId], references: [id], onDelete: Restrict)
-  journalEntry   ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  application    Application                      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  supplier       ContabilidadSupplier             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  period         ContabilidadPeriod               @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  expenseAccount ContabilidadAccount              @relation("PurchaseExpenseAccount", fields: [expenseAccountId], references: [id], onDelete: Restrict)
+  journalEntry   ContabilidadJournalEntry?        @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
   payments       ContabilidadPurchasePayment[]
   creditNotes    ContabilidadPurchaseCreditNote[]
   debitNotes     ContabilidadPurchaseDebitNote[]
   detracciones   ContabilidadDetraccion[]
   retentions     ContabilidadRetention[]
+
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, documentType, series, number])
   @@index([applicationId])
@@ -94,11 +99,13 @@ model ContabilidadPurchaseCreditNote {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  supplier     ContabilidadSupplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  application  Application                  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  supplier     ContabilidadSupplier         @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   invoice      ContabilidadPurchaseInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
-  period       ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
-  journalEntry ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  period       ContabilidadPeriod           @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  journalEntry ContabilidadJournalEntry?    @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, series, number])
   @@index([applicationId])
@@ -126,11 +133,13 @@ model ContabilidadPurchaseDebitNote {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  supplier     ContabilidadSupplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  application  Application                  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  supplier     ContabilidadSupplier         @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   invoice      ContabilidadPurchaseInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
-  period       ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
-  journalEntry ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  period       ContabilidadPeriod           @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  journalEntry ContabilidadJournalEntry?    @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, series, number])
   @@index([applicationId])
@@ -154,12 +163,15 @@ model ContabilidadPurchasePayment {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  invoice          ContabilidadPurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
-  period           ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
-  cashBox          ContabilidadCashBox? @relation(fields: [cashBoxId], references: [id], onDelete: Restrict)
-  bankAccount      ContabilidadBankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
+  application      Application                   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  invoice          ContabilidadPurchaseInvoice   @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  period           ContabilidadPeriod            @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  cashBox          ContabilidadCashBox?          @relation(fields: [cashBoxId], references: [id], onDelete: Restrict)
+  bankAccount      ContabilidadBankAccount?      @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
   treasuryMovement ContabilidadTreasuryMovement? @relation(fields: [treasuryMovementId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
 
   @@index([applicationId])
   @@index([invoiceId])

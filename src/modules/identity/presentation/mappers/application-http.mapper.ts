@@ -9,6 +9,7 @@ export class ApplicationHttpMapper {
   static toResponse(application: Application): ApplicationResponseDto {
     return {
       id: application.id,
+      accessLevel: application.accessLevel,
       name: application.name,
       slug: application.slug,
       description: application.description,

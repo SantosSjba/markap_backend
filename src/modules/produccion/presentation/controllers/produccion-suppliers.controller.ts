@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -35,6 +36,7 @@ import {
 } from '../dtos/produccion-purchases/supplier.dto';
 
 @ApiTags('Producción — Compras (proveedores)')
+@RequiresApplication('produccion')
 @Controller('produccion-suppliers')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

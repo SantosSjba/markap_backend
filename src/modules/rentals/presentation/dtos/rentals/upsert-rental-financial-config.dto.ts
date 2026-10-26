@@ -13,9 +13,9 @@ export class UpsertRentalFinancialConfigDto {
     currency: z
       .preprocess(
         primitiveText,
-        z.enum(['PEN', 'USD'], {
-          error: 'El campo «moneda» no es una opción permitida.',
-        }),
+        z
+          .string({ error: 'El campo «moneda» debe ser un texto.' })
+          .max(10, { error: 'El campo «moneda» es demasiado largo.' }),
       )
       .nullish(),
     baseAmount: z
@@ -48,6 +48,16 @@ export class UpsertRentalFinancialConfigDto {
     expenseDetail: z
       .string({ error: 'El campo «expenseDetail» debe ser un texto.' })
       .nullish(),
+    expenseCurrency: z
+      .preprocess(
+        primitiveText,
+        z
+          .string({ error: 'El campo «moneda del gasto» debe ser un texto.' })
+          .max(10, {
+            error: 'El campo «moneda del gasto» es demasiado largo.',
+          }),
+      )
+      .nullish(),
     taxType: z
       .enum(VALUE_TYPES, {
         error: 'El campo «taxType» no es una opción permitida.',
@@ -65,6 +75,18 @@ export class UpsertRentalFinancialConfigDto {
       .nullish(),
     taxDetail: z
       .string({ error: 'El campo «taxDetail» debe ser un texto.' })
+      .nullish(),
+    taxCurrency: z
+      .preprocess(
+        primitiveText,
+        z
+          .string({
+            error: 'El campo «moneda del impuesto» debe ser un texto.',
+          })
+          .max(10, {
+            error: 'El campo «moneda del impuesto» es demasiado largo.',
+          }),
+      )
       .nullish(),
     externalAgentId: z
       .string({ error: 'El campo «externalAgentId» debe ser un texto.' })
@@ -91,6 +113,20 @@ export class UpsertRentalFinancialConfigDto {
     externalAgentName: z
       .string({ error: 'El campo «agente externo» debe ser un texto.' })
       .nullish(),
+    externalAgentCurrency: z
+      .preprocess(
+        primitiveText,
+        z
+          .string({
+            error:
+              'El campo «moneda de la comisión externa» debe ser un texto.',
+          })
+          .max(10, {
+            error:
+              'El campo «moneda de la comisión externa» es demasiado largo.',
+          }),
+      )
+      .nullish(),
     internalAgentId: z
       .string({ error: 'El campo «internalAgentId» debe ser un texto.' })
       .uuid({ error: 'El campo «internalAgentId» no es válido.' })
@@ -116,10 +152,41 @@ export class UpsertRentalFinancialConfigDto {
           }),
       )
       .nullish(),
+    internalAgentCurrency: z
+      .preprocess(
+        primitiveText,
+        z
+          .string({
+            error:
+              'El campo «moneda de la comisión interna» debe ser un texto.',
+          })
+          .max(10, {
+            error:
+              'El campo «moneda de la comisión interna» es demasiado largo.',
+          }),
+      )
+      .nullish(),
   });
 
-  @ApiPropertyOptional({ enum: ['PEN', 'USD'] })
+  @ApiPropertyOptional({
+    description: 'Moneda del contrato (catálogo: PEN, USD, EUR…)',
+  })
   currency?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Moneda de cada monto fijo (gasto, impuesto, comisiones). Null = moneda del contrato; los porcentajes siempre van en la del contrato.',
+  })
+  expenseCurrency?: string | null;
+
+  @ApiPropertyOptional()
+  taxCurrency?: string | null;
+
+  @ApiPropertyOptional()
+  externalAgentCurrency?: string | null;
+
+  @ApiPropertyOptional()
+  internalAgentCurrency?: string | null;
 
   @ApiPropertyOptional({
     description:

@@ -5,6 +5,8 @@ model Rental {
   applicationId String @map("application_id")
   propertyId    String @map("property_id")
   tenantId      String @map("tenant_id")
+  /// Código descriptivo (ALQUILER-2026-CASA-EL BOSQUE-JIMÉNEZ); el id sigue siendo la referencia interna
+  code          String? @map("code")
 
   startDate       DateTime @map("start_date")
   endDate         DateTime @map("end_date")
@@ -14,11 +16,11 @@ model Rental {
   paymentDueDay   Int      @default(5) @map("payment_due_day")
   notes           String?  @db.Text
 
-  status                  String  @default("ACTIVE") @map("status")
-  enableExpirationAlerts  Boolean @default(true) @map("enable_expiration_alerts")
-  enableCollectionAlerts  Boolean @default(true) @map("enable_collection_alerts")
+  status                 String  @default("ACTIVE") @map("status")
+  enableExpirationAlerts Boolean @default(true) @map("enable_expiration_alerts")
+  enableCollectionAlerts Boolean @default(true) @map("enable_collection_alerts")
 
-  lastCommunicationNote String?   @db.Text @map("last_communication_note")
+  lastCommunicationNote String?   @map("last_communication_note") @db.Text
   lastCommunicationDate DateTime? @map("last_communication_date")
 
   createdAt DateTime  @default(now()) @map("created_at")
@@ -28,15 +30,16 @@ model Rental {
   deletedAt DateTime? @map("deleted_at")
   deletedBy String?   @map("deleted_by")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  property    Property    @relation(fields: [propertyId], references: [id], onDelete: Restrict)
-  tenant      Client      @relation("RentalPrimaryTenant", fields: [tenantId], references: [id], onDelete: Restrict)
+  application Application    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  property    Property       @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  tenant      Client         @relation("RentalPrimaryTenant", fields: [tenantId], references: [id], onDelete: Restrict)
   tenants     RentalTenant[]
 
   attachments     RentalAttachment[]
   financialConfig RentalFinancialConfig?
   payments        Payment[]
 
+  @@unique([applicationId, code])
   @@index([applicationId])
   @@index([propertyId])
   @@index([tenantId])
@@ -52,23 +55,28 @@ model RentalFinancialConfig {
 
   baseAmount Float? @map("base_amount")
 
-  expenseType  String @default("FIXED") @map("expense_type")
-  expenseValue Float  @default(0) @map("expense_value")
+  expenseType   String  @default("FIXED") @map("expense_type")
+  expenseValue  Float   @default(0) @map("expense_value")
   expenseDetail String? @map("expense_detail")
+  /// Moneda del gasto fijo (null = moneda del contrato; los % siempre van en la del contrato)
+  expenseCurrency String? @map("expense_currency")
 
-  taxType  String @default("FIXED") @map("tax_type")
-  taxValue Float  @default(0) @map("tax_value")
+  taxType   String  @default("FIXED") @map("tax_type")
+  taxValue  Float   @default(0) @map("tax_value")
   taxDetail String? @map("tax_detail")
+  taxCurrency String? @map("tax_currency")
 
-  externalAgentId     String? @map("external_agent_id")
-  externalAgentType   String  @default("FIXED") @map("external_agent_type")
-  externalAgentValue  Float   @default(0) @map("external_agent_value")
-  externalAgentName   String? @map("external_agent_name")
+  externalAgentId    String? @map("external_agent_id")
+  externalAgentType  String  @default("FIXED") @map("external_agent_type")
+  externalAgentValue Float   @default(0) @map("external_agent_value")
+  externalAgentName  String? @map("external_agent_name")
+  externalAgentCurrency String? @map("external_agent_currency")
 
   internalAgentId    String? @map("internal_agent_id")
   internalAgentType  String  @default("FIXED") @map("internal_agent_type")
   internalAgentValue Float   @default(0) @map("internal_agent_value")
   internalAgentName  String? @map("internal_agent_name")
+  internalAgentCurrency String? @map("internal_agent_currency")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -76,6 +84,9 @@ model RentalFinancialConfig {
   rental        Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
   externalAgent Agent? @relation("ExternalAgent", fields: [externalAgentId], references: [id], onDelete: SetNull)
   internalAgent Agent? @relation("InternalAgent", fields: [internalAgentId], references: [id], onDelete: SetNull)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([rentalId])
   @@index([internalAgentId])
@@ -107,6 +118,8 @@ model Payment {
 
   rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
 
+  updatedBy String? @map("updated_by")
+
   @@unique([rentalId, periodYear, periodMonth])
   @@index([rentalId])
   @@index([status])
@@ -122,6 +135,11 @@ model RentalTenant {
 
   rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
   client Client @relation("RentalTenants", fields: [clientId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@unique([rentalId, clientId])
   @@index([rentalId])
@@ -141,6 +159,10 @@ model RentalAttachment {
 
   rental  Rental      @relation(fields: [rentalId], references: [id], onDelete: Cascade)
   archivo GenArchivo? @relation(fields: [archivoId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([rentalId])
   @@index([type])

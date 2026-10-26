@@ -368,7 +368,8 @@ export class ContabilidadTaxesPrismaRepository implements ContabilidadTaxesRepos
     input: PayDetraccionInput,
     createdBy?: string | null,
   ): Promise<ContabilidadDetraccionDto> {
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$queryRaw`SELECT id FROM contabilidad_detracciones WHERE id = ${id} FOR UPDATE`;
     const existing = await this.prisma.contabilidadDetraccion.findFirst({
       where: { id, applicationId },

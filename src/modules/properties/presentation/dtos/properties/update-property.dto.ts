@@ -17,7 +17,7 @@ export class UpdatePropertyDto {
         primitiveText,
         z
           .string({ error: 'El campo «código» debe ser un texto.' })
-          .max(50, { error: 'El campo «código» es demasiado largo.' }),
+          .max(120, { error: 'El campo «código» es demasiado largo.' }),
       ),
       propertyTypeId: z.preprocess(
         primitiveText,
@@ -175,6 +175,18 @@ export class UpdatePropertyDto {
             }),
         )
         .nullish(),
+      rentCurrency: z
+        .preprocess(
+          primitiveText,
+          z
+            .string({
+              error: 'El campo «moneda del alquiler» debe ser un texto.',
+            })
+            .max(10, {
+              error: 'El campo «moneda del alquiler» es demasiado largo.',
+            }),
+        )
+        .nullish(),
       saleCurrency: z
         .preprocess(
           primitiveText,
@@ -286,10 +298,17 @@ export class UpdatePropertyDto {
   })
   ownerClientIds?: string[];
 
-  @ApiPropertyOptional({ description: 'Alquiler mensual (S/)' })
+  @ApiPropertyOptional({ description: 'Alquiler mensual (en rentCurrency)' })
   monthlyRent?: number | null;
 
-  @ApiPropertyOptional({ description: 'Mantenimiento (S/)' })
+  @ApiPropertyOptional({
+    description:
+      'Moneda del alquiler y mantenimiento (código catálogo, ej. PEN, USD)',
+    default: 'PEN',
+  })
+  rentCurrency?: string;
+
+  @ApiPropertyOptional({ description: 'Mantenimiento (en rentCurrency)' })
   maintenanceAmount?: number | null;
 
   @ApiPropertyOptional({ description: 'Garantía en meses' })

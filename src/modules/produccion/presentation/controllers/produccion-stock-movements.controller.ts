@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.guard';
@@ -10,6 +11,7 @@ import type { ProduccionStockMovementType } from '../../domain/repositories/prod
 import { CreateProduccionStockMovementDto } from '../dtos/produccion-inventory/stock-movement.dto';
 
 @ApiTags('Producción — Inventario (movimientos)')
+@RequiresApplication('produccion')
 @Controller('produccion-stock-movements')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

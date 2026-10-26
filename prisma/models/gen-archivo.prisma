@@ -23,14 +23,17 @@ model GenArchivo {
 
   rentalAttachments           RentalAttachment[]
   saleComplianceDocuments     SaleComplianceDocument[]
-  saleSeparationReceipts      SaleSeparation[]         @relation("SeparationReceiptArchivo")
-  saleClosingContracts        SaleClosing[]              @relation("ClosingContractArchivo")
-  saleCompliancePaymentProofs SaleComplianceChecklist[]  @relation("CompliancePaymentEvidenceArchivo")
+  saleSeparationReceipts      SaleSeparation[]          @relation("SeparationReceiptArchivo")
+  saleClosingContracts        SaleClosing[]             @relation("ClosingContractArchivo")
+  saleCompliancePaymentProofs SaleComplianceChecklist[] @relation("CompliancePaymentEvidenceArchivo")
 
-  arquitecturaProjectDocuments    ArquitecturaProjectDocument[]  @relation("ArquitecturaProjectDocumentArchivo")
-  interiorProjectDocuments        InteriorProjectDocument[]      @relation("InteriorProjectDocumentArchivo")
-  arquitecturaExecutionEvidences  ArquitecturaExecutionEvidence[] @relation("ArquitecturaExecutionEvidenceArchivo")
-  interiorExecutionEvidences      InteriorExecutionEvidence[]    @relation("InteriorExecutionEvidenceArchivo")
+  arquitecturaProjectDocuments   ArquitecturaProjectDocument[]   @relation("ArquitecturaProjectDocumentArchivo")
+  interiorProjectDocuments       InteriorProjectDocument[]       @relation("InteriorProjectDocumentArchivo")
+  arquitecturaExecutionEvidences ArquitecturaExecutionEvidence[] @relation("ArquitecturaExecutionEvidenceArchivo")
+  interiorExecutionEvidences     InteriorExecutionEvidence[]     @relation("InteriorExecutionEvidenceArchivo")
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
 
   @@unique([bucket, objectKey])
   @@index([applicationSlug])

@@ -1,16 +1,16 @@
 /// Proyectos de arquitectura (aplicación arquitectura)
 
 model ArquitecturaProject {
-  id             String @id @default(uuid())
-  applicationId  String @map("application_id")
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
   /// Código único por aplicación (ej. ARQ-PRY-001)
-  code           String @map("code")
-  name           String @map("name")
-  clientId       String @map("client_id")
+  code          String @map("code")
+  name          String @map("name")
+  clientId      String @map("client_id")
   /// RESIDENTIAL | COMMERCIAL | INSTITUTIONAL | MIXED_USE | URBAN
-  projectType    String @map("project_type")
+  projectType   String @map("project_type")
   /// DESIGN | QUOTE | APPROVED | IN_PROGRESS | FINISHED | CANCELLED
-  status         String @map("status")
+  status        String @map("status")
 
   addressLine       String?   @map("address_line") @db.Text
   city              String?   @map("city")
@@ -50,16 +50,19 @@ model ArquitecturaProject {
   supervisorAgent  Agent?      @relation("ArquitecturaProjectSupervisor", fields: [supervisorAgentId], references: [id], onDelete: SetNull)
   commercialAgent  Agent?      @relation("ArquitecturaProjectCommercial", fields: [commercialAgentId], references: [id], onDelete: SetNull)
 
-  budgetSections ArquitecturaProjectSection[]
-  payments       ArquitecturaProjectPayment[]
-  financeSchedules ArquitecturaFinanceIncomeSchedule[]
-  calendarEvents   ArquitecturaCalendarEvent[]
-  documents        ArquitecturaProjectDocument[]
-  milestones       ArquitecturaProjectMilestone[]
+  budgetSections       ArquitecturaProjectSection[]
+  payments             ArquitecturaProjectPayment[]
+  financeSchedules     ArquitecturaFinanceIncomeSchedule[]
+  calendarEvents       ArquitecturaCalendarEvent[]
+  documents            ArquitecturaProjectDocument[]
+  milestones           ArquitecturaProjectMilestone[]
   executionTasks       ArquitecturaExecutionTask[]
   executionEvidences   ArquitecturaExecutionEvidence[]
   executionIncidents   ArquitecturaExecutionIncident[]
   executionActualCosts ArquitecturaExecutionActualCost[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -71,21 +74,25 @@ model ArquitecturaProject {
 }
 
 model ArquitecturaProjectPayment {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  paidAt    DateTime @map("paid_at")
-  amount    Decimal  @map("amount") @db.Decimal(14, 2)
-  concept   String   @map("concept") @db.Text
+  id             String   @id @default(uuid())
+  projectId      String   @map("project_id")
+  paidAt         DateTime @map("paid_at")
+  amount         Decimal  @map("amount") @db.Decimal(14, 2)
+  concept        String   @map("concept") @db.Text
   /// ABONO | PAGO_FINAL | SALDO | OTHER
-  paymentType String @default("OTHER") @map("payment_type")
+  paymentType    String   @default("OTHER") @map("payment_type")
   /// PENDING | PAID | CANCELLED
-  status    String   @map("status")
-  scheduleItemId String? @map("schedule_item_id")
+  status         String   @map("status")
+  scheduleItemId String?  @map("schedule_item_id")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  project      ArquitecturaProject                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      ArquitecturaProject                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   scheduleItem ArquitecturaFinanceIncomeSchedule? @relation(fields: [scheduleItemId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([projectId])
   @@index([scheduleItemId])
@@ -106,6 +113,10 @@ model ArquitecturaProjectDocument {
   project ArquitecturaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   archivo GenArchivo?         @relation("ArquitecturaProjectDocumentArchivo", fields: [archivoId], references: [id], onDelete: SetNull)
 
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
   @@index([projectId])
   @@index([archivoId])
   @@map("arquitectura_project_documents")
@@ -121,6 +132,10 @@ model ArquitecturaProjectMilestone {
   createdAt DateTime @default(now()) @map("created_at")
 
   project ArquitecturaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([projectId])
   @@map("arquitectura_project_milestones")

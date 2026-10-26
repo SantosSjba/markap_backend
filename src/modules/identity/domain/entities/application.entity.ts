@@ -2,7 +2,9 @@
  * Application Entity
  * Represents an application/module in the domain layer
  */
+import type { AccessLevel } from '../../../../shared/domain/access-level';
 export class Application {
+  accessLevel?: AccessLevel;
   constructor(
     public readonly id: string,
     public readonly name: string,

@@ -1,9 +1,10 @@
-import { dateOnlyYear } from '../../../../../shared/domain/utils/peru-date.util';
+import { legacyRentalCode } from '../../../domain/utils/rental-code.util';
 import { Rental, RentalListItem } from '../../../domain/entities/rental.entity';
 
 export class RentalPrismaMapper {
   static toListItem(r: {
     id: string;
+    code: string | null;
     startDate: Date;
     property: {
       id: string;
@@ -20,8 +21,6 @@ export class RentalPrismaMapper {
     status: string;
     attachments?: unknown[];
   }): RentalListItem {
-    const year = dateOnlyYear(r.startDate);
-    const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
     const n = (
       v: number | { toNumber?: () => number } | null | undefined,
     ): number | null => {
@@ -36,7 +35,7 @@ export class RentalPrismaMapper {
 
     return new RentalListItem(
       r.id,
-      `ALQ-${year}-${shortId}`,
+      r.code ?? legacyRentalCode(r.id, r.startDate),
       r.property.id,
       r.property.addressLine,
       r.property.code,

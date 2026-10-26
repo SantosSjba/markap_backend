@@ -85,7 +85,8 @@ export class ArquitecturaFinancePrismaRepository implements ArquitecturaFinanceR
    */
   private async lockSchedules(...ids: (string | null)[]): Promise<void> {
     for (const id of [...new Set(ids.filter((v): v is string => !!v))].sort())
-      await this.prisma
+      await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+      this.prisma
         .$queryRaw`SELECT id FROM arquitectura_finance_income_schedules WHERE id = ${id} FOR UPDATE`;
   }
 

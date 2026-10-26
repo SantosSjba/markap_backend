@@ -15,9 +15,12 @@ model ContabilidadInventoryItem {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  account     ContabilidadAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  application Application                     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  account     ContabilidadAccount             @relation(fields: [accountId], references: [id], onDelete: Restrict)
   movements   ContabilidadInventoryMovement[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -43,10 +46,13 @@ model ContabilidadInventoryMovement {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application  Application               @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   item         ContabilidadInventoryItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  period       ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  period       ContabilidadPeriod        @relation(fields: [periodId], references: [id], onDelete: Restrict)
   journalEntry ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
 
   @@index([applicationId])
   @@index([itemId])

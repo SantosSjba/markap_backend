@@ -11,11 +11,14 @@ model ContabilidadCashBox {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  account     ContabilidadAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  movements   ContabilidadTreasuryMovement[]
+  application      Application                    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  account          ContabilidadAccount            @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  movements        ContabilidadTreasuryMovement[]
   purchasePayments ContabilidadPurchasePayment[]
   salesCollections ContabilidadSalesCollection[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -36,12 +39,15 @@ model ContabilidadBankAccount {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  account          ContabilidadAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  application      Application                      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  account          ContabilidadAccount              @relation(fields: [accountId], references: [id], onDelete: Restrict)
   movements        ContabilidadTreasuryMovement[]
   reconciliations  ContabilidadBankReconciliation[]
   purchasePayments ContabilidadPurchasePayment[]
   salesCollections ContabilidadSalesCollection[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -49,40 +55,42 @@ model ContabilidadBankAccount {
 }
 
 model ContabilidadTreasuryMovement {
-  id              String   @id @default(uuid())
-  applicationId   String   @map("application_id")
-  periodId        String   @map("period_id")
-  movementType    String   @map("movement_type")
-  sourceType      String   @map("source_type")
-  cashBoxId       String?  @map("cash_box_id")
-  bankAccountId   String?  @map("bank_account_id")
-  offsetAccountId String?  @map("offset_account_id")
-  transferGroupId String?  @map("transfer_group_id")
-  currencyCode    String   @default("PEN") @map("currency_code")
-  foreignAmount   Decimal? @map("foreign_amount") @db.Decimal(14, 2)
-  exchangeRate    Decimal? @map("exchange_rate") @db.Decimal(12, 6)
-  amount          Decimal  @db.Decimal(14, 2)
-  movementDate    DateTime @map("movement_date") @db.Date
-  description     String
-  journalEntryId  String?  @map("journal_entry_id")
-  reconciliationId String? @map("reconciliation_id")
-  reconciledAt    DateTime? @map("reconciled_at")
-  createdBy       String?  @map("created_by")
+  id               String    @id @default(uuid())
+  applicationId    String    @map("application_id")
+  periodId         String    @map("period_id")
+  movementType     String    @map("movement_type")
+  sourceType       String    @map("source_type")
+  cashBoxId        String?   @map("cash_box_id")
+  bankAccountId    String?   @map("bank_account_id")
+  offsetAccountId  String?   @map("offset_account_id")
+  transferGroupId  String?   @map("transfer_group_id")
+  currencyCode     String    @default("PEN") @map("currency_code")
+  foreignAmount    Decimal?  @map("foreign_amount") @db.Decimal(14, 2)
+  exchangeRate     Decimal?  @map("exchange_rate") @db.Decimal(12, 6)
+  amount           Decimal   @db.Decimal(14, 2)
+  movementDate     DateTime  @map("movement_date") @db.Date
+  description      String
+  journalEntryId   String?   @map("journal_entry_id")
+  reconciliationId String?   @map("reconciliation_id")
+  reconciledAt     DateTime? @map("reconciled_at")
+  createdBy        String?   @map("created_by")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  period         ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
-  cashBox        ContabilidadCashBox? @relation(fields: [cashBoxId], references: [id], onDelete: Restrict)
-  bankAccount    ContabilidadBankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
-  offsetAccount  ContabilidadAccount? @relation("TreasuryOffsetAccount", fields: [offsetAccountId], references: [id], onDelete: Restrict)
-  journalEntry   ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
-  reconciliation ContabilidadBankReconciliation? @relation(fields: [reconciliationId], references: [id], onDelete: SetNull)
+  application      Application                     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period           ContabilidadPeriod              @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  cashBox          ContabilidadCashBox?            @relation(fields: [cashBoxId], references: [id], onDelete: Restrict)
+  bankAccount      ContabilidadBankAccount?        @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
+  offsetAccount    ContabilidadAccount?            @relation("TreasuryOffsetAccount", fields: [offsetAccountId], references: [id], onDelete: Restrict)
+  journalEntry     ContabilidadJournalEntry?       @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  reconciliation   ContabilidadBankReconciliation? @relation(fields: [reconciliationId], references: [id], onDelete: SetNull)
   purchasePayments ContabilidadPurchasePayment[]
   salesCollections ContabilidadSalesCollection[]
   detracciones     ContabilidadDetraccion[]
   perceptions      ContabilidadPerception[]
+
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@index([periodId])
@@ -102,14 +110,17 @@ model ContabilidadBankReconciliation {
   notes            String?
   status           String  @default("OPEN")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
   closedAt  DateTime? @map("closed_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  bankAccount ContabilidadBankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
-  period      ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  application Application                    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  bankAccount ContabilidadBankAccount        @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
+  period      ContabilidadPeriod             @relation(fields: [periodId], references: [id], onDelete: Restrict)
   movements   ContabilidadTreasuryMovement[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, bankAccountId, periodId])
   @@index([applicationId])

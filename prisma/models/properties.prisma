@@ -6,11 +6,11 @@ model Property {
   code           String
   propertyTypeId String @map("property_type_id")
 
-  addressLine String  @map("address_line")
-  districtId  String  @map("district_id")
+  addressLine    String  @map("address_line")
+  districtId     String  @map("district_id")
   /// Ubicación fuera del ubigeo peruano (cuando distrito = Otros)
-  locationCustom Json? @map("location_custom")
-  description String? @db.Text
+  locationCustom Json?   @map("location_custom")
+  description    String? @db.Text
 
   area          Float?  @map("area")
   bedrooms      Int?    @map("bedrooms")
@@ -26,6 +26,8 @@ model Property {
   ownerId String @map("owner_id")
 
   monthlyRent       Float? @map("monthly_rent")
+  /// Moneda del alquiler y mantenimiento (catálogo currencies, ej. PEN, USD)
+  rentCurrency      String @default("PEN") @map("rent_currency")
   maintenanceAmount Float? @map("maintenance_amount")
   depositMonths     Int?   @map("deposit_months")
 
@@ -34,9 +36,9 @@ model Property {
   /// Código de moneda del precio de venta (catálogo currencies, ej. PEN, USD)
   saleCurrency String  @default("PEN") @map("sale_currency")
   /// Nombre del proyecto / urbanización (Ventas)
-  projectName String? @map("project_name")
+  projectName  String? @map("project_name")
   /// Multimedia: [{ "url": string, "kind": "photo" | "plan" }]
-  mediaItems  Json?   @map("media_items")
+  mediaItems   Json?   @map("media_items")
 
   listingStatus String? @map("listing_status")
 
@@ -49,13 +51,13 @@ model Property {
   deletedAt DateTime? @map("deleted_at")
   deletedBy String?   @map("deleted_by")
 
-  application  Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  propertyType PropertyType @relation(fields: [propertyTypeId], references: [id], onDelete: Restrict)
-  district     District     @relation(fields: [districtId], references: [id], onDelete: Restrict)
-  owner        Client       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
-  owners       PropertyOwnerLink[]
-  rentals      Rental[]
-  saleProcesses SaleProcess[]
+  application     Application         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  propertyType    PropertyType        @relation(fields: [propertyTypeId], references: [id], onDelete: Restrict)
+  district        District            @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  owner           Client              @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  owners          PropertyOwnerLink[]
+  rentals         Rental[]
+  saleProcesses   SaleProcess[]
   saleSeparations SaleSeparation[]
   saleClosings    SaleClosing[]
 
@@ -69,15 +71,19 @@ model Property {
 
 /// Copropietarios / propietarios adicionales del inmueble (el principal sigue en owner_id).
 model PropertyOwnerLink {
-  id            String  @id @default(uuid())
-  propertyId    String  @map("property_id")
-  ownerClientId String  @map("owner_client_id")
-  isPrimary     Boolean @default(false) @map("is_primary")
-  sortOrder     Int     @default(0) @map("sort_order")
+  id            String   @id @default(uuid())
+  propertyId    String   @map("property_id")
+  ownerClientId String   @map("owner_client_id")
+  isPrimary     Boolean  @default(false) @map("is_primary")
+  sortOrder     Int      @default(0) @map("sort_order")
   createdAt     DateTime @default(now()) @map("created_at")
 
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   owner    Client   @relation("PropertyOwners", fields: [ownerClientId], references: [id], onDelete: Restrict)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@unique([propertyId, ownerClientId])
   @@index([propertyId])

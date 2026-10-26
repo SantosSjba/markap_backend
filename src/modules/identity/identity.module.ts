@@ -16,11 +16,6 @@ import { LoginUserUseCase } from './application/use-cases/auth/login-user.use-ca
 import { RegisterUserUseCase } from './application/use-cases/auth/register-user.use-case';
 import { RequestPasswordResetUseCase } from './application/use-cases/auth/request-password-reset.use-case';
 import { ResetPasswordUseCase } from './application/use-cases/auth/reset-password.use-case';
-import { CreateMenuUseCase } from './application/use-cases/menus/create-menu.use-case';
-import { DeleteMenuUseCase } from './application/use-cases/menus/delete-menu.use-case';
-import { GetMenusByApplicationUseCase } from './application/use-cases/menus/get-menus-by-application.use-case';
-import { GetMenusFlatUseCase } from './application/use-cases/menus/get-menus-flat.use-case';
-import { UpdateMenuUseCase } from './application/use-cases/menus/update-menu.use-case';
 import { AssignApplicationToRoleUseCase } from './application/use-cases/roles/assign-application-to-role.use-case';
 import { CreateRoleUseCase } from './application/use-cases/roles/create-role.use-case';
 import { DeleteRoleUseCase } from './application/use-cases/roles/delete-role.use-case';
@@ -37,30 +32,29 @@ import { ToggleUserActiveUseCase } from './application/use-cases/users/toggle-us
 import { UpdateUserUseCase } from './application/use-cases/users/update-user.use-case';
 import { ApplicationsController } from './presentation/controllers/applications.controller';
 import { AuthController } from './presentation/controllers/auth.controller';
-import { MenusController } from './presentation/controllers/menus.controller';
 import { RolesController } from './presentation/controllers/roles.controller';
 import { UsersController } from './presentation/controllers/users.controller';
+import { GetRoleApplicationsMatrixUseCase } from './application/use-cases/roles/get-role-applications-matrix.use-case';
+import { ListAuditLogsUseCase } from './application/use-cases/audit/list-audit-logs.use-case';
+import { AuditLogsController } from './presentation/controllers/audit-logs.controller';
 @Module({
   imports: [DatabaseModule, StorageModule, RuntimeModule, AuthRateLimitModule],
   controllers: [
+    AuditLogsController,
     AuthController,
     ApplicationsController,
     UsersController,
     RolesController,
-    MenusController,
   ],
   providers: [
+    ListAuditLogsUseCase,
+    GetRoleApplicationsMatrixUseCase,
     GetUserApplicationsUseCase,
     GetAllApplicationsUseCase,
     GetApplicationByIdUseCase,
     CreateApplicationUseCase,
     UpdateApplicationUseCase,
     DeleteApplicationUseCase,
-    GetMenusByApplicationUseCase,
-    GetMenusFlatUseCase,
-    CreateMenuUseCase,
-    UpdateMenuUseCase,
-    DeleteMenuUseCase,
     GetUserRolesUseCase,
     GetAllRolesUseCase,
     GetRoleByIdUseCase,

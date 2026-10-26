@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -22,6 +23,7 @@ import { ContabilidadSolOperationsService } from '../../application/services/con
 import { UpsertSolCredentialsDto } from '../dtos/contabilidad/contabilidad-electronic.dto';
 
 @ApiTags('Contabilidad — Declaraciones SUNAT (SOL)')
+@RequiresApplication('contabilidad')
 @Controller('contabilidad-sol')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

@@ -18,6 +18,9 @@ model ContabilidadCpeProviderConfig {
   application Application             @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   legalEntity ContabilidadLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@unique([legalEntityId])
   @@index([applicationId])
   @@map("contabilidad_cpe_provider_configs")

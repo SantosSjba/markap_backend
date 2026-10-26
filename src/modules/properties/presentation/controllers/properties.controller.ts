@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import { CatalogQueriesService } from '../../../../shared/application/services/catalog-queries.service';
 import { parseIntegerQuery } from '../../../../shared/utils/parse-integer-query.util';
 import { PropertyLookupsService } from '../../application/services/property-lookups.service';
@@ -48,6 +49,7 @@ import { UpdateListingStatusDto } from '../dtos/properties/update-listing-status
 import { UpdatePropertyDto } from '../dtos/properties/update-property.dto';
 
 @ApiTags('Properties')
+@RequiresApplication({ fromRequest: true, fallback: ['alquileres', 'ventas'] })
 @Controller('properties')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
@@ -313,6 +315,7 @@ export class PropertiesController {
         ownerId: dto.ownerId,
         ownerClientIds: dto.ownerClientIds,
         monthlyRent: dto.monthlyRent,
+        rentCurrency: dto.rentCurrency,
         maintenanceAmount: dto.maintenanceAmount,
         depositMonths: dto.depositMonths,
         salePrice: dto.salePrice,
@@ -350,6 +353,7 @@ export class PropertiesController {
       ownerId: dto.ownerId,
       ownerClientIds: dto.ownerClientIds,
       monthlyRent: dto.monthlyRent,
+      rentCurrency: dto.rentCurrency,
       maintenanceAmount: dto.maintenanceAmount,
       depositMonths: dto.depositMonths,
       salePrice: dto.salePrice,

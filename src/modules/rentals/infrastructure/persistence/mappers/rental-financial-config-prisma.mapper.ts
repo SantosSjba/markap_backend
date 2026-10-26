@@ -10,17 +10,21 @@ export class RentalFinancialConfigPrismaMapper {
     expenseType: string;
     expenseValue: number | { toNumber?: () => number };
     expenseDetail?: string | null;
+    expenseCurrency?: string | null;
     taxType: string;
     taxValue: number | { toNumber?: () => number };
     taxDetail?: string | null;
+    taxCurrency?: string | null;
     externalAgentId: string | null;
     externalAgentType: string;
     externalAgentValue: number | { toNumber?: () => number };
     externalAgentName: string | null;
+    externalAgentCurrency?: string | null;
     internalAgentId: string | null;
     internalAgentType: string;
     internalAgentValue: number | { toNumber?: () => number };
     internalAgentName: string | null;
+    internalAgentCurrency?: string | null;
     createdAt: Date;
     updatedAt: Date;
     externalAgent?: { fullName: string } | null;
@@ -36,17 +40,21 @@ export class RentalFinancialConfigPrismaMapper {
       row.expenseType as FinancialValueType,
       n(row.expenseValue),
       row.expenseDetail ?? null,
+      row.expenseCurrency ?? null,
       row.taxType as FinancialValueType,
       n(row.taxValue),
       row.taxDetail ?? null,
+      row.taxCurrency ?? null,
       row.externalAgentId ?? null,
       row.externalAgentType as FinancialValueType,
       n(row.externalAgentValue),
       row.externalAgent?.fullName ?? row.externalAgentName,
+      row.externalAgentCurrency ?? null,
       row.internalAgentId ?? null,
       row.internalAgentType as FinancialValueType,
       n(row.internalAgentValue),
       row.internalAgent?.fullName ?? row.internalAgentName,
+      row.internalAgentCurrency ?? null,
       row.createdAt,
       row.updatedAt,
     );

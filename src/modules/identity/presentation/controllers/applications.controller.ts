@@ -1,3 +1,4 @@
+import { SkipApplicationAccess } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -24,13 +25,13 @@ import { GetAllApplicationsUseCase } from '../../application/use-cases/applicati
 import { GetApplicationByIdUseCase } from '../../application/use-cases/applications/get-application-by-id.use-case';
 import { GetUserApplicationsUseCase } from '../../application/use-cases/applications/get-user-applications.use-case';
 import { UpdateApplicationUseCase } from '../../application/use-cases/applications/update-application.use-case';
-import { GetMenusByApplicationUseCase } from '../../application/use-cases/menus/get-menus-by-application.use-case';
 import { ApplicationResponseDto } from '../dtos/applications/application-response.dto';
 import { CreateApplicationDto } from '../dtos/applications/create-application.dto';
 import { UpdateApplicationDto } from '../dtos/applications/update-application.dto';
 import { ApplicationHttpMapper } from '../mappers/application-http.mapper';
 
 @ApiTags('Applications')
+@SkipApplicationAccess()
 @Controller('applications')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
@@ -42,7 +43,6 @@ export class ApplicationsController {
     private readonly createApplicationUseCase: CreateApplicationUseCase,
     private readonly updateApplicationUseCase: UpdateApplicationUseCase,
     private readonly deleteApplicationUseCase: DeleteApplicationUseCase,
-    private readonly getMenusByApplicationUseCase: GetMenusByApplicationUseCase,
   ) {}
 
   @Get('me')
@@ -77,19 +77,6 @@ export class ApplicationsController {
   async getById(@Param('id') id: string) {
     const app = await this.getApplicationByIdUseCase.execute(id);
     return ApplicationHttpMapper.toResponse(app);
-  }
-
-  @Get(':slug/menus')
-  @ApiOperation({ summary: 'Obtener menús de una aplicación por slug' })
-  @ApiResponse({
-    status: 200,
-    description: 'Menús jerárquicos de la aplicación',
-  })
-  @ApiResponse({ status: 404, description: 'Aplicación no encontrada' })
-  async getMenus(@Param('slug') slug: string) {
-    return this.getMenusByApplicationUseCase.execute({
-      applicationSlug: slug,
-    });
   }
 
   @Post()

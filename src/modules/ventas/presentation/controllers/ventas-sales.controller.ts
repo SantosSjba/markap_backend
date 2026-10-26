@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   BadRequestException,
   Body,
@@ -37,6 +38,7 @@ import {
 } from '../dtos/ventas/ventas-sales-requests.dto';
 
 @ApiTags('Ventas — CRM')
+@RequiresApplication('ventas')
 @Controller('ventas-sales')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

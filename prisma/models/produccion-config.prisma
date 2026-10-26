@@ -12,6 +12,9 @@ model ProduccionAppSettings {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@map("produccion_app_settings")
 }
 
@@ -27,6 +30,9 @@ model ProduccionFurnitureCategoryConfig {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -46,6 +52,9 @@ model ProduccionMaterialCategoryConfig {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@unique([applicationId, code])
   @@index([applicationId])
   @@map("produccion_material_category_configs")
@@ -63,6 +72,9 @@ model ProduccionProductionStageConfig {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, stageKey])
   @@index([applicationId])
@@ -82,6 +94,9 @@ model ProduccionUnitConfig {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@unique([applicationId, code])
   @@index([applicationId])
   @@map("produccion_unit_configs")
@@ -100,6 +115,9 @@ model ProduccionNumberingSeries {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, seriesKey])
   @@index([applicationId])

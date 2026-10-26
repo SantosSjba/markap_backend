@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -9,6 +10,7 @@ import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.gu
 import { ContabilidadLegalEntityOperationsService } from '../../application/services/contabilidad-legal-entity-operations.service';
 
 @ApiTags('Contabilidad — Entidades legales')
+@RequiresApplication('contabilidad')
 @Controller('contabilidad-legal-entities')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

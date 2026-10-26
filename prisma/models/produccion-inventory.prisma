@@ -16,11 +16,14 @@ model ProduccionMaterial {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  movements   ProduccionStockMovement[]
-  supplierLinks ProduccionSupplierMaterialLink[]
-  purchaseOrderLines ProduccionPurchaseOrderLine[]
+  application           Application                              @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  movements             ProduccionStockMovement[]
+  supplierLinks         ProduccionSupplierMaterialLink[]
+  purchaseOrderLines    ProduccionPurchaseOrderLine[]
   workOrderConsumptions ProduccionWorkOrderMaterialConsumption[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -43,6 +46,10 @@ model ProduccionStockMovement {
   createdAt DateTime @default(now()) @map("created_at")
 
   material ProduccionMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([materialId])
   @@index([movementType])

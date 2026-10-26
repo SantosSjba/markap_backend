@@ -17,18 +17,21 @@ model ContabilidadAccount {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  parent      ContabilidadAccount? @relation("ContabilidadAccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children    ContabilidadAccount[] @relation("ContabilidadAccountHierarchy")
-  journalLines ContabilidadJournalEntryLine[]
-  templateLines ContabilidadJournalTemplateLine[]
-  inventorySnapshots ContabilidadInventoryBalanceSnapshot[]
-  cashBoxes              ContabilidadCashBox[]
-  bankAccounts           ContabilidadBankAccount[]
-  treasuryOffsetMovements ContabilidadTreasuryMovement[] @relation("TreasuryOffsetAccount")
-  purchaseExpenseInvoices ContabilidadPurchaseInvoice[] @relation("PurchaseExpenseAccount")
-  salesIncomeInvoices     ContabilidadSalesInvoice[] @relation("SalesIncomeAccount")
+  application             Application                            @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  parent                  ContabilidadAccount?                   @relation("ContabilidadAccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children                ContabilidadAccount[]                  @relation("ContabilidadAccountHierarchy")
+  journalLines            ContabilidadJournalEntryLine[]
+  templateLines           ContabilidadJournalTemplateLine[]
+  inventorySnapshots      ContabilidadInventoryBalanceSnapshot[]
+  cashBoxes               ContabilidadCashBox[]
+  bankAccounts            ContabilidadBankAccount[]
+  treasuryOffsetMovements ContabilidadTreasuryMovement[]         @relation("TreasuryOffsetAccount")
+  purchaseExpenseInvoices ContabilidadPurchaseInvoice[]          @relation("PurchaseExpenseAccount")
+  salesIncomeInvoices     ContabilidadSalesInvoice[]             @relation("SalesIncomeAccount")
   inventoryItems          ContabilidadInventoryItem[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])

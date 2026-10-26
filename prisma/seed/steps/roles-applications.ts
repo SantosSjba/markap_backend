@@ -87,10 +87,7 @@ export async function seedRolesAndApplications(
         data: {
           roleId: adminRoleId,
           applicationId: appId,
-          canRead: true,
-          canWrite: true,
-          canDelete: true,
-          canAdmin: true,
+          accessLevel: 'ADMIN',
         },
       });
     }
@@ -125,10 +122,7 @@ export async function seedRolesAndApplications(
           data: {
             roleId,
             applicationId: appId,
-            canRead: true,
-            canWrite: true,
-            canDelete: false,
-            canAdmin: false,
+            accessLevel: 'WRITE',
           },
         });
       }

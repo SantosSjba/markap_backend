@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -21,6 +22,7 @@ import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.gu
 import { ArquitecturaConfigOperationsService } from '../../application/services/arquitectura-config-operations.service';
 
 @ApiTags('Arquitectura — Configuración')
+@RequiresApplication('arquitectura')
 @Controller('arquitectura-config')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

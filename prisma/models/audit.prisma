@@ -1,0 +1,27 @@
+// Bitácora de auditoría inmutable (trigger en la migración audit_trail)
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  occurredAt    DateTime @default(now()) @map("occurred_at")
+  userId        String?  @map("user_id")
+  action        String // CREATE | UPDATE | DELETE | SOFT_DELETE | RESTORE
+  // | LOGIN | LOGIN_FAILED | LOGOUT | PASSWORD_RESET
+  // | ACCESS_DENIED
+  tableName     String?  @map("table_name") // nombre físico (@@map)
+  recordId      String?  @map("record_id")
+  applicationId String?  @map("application_id") // si el registro tiene applicationId
+  changes       Json? // { campo: { before, after } } para UPDATE
+  snapshot      Json? // fila completa en CREATE (after) y DELETE (before)
+  metadata      Json? // datos del evento (ruta, método, motivo del 403, email del login fallido…)
+  ip            String?
+  userAgent     String?  @map("user_agent")
+  requestId     String?  @map("request_id")
+  source        String // HTTP | WS | JOB | SEED | SYSTEM
+
+  @@index([occurredAt])
+  @@index([userId, occurredAt])
+  @@index([tableName, recordId])
+  @@index([applicationId, occurredAt])
+  @@index([action])
+  @@map("audit_logs")
+}

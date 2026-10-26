@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -32,6 +33,7 @@ import { CreateProduccionFurnitureDto } from '../dtos/produccion-furniture/creat
 import { UpdateProduccionFurnitureDto } from '../dtos/produccion-furniture/update-furniture.dto';
 
 @ApiTags('Producción — Catálogo de muebles')
+@RequiresApplication('produccion')
 @Controller('produccion-furniture')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

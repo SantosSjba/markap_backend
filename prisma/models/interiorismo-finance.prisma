@@ -15,8 +15,11 @@ model InteriorFinanceIncomeSchedule {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  project   InteriorProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  payments  InteriorProjectPayment[]
+  project  InteriorProject          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  payments InteriorProjectPayment[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([projectId])
   @@index([projectId, kind])

@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   BadRequestException,
   Body,
@@ -41,6 +42,7 @@ import { CreateInteriorCatalogMaterialDto } from '../dtos/interiorismo-catalog-m
 import { UpdateInteriorCatalogMaterialDto } from '../dtos/interiorismo-catalog-materials/update-catalog-material.dto';
 
 @ApiTags('Interiorismo — Materiales (catálogo)')
+@RequiresApplication('interiorismo')
 @Controller('interiorismo-catalog-materials')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

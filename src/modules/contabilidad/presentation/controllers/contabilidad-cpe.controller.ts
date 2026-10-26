@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -22,6 +23,7 @@ import { CONTABILIDAD_CPE_PROVIDER } from '../../domain/constants/contabilidad-c
 import { UpsertCpeProviderConfigDto } from '../dtos/contabilidad/contabilidad-electronic.dto';
 
 @ApiTags('Contabilidad — Facturación electrónica CPE')
+@RequiresApplication('contabilidad')
 @Controller('contabilidad-cpe')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

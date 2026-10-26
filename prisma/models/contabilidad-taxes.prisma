@@ -12,8 +12,11 @@ model ContabilidadDetraccionRate {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application  Application              @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   detracciones ContabilidadDetraccion[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, sunatCode])
   @@index([applicationId])
@@ -42,12 +45,14 @@ model ContabilidadDetraccion {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  period           ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
-  purchaseInvoice  ContabilidadPurchaseInvoice? @relation(fields: [purchaseInvoiceId], references: [id], onDelete: SetNull)
-  rate             ContabilidadDetraccionRate? @relation(fields: [rateId], references: [id], onDelete: SetNull)
+  application      Application                   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period           ContabilidadPeriod            @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  purchaseInvoice  ContabilidadPurchaseInvoice?  @relation(fields: [purchaseInvoiceId], references: [id], onDelete: SetNull)
+  rate             ContabilidadDetraccionRate?   @relation(fields: [rateId], references: [id], onDelete: SetNull)
   treasuryMovement ContabilidadTreasuryMovement? @relation(fields: [treasuryMovementId], references: [id], onDelete: SetNull)
-  journalEntry     ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  journalEntry     ContabilidadJournalEntry?     @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@index([periodId])
@@ -77,10 +82,12 @@ model ContabilidadRetention {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  period          ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  application     Application                  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period          ContabilidadPeriod           @relation(fields: [periodId], references: [id], onDelete: Restrict)
   purchaseInvoice ContabilidadPurchaseInvoice? @relation(fields: [purchaseInvoiceId], references: [id], onDelete: SetNull)
-  journalEntry    ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  journalEntry    ContabilidadJournalEntry?    @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@index([periodId])
@@ -107,11 +114,13 @@ model ContabilidadPerception {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  period           ContabilidadPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
-  salesInvoice     ContabilidadSalesInvoice? @relation(fields: [salesInvoiceId], references: [id], onDelete: SetNull)
+  application      Application                   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  period           ContabilidadPeriod            @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  salesInvoice     ContabilidadSalesInvoice?     @relation(fields: [salesInvoiceId], references: [id], onDelete: SetNull)
   treasuryMovement ContabilidadTreasuryMovement? @relation(fields: [treasuryMovementId], references: [id], onDelete: SetNull)
-  journalEntry     ContabilidadJournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  journalEntry     ContabilidadJournalEntry?     @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@index([periodId])

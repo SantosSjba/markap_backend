@@ -101,6 +101,7 @@ export class PropertyPrismaMapper {
     partida3: string | null;
     ownerId: string;
     monthlyRent: number | null;
+    rentCurrency: string | null;
     maintenanceAmount: number | null;
     depositMonths: number | null;
     salePrice: number | null;
@@ -167,6 +168,7 @@ export class PropertyPrismaMapper {
       property.ownerId,
       owners,
       property.monthlyRent,
+      property.rentCurrency ?? 'PEN',
       property.maintenanceAmount,
       property.depositMonths,
       property.salePrice,

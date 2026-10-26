@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -26,6 +27,7 @@ import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.gu
 import { ProduccionConfigOperationsService } from '../../application/services/produccion-config-operations.service';
 
 @ApiTags('Producción — Configuración')
+@RequiresApplication('produccion')
 @Controller('produccion-config')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

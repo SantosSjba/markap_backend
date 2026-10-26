@@ -16,6 +16,9 @@ model ContabilidadSolCredentials {
   application Application             @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   legalEntity ContabilidadLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@unique([legalEntityId])
   @@index([applicationId])
   @@map("contabilidad_sol_credentials")
@@ -42,6 +45,8 @@ model ContabilidadSunatDeclarationLog {
   application Application             @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   legalEntity ContabilidadLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
   period      ContabilidadPeriod      @relation(fields: [periodId], references: [id], onDelete: Restrict)
+
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@index([legalEntityId])

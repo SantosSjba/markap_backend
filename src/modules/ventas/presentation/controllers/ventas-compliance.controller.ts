@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   BadRequestException,
   Body,
@@ -33,6 +34,7 @@ import {
 } from '../dtos/ventas/ventas-compliance-requests.dto';
 
 @ApiTags('Ventas — Cumplimiento Legal')
+@RequiresApplication('ventas')
 @Controller('ventas-compliance')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

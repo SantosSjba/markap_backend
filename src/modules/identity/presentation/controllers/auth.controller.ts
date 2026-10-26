@@ -1,3 +1,4 @@
+import { SkipApplicationAccess } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -15,6 +16,10 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import {
+  AUDIT_RECORDER,
+  type AuditRecorder,
+} from '../../../../shared/application/ports/audit-recorder.port';
 import { AuthRateLimit } from '../../../../shared/presentation/decorators/auth-rate-limit.decorator';
 import { AdminGuard } from '../../../../shared/presentation/guards/admin.guard';
 import type { AuthenticatedRequest } from '../../../../shared/presentation/guards/jwt-auth.guard';
@@ -32,9 +37,13 @@ import { ResetPasswordDto } from '../dtos/auth/reset-password.dto';
 import { UserHttpMapper } from '../mappers/user-http.mapper';
 
 @ApiTags('Auth')
+@SkipApplicationAccess()
 @Controller('auth')
 export class AuthController {
-  constructor(@Inject(AUTH_PORT) private readonly auth: AuthPort) {}
+  constructor(
+    @Inject(AUTH_PORT) private readonly auth: AuthPort,
+    @Inject(AUDIT_RECORDER) private readonly audit: AuditRecorder,
+  ) {}
 
   @Post('register')
   @UseGuards(JwtAuthGuard, AdminGuard)
@@ -75,6 +84,13 @@ export class AuthController {
       message: 'Usuario registrado exitosamente',
       user: UserHttpMapper.toResponse(user),
     };
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  async logout(@Request() req: AuthenticatedRequest) {
+    await this.audit.record({ action: 'LOGOUT', userId: req.user.sub });
   }
 
   @Post('login')

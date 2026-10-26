@@ -18,14 +18,17 @@ model ContabilidadLegalEntity {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application    Application                @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  periods        ContabilidadPeriod[]
-  journalEntries ContabilidadJournalEntry[]
-  auditLogs      ContabilidadAuditLog[]
+  application       Application                         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  periods           ContabilidadPeriod[]
+  journalEntries    ContabilidadJournalEntry[]
+  auditLogs         ContabilidadAuditLog[]
   cpeProviderConfig ContabilidadCpeProviderConfig?
   electronicDocLogs ContabilidadElectronicDocumentLog[]
   solCredentials    ContabilidadSolCredentials?
   sunatDeclarations ContabilidadSunatDeclarationLog[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@unique([applicationId, ruc])
@@ -34,16 +37,16 @@ model ContabilidadLegalEntity {
 }
 
 model ContabilidadAuditLog {
-  id              String   @id @default(uuid())
-  applicationId   String   @map("application_id")
-  legalEntityId   String?  @map("legal_entity_id")
-  entityType      String   @map("entity_type")
-  entityId        String?  @map("entity_id")
-  action          String
-  userId          String?  @map("user_id")
-  summary         String?
-  payload         Json?
-  createdAt       DateTime @default(now()) @map("created_at")
+  id            String   @id @default(uuid())
+  applicationId String   @map("application_id")
+  legalEntityId String?  @map("legal_entity_id")
+  entityType    String   @map("entity_type")
+  entityId      String?  @map("entity_id")
+  action        String
+  userId        String?  @map("user_id")
+  summary       String?
+  payload       Json?
+  createdAt     DateTime @default(now()) @map("created_at")
 
   application Application              @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   legalEntity ContabilidadLegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: SetNull)

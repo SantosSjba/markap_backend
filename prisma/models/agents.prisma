@@ -19,28 +19,31 @@ model Agent {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  application   Application    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  documentType  DocumentType?  @relation(fields: [documentTypeId], references: [id], onDelete: SetNull)
-  rentalFinancialConfigsExternal RentalFinancialConfig[] @relation("ExternalAgent")
-  rentalFinancialConfigsInternal RentalFinancialConfig[] @relation("InternalAgent")
-  assignedSalesClients           Client[]                 @relation("ClientAssignedAgent")
-  saleProcesses                  SaleProcess[]
-  saleClosings                   SaleClosing[]
-  saleCommissions                SaleCommission[]
-  ventasCommissionProfiles       VentasAgentCommissionProfile[]
-  interiorProjectsAsDesigner     InteriorProject[] @relation("InteriorProjectDesigner")
-  interiorProjectsAsArchitectJr  InteriorProject[] @relation("InteriorProjectArchitectJr")
-  interiorProjectsAsArchitectSr  InteriorProject[] @relation("InteriorProjectArchitectSr")
-  interiorProjectsAsSupervisor   InteriorProject[] @relation("InteriorProjectSupervisor")
-  interiorProjectsAsCommercial   InteriorProject[] @relation("InteriorProjectCommercial")
-  arquitecturaProjectsAsDesigner    ArquitecturaProject[] @relation("ArquitecturaProjectDesigner")
-  arquitecturaProjectsAsArchitectJr ArquitecturaProject[] @relation("ArquitecturaProjectArchitectJr")
-  arquitecturaProjectsAsArchitectSr ArquitecturaProject[] @relation("ArquitecturaProjectArchitectSr")
-  arquitecturaProjectsAsSupervisor  ArquitecturaProject[] @relation("ArquitecturaProjectSupervisor")
-  arquitecturaProjectsAsCommercial  ArquitecturaProject[] @relation("ArquitecturaProjectCommercial")
-  arquitecturaCalendarEvents        ArquitecturaCalendarEvent[] @relation("ArquitecturaCalendarAgent")
-  interiorCalendarEvents          InteriorCalendarEvent[]
+  application                       Application                    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user                              User?                          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  documentType                      DocumentType?                  @relation(fields: [documentTypeId], references: [id], onDelete: SetNull)
+  rentalFinancialConfigsExternal    RentalFinancialConfig[]        @relation("ExternalAgent")
+  rentalFinancialConfigsInternal    RentalFinancialConfig[]        @relation("InternalAgent")
+  assignedSalesClients              Client[]                       @relation("ClientAssignedAgent")
+  saleProcesses                     SaleProcess[]
+  saleClosings                      SaleClosing[]
+  saleCommissions                   SaleCommission[]
+  ventasCommissionProfiles          VentasAgentCommissionProfile[]
+  interiorProjectsAsDesigner        InteriorProject[]              @relation("InteriorProjectDesigner")
+  interiorProjectsAsArchitectJr     InteriorProject[]              @relation("InteriorProjectArchitectJr")
+  interiorProjectsAsArchitectSr     InteriorProject[]              @relation("InteriorProjectArchitectSr")
+  interiorProjectsAsSupervisor      InteriorProject[]              @relation("InteriorProjectSupervisor")
+  interiorProjectsAsCommercial      InteriorProject[]              @relation("InteriorProjectCommercial")
+  arquitecturaProjectsAsDesigner    ArquitecturaProject[]          @relation("ArquitecturaProjectDesigner")
+  arquitecturaProjectsAsArchitectJr ArquitecturaProject[]          @relation("ArquitecturaProjectArchitectJr")
+  arquitecturaProjectsAsArchitectSr ArquitecturaProject[]          @relation("ArquitecturaProjectArchitectSr")
+  arquitecturaProjectsAsSupervisor  ArquitecturaProject[]          @relation("ArquitecturaProjectSupervisor")
+  arquitecturaProjectsAsCommercial  ArquitecturaProject[]          @relation("ArquitecturaProjectCommercial")
+  arquitecturaCalendarEvents        ArquitecturaCalendarEvent[]    @relation("ArquitecturaCalendarAgent")
+  interiorCalendarEvents            InteriorCalendarEvent[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@index([type])

@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   BadRequestException,
   Body,
@@ -40,6 +41,7 @@ import { CreateInteriorProjectDocumentDto } from '../dtos/interiorismo-documents
 import { UpdateInteriorProjectDocumentDto } from '../dtos/interiorismo-documents/update-interior-project-document.dto';
 
 @ApiTags('Interiorismo — Documentos')
+@RequiresApplication('interiorismo')
 @Controller('interiorismo-documents')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

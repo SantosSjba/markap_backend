@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -32,6 +33,7 @@ import {
 } from '../dtos/produccion-costs/extra-cost-catalog.dto';
 
 @ApiTags('Producción — Gastos adicionales (catálogo)')
+@RequiresApplication('produccion')
 @Controller('produccion-extra-costs')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

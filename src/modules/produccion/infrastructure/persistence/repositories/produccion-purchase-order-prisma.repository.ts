@@ -347,6 +347,7 @@ export class ProduccionPurchaseOrderPrismaRepository implements ProduccionPurcha
     }
 
     await this.prisma.$transaction(async (tx) => {
+      // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
       await tx.$queryRaw`SELECT id FROM produccion_purchase_orders WHERE id = ${id} FOR UPDATE`;
       const order = await tx.produccionPurchaseOrder.findUnique({
         where: { id },

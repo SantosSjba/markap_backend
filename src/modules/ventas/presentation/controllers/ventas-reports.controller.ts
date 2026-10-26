@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -9,6 +10,7 @@ import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.gu
 import { VentasReportsOperationsService } from '../../application/services/ventas-reports-operations.service';
 
 @ApiTags('Ventas — Reportes')
+@RequiresApplication('ventas')
 @Controller('ventas-reports')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

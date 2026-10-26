@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -26,6 +27,7 @@ import { CreateInteriorProjectDto } from '../dtos/interiorismo-projects/create-i
 import { UpdateInteriorProjectDto } from '../dtos/interiorismo-projects/update-interior-project.dto';
 
 @ApiTags('Interiorismo — Proyectos')
+@RequiresApplication('interiorismo')
 @Controller('interiorismo-projects')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

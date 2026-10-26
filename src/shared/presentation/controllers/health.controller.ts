@@ -1,7 +1,9 @@
+import { SkipApplicationAccess } from '../decorators/application-access.decorators';
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Health')
+@SkipApplicationAccess()
 @Controller('health')
 export class HealthController {
   @Get()

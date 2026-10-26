@@ -3,40 +3,12 @@ export { CURRENCIES } from './currencies';
 export { SALE_FINANCING_CHANNELS } from './sale-financing-channels';
 export { DOCUMENT_TYPES } from './document-types';
 export {
-  ALQUILERES_CHILD_MENUS,
-  ALQUILERES_PARENT_MENUS,
-} from './menus-alquileres';
-export {
   VENTAS_APPLICATION_SLUG,
-  VENTAS_CHILD_MENUS,
-  VENTAS_PARENT_MENUS,
-} from './menus-ventas';
-export {
   INTERIORISMO_APPLICATION_SLUG,
-  INTERIORISMO_CHILD_MENUS,
-  INTERIORISMO_OBSOLETE_MENU_PATH_PREFIXES,
-  INTERIORISMO_OBSOLETE_PARENT_LABELS,
-  INTERIORISMO_PARENT_MENUS,
-} from './menus-interiorismo';
-export {
   ARQUITECTURA_APPLICATION_SLUG,
-  ARQUITECTURA_CHILD_MENUS,
-  ARQUITECTURA_PARENT_MENUS,
-} from './menus-arquitectura';
-export {
   PRODUCCION_APPLICATION_SLUG,
-  PRODUCCION_CHILD_MENUS,
-  PRODUCCION_DEPRECATED_PARENT_LABELS,
-  PRODUCCION_DEPRECATED_PATHS,
-  PRODUCCION_PARENT_MENUS,
-} from './menus-produccion';
-export {
   CONTABILIDAD_APPLICATION_SLUG,
-  CONTABILIDAD_CHILD_MENUS,
-  CONTABILIDAD_DEPRECATED_PARENT_LABELS,
-  CONTABILIDAD_DEPRECATED_PATHS,
-  CONTABILIDAD_PARENT_MENUS,
-} from './menus-contabilidad';
+} from './application-slugs';
 export { PROPERTY_TYPES } from './property-types';
 export { ROLE_APPLICATION_ASSIGNMENTS } from './role-application-assignments';
 export { ROLES } from './roles';

@@ -18,15 +18,18 @@ model ProduccionFurniture {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  images      ProduccionFurnitureImage[]
-  bomLines    ProduccionFurnitureBomLine[]
-  laborEntries ProduccionFurnitureLaborEntry[]
-  extraExpenses ProduccionFurnitureExtraExpense[]
-  costSnapshots ProduccionFurnitureCostSnapshot[]
+  application    Application                       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  images         ProduccionFurnitureImage[]
+  bomLines       ProduccionFurnitureBomLine[]
+  laborEntries   ProduccionFurnitureLaborEntry[]
+  extraExpenses  ProduccionFurnitureExtraExpense[]
+  costSnapshots  ProduccionFurnitureCostSnapshot[]
   workOrderLines ProduccionWorkOrderLine[]
   quotationLines ProduccionQuotationLine[]
   orderLines     ProduccionOrderLine[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -43,22 +46,32 @@ model ProduccionFurnitureImage {
 
   furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
   @@index([furnitureId])
   @@map("produccion_furniture_images")
 }
 
 /// Lista de materiales base (BOM) por mueble — v1 sin vínculo a inventario.
 model ProduccionFurnitureBomLine {
-  id           String  @id @default(uuid())
-  furnitureId  String  @map("furniture_id")
-  sortOrder    Int     @default(0) @map("sort_order")
-  materialName String  @map("material_name")
-  unit         String  @map("unit")
+  id           String   @id @default(uuid())
+  furnitureId  String   @map("furniture_id")
+  sortOrder    Int      @default(0) @map("sort_order")
+  materialName String   @map("material_name")
+  unit         String   @map("unit")
   quantity     Decimal  @map("quantity") @db.Decimal(14, 4)
   unitCost     Decimal? @map("unit_cost") @db.Decimal(14, 4)
   notes        String?  @db.Text
 
   furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([furnitureId])
   @@map("produccion_furniture_bom_lines")

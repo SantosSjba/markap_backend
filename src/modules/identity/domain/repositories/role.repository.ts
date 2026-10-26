@@ -1,3 +1,4 @@
+import type { AccessLevel } from '../../../../shared/domain/access-level';
 import { Role } from '../entities/role.entity';
 
 export type CreateRoleData = Pick<
@@ -69,6 +70,16 @@ export interface RoleRepository {
    * Assign application to role
    */
   assignApplication(roleId: string, applicationId: string): Promise<void>;
+  setApplicationAccess(
+    roleId: string,
+    applicationId: string,
+    level: AccessLevel,
+  ): Promise<void>;
+  getApplicationsMatrix(): Promise<{
+    roles: Role[];
+    applications: { id: string; name: string; slug: string }[];
+    access: Record<string, Record<string, AccessLevel>>;
+  }>;
 
   /**
    * Revoke application from role

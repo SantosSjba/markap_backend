@@ -11,8 +11,11 @@ model ProduccionLaborRate {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application  Application                     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   laborEntries ProduccionFurnitureLaborEntry[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@index([isActive])
@@ -31,39 +34,52 @@ model ProduccionExtraCostCatalog {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application Application                       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   expenses    ProduccionFurnitureExtraExpense[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@map("produccion_extra_cost_catalog")
 }
 
 model ProduccionFurnitureLaborEntry {
-  id           String  @id @default(uuid())
-  furnitureId  String  @map("furniture_id")
-  laborRateId  String? @map("labor_rate_id")
-  description  String  @map("description")
-  hours        Decimal @map("hours") @db.Decimal(10, 2)
-  hourlyRate   Decimal @map("hourly_rate") @db.Decimal(14, 2)
-  sortOrder    Int     @default(0) @map("sort_order")
+  id          String  @id @default(uuid())
+  furnitureId String  @map("furniture_id")
+  laborRateId String? @map("labor_rate_id")
+  description String  @map("description")
+  hours       Decimal @map("hours") @db.Decimal(10, 2)
+  hourlyRate  Decimal @map("hourly_rate") @db.Decimal(14, 2)
+  sortOrder   Int     @default(0) @map("sort_order")
 
-  furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
+  furniture ProduccionFurniture  @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
   laborRate ProduccionLaborRate? @relation(fields: [laborRateId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([furnitureId])
   @@map("produccion_furniture_labor_entries")
 }
 
 model ProduccionFurnitureExtraExpense {
-  id           String  @id @default(uuid())
-  furnitureId  String  @map("furniture_id")
+  id            String  @id @default(uuid())
+  furnitureId   String  @map("furniture_id")
   catalogItemId String? @map("catalog_item_id")
-  description  String  @map("description")
-  amount       Decimal @map("amount") @db.Decimal(14, 2)
-  sortOrder    Int     @default(0) @map("sort_order")
+  description   String  @map("description")
+  amount        Decimal @map("amount") @db.Decimal(14, 2)
+  sortOrder     Int     @default(0) @map("sort_order")
 
-  furniture   ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
+  furniture   ProduccionFurniture         @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
   catalogItem ProduccionExtraCostCatalog? @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([furnitureId])
   @@map("produccion_furniture_extra_expenses")
@@ -71,19 +87,23 @@ model ProduccionFurnitureExtraExpense {
 
 /// Historial de costeos guardados por mueble.
 model ProduccionFurnitureCostSnapshot {
-  id              String   @id @default(uuid())
-  furnitureId     String   @map("furniture_id")
-  label           String?  @map("label")
-  materialsTotal  Decimal  @map("materials_total") @db.Decimal(14, 2)
-  laborTotal      Decimal  @map("labor_total") @db.Decimal(14, 2)
-  extrasTotal     Decimal  @map("extras_total") @db.Decimal(14, 2)
-  totalCost       Decimal  @map("total_cost") @db.Decimal(14, 2)
-  referencePrice  Decimal  @map("reference_price") @db.Decimal(14, 2)
-  marginPercent   Decimal? @map("margin_percent") @db.Decimal(8, 2)
+  id             String   @id @default(uuid())
+  furnitureId    String   @map("furniture_id")
+  label          String?  @map("label")
+  materialsTotal Decimal  @map("materials_total") @db.Decimal(14, 2)
+  laborTotal     Decimal  @map("labor_total") @db.Decimal(14, 2)
+  extrasTotal    Decimal  @map("extras_total") @db.Decimal(14, 2)
+  totalCost      Decimal  @map("total_cost") @db.Decimal(14, 2)
+  referencePrice Decimal  @map("reference_price") @db.Decimal(14, 2)
+  marginPercent  Decimal? @map("margin_percent") @db.Decimal(8, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
 
   furniture ProduccionFurniture @relation(fields: [furnitureId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([furnitureId])
   @@map("produccion_furniture_cost_snapshots")

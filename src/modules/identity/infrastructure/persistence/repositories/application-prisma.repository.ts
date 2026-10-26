@@ -54,26 +54,38 @@ export class ApplicationPrismaRepository implements ApplicationRepository {
   }
 
   async findByUserId(userId: string): Promise<Application[]> {
+    const admin = await this.prisma.role.count({
+      where: {
+        code: 'ADMIN',
+        isActive: true,
+        deletedAt: null,
+        userRoles: { some: { userId, isActive: true, revokedAt: null } },
+      },
+    });
     // Get applications through user's roles
     const applications = await this.prisma.application.findMany({
       where: {
         isActive: true,
         deletedAt: null,
-        roleApplications: {
-          some: {
-            role: {
-              isActive: true,
-              deletedAt: null,
-              userRoles: {
+        ...(admin
+          ? {}
+          : {
+              roleApplications: {
                 some: {
-                  userId,
-                  isActive: true,
-                  revokedAt: null,
+                  role: {
+                    isActive: true,
+                    deletedAt: null,
+                    userRoles: {
+                      some: {
+                        userId,
+                        isActive: true,
+                        revokedAt: null,
+                      },
+                    },
+                  },
                 },
               },
-            },
-          },
-        },
+            }),
       },
       orderBy: { order: 'asc' },
     });

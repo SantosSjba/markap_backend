@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'node:crypto';
 import { UserNotFoundException } from '../../../../../shared/domain/exceptions/domain.exception';
@@ -28,9 +28,14 @@ function generateNumericCode(length: number): string {
  *
  * Genera un código de recuperación, lo guarda en BD y lo envía por correo.
  */
+import {
+  AUDIT_RECORDER,
+  type AuditRecorder,
+} from '../../../../../shared/application/ports/audit-recorder.port';
 @Injectable()
 export class RequestPasswordResetUseCase {
   constructor(
+    @Inject(AUDIT_RECORDER) private readonly audit: AuditRecorder,
     private readonly userRepository: UserRepository,
     private readonly passwordResetCodeRepository: PasswordResetCodeRepository,
     private readonly mailService: MailService,
@@ -70,6 +75,11 @@ export class RequestPasswordResetUseCase {
       expiresAt,
     });
 
+    await this.audit.record({
+      action: 'PASSWORD_RESET',
+      userId: user.id,
+      metadata: { step: 'REQUEST' },
+    });
     const frontendUrl =
       this.configService.get<string>('frontend.url') || 'http://localhost:5173';
     const resetUrl = `${frontendUrl}/auth/reset-password?email=${encodeURIComponent(user.email)}`;

@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   BadRequestException,
   Body,
@@ -40,6 +41,7 @@ import { CreateArquitecturaProjectDocumentDto } from '../dtos/arquitectura-docum
 import { UpdateArquitecturaProjectDocumentDto } from '../dtos/arquitectura-documents/update-arquitectura-project-document.dto';
 
 @ApiTags('Arquitectura - Documentos')
+@RequiresApplication('arquitectura')
 @Controller('arquitectura-documents')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

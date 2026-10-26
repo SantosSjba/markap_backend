@@ -1,16 +1,16 @@
 /// Proyectos de diseño interior (aplicación interiorismo)
 
 model InteriorProject {
-  id             String @id @default(uuid())
-  applicationId  String @map("application_id")
+  id            String @id @default(uuid())
+  applicationId String @map("application_id")
   /// Código único por aplicación (ej. INT-PRY-001)
-  code           String @map("code")
-  name           String @map("name")
-  clientId       String @map("client_id")
+  code          String @map("code")
+  name          String @map("name")
+  clientId      String @map("client_id")
   /// REMODELING | INTERIOR_DESIGN | IMPLEMENTATION | FURNITURE
-  projectType    String @map("project_type")
+  projectType   String @map("project_type")
   /// DESIGN | QUOTE | APPROVED | IN_PROGRESS | FINISHED | CANCELLED
-  status         String @map("status")
+  status        String @map("status")
 
   addressLine       String?   @map("address_line") @db.Text
   city              String?   @map("city")
@@ -29,10 +29,10 @@ model InteriorProject {
   estimatedEndDate  DateTime? @map("estimated_end_date") @db.Date
 
   designerAgentId    String? @map("designer_agent_id")
-  architectJrAgentId   String? @map("architect_jr_agent_id")
-  architectSrAgentId   String? @map("architect_agent_id")
-  supervisorAgentId    String? @map("supervisor_agent_id")
-  commercialAgentId    String? @map("commercial_agent_id")
+  architectJrAgentId String? @map("architect_jr_agent_id")
+  architectSrAgentId String? @map("architect_agent_id")
+  supervisorAgentId  String? @map("supervisor_agent_id")
+  commercialAgentId  String? @map("commercial_agent_id")
 
   estimatedBudget Decimal? @map("estimated_budget") @db.Decimal(14, 2)
   projectedCost   Decimal? @map("projected_cost") @db.Decimal(14, 2)
@@ -53,18 +53,21 @@ model InteriorProject {
   supervisorAgent  Agent?      @relation("InteriorProjectSupervisor", fields: [supervisorAgentId], references: [id], onDelete: SetNull)
   commercialAgent  Agent?      @relation("InteriorProjectCommercial", fields: [commercialAgentId], references: [id], onDelete: SetNull)
 
-  budgetSections InteriorProjectSection[]
-  materials   InteriorProjectMaterial[]
-  documents   InteriorProjectDocument[]
-  payments    InteriorProjectPayment[]
-  activities  InteriorProjectActivity[]
-  milestones  InteriorProjectMilestone[]
-  executionTasks       InteriorExecutionTask[]
-  executionEvidences   InteriorExecutionEvidence[]
-  executionIncidents   InteriorExecutionIncident[]
-  executionActualCosts InteriorExecutionActualCost[]
+  budgetSections         InteriorProjectSection[]
+  materials              InteriorProjectMaterial[]
+  documents              InteriorProjectDocument[]
+  payments               InteriorProjectPayment[]
+  activities             InteriorProjectActivity[]
+  milestones             InteriorProjectMilestone[]
+  executionTasks         InteriorExecutionTask[]
+  executionEvidences     InteriorExecutionEvidence[]
+  executionIncidents     InteriorExecutionIncident[]
+  executionActualCosts   InteriorExecutionActualCost[]
   financeIncomeSchedules InteriorFinanceIncomeSchedule[]
   calendarEvents         InteriorCalendarEvent[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -76,16 +79,20 @@ model InteriorProject {
 }
 
 model InteriorProjectMaterial {
-  id             String   @id @default(uuid())
-  projectId      String   @map("project_id")
-  name           String   @map("name")
-  quantity       Decimal? @map("quantity") @db.Decimal(12, 3)
-  unit           String?  @map("unit")
-  estimatedCost  Decimal? @map("estimated_cost") @db.Decimal(14, 2)
+  id            String   @id @default(uuid())
+  projectId     String   @map("project_id")
+  name          String   @map("name")
+  quantity      Decimal? @map("quantity") @db.Decimal(12, 3)
+  unit          String?  @map("unit")
+  estimatedCost Decimal? @map("estimated_cost") @db.Decimal(14, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
 
   project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([projectId])
   @@map("interior_project_materials")
@@ -105,27 +112,35 @@ model InteriorProjectDocument {
   project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   archivo GenArchivo?     @relation("InteriorProjectDocumentArchivo", fields: [archivoId], references: [id], onDelete: SetNull)
 
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
   @@index([projectId])
   @@index([archivoId])
   @@map("interior_project_documents")
 }
 
 model InteriorProjectPayment {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  paidAt    DateTime @map("paid_at")
-  amount    Decimal  @map("amount") @db.Decimal(14, 2)
-  concept   String   @map("concept") @db.Text
+  id             String   @id @default(uuid())
+  projectId      String   @map("project_id")
+  paidAt         DateTime @map("paid_at")
+  amount         Decimal  @map("amount") @db.Decimal(14, 2)
+  concept        String   @map("concept") @db.Text
   /// ABONO | PAGO_FINAL | SALDO | OTHER
-  paymentType String @default("OTHER") @map("payment_type")
+  paymentType    String   @default("OTHER") @map("payment_type")
   /// PENDING | PAID | CANCELLED
-  status    String   @map("status")
-  scheduleItemId String? @map("schedule_item_id")
+  status         String   @map("status")
+  scheduleItemId String?  @map("schedule_item_id")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  project       InteriorProject                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  scheduleItem  InteriorFinanceIncomeSchedule?   @relation(fields: [scheduleItemId], references: [id], onDelete: SetNull)
+  project      InteriorProject                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scheduleItem InteriorFinanceIncomeSchedule? @relation(fields: [scheduleItemId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([projectId])
   @@index([scheduleItemId])
@@ -145,6 +160,10 @@ model InteriorProjectActivity {
 
   project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
   @@index([projectId])
   @@index([occurredAt])
   @@map("interior_project_activities")
@@ -160,6 +179,10 @@ model InteriorProjectMilestone {
   createdAt DateTime @default(now()) @map("created_at")
 
   project InteriorProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([projectId])
   @@map("interior_project_milestones")

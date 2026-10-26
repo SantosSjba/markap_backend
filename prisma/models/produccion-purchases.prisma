@@ -14,9 +14,12 @@ model ProduccionSupplier {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application    Application                      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   materialLinks  ProduccionSupplierMaterialLink[]
   purchaseOrders ProduccionPurchaseOrder[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, ruc])
   @@index([applicationId])
@@ -34,6 +37,11 @@ model ProduccionSupplierMaterialLink {
 
   supplier ProduccionSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   material ProduccionMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@unique([supplierId, materialId])
   @@index([supplierId])
@@ -55,9 +63,12 @@ model ProduccionPurchaseOrder {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  supplier    ProduccionSupplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  application Application                   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  supplier    ProduccionSupplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   lines       ProduccionPurchaseOrderLine[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -76,7 +87,12 @@ model ProduccionPurchaseOrderLine {
   unitPrice        Decimal @map("unit_price") @db.Decimal(14, 4)
 
   purchaseOrder ProduccionPurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
-  material      ProduccionMaterial @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  material      ProduccionMaterial      @relation(fields: [materialId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([purchaseOrderId])
   @@index([materialId])

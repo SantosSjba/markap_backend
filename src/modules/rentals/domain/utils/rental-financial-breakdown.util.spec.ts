@@ -27,4 +27,58 @@ describe('computeRentalFinancialBreakdown', () => {
     expect(result.base).toBe(2500);
     expect(result.utility).toBe(2500);
   });
+
+  it('agrupa por moneda los montos fijos en otra moneda sin convertirlos', () => {
+    const result = computeRentalFinancialBreakdown(
+      2000,
+      {
+        expenseType: 'PERCENT',
+        expenseValue: 10,
+        taxType: 'FIXED',
+        taxValue: 0,
+        externalAgentType: 'FIXED',
+        externalAgentValue: 100,
+        externalAgentCurrency: 'USD',
+        internalAgentType: 'PERCENT',
+        internalAgentValue: 10,
+      },
+      'PEN',
+    );
+
+    expect(result.currencies.expense).toBe('PEN');
+    expect(result.currencies.externalAgentCommission).toBe('USD');
+    // Comisión % sobre base − gastos en soles (la de dólares no se descuenta)
+    expect(result.internalAgentCommission).toBe(180);
+    expect(result.utility).toBe(1620);
+    expect(result.totalsByCurrency).toEqual([
+      {
+        currency: 'PEN',
+        income: 2000,
+        expense: 200,
+        tax: 0,
+        externalAgentCommission: 0,
+        internalAgentCommission: 180,
+        utility: 1620,
+      },
+      {
+        currency: 'USD',
+        income: 0,
+        expense: 0,
+        tax: 0,
+        externalAgentCommission: 100,
+        internalAgentCommission: 0,
+        utility: -100,
+      },
+    ]);
+  });
+
+  it('los porcentajes siempre van en la moneda del contrato', () => {
+    const result = computeRentalFinancialBreakdown(
+      1000,
+      { taxType: 'PERCENT', taxValue: 18, taxCurrency: 'EUR' },
+      'USD',
+    );
+    expect(result.currencies.tax).toBe('USD');
+    expect(result.totalsByCurrency).toHaveLength(1);
+  });
 });

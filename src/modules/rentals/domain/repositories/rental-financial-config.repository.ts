@@ -17,17 +17,21 @@ export interface CreateOrUpdateRentalFinancialConfigData {
   expenseType?: FinancialValueType;
   expenseValue?: number;
   expenseDetail?: string | null;
+  expenseCurrency?: string | null;
   taxType?: FinancialValueType;
   taxValue?: number;
   taxDetail?: string | null;
+  taxCurrency?: string | null;
   externalAgentId?: string | null;
   externalAgentType?: FinancialValueType;
   externalAgentValue?: number;
   externalAgentName?: string | null;
+  externalAgentCurrency?: string | null;
   internalAgentId?: string | null;
   internalAgentType?: FinancialValueType;
   internalAgentValue?: number;
   internalAgentName?: string | null;
+  internalAgentCurrency?: string | null;
 }
 
 export const RENTAL_FINANCIAL_CONFIG_REPOSITORY = Symbol(

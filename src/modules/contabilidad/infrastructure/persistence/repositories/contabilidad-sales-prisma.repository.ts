@@ -413,7 +413,8 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     applicationId: string,
     id: string,
   ): Promise<ContabilidadSalesInvoiceDto> {
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$queryRaw`SELECT id FROM contabilidad_sales_invoices WHERE id = ${id} FOR UPDATE`;
     const existing = await this.prisma.contabilidadSalesInvoice.findFirst({
       where: { applicationId, id },
@@ -730,7 +731,8 @@ export class ContabilidadSalesPrismaRepository implements ContabilidadSalesRepos
     receivableAccountId: string,
     createdBy?: string | null,
   ): Promise<ContabilidadSalesCollectionDto> {
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$queryRaw`SELECT id FROM contabilidad_sales_invoices WHERE id = ${input.invoiceId} FOR UPDATE`;
     const invoice = await this.prisma.contabilidadSalesInvoice.findFirst({
       where: { applicationId, id: input.invoiceId },

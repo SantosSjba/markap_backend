@@ -2,11 +2,14 @@ import {
   ContractExpiringItem,
   PropertyWithoutContractItem,
 } from '../../../domain/entities/report.entity';
+import { legacyRentalCode } from '../../../domain/utils/rental-code.util';
 
 export class ReportPrismaMapper {
   static toContractExpiringItem(
     r: {
       id: string;
+      code: string | null;
+      startDate: Date;
       endDate: Date;
       tenant: { fullName: string };
       property: {
@@ -20,11 +23,9 @@ export class ReportPrismaMapper {
     const daysLeft = Math.ceil(
       (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
     );
-    const year = endDate.getFullYear();
-    const shortId = String(r.id).replace(/-/g, '').slice(-6).toUpperCase();
     return new ContractExpiringItem(
       r.id,
-      `ALQ-${year}-${shortId}`,
+      r.code ?? legacyRentalCode(r.id, r.startDate),
       r.tenant.fullName,
       r.property.addressLine,
       r.property.owner.fullName,

@@ -1,3 +1,4 @@
+import { SkipApplicationAccess } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -20,6 +21,7 @@ import { UpsertAlertConfigUseCase } from '../../application/use-cases/alert-conf
 import { UpsertAlertConfigDto } from '../dtos/alert-config/upsert-alert-config.dto';
 
 @ApiTags('Alert Config')
+@SkipApplicationAccess()
 @Controller('alert-config')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

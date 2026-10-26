@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   BadRequestException,
   Body,
@@ -56,6 +57,7 @@ import {
 } from '../dtos/interiorismo-project-budget/project-budget.dto';
 
 @ApiTags('Interiorismo — Presupuesto por proyecto')
+@RequiresApplication('interiorismo')
 @Controller('interiorismo-projects')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

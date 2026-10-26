@@ -254,7 +254,8 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     id: string,
     postedBy?: string | null,
   ): Promise<ContabilidadJournalEntryDetailDto> {
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$queryRaw`SELECT p.id FROM contabilidad_periods p JOIN contabilidad_journal_entries e ON e.period_id = p.id WHERE e.id = ${id} FOR SHARE OF p`;
     await this.lockEntry(id);
     const existing = await this.prisma.contabilidadJournalEntry.findFirst({
@@ -308,7 +309,8 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     id: string,
     postedBy?: string | null,
   ): Promise<ContabilidadJournalEntryDetailDto> {
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$queryRaw`SELECT p.id FROM contabilidad_periods p JOIN contabilidad_journal_entries e ON e.period_id = p.id WHERE e.id = ${id} FOR SHARE OF p`;
     await this.lockEntry(id);
     const original = await this.prisma.contabilidadJournalEntry.findFirst({
@@ -479,13 +481,15 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
 
   /** Bloquea el asiento hasta el final de la transacción en curso. */
   private async lockEntry(id: string): Promise<void> {
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$queryRaw`SELECT id FROM contabilidad_journal_entries WHERE id = ${id} FOR UPDATE`;
   }
 
   /** Impide cerrar el periodo mientras se registra un asiento en él. */
   private async lockPeriod(periodId: string): Promise<void> {
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$queryRaw`SELECT id FROM contabilidad_periods WHERE id = ${periodId} FOR SHARE`;
   }
 
@@ -494,7 +498,8 @@ export class ContabilidadJournalPrismaRepository implements ContabilidadJournalR
     legalEntityId: string,
     periodId: string,
   ): Promise<number> {
-    await this.prisma
+    await // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
+    this.prisma
       .$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`journal:${legalEntityId}:${periodId}`}))`;
     const last = await this.prisma.contabilidadJournalEntry.findFirst({
       where: { legalEntityId, periodId },

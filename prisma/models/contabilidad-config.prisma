@@ -17,25 +17,31 @@ model ContabilidadCompanyProfile {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
   @@map("contabilidad_company_profiles")
 }
 
 model ContabilidadAppSettings {
-  id                  String  @id @default(uuid())
-  applicationId       String  @unique @map("application_id")
-  taxRegime           String  @default("GENERAL") @map("tax_regime")
-  isDetractionAgent   Boolean @default(false) @map("is_detraction_agent")
-  isRetentionAgent    Boolean @default(false) @map("is_retention_agent")
-  isPerceptionAgent   Boolean @default(false) @map("is_perception_agent")
-  igvPercent          Decimal @default(18) @map("igv_percent") @db.Decimal(5, 2)
-  currencyCode        String  @default("PEN") @map("currency_code")
-  fiscalYearStartMonth Int    @default(1) @map("fiscal_year_start_month")
-  amountDecimals      Int     @default(2) @map("amount_decimals")
+  id                   String  @id @default(uuid())
+  applicationId        String  @unique @map("application_id")
+  taxRegime            String  @default("GENERAL") @map("tax_regime")
+  isDetractionAgent    Boolean @default(false) @map("is_detraction_agent")
+  isRetentionAgent     Boolean @default(false) @map("is_retention_agent")
+  isPerceptionAgent    Boolean @default(false) @map("is_perception_agent")
+  igvPercent           Decimal @default(18) @map("igv_percent") @db.Decimal(5, 2)
+  currencyCode         String  @default("PEN") @map("currency_code")
+  fiscalYearStartMonth Int     @default(1) @map("fiscal_year_start_month")
+  amountDecimals       Int     @default(2) @map("amount_decimals")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@map("contabilidad_app_settings")
 }
@@ -53,6 +59,9 @@ model ContabilidadDocumentSeries {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, seriesKey])
   @@index([applicationId])

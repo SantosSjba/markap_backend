@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   BadRequestException,
   Body,
@@ -55,6 +56,7 @@ import {
   UpdateProjectBudgetSectionDto,
 } from '../dtos/arquitectura-project-budget/project-budget.dto';
 @ApiTags('Arquitectura — Presupuesto por proyecto')
+@RequiresApplication('arquitectura')
 @Controller('arquitectura-projects')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

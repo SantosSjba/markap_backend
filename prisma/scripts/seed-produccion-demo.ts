@@ -9,7 +9,6 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import {
   seedAdminUser,
   seedRolesAndApplications,
-  seedProduccionMenus,
   seedDemoProduccion,
 } from '../seed/steps';
 import { createScriptLogger } from '../../src/shared/infrastructure/logging/script-logger';
@@ -31,7 +30,6 @@ async function main() {
 
   const { adminRoleId, appIdBySlug } = await seedRolesAndApplications(prisma);
   const { adminUser } = await seedAdminUser(prisma, adminRoleId);
-  await seedProduccionMenus(prisma);
   await seedDemoProduccion(prisma, appIdBySlug, adminUser);
 
   logger.info({ event: 'seed.progress' }, '\n✨ Seed Producción completado.\n');

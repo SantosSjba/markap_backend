@@ -34,19 +34,19 @@ model Client {
   deletedAt DateTime? @map("deleted_at")
   deletedBy String?   @map("deleted_by")
 
-  application       Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  documentType      DocumentType @relation(fields: [documentTypeId], references: [id], onDelete: Restrict)
-  assignedAgent     Agent?      @relation("ClientAssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
-  addresses         Address[]
-  propertiesAsOwner Property[]
-  propertyOwnerLinks PropertyOwnerLink[] @relation("PropertyOwners")
-  rentalsAsTenant   Rental[]       @relation("RentalPrimaryTenant")
-  rentalTenants     RentalTenant[] @relation("RentalTenants")
-  saleProcessesAsBuyer SaleProcess[] @relation("SaleProcessBuyer")
-  saleProcessBuyerLinks SaleProcessBuyerLink[] @relation("SaleProcessBuyers")
-  saleProcessOwnerLinks SaleProcessOwnerLink[] @relation("SaleProcessOwners")
-  saleSeparationsAsBuyer SaleSeparation[] @relation("SaleSeparationBuyer")
-  saleClosingsAsBuyer    SaleClosing[] @relation("SaleClosingBuyer")
+  application            Application            @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  documentType           DocumentType           @relation(fields: [documentTypeId], references: [id], onDelete: Restrict)
+  assignedAgent          Agent?                 @relation("ClientAssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  addresses              Address[]
+  propertiesAsOwner      Property[]
+  propertyOwnerLinks     PropertyOwnerLink[]    @relation("PropertyOwners")
+  rentalsAsTenant        Rental[]               @relation("RentalPrimaryTenant")
+  rentalTenants          RentalTenant[]         @relation("RentalTenants")
+  saleProcessesAsBuyer   SaleProcess[]          @relation("SaleProcessBuyer")
+  saleProcessBuyerLinks  SaleProcessBuyerLink[] @relation("SaleProcessBuyers")
+  saleProcessOwnerLinks  SaleProcessOwnerLink[] @relation("SaleProcessOwners")
+  saleSeparationsAsBuyer SaleSeparation[]       @relation("SaleSeparationBuyer")
+  saleClosingsAsBuyer    SaleClosing[]          @relation("SaleClosingBuyer")
   interiorProjects       InteriorProject[]
   arquitecturaProjects   ArquitecturaProject[]
   produccionWorkOrders   ProduccionWorkOrder[]
@@ -64,21 +64,24 @@ model Client {
 }
 
 model Address {
-  id          String  @id @default(uuid())
-  clientId    String  @map("client_id")
-  addressType String  @map("address_type")
-  addressLine String  @map("address_line")
-  districtId  String  @map("district_id")
+  id             String  @id @default(uuid())
+  clientId       String  @map("client_id")
+  addressType    String  @map("address_type")
+  addressLine    String  @map("address_line")
+  districtId     String  @map("district_id")
   /// Ubicación fuera del ubigeo peruano (cuando distrito = Otros): país, departamento, provincia, distrito libres
-  locationCustom Json? @map("location_custom")
-  reference   String? @db.Text
-  isPrimary   Boolean @default(true) @map("is_primary")
+  locationCustom Json?   @map("location_custom")
+  reference      String? @db.Text
+  isPrimary      Boolean @default(true) @map("is_primary")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   client   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   district District @relation(fields: [districtId], references: [id], onDelete: Restrict)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([clientId])
   @@index([districtId])

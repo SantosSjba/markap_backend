@@ -2,32 +2,32 @@
 
 /// Oportunidad / proceso comercial (cliente comprador + inmueble + asesor)
 model SaleProcess {
-  id             String @id @default(uuid())
-  applicationId  String @map("application_id")
+  id                 String    @id @default(uuid())
+  applicationId      String    @map("application_id")
   /// Código legible único por app (ej. VNT-PRC-001)
-  code           String
-  buyerClientId  String @map("buyer_client_id")
-  propertyId     String @map("property_id")
-  agentId        String? @map("agent_id")
+  code               String
+  buyerClientId      String    @map("buyer_client_id")
+  propertyId         String    @map("property_id")
+  agentId            String?   @map("agent_id")
   /// SEPARATION | ARRAS | MINUTA | PUBLIC_DEED
-  pipelineStage  String @map("pipeline_stage")
+  pipelineStage      String    @map("pipeline_stage")
   /// ACTIVE | WON | LOST
-  status         String @default("ACTIVE")
+  status             String    @default("ACTIVE")
   /// Motivo registrado al marcar la venta como caída (status = LOST)
-  lostReason     String? @db.Text @map("lost_reason")
-  title          String?
+  lostReason         String?   @map("lost_reason") @db.Text
+  title              String?
   /// Medio de pago / banco con el que se gestiona la venta (catálogo sale_financing_channels)
-  financingChannelId String? @map("financing_channel_id")
-  closedAt       DateTime? @map("closed_at")
+  financingChannelId String?   @map("financing_channel_id")
+  closedAt           DateTime? @map("closed_at")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  buyer       Client      @relation("SaleProcessBuyer", fields: [buyerClientId], references: [id], onDelete: Restrict)
-  property    Property    @relation(fields: [propertyId], references: [id], onDelete: Restrict)
-  agent       Agent?      @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  application      Application           @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  buyer            Client                @relation("SaleProcessBuyer", fields: [buyerClientId], references: [id], onDelete: Restrict)
+  property         Property              @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  agent            Agent?                @relation(fields: [agentId], references: [id], onDelete: SetNull)
   financingChannel SaleFinancingChannel? @relation(fields: [financingChannelId], references: [id], onDelete: SetNull)
 
   notes       SaleProcessNote[]
@@ -38,6 +38,9 @@ model SaleProcess {
   separations SaleSeparation[]
   closings    SaleClosing[]
   commissions SaleCommission[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -59,7 +62,11 @@ model SaleProcessBuyerLink {
   createdAt DateTime @default(now()) @map("created_at")
 
   saleProcess SaleProcess @relation(fields: [saleProcessId], references: [id], onDelete: Cascade)
-  buyer      Client      @relation("SaleProcessBuyers", fields: [buyerClientId], references: [id], onDelete: Restrict)
+  buyer       Client      @relation("SaleProcessBuyers", fields: [buyerClientId], references: [id], onDelete: Restrict)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@unique([saleProcessId, buyerClientId])
   @@index([buyerClientId])
@@ -76,7 +83,11 @@ model SaleProcessOwnerLink {
   createdAt DateTime @default(now()) @map("created_at")
 
   saleProcess SaleProcess @relation(fields: [saleProcessId], references: [id], onDelete: Cascade)
-  owner      Client      @relation("SaleProcessOwners", fields: [ownerClientId], references: [id], onDelete: Restrict)
+  owner       Client      @relation("SaleProcessOwners", fields: [ownerClientId], references: [id], onDelete: Restrict)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@unique([saleProcessId, ownerClientId])
   @@index([ownerClientId])
@@ -84,14 +95,17 @@ model SaleProcessOwnerLink {
 }
 
 model SaleProcessNote {
-  id            String @id @default(uuid())
-  saleProcessId String @map("sale_process_id")
-  body          String @db.Text
+  id            String  @id @default(uuid())
+  saleProcessId String  @map("sale_process_id")
+  body          String  @db.Text
   createdBy     String? @map("created_by")
 
   createdAt DateTime @default(now()) @map("created_at")
 
   saleProcess SaleProcess @relation(fields: [saleProcessId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
 
   @@index([saleProcessId])
   @@map("sale_process_notes")
@@ -99,12 +113,12 @@ model SaleProcessNote {
 
 /// Actividades / seguimiento (llamada, visita, tarea…)
 model SaleProcessActivity {
-  id            String @id @default(uuid())
-  saleProcessId String @map("sale_process_id")
+  id            String    @id @default(uuid())
+  saleProcessId String    @map("sale_process_id")
   /// CALL | VISIT | EMAIL | TASK | OTHER
-  activityType  String @map("activity_type")
+  activityType  String    @map("activity_type")
   title         String
-  description   String? @db.Text
+  description   String?   @db.Text
   scheduledAt   DateTime? @map("scheduled_at")
   completedAt   DateTime? @map("completed_at")
 
@@ -112,20 +126,28 @@ model SaleProcessActivity {
 
   saleProcess SaleProcess @relation(fields: [saleProcessId], references: [id], onDelete: Cascade)
 
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
   @@index([saleProcessId])
   @@map("sale_process_activities")
 }
 
 model SaleProcessReminder {
-  id            String @id @default(uuid())
-  saleProcessId String @map("sale_process_id")
+  id            String    @id @default(uuid())
+  saleProcessId String    @map("sale_process_id")
   title         String
-  dueAt         DateTime @map("due_at")
+  dueAt         DateTime  @map("due_at")
   completedAt   DateTime? @map("completed_at")
 
   createdAt DateTime @default(now()) @map("created_at")
 
   saleProcess SaleProcess @relation(fields: [saleProcessId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([saleProcessId])
   @@index([dueAt])
@@ -134,30 +156,33 @@ model SaleProcessReminder {
 
 /// Reserva / separación con dinero
 model SaleSeparation {
-  id             String @id @default(uuid())
-  applicationId  String @map("application_id")
-  saleProcessId  String? @map("sale_process_id")
-  propertyId     String @map("property_id")
-  buyerClientId  String @map("buyer_client_id")
-  amount         Float
-  currency       String  @default("PEN")
-  separationDate DateTime @map("separation_date")
-  expiresAt      DateTime? @map("expires_at")
+  id               String    @id @default(uuid())
+  applicationId    String    @map("application_id")
+  saleProcessId    String?   @map("sale_process_id")
+  propertyId       String    @map("property_id")
+  buyerClientId    String    @map("buyer_client_id")
+  amount           Float
+  currency         String    @default("PEN")
+  separationDate   DateTime  @map("separation_date")
+  expiresAt        DateTime? @map("expires_at")
   /// ACTIVE | EXPIRED | CLOSED
-  status         String @default("ACTIVE")
-  receiptFilePath    String? @map("receipt_file_path")
-  receiptArchivoId   String? @map("receipt_archivo_id")
-  notes              String? @db.Text
+  status           String    @default("ACTIVE")
+  receiptFilePath  String?   @map("receipt_file_path")
+  receiptArchivoId String?   @map("receipt_archivo_id")
+  notes            String?   @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   application    Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   receiptArchivo GenArchivo?  @relation("SeparationReceiptArchivo", fields: [receiptArchivoId], references: [id], onDelete: SetNull)
-  saleProcess SaleProcess? @relation(fields: [saleProcessId], references: [id], onDelete: SetNull)
-  property    Property     @relation(fields: [propertyId], references: [id], onDelete: Restrict)
-  buyer       Client       @relation("SaleSeparationBuyer", fields: [buyerClientId], references: [id], onDelete: Restrict)
-  closing     SaleClosing?
+  saleProcess    SaleProcess? @relation(fields: [saleProcessId], references: [id], onDelete: SetNull)
+  property       Property     @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  buyer          Client       @relation("SaleSeparationBuyer", fields: [buyerClientId], references: [id], onDelete: Restrict)
+  closing        SaleClosing?
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId])
   @@index([propertyId])
@@ -168,33 +193,37 @@ model SaleSeparation {
 
 /// Venta final / cierre
 model SaleClosing {
-  id                String @id @default(uuid())
-  applicationId     String @map("application_id")
-  saleProcessId     String? @map("sale_process_id")
-  saleSeparationId  String? @unique @map("sale_separation_id")
-  propertyId        String @map("property_id")
-  buyerClientId     String @map("buyer_client_id")
-  agentId           String? @map("agent_id")
-  finalPrice        Float @map("final_price")
+  id                String   @id @default(uuid())
+  applicationId     String   @map("application_id")
+  saleProcessId     String?  @map("sale_process_id")
+  saleSeparationId  String?  @unique @map("sale_separation_id")
+  propertyId        String   @map("property_id")
+  buyerClientId     String   @map("buyer_client_id")
+  agentId           String?  @map("agent_id")
+  finalPrice        Float    @map("final_price")
   /// CASH | CREDIT
-  paymentType       String @map("payment_type")
-  contractFilePath   String? @map("contract_file_path")
-  contractArchivoId  String? @map("contract_archivo_id")
-  notes              String? @db.Text
-  closedAt           DateTime @default(now()) @map("closed_at")
+  paymentType       String   @map("payment_type")
+  contractFilePath  String?  @map("contract_file_path")
+  contractArchivoId String?  @map("contract_archivo_id")
+  notes             String?  @db.Text
+  closedAt          DateTime @default(now()) @map("closed_at")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  application     Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  contractArchivo GenArchivo?  @relation("ClosingContractArchivo", fields: [contractArchivoId], references: [id], onDelete: SetNull)
-  saleProcess SaleProcess? @relation(fields: [saleProcessId], references: [id], onDelete: SetNull)
-  separation  SaleSeparation? @relation(fields: [saleSeparationId], references: [id], onDelete: SetNull)
-  property    Property     @relation(fields: [propertyId], references: [id], onDelete: Restrict)
-  buyer       Client       @relation("SaleClosingBuyer", fields: [buyerClientId], references: [id], onDelete: Restrict)
-  agent       Agent?       @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  commissions SaleCommission[]
-  buyerPayments       SaleBuyerPayment[]
-  documentationCosts  SaleDocumentationCost[]
+  application        Application             @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  contractArchivo    GenArchivo?             @relation("ClosingContractArchivo", fields: [contractArchivoId], references: [id], onDelete: SetNull)
+  saleProcess        SaleProcess?            @relation(fields: [saleProcessId], references: [id], onDelete: SetNull)
+  separation         SaleSeparation?         @relation(fields: [saleSeparationId], references: [id], onDelete: SetNull)
+  property           Property                @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  buyer              Client                  @relation("SaleClosingBuyer", fields: [buyerClientId], references: [id], onDelete: Restrict)
+  agent              Agent?                  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  commissions        SaleCommission[]
+  buyerPayments      SaleBuyerPayment[]
+  documentationCosts SaleDocumentationCost[]
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([applicationId])
   @@index([propertyId])
@@ -203,30 +232,34 @@ model SaleClosing {
 }
 
 model SaleCommission {
-  id             String @id @default(uuid())
-  applicationId  String @map("application_id")
+  id              String    @id @default(uuid())
+  applicationId   String    @map("application_id")
   /// Comisión definida al crear el proceso
-  saleProcessId  String? @map("sale_process_id")
+  saleProcessId   String?   @map("sale_process_id")
   /// Vinculada al cierre (varias comisiones por cierre)
-  saleClosingId  String? @map("sale_closing_id")
-  agentId        String @map("agent_id")
+  saleClosingId   String?   @map("sale_closing_id")
+  agentId         String    @map("agent_id")
   /// PERCENT | FIXED
-  calculationType String @default("PERCENT") @map("calculation_type")
-  amount         Float
+  calculationType String    @default("PERCENT") @map("calculation_type")
+  amount          Float
   /// Porcentaje (0–100) cuando calculationType = PERCENT
-  percentApplied Float? @map("percent_applied")
+  percentApplied  Float?    @map("percent_applied")
   /// PENDING | PARTIAL | PAID | CANCELLED (proceso caído o anulado)
-  status         String @default("PENDING")
-  paidAt         DateTime? @map("paid_at")
+  status          String    @default("PENDING")
+  paidAt          DateTime? @map("paid_at")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  saleProcess SaleProcess? @relation(fields: [saleProcessId], references: [id], onDelete: Cascade)
-  closing     SaleClosing? @relation(fields: [saleClosingId], references: [id], onDelete: Cascade)
-  agent       Agent       @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  application  Application                 @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  saleProcess  SaleProcess?                @relation(fields: [saleProcessId], references: [id], onDelete: Cascade)
+  closing      SaleClosing?                @relation(fields: [saleClosingId], references: [id], onDelete: Cascade)
+  agent        Agent                       @relation(fields: [agentId], references: [id], onDelete: Restrict)
   paymentParts SaleCommissionPaymentPart[]
   deductibles  SaleCommissionDeductible[]
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@unique([saleProcessId, agentId])
   @@index([applicationId])
@@ -239,19 +272,23 @@ model SaleCommission {
 
 /// Cuota del pago de comisión al asesor (configurable al crear el proceso).
 model SaleCommissionPaymentPart {
-  id               String   @id @default(uuid())
-  saleCommissionId String   @map("sale_commission_id")
-  partNumber       Int      @map("part_number")
+  id               String    @id @default(uuid())
+  saleCommissionId String    @map("sale_commission_id")
+  partNumber       Int       @map("part_number")
   label            String?
   amount           Float
   dueDate          DateTime? @map("due_date")
   /// PENDING | PAID
-  status           String   @default("PENDING")
+  status           String    @default("PENDING")
   paidAt           DateTime? @map("paid_at")
 
   createdAt DateTime @default(now()) @map("created_at")
 
   saleCommission SaleCommission @relation(fields: [saleCommissionId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@unique([saleCommissionId, partNumber])
   @@index([saleCommissionId])
@@ -261,16 +298,20 @@ model SaleCommissionPaymentPart {
 
 /// Deducible descontado de la comisión bruta (pasajes, impuestos, etc.).
 model SaleCommissionDeductible {
-  id               String   @id @default(uuid())
-  saleCommissionId String   @map("sale_commission_id")
+  id               String  @id @default(uuid())
+  saleCommissionId String  @map("sale_commission_id")
   /// TRAVEL | TAX | NOTARY | REGISTRY | OTHER
-  deductibleType   String   @map("deductible_type")
-  description      String?  @db.Text
+  deductibleType   String  @map("deductible_type")
+  description      String? @db.Text
   amount           Float
 
   createdAt DateTime @default(now()) @map("created_at")
 
   saleCommission SaleCommission @relation(fields: [saleCommissionId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([saleCommissionId])
   @@map("sale_commission_deductibles")
@@ -278,21 +319,25 @@ model SaleCommissionDeductible {
 
 /// Pago del comprador vinculado al cierre (inicial o cuota). OVERDUE se deriva en API si PENDING y vencido.
 model SaleBuyerPayment {
-  id            String   @id @default(uuid())
-  saleClosingId String   @map("sale_closing_id")
+  id            String    @id @default(uuid())
+  saleClosingId String    @map("sale_closing_id")
   /// DOWN_PAYMENT | INSTALLMENT
   kind          String
   amount        Float
-  currency      String   @default("PEN")
-  dueDate       DateTime @map("due_date")
+  currency      String    @default("PEN")
+  dueDate       DateTime  @map("due_date")
   paidAt        DateTime? @map("paid_at")
   /// PENDING | PAID
-  status        String   @default("PENDING")
-  notes         String?  @db.Text
+  status        String    @default("PENDING")
+  notes         String?   @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
 
   closing SaleClosing @relation(fields: [saleClosingId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([saleClosingId])
   @@index([status])
@@ -317,6 +362,10 @@ model SaleDocumentationCost {
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   closing     SaleClosing @relation(fields: [saleClosingId], references: [id], onDelete: Cascade)
 
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
   @@index([applicationId])
   @@index([saleClosingId])
   @@map("sale_documentation_costs")
@@ -334,6 +383,9 @@ model VentasAgentCommissionProfile {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   agent       Agent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, agentId])
   @@index([applicationId])

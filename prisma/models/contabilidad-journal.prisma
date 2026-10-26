@@ -20,14 +20,14 @@ model ContabilidadJournalEntry {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application Application             @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  legalEntity ContabilidadLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
-  period      ContabilidadPeriod      @relation(fields: [periodId], references: [id], onDelete: Restrict)
-  reversalOf  ContabilidadJournalEntry?  @relation("ContabilidadJournalReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
-  reversals   ContabilidadJournalEntry[] @relation("ContabilidadJournalReversal")
-  lines             ContabilidadJournalEntryLine[]
-  treasuryMovements ContabilidadTreasuryMovement[]
-  purchaseInvoices  ContabilidadPurchaseInvoice[]
+  application         Application                      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  legalEntity         ContabilidadLegalEntity          @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
+  period              ContabilidadPeriod               @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  reversalOf          ContabilidadJournalEntry?        @relation("ContabilidadJournalReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversals           ContabilidadJournalEntry[]       @relation("ContabilidadJournalReversal")
+  lines               ContabilidadJournalEntryLine[]
+  treasuryMovements   ContabilidadTreasuryMovement[]
+  purchaseInvoices    ContabilidadPurchaseInvoice[]
   purchaseCreditNotes ContabilidadPurchaseCreditNote[]
   purchaseDebitNotes  ContabilidadPurchaseDebitNote[]
   salesInvoices       ContabilidadSalesInvoice[]
@@ -37,6 +37,8 @@ model ContabilidadJournalEntry {
   retentions          ContabilidadRetention[]
   perceptions         ContabilidadPerception[]
   inventoryMovements  ContabilidadInventoryMovement[]
+
+  updatedBy String? @map("updated_by")
 
   @@unique([legalEntityId, periodId, entryNumber])
   @@index([applicationId])
@@ -48,23 +50,28 @@ model ContabilidadJournalEntry {
 }
 
 model ContabilidadJournalEntryLine {
-  id             String  @id @default(uuid())
-  journalEntryId String  @map("journal_entry_id")
-  lineNumber     Int     @map("line_number")
-  accountId      String  @map("account_id")
-  debit          Decimal @default(0) @db.Decimal(14, 2)
-  credit         Decimal @default(0) @db.Decimal(14, 2)
-  foreignCurrency String? @map("foreign_currency")
+  id              String   @id @default(uuid())
+  journalEntryId  String   @map("journal_entry_id")
+  lineNumber      Int      @map("line_number")
+  accountId       String   @map("account_id")
+  debit           Decimal  @default(0) @db.Decimal(14, 2)
+  credit          Decimal  @default(0) @db.Decimal(14, 2)
+  foreignCurrency String?  @map("foreign_currency")
   foreignAmount   Decimal? @map("foreign_amount") @db.Decimal(14, 2)
   exchangeRate    Decimal? @map("exchange_rate") @db.Decimal(12, 6)
-  costCenterId   String? @map("cost_center_id")
-  auxiliaryRuc   String? @map("auxiliary_ruc")
-  auxiliaryDoc   String? @map("auxiliary_doc")
-  description    String?
+  costCenterId    String?  @map("cost_center_id")
+  auxiliaryRuc    String?  @map("auxiliary_ruc")
+  auxiliaryDoc    String?  @map("auxiliary_doc")
+  description     String?
 
   journalEntry ContabilidadJournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
   account      ContabilidadAccount      @relation(fields: [accountId], references: [id], onDelete: Restrict)
   costCenter   ContabilidadCostCenter?  @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([journalEntryId])
   @@index([accountId])

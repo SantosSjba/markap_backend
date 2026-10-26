@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -27,6 +28,7 @@ import { CreateArquitecturaProjectDto } from '../dtos/arquitectura-projects/crea
 import { UpdateArquitecturaProjectDto } from '../dtos/arquitectura-projects/update-arquitectura-project.dto';
 
 @ApiTags('Arquitectura — Proyectos')
+@RequiresApplication('arquitectura')
 @Controller('arquitectura-projects')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

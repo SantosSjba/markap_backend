@@ -16,6 +16,7 @@ export class RentalDocumentAdapter extends RentalDocumentPort {
     archivo: RentalStoredAttachment,
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
+      // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
       await tx.$queryRaw`SELECT id FROM rentals WHERE id = ${rentalId} FOR UPDATE`;
       await tx.rentalAttachment.deleteMany({ where: { rentalId, type } });
       await tx.rentalAttachment.create({

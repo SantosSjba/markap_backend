@@ -29,7 +29,28 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
-      "prettier/prettier": ["error", { endOfLine: "auto" }],
+      'prettier/prettier': ['error', { endOfLine: 'auto' }],
+    },
+  },
+  {
+    files: ['src/**/*.ts'],
+    ignores: [
+      'src/shared/infrastructure/database/**',
+      'src/modules/contabilidad/infrastructure/persistence/period-transaction.adapter.ts',
+    ],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        ...[
+          '$executeRaw',
+          '$executeRawUnsafe',
+          '$queryRaw',
+          '$queryRawUnsafe',
+        ].map((property) => ({
+          property,
+          message: 'Usa un adaptador de base de datos que registre auditoría.',
+        })),
+      ],
     },
   },
 );

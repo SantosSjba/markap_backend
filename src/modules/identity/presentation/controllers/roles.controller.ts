@@ -1,3 +1,4 @@
+import { SkipApplicationAccess } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -5,6 +6,8 @@ import {
   Get,
   Param,
   Patch,
+  Put,
+  HttpCode,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -14,6 +17,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { SetRoleApplicationAccessDto } from '../dtos/roles/set-role-application-access.dto';
+import { GetRoleApplicationsMatrixUseCase } from '../../application/use-cases/roles/get-role-applications-matrix.use-case';
 import { AdminGuard } from '../../../../shared/presentation/guards/admin.guard';
 import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.guard';
 import { AssignApplicationToRoleUseCase } from '../../application/use-cases/roles/assign-application-to-role.use-case';
@@ -31,11 +36,13 @@ import { ApplicationHttpMapper } from '../mappers/application-http.mapper';
 import { RoleHttpMapper } from '../mappers/role-http.mapper';
 
 @ApiTags('Roles')
+@SkipApplicationAccess()
 @Controller('roles')
 @UseGuards(JwtAuthGuard, AdminGuard)
 @ApiBearerAuth('JWT-auth')
 export class RolesController {
   constructor(
+    private readonly matrix: GetRoleApplicationsMatrixUseCase,
     private readonly getAllRolesUseCase: GetAllRolesUseCase,
     private readonly getRoleByIdUseCase: GetRoleByIdUseCase,
     private readonly createRoleUseCase: CreateRoleUseCase,
@@ -65,6 +72,25 @@ export class RolesController {
   async getRoleApplications(@Param('id') id: string) {
     const applications = await this.getApplicationsByRoleUseCase.execute(id);
     return ApplicationHttpMapper.toResponseList(applications);
+  }
+
+  @Get('applications-matrix')
+  getMatrix() {
+    return this.matrix.execute();
+  }
+
+  @Put(':roleId/applications/:applicationId')
+  @HttpCode(204)
+  async setAccess(
+    @Param('roleId') roleId: string,
+    @Param('applicationId') applicationId: string,
+    @Body() dto: SetRoleApplicationAccessDto,
+  ) {
+    await this.assignApplicationToRoleUseCase.execute({
+      roleId,
+      applicationId,
+      accessLevel: dto.accessLevel,
+    });
   }
 
   @Get(':id')

@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -39,6 +40,7 @@ function parseIsoDate(s: string): Date {
 }
 
 @ApiTags('Arquitectura — Finanzas')
+@RequiresApplication('arquitectura')
 @Controller('arquitectura-finance')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

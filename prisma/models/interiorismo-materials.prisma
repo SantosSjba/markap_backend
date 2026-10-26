@@ -15,11 +15,14 @@ model InteriorCatalogMaterial {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  images         InteriorCatalogMaterialImage[]
-  supplierLinks          InteriorSupplierCatalogLink[]
-  purchases              InteriorMaterialPurchase[]
-  executionActualCosts   InteriorExecutionActualCost[]
+  application          Application                    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  images               InteriorCatalogMaterialImage[]
+  supplierLinks        InteriorSupplierCatalogLink[]
+  purchases            InteriorMaterialPurchase[]
+  executionActualCosts InteriorExecutionActualCost[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, code])
   @@index([applicationId])
@@ -35,26 +38,34 @@ model InteriorCatalogMaterialImage {
 
   material InteriorCatalogMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
   @@index([materialId])
   @@map("interior_catalog_material_images")
 }
 
 model InteriorMaterialSupplier {
-  id          String  @id @default(uuid())
-  applicationId String @map("application_id")
-  companyName String  @map("company_name")
-  ruc         String  @map("ruc")
-  contactName String? @map("contact_name")
-  phone       String? @map("phone")
-  email       String? @map("email")
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  companyName   String  @map("company_name")
+  ruc           String  @map("ruc")
+  contactName   String? @map("contact_name")
+  phone         String? @map("phone")
+  email         String? @map("email")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  catalogLinks  InteriorSupplierCatalogLink[]
-  purchases     InteriorMaterialPurchase[]
+  application     Application                   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  catalogLinks    InteriorSupplierCatalogLink[]
+  purchases       InteriorMaterialPurchase[]
   budgetLineItems InteriorProjectLineItem[]
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@unique([applicationId, ruc])
   @@index([applicationId])
@@ -63,14 +74,19 @@ model InteriorMaterialSupplier {
 
 /// Materiales del catálogo que surte cada proveedor.
 model InteriorSupplierCatalogLink {
-  id                String @id @default(uuid())
-  supplierId        String @map("supplier_id")
-  catalogMaterialId String @map("catalog_material_id")
+  id                String  @id @default(uuid())
+  supplierId        String  @map("supplier_id")
+  catalogMaterialId String  @map("catalog_material_id")
   supplierSku       String? @map("supplier_sku")
   notes             String? @map("notes") @db.Text
 
   supplier        InteriorMaterialSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   catalogMaterial InteriorCatalogMaterial  @relation(fields: [catalogMaterialId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@unique([supplierId, catalogMaterialId])
   @@index([supplierId])
@@ -93,6 +109,10 @@ model InteriorMaterialPurchase {
 
   supplier        InteriorMaterialSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   catalogMaterial InteriorCatalogMaterial? @relation(fields: [catalogMaterialId], references: [id], onDelete: SetNull)
+
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
 
   @@index([supplierId])
   @@index([catalogMaterialId])

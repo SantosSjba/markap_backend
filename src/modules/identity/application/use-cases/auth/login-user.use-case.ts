@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   InvalidCredentialsException,
   UserInactiveException,
@@ -31,9 +31,14 @@ export interface LoginUserOutput {
  *
  * Caso de uso para autenticar un usuario.
  */
+import {
+  AUDIT_RECORDER,
+  type AuditRecorder,
+} from '../../../../../shared/application/ports/audit-recorder.port';
 @Injectable()
 export class LoginUserUseCase {
   constructor(
+    @Inject(AUDIT_RECORDER) private readonly audit: AuditRecorder,
     private readonly userRepository: UserRepository,
     private readonly hashService: HashService,
     private readonly tokenService: TokenService,
@@ -43,11 +48,22 @@ export class LoginUserUseCase {
     const email = Email.create(input.email);
     const user = await this.userRepository.findByEmail(email.value);
     if (!user) {
+      await this.audit.record({
+        action: 'LOGIN_FAILED',
+        metadata: { email: email.value, reason: 'INVALID_CREDENTIALS' },
+        outsideTransaction: true,
+      });
       throw new InvalidCredentialsException();
     }
 
     // Verificar si el usuario puede autenticarse
     if (!user.canAuthenticate) {
+      await this.audit.record({
+        action: 'LOGIN_FAILED',
+        userId: user.id,
+        metadata: { email: email.value, reason: 'INACTIVE_USER' },
+        outsideTransaction: true,
+      });
       throw new UserInactiveException();
     }
 
@@ -57,6 +73,12 @@ export class LoginUserUseCase {
       user.password,
     );
     if (!isPasswordValid) {
+      await this.audit.record({
+        action: 'LOGIN_FAILED',
+        userId: user.id,
+        metadata: { email: email.value, reason: 'INVALID_CREDENTIALS' },
+        outsideTransaction: true,
+      });
       throw new InvalidCredentialsException();
     }
 
@@ -66,6 +88,11 @@ export class LoginUserUseCase {
       email: user.email,
     });
 
+    await this.audit.record({
+      action: 'LOGIN',
+      userId: user.id,
+      metadata: { email: email.value },
+    });
     return {
       user,
       accessToken: tokenResult.accessToken,

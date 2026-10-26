@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -8,6 +9,7 @@ import {
 import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.guard';
 import { GetArquitecturaReportsDashboardUseCase } from '../../application/use-cases/arquitectura-reports/get-arquitectura-reports-dashboard.use-case';
 @ApiTags('Arquitectura — Reportes')
+@RequiresApplication('arquitectura')
 @Controller('arquitectura-reports')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

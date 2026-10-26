@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { BusinessReferencePort } from '../../../../../shared/application/ports/business-reference.port';
+import { assertActiveCurrency } from '../../../../../shared/application/validation/currency.validator';
 import { EntityNotFoundException } from '../../../../../shared/domain/exceptions/domain.exception';
 import { parseDateOnly } from '../../../../../shared/domain/utils/peru-date.util';
 import type { Rental } from '../../../domain/entities/rental.entity';
@@ -29,6 +31,7 @@ export class UpdateRentalUseCase {
   constructor(
     @Inject(RENTAL_REPOSITORY)
     private readonly rentalRepository: RentalRepository,
+    private readonly references: BusinessReferencePort,
   ) {}
 
   async execute(input: UpdateRentalInput): Promise<Rental> {
@@ -40,7 +43,11 @@ export class UpdateRentalUseCase {
     if (input.startDate != null)
       data.startDate = parseDateOnly(input.startDate);
     if (input.endDate != null) data.endDate = parseDateOnly(input.endDate);
-    if (input.currency != null) data.currency = input.currency;
+    if (input.currency != null)
+      data.currency = await assertActiveCurrency(
+        this.references,
+        input.currency,
+      );
     if (input.monthlyAmount != null) data.monthlyAmount = input.monthlyAmount;
     if (input.securityDeposit !== undefined)
       data.securityDeposit = input.securityDeposit;

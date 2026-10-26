@@ -1,3 +1,4 @@
+import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
 import {
   Body,
   Controller,
@@ -26,6 +27,7 @@ import { CreateAgentDto } from '../dtos/agents/create-agent.dto';
 import { UpdateAgentDto } from '../dtos/agents/update-agent.dto';
 
 @ApiTags('Agents')
+@RequiresApplication({ fromRequest: true, fallback: ['alquileres', 'ventas'] })
 @Controller('agents')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')

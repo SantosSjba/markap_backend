@@ -17,9 +17,12 @@ model ArquitecturaCalendarEvent {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application   Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application   Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   project       ArquitecturaProject? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignedAgent Agent?            @relation("ArquitecturaCalendarAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  assignedAgent Agent?               @relation("ArquitecturaCalendarAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
 
   @@index([applicationId, startsAt])
   @@index([projectId])

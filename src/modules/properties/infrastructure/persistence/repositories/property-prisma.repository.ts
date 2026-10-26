@@ -40,6 +40,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
       partida2: data.partida2?.trim() || null,
       partida3: data.partida3?.trim() || null,
       monthlyRent: data.monthlyRent ?? null,
+      rentCurrency: data.rentCurrency ?? 'PEN',
       maintenanceAmount: data.maintenanceAmount ?? null,
       depositMonths: data.depositMonths ?? null,
       salePrice: data.salePrice ?? null,
@@ -200,6 +201,7 @@ export class PropertyPrismaRepository implements PropertyRepository {
             p.owner?.id ?? '',
             p.owner?.fullName ?? '',
             p.monthlyRent,
+            p.rentCurrency ?? 'PEN',
             p.salePrice,
             p.saleCurrency ?? 'PEN',
             p.projectName,
@@ -318,6 +320,8 @@ export class PropertyPrismaRepository implements PropertyRepository {
         : undefined;
     if (data.monthlyRent !== undefined)
       updatePayload.monthlyRent = data.monthlyRent;
+    if (data.rentCurrency !== undefined)
+      updatePayload.rentCurrency = data.rentCurrency;
     if (data.maintenanceAmount !== undefined)
       updatePayload.maintenanceAmount = data.maintenanceAmount;
     if (data.depositMonths !== undefined)
