@@ -1,3 +1,5 @@
+import type { RentalCommissionStatus } from '../utils/rental-commission.util';
+
 /** Adjunto de contrato u otro documento del alquiler. */
 export class RentalAttachment {
   constructor(
@@ -27,6 +29,9 @@ export class Rental {
     public readonly status: string,
     public readonly enableExpirationAlerts: boolean,
     public readonly enableCollectionAlerts: boolean,
+    public readonly commissionStatus: RentalCommissionStatus,
+    public readonly commissionDueDate: Date | null,
+    public readonly commissionPaidDate: Date | null,
   ) {}
 }
 
@@ -85,6 +90,9 @@ export class RentalDetail extends Rental {
       rental.status,
       rental.enableExpirationAlerts,
       rental.enableCollectionAlerts,
+      rental.commissionStatus,
+      rental.commissionDueDate,
+      rental.commissionPaidDate,
     );
   }
 }

@@ -25,4 +25,10 @@ export abstract class RentalAlertQueryPort {
     type: string,
     since: Date,
   ): Promise<{ data: unknown }[]>;
+  /** Si ya existe una notificación de ese tipo para el contrato desde `since`. */
+  abstract wasRentalAlertSentSince(
+    type: string,
+    rentalId: string,
+    since: Date,
+  ): Promise<boolean>;
 }

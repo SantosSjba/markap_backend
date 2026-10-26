@@ -5,6 +5,7 @@ import type {
   FinancialDistributionReportItem,
   MonthlyMetrics,
   PropertyWithoutContractItem,
+  RentalCommissionsList,
   RentalsByMonthItem,
   ReportsSummary,
 } from '../entities/report.entity';
@@ -16,9 +17,19 @@ export type {
   FinancialDistributionReportItem,
   MonthlyMetrics,
   PropertyWithoutContractItem,
+  RentalCommissionsList,
   RentalsByMonthItem,
   ReportsSummary,
 } from '../entities/report.entity';
+
+/** Fecha con la que se filtra el reporte: inicio del contrato o cobro de la comisión. */
+export type FinancialDistributionDateField = 'startDate' | 'commissionPaidDate';
+
+export interface ListRentalCommissionsFilters {
+  applicationSlug: string;
+  status?: 'PENDING' | 'PAID';
+  search?: string;
+}
 
 export const REPORT_REPOSITORY = Symbol('ReportRepository');
 
@@ -48,5 +59,9 @@ export interface ReportRepository {
     status?: string,
     startDate?: string,
     endDate?: string,
+    dateField?: FinancialDistributionDateField,
   ): Promise<FinancialDistributionReportItem[]>;
+  listCommissions(
+    filters: ListRentalCommissionsFilters,
+  ): Promise<RentalCommissionsList>;
 }

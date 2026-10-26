@@ -134,7 +134,7 @@ model RoleApplication {
 }
 
 enum ApplicationAccessLevel {
- READ
- WRITE
- ADMIN
+  READ
+  WRITE
+  ADMIN
 }

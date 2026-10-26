@@ -82,6 +82,8 @@ export class PaymentPrismaRepository implements PaymentRepository {
         applicationId: app.id,
         status: 'ACTIVE',
         deletedAt: null,
+        // Sin cobranza activa la inmobiliaria no administra los pagos: no se generan cuotas
+        enableCollectionAlerts: true,
         startDate: { lte: monthEnd },
         endDate: { gte: monthStart },
       },
@@ -155,6 +157,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
           applicationId: app.id,
           status: 'ACTIVE',
           deletedAt: null,
+          enableCollectionAlerts: true,
           ...(filters.search?.trim()
             ? {
                 OR: [
@@ -368,7 +371,12 @@ export class PaymentPrismaRepository implements PaymentRepository {
         { status: 'OVERDUE' },
         { status: 'PARTIAL', dueDate: { lt: startOfTodayLima() } },
       ],
-      rental: { applicationId: app.id, status: 'ACTIVE', deletedAt: null },
+      rental: {
+        applicationId: app.id,
+        status: 'ACTIVE',
+        deletedAt: null,
+        enableCollectionAlerts: true,
+      },
     };
 
     if (search?.trim()) {
@@ -524,6 +532,12 @@ export class PaymentPrismaRepository implements PaymentRepository {
     const year = Number(todayYmd.slice(0, 4));
     const month = Number(todayYmd.slice(5, 7));
 
+    // Solo contratos cuya cobranza administra la inmobiliaria
+    const collectedRental = {
+      applicationId: app.id,
+      deletedAt: null,
+      enableCollectionAlerts: true,
+    };
     const [pendingAgg, collectedAgg, pendingCount, overdueCount] =
       await Promise.all([
         this.prisma.payment.aggregate({
@@ -531,7 +545,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
             periodYear: year,
             periodMonth: month,
             status: { in: ['PENDING', 'OVERDUE', 'PARTIAL'] },
-            rental: { applicationId: app.id, deletedAt: null },
+            rental: collectedRental,
           },
           _sum: { amount: true, paidAmount: true },
         }),
@@ -540,14 +554,14 @@ export class PaymentPrismaRepository implements PaymentRepository {
             periodYear: year,
             periodMonth: month,
             status: { in: ['PAID', 'PARTIAL'] },
-            rental: { applicationId: app.id, deletedAt: null },
+            rental: collectedRental,
           },
           _sum: { paidAmount: true },
         }),
         this.prisma.payment.count({
           where: {
             status: { in: ['PENDING', 'OVERDUE', 'PARTIAL'] },
-            rental: { applicationId: app.id, deletedAt: null },
+            rental: collectedRental,
           },
         }),
         this.prisma.payment.count({
@@ -556,7 +570,7 @@ export class PaymentPrismaRepository implements PaymentRepository {
               { status: 'OVERDUE' },
               { status: 'PARTIAL', dueDate: { lt: startOfTodayLima() } },
             ],
-            rental: { applicationId: app.id, deletedAt: null },
+            rental: collectedRental,
           },
         }),
       ]);

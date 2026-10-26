@@ -6960,6 +6960,42 @@
     ]
   },
   {
+    "controller": "RentalCommissionsController",
+    "classDecorators": [
+      "ApiTags('Rental commissions')",
+      "RequiresApplication('alquileres')",
+      "Controller('rental-commissions')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "list",
+    "decorators": [
+      "Get()",
+      "ApiOperation({ summary: 'Comisiones de alquileres y su estado de cobro' })",
+      "ApiQuery({ name: 'applicationSlug', required: false })",
+      "ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'PAID'] })",
+      "ApiQuery({\n    name: 'search',\n    required: false,\n    description: 'Código, propiedad, propietario o inquilino',\n  })",
+      "ApiResponse({ status: 200 })"
+    ]
+  },
+  {
+    "controller": "RentalCommissionsController",
+    "classDecorators": [
+      "ApiTags('Rental commissions')",
+      "RequiresApplication('alquileres')",
+      "Controller('rental-commissions')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "update",
+    "decorators": [
+      "Patch(':rentalId')",
+      "ApiOperation({\n    summary:\n      'Registrar el cobro de la comisión (pagada con fecha real), volverla a pendiente o cambiar la fecha estimada',\n  })",
+      "ApiResponse({ status: 200 })",
+      "ApiResponse({ status: 404 })"
+    ]
+  },
+  {
     "controller": "RentalsController",
     "classDecorators": [
       "ApiTags('Rentals')",
@@ -7251,7 +7287,7 @@
     "method": "getRentalsByMonth",
     "decorators": [
       "Get('rentals-by-month')",
-      "ApiOperation({\n    summary:\n      'Reporte de alquiler por mes. Soporta filtro por año, mes específico o rango de fechas.',\n  })",
+      "ApiOperation({\n    summary:\n      'Comisiones de alquileres por mes (según la fecha efectiva de cobro), separadas por moneda. Soporta filtro por año, mes específico o rango de fechas.',\n  })",
       "ApiQuery({ name: 'applicationSlug', required: false })",
       "ApiQuery({\n    name: 'year',\n    required: false,\n    description:\n      'Año (ej: 2026). Requerido salvo que se use startDate/endDate.',\n  })",
       "ApiQuery({\n    name: 'month',\n    required: false,\n    description: 'Mes específico 1-12 (usar junto con year)',\n  })",
@@ -7277,6 +7313,7 @@
       "ApiQuery({\n    name: 'status',\n    required: false,\n    enum: ['ACTIVE', 'EXPIRED', 'CANCELLED'],\n    description: 'Filtrar por estado del contrato',\n  })",
       "ApiQuery({\n    name: 'startDate',\n    required: false,\n    description: 'Fecha inicio del contrato YYYY-MM-DD (cuándo se concretó)',\n  })",
       "ApiQuery({\n    name: 'endDate',\n    required: false,\n    description: 'Fecha fin del contrato YYYY-MM-DD',\n  })",
+      "ApiQuery({\n    name: 'dateField',\n    required: false,\n    enum: ['startDate', 'commissionPaidDate'],\n    description:\n      'Fecha que filtra el rango: inicio del contrato (default) o cobro de la comisión',\n  })",
       "ApiResponse({ status: 200 })"
     ]
   },

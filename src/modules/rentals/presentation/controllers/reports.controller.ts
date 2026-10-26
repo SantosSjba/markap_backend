@@ -130,7 +130,7 @@ export class ReportsController {
   @Get('rentals-by-month')
   @ApiOperation({
     summary:
-      'Reporte de alquiler por mes. Soporta filtro por año, mes específico o rango de fechas.',
+      'Comisiones de alquileres por mes (según la fecha efectiva de cobro), separadas por moneda. Soporta filtro por año, mes específico o rango de fechas.',
   })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({
@@ -197,18 +197,27 @@ export class ReportsController {
     required: false,
     description: 'Fecha fin del contrato YYYY-MM-DD',
   })
+  @ApiQuery({
+    name: 'dateField',
+    required: false,
+    enum: ['startDate', 'commissionPaidDate'],
+    description:
+      'Fecha que filtra el rango: inicio del contrato (default) o cobro de la comisión',
+  })
   @ApiResponse({ status: 200 })
   async getFinancialDistribution(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('status') status?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('dateField') dateField?: string,
   ) {
     return this.getFinancialDistributionReportUseCase.execute(
       applicationSlug ?? 'alquileres',
       status,
       startDate,
       endDate,
+      dateField === 'commissionPaidDate' ? 'commissionPaidDate' : 'startDate',
     );
   }
 }

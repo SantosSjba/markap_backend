@@ -7,6 +7,10 @@ import {
   type NotificationPayload,
 } from '../ports/notification-delivery.port';
 import { RentalAlertQueryPort } from '../ports/rental-alert-query.port';
+import {
+  rentalExpiringAlertType,
+  rentalExpiringAlertWindowStart,
+} from '../../domain/utils/rental-expiring-alert.util';
 
 import {
   startOfDayLima,
@@ -56,8 +60,7 @@ export class NotificationsService {
       applicationId,
     );
     if (!config) {
-      // Defaults: RENTAL_CREATED siempre, expiring 90 días no, el resto sí
-      if (alertType === 'RENTAL_EXPIRING_90') return false;
+      // Defaults: todo activo (avisos de vencimiento a 3, 2 y 1 mes)
       return true;
     }
     switch (alertType) {
@@ -264,7 +267,7 @@ export class NotificationsService {
   }
 
   /**
-   * Job programado: contratos por vencer (30/60/90 días) y pagos pendientes/atrasados.
+   * Job programado: contratos por vencer (avisos a 3, 2 y 1 mes) y pagos pendientes/atrasados.
    */
   async processScheduledRentalAlerts(): Promise<{
     expiring: number;
@@ -287,19 +290,13 @@ export class NotificationsService {
         const daysLeft = Math.round(
           (end.getTime() - today.getTime()) / 86_400_000,
         );
-        const expiringMap: Record<
-          number,
-          'RENTAL_EXPIRING_30' | 'RENTAL_EXPIRING_60' | 'RENTAL_EXPIRING_90'
-        > = {
-          30: 'RENTAL_EXPIRING_30',
-          60: 'RENTAL_EXPIRING_60',
-          90: 'RENTAL_EXPIRING_90',
-        };
-        const alertType = expiringMap[daysLeft];
+        const alertType = rentalExpiringAlertType(daysLeft);
         if (alertType) {
-          const sent = await this.wasAlertSentRecently(alertType, rental.id, {
-            daysLeft,
-          });
+          const sent = await this.alertQueries.wasRentalAlertSentSince(
+            alertType,
+            rental.id,
+            rentalExpiringAlertWindowStart(end),
+          );
           if (!sent) {
             await this.notifyRentalExpiring(
               rental.id,

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import {
   formatDateOnly,
   parseDateOnly,
@@ -6,6 +7,7 @@ import {
   todayDateOnlyLima,
 } from '../../../../../shared/domain/utils/peru-date.util';
 import { PrismaService } from '../../../../../shared/infrastructure/database/prisma/prisma.service';
+import { containsI } from '../../../../../shared/utils/prisma-contains-insensitive.util';
 import type {
   ContractExpiringItem,
   PropertyWithoutContractItem,
@@ -15,13 +17,39 @@ import {
   ContractStatusSummary,
   FinancialDistributionReportItem,
   MonthlyMetrics,
+  RentalCommissionCurrencyTotals,
+  RentalCommissionItem,
+  RentalCommissionsList,
+  RentalsByMonthCurrencyTotals,
   RentalsByMonthItem,
   ReportsSummary,
 } from '../../../domain/entities/report.entity';
-import type { ReportRepository } from '../../../domain/repositories/report.repository';
+import type {
+  FinancialDistributionDateField,
+  ListRentalCommissionsFilters,
+  ReportRepository,
+} from '../../../domain/repositories/report.repository';
 import { computeRentalFinancialBreakdown } from '../../../domain/utils/rental-financial-breakdown.util';
+import { sumCollectedCommissionsByCurrency } from '../../../domain/utils/rental-commission.util';
 import { ReportPrismaMapper } from '../mappers/report-prisma.mapper';
 import { legacyRentalCode } from '../../../domain/utils/rental-code.util';
+
+/** Campos de la distribución financiera que necesita el cálculo de montos. */
+const FINANCIAL_CONFIG_CALC_SELECT = {
+  baseAmount: true,
+  expenseType: true,
+  expenseValue: true,
+  expenseCurrency: true,
+  taxType: true,
+  taxValue: true,
+  taxCurrency: true,
+  externalAgentType: true,
+  externalAgentValue: true,
+  externalAgentCurrency: true,
+  internalAgentType: true,
+  internalAgentValue: true,
+  internalAgentCurrency: true,
+} as const;
 
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
@@ -354,7 +382,7 @@ export class ReportPrismaRepository implements ReportRepository {
         rangeStart && rangeStart > firstDay ? rangeStart : firstDay;
       const periodEnd = rangeEnd && rangeEnd < lastDay ? rangeEnd : lastDay;
 
-      const [newContracts, expiredContracts, activeAtEnd, revenueRentals] =
+      const [newContracts, expiredContracts, activeAtEnd, collectedRentals] =
         await Promise.all([
           this.prisma.rental.count({
             where: {
@@ -373,64 +401,41 @@ export class ReportPrismaRepository implements ReportRepository {
               endDate: { gte: lastDay },
             },
           }),
-          // Solo alquileres CONCRETADOS (startDate) dentro del período efectivo del mes
+          // Comisiones COBRADAS: fecha efectiva de cobro dentro del período (no el inicio del contrato)
           this.prisma.rental.findMany({
             where: {
               ...baseWhere,
-              startDate: { gte: periodStart, lte: periodEnd },
+              commissionStatus: 'PAID',
+              commissionPaidDate: { gte: periodStart, lte: periodEnd },
             },
             select: {
               monthlyAmount: true,
               currency: true,
-              financialConfig: {
-                select: {
-                  baseAmount: true,
-                  expenseType: true,
-                  expenseValue: true,
-                  expenseCurrency: true,
-                  taxType: true,
-                  taxValue: true,
-                  taxCurrency: true,
-                  externalAgentType: true,
-                  externalAgentValue: true,
-                  externalAgentCurrency: true,
-                  internalAgentType: true,
-                  internalAgentValue: true,
-                  internalAgentCurrency: true,
-                },
-              },
+              financialConfig: { select: FINANCIAL_CONFIG_CALC_SELECT },
             },
           }),
         ]);
 
-      let totalRevenue = 0;
-      let companyRevenue = 0;
-      let totalExpense = 0;
-      let totalTax = 0;
-      let totalExternalCommission = 0;
-      let totalInternalCommission = 0;
-      let totalUtility = 0;
-
-      for (const r of revenueRentals) {
-        const monthly = Number(r.monthlyAmount || 0);
-        totalRevenue += monthly;
-        const cfg = r.financialConfig;
-        // Totales en la moneda del contrato (los montos fijos en otra moneda no se convierten)
-        const totals = computeRentalFinancialBreakdown(
-          monthly,
-          cfg ?? undefined,
-          r.currency,
-        ).totalsByCurrency[0];
-        companyRevenue += totals.income;
-        totalExpense += totals.expense;
-        totalTax += totals.tax;
-        totalExternalCommission += totals.externalAgentCommission;
-        totalInternalCommission += totals.internalAgentCommission;
-        totalUtility += totals.utility;
-      }
-
-      const currency =
-        revenueRentals.length > 0 ? revenueRentals[0].currency || 'PEN' : 'PEN';
+      const totalsByCurrency = sumCollectedCommissionsByCurrency(
+        collectedRentals.map((r) => ({
+          monthlyAmount: Number(r.monthlyAmount || 0),
+          currency: r.currency,
+          config: r.financialConfig,
+        })),
+      ).map(
+        (t) =>
+          new RentalsByMonthCurrencyTotals(
+            t.currency,
+            t.collectedCommissions,
+            t.monthlyRent,
+            t.income,
+            t.expense,
+            t.tax,
+            t.externalAgentCommission,
+            t.internalAgentCommission,
+            t.utility,
+          ),
+      );
 
       // Para el monthName cuando el año es diferente al solicitado (modo rango), incluir el año
       const monthLabel =
@@ -446,14 +451,7 @@ export class ReportPrismaRepository implements ReportRepository {
           newContracts,
           expiredContracts,
           activeAtEnd,
-          Math.round(totalRevenue * 100) / 100,
-          Math.round(companyRevenue * 100) / 100,
-          Math.round(totalExpense * 100) / 100,
-          Math.round(totalTax * 100) / 100,
-          Math.round(totalExternalCommission * 100) / 100,
-          Math.round(totalInternalCommission * 100) / 100,
-          Math.round(totalUtility * 100) / 100,
-          currency,
+          totalsByCurrency,
         ),
       );
     }
@@ -466,35 +464,37 @@ export class ReportPrismaRepository implements ReportRepository {
     status?: string,
     startDate?: string,
     endDate?: string,
+    dateField: FinancialDistributionDateField = 'startDate',
   ): Promise<FinancialDistributionReportItem[]> {
     const app = await this.prisma.application.findUnique({
       where: { slug: applicationSlug },
     });
     if (!app) return [];
 
-    // Filtro por fecha de inicio del contrato (cuándo se concretó el alquiler)
-    let startDateFilter: Date | undefined;
-    let endDateFilter: Date | undefined;
-    if (startDate) {
-      startDateFilter = parseDateOnly(startDate);
-    }
-    if (endDate) {
-      endDateFilter = parseDateOnly(endDate);
-    }
+    // Filtro por inicio del contrato (cuándo se concretó) o por cobro de la comisión
+    const range =
+      startDate || endDate
+        ? {
+            ...(startDate ? { gte: parseDateOnly(startDate) } : {}),
+            ...(endDate ? { lte: parseDateOnly(endDate) } : {}),
+          }
+        : undefined;
+    const dateWhere: Prisma.RentalWhereInput =
+      dateField === 'commissionPaidDate'
+        ? {
+            commissionStatus: 'PAID',
+            ...(range ? { commissionPaidDate: range } : {}),
+          }
+        : range
+          ? { startDate: range }
+          : {};
 
     const rentals = await this.prisma.rental.findMany({
       where: {
         applicationId: app.id,
         deletedAt: null,
         ...(status ? { status } : {}),
-        ...(startDateFilter || endDateFilter
-          ? {
-              startDate: {
-                ...(startDateFilter ? { gte: startDateFilter } : {}),
-                ...(endDateFilter ? { lte: endDateFilter } : {}),
-              },
-            }
-          : {}),
+        ...dateWhere,
       },
       include: {
         property: {
@@ -549,8 +549,128 @@ export class ReportPrismaRepository implements ReportRepository {
         internalAgentName,
         r.status,
         formatDateOnly(r.startDate),
+        r.commissionStatus,
+        r.commissionPaidDate ? formatDateOnly(r.commissionPaidDate) : null,
       );
     });
+  }
+
+  async listCommissions(
+    filters: ListRentalCommissionsFilters,
+  ): Promise<RentalCommissionsList> {
+    const app = await this.prisma.application.findUnique({
+      where: { slug: filters.applicationSlug },
+    });
+    if (!app) return new RentalCommissionsList([], []);
+
+    const q = filters.search?.trim();
+    const rentals = await this.prisma.rental.findMany({
+      where: {
+        applicationId: app.id,
+        deletedAt: null,
+        ...(filters.status ? { commissionStatus: filters.status } : {}),
+        ...(q
+          ? {
+              OR: [
+                { code: containsI(q) },
+                { property: { addressLine: containsI(q) } },
+                { property: { owner: { fullName: containsI(q) } } },
+                { tenant: { fullName: containsI(q) } },
+                { tenants: { some: { client: { fullName: containsI(q) } } } },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        property: {
+          select: {
+            addressLine: true,
+            owner: { select: { fullName: true } },
+          },
+        },
+        tenant: { select: { fullName: true } },
+        tenants: {
+          orderBy: { sortOrder: 'asc' },
+          include: { client: { select: { fullName: true } } },
+        },
+        financialConfig: { select: FINANCIAL_CONFIG_CALC_SELECT },
+      },
+      // Pendientes primero por fecha estimada; luego los cobrados más recientes
+      orderBy: [
+        { commissionStatus: 'asc' },
+        { commissionDueDate: { sort: 'asc', nulls: 'last' } },
+        { commissionPaidDate: { sort: 'desc', nulls: 'last' } },
+        { startDate: 'desc' },
+      ],
+    });
+
+    const today = startOfTodayLima();
+    const totals = new Map<
+      string,
+      {
+        -readonly [K in keyof RentalCommissionCurrencyTotals]: RentalCommissionCurrencyTotals[K];
+      }
+    >();
+    const items = rentals.map((r) => {
+      // La comisión es el ingreso de la distribución financiera, en la moneda del contrato
+      const amount = computeRentalFinancialBreakdown(
+        Number(r.monthlyAmount),
+        r.financialConfig ?? undefined,
+        r.currency,
+      ).base;
+      const paid = r.commissionStatus === 'PAID';
+      const row = totals.get(r.currency) ?? {
+        currency: r.currency,
+        pendingCount: 0,
+        pendingAmount: 0,
+        paidCount: 0,
+        paidAmount: 0,
+      };
+      if (paid) {
+        row.paidCount += 1;
+        row.paidAmount = Math.round((row.paidAmount + amount) * 100) / 100;
+      } else {
+        row.pendingCount += 1;
+        row.pendingAmount =
+          Math.round((row.pendingAmount + amount) * 100) / 100;
+      }
+      totals.set(r.currency, row);
+
+      const tenantNames = r.tenants.length
+        ? r.tenants.map((t) => t.client.fullName).join(', ')
+        : (r.tenant?.fullName ?? '—');
+      return new RentalCommissionItem(
+        r.id,
+        r.code ?? legacyRentalCode(r.id, r.startDate),
+        r.property?.addressLine ?? '—',
+        r.property?.owner?.fullName ?? '—',
+        tenantNames,
+        r.status,
+        formatDateOnly(r.startDate),
+        r.currency,
+        amount,
+        paid ? 'PAID' : 'PENDING',
+        r.commissionDueDate ? formatDateOnly(r.commissionDueDate) : null,
+        r.commissionPaidDate ? formatDateOnly(r.commissionPaidDate) : null,
+        !paid && !!r.commissionDueDate && r.commissionDueDate < today,
+      );
+    });
+
+    return new RentalCommissionsList(
+      items,
+      [...totals.values()]
+        .sort((a, b) => a.currency.localeCompare(b.currency))
+        .map(
+          (t) =>
+            new RentalCommissionCurrencyTotals(
+              t.currency,
+              t.pendingCount,
+              t.pendingAmount,
+              t.paidCount,
+              t.paidAmount,
+            ),
+        ),
+    );
   }
 
   private async countPropertiesWithoutContract(
@@ -611,7 +731,11 @@ export class ReportPrismaRepository implements ReportRepository {
     year: number,
     month: number,
   ): Promise<number> {
-    const rental = { applicationId, deletedAt: null };
+    const rental = {
+      applicationId,
+      deletedAt: null,
+      enableCollectionAlerts: true,
+    };
     const [collectedAgg, pendingAgg] = await Promise.all([
       this.prisma.payment.aggregate({
         where: {
@@ -696,6 +820,7 @@ export class ReportPrismaRepository implements ReportRepository {
         applicationId,
         deletedAt: null,
         status: 'ACTIVE',
+        enableCollectionAlerts: true,
         payments: {
           some: {
             OR: [

@@ -14,6 +14,8 @@ import { ListOverduePaymentsUseCase } from './application/use-cases/payments/lis
 import { ListPaymentHistoryUseCase } from './application/use-cases/payments/list-payment-history.use-case';
 import { ListPendingPaymentsUseCase } from './application/use-cases/payments/list-pending-payments.use-case';
 import { RegisterPaymentUseCase } from './application/use-cases/payments/register-payment.use-case';
+import { ListRentalCommissionsUseCase } from './application/use-cases/commissions/list-rental-commissions.use-case';
+import { UpdateRentalCommissionUseCase } from './application/use-cases/commissions/update-rental-commission.use-case';
 import { CancelRentalUseCase } from './application/use-cases/rentals/cancel-rental.use-case';
 import { CreateRentalUseCase } from './application/use-cases/rentals/create-rental.use-case';
 import { GetRentalByIdUseCase } from './application/use-cases/rentals/get-rental-by-id.use-case';
@@ -33,11 +35,17 @@ import { GetRentalsByMonthUseCase } from './application/use-cases/reports/get-re
 import { GetReportsSummaryUseCase } from './application/use-cases/reports/get-reports-summary.use-case';
 import { RentalDocumentAdapter } from './infrastructure/persistence/rental-document.adapter';
 import { PaymentsController } from './presentation/controllers/payments.controller';
+import { RentalCommissionsController } from './presentation/controllers/rental-commissions.controller';
 import { RentalsController } from './presentation/controllers/rentals.controller';
 import { ReportsController } from './presentation/controllers/reports.controller';
 @Module({
   imports: [DatabaseModule, StorageModule, RuntimeModule, NotificationsModule],
-  controllers: [RentalsController, ReportsController, PaymentsController],
+  controllers: [
+    RentalsController,
+    ReportsController,
+    PaymentsController,
+    RentalCommissionsController,
+  ],
   providers: [
     RentalDocumentsService,
     { provide: RentalDocumentPort, useClass: RentalDocumentAdapter },
@@ -63,6 +71,8 @@ import { ReportsController } from './presentation/controllers/reports.controller
     RegisterPaymentUseCase,
     ListPaymentHistoryUseCase,
     ListOverduePaymentsUseCase,
+    ListRentalCommissionsUseCase,
+    UpdateRentalCommissionUseCase,
     { provide: PAYMENT_PORT, useClass: PaymentFacade },
     { provide: RENTAL_PORT, useClass: RentalFacade },
   ],

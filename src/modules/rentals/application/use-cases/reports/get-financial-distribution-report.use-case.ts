@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { FinancialDistributionReportItem } from '../../../domain/entities/report.entity';
-import type { ReportRepository } from '../../../domain/repositories/report.repository';
+import type {
+  FinancialDistributionDateField,
+  ReportRepository,
+} from '../../../domain/repositories/report.repository';
 import { REPORT_REPOSITORY } from '../../../domain/repositories/report.repository';
 
 @Injectable()
@@ -15,12 +18,14 @@ export class GetFinancialDistributionReportUseCase {
     status?: string,
     startDate?: string,
     endDate?: string,
+    dateField?: FinancialDistributionDateField,
   ): Promise<FinancialDistributionReportItem[]> {
     return this.reportRepository.getFinancialDistributionReport(
       applicationSlug,
       status,
       startDate,
       endDate,
+      dateField,
     );
   }
 }

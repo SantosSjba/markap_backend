@@ -55,6 +55,24 @@ export class MonthlyMetrics {
   ) {}
 }
 
+/** Comisiones cobradas en el mes, en una sola moneda (sin conversión entre monedas). */
+export class RentalsByMonthCurrencyTotals {
+  constructor(
+    public readonly currency: string,
+    /** Comisiones cobradas (alquileres con cobro en el período) */
+    public readonly collectedCommissions: number,
+    /** Renta mensual de esos alquileres */
+    public readonly totalRevenue: number,
+    /** Ingreso de la distribución financiera (la comisión de la inmobiliaria) */
+    public readonly companyRevenue: number,
+    public readonly totalExpense: number,
+    public readonly totalTax: number,
+    public readonly totalExternalCommission: number,
+    public readonly totalInternalCommission: number,
+    public readonly totalUtility: number,
+  ) {}
+}
+
 export class RentalsByMonthItem {
   constructor(
     public readonly month: number,
@@ -63,14 +81,45 @@ export class RentalsByMonthItem {
     public readonly newContracts: number,
     public readonly expiredContracts: number,
     public readonly activeAtEndOfMonth: number,
-    public readonly totalRevenue: number,
-    public readonly companyRevenue: number,
-    public readonly totalExpense: number,
-    public readonly totalTax: number,
-    public readonly totalExternalCommission: number,
-    public readonly totalInternalCommission: number,
-    public readonly totalUtility: number,
+    /** Totales por moneda según la fecha efectiva de cobro de la comisión */
+    public readonly totalsByCurrency: RentalsByMonthCurrencyTotals[],
+  ) {}
+}
+
+/** Comisión (ingreso) de un alquiler y su seguimiento de cobro. */
+export class RentalCommissionItem {
+  constructor(
+    public readonly rentalId: string,
+    public readonly rentalCode: string,
+    public readonly propertyAddress: string,
+    public readonly ownerName: string,
+    public readonly tenantName: string,
+    public readonly rentalStatus: string,
+    public readonly contractStartDate: string,
     public readonly currency: string,
+    public readonly amount: number,
+    public readonly status: string,
+    public readonly dueDate: string | null,
+    public readonly paidDate: string | null,
+    /** Pendiente con fecha estimada ya pasada */
+    public readonly isOverdue: boolean,
+  ) {}
+}
+
+export class RentalCommissionCurrencyTotals {
+  constructor(
+    public readonly currency: string,
+    public readonly pendingCount: number,
+    public readonly pendingAmount: number,
+    public readonly paidCount: number,
+    public readonly paidAmount: number,
+  ) {}
+}
+
+export class RentalCommissionsList {
+  constructor(
+    public readonly items: RentalCommissionItem[],
+    public readonly totalsByCurrency: RentalCommissionCurrencyTotals[],
   ) {}
 }
 
@@ -93,5 +142,7 @@ export class FinancialDistributionReportItem {
     public readonly internalAgentName: string | null,
     public readonly status: string,
     public readonly contractStartDate: string,
+    public readonly commissionStatus: string,
+    public readonly commissionPaidDate: string | null,
   ) {}
 }

@@ -68,6 +68,9 @@ export class RentalPrismaMapper {
     status: string;
     enableExpirationAlerts: boolean;
     enableCollectionAlerts: boolean;
+    commissionStatus: string;
+    commissionDueDate: Date | null;
+    commissionPaidDate: Date | null;
   }): Rental {
     const n = (
       v: number | { toNumber?: () => number } | null | undefined,
@@ -90,6 +93,9 @@ export class RentalPrismaMapper {
       r.status,
       r.enableExpirationAlerts,
       r.enableCollectionAlerts,
+      r.commissionStatus === 'PAID' ? 'PAID' : 'PENDING',
+      r.commissionDueDate,
+      r.commissionPaidDate,
     );
   }
 }

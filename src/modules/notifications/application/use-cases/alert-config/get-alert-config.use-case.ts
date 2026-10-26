@@ -32,7 +32,7 @@ export class GetAlertConfigUseCase {
         userId,
         alert30Days: true,
         alert60Days: true,
-        alert90Days: false,
+        alert90Days: true,
         alertPendingPayment: true,
         alertOverduePayment: true,
         channelInApp: true,

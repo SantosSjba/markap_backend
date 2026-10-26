@@ -7,7 +7,7 @@ model AlertConfig {
 
   alert30Days Boolean @default(true) @map("alert_30_days")
   alert60Days Boolean @default(true) @map("alert_60_days")
-  alert90Days Boolean @default(false) @map("alert_90_days")
+  alert90Days Boolean @default(true) @map("alert_90_days")
 
   alertPendingPayment Boolean @default(true) @map("alert_pending_payment")
   alertOverduePayment Boolean @default(true) @map("alert_overdue_payment")

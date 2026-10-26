@@ -18,6 +18,11 @@ import {
 } from '../../../domain/utils/rental-code.util';
 import type { Rental } from '../../../domain/entities/rental.entity';
 import {
+  resolveRentalCommissionState,
+  type RentalCommissionPatch,
+  type RentalCommissionState,
+} from '../../../domain/utils/rental-commission.util';
+import {
   RentalAttachment,
   RentalDetail,
   RentalStats,
@@ -49,6 +54,19 @@ function resolveTenantClients(r: {
   return [];
 }
 
+/** Reglas del cobro de la comisión como error 400 para el cliente. */
+function resolveCommission(
+  current: RentalCommissionState,
+  patch: RentalCommissionPatch | undefined,
+): RentalCommissionState {
+  try {
+    return resolveRentalCommissionState(current, patch ?? {});
+  } catch (err) {
+    if (err instanceof RangeError) throw new BadRequestException(err.message);
+    throw err;
+  }
+}
+
 @Injectable()
 export class RentalPrismaRepository implements RentalRepository {
   constructor(
@@ -68,6 +86,14 @@ export class RentalPrismaRepository implements RentalRepository {
         'El rango de fechas del contrato no es válido',
       );
     const primaryTenantId = data.tenantIds[0];
+    const commission = resolveCommission(
+      {
+        commissionStatus: 'PENDING',
+        commissionDueDate: null,
+        commissionPaidDate: null,
+      },
+      data.commission,
+    );
     const rental = await this.prisma.$transaction(async (tx) => {
       // eslint-disable-next-line no-restricted-properties -- Bloqueo transaccional de lectura; no modifica filas.
       await tx.$queryRaw`SELECT id FROM properties WHERE id = ${data.propertyId} FOR UPDATE`;
@@ -140,6 +166,7 @@ export class RentalPrismaRepository implements RentalRepository {
           notes: data.notes?.trim() || null,
           enableExpirationAlerts: data.enableExpirationAlerts ?? true,
           enableCollectionAlerts: data.enableCollectionAlerts ?? true,
+          ...commission,
           tenants: {
             create: data.tenantIds.map((clientId, sortOrder) => ({
               clientId,
@@ -430,6 +457,20 @@ export class RentalPrismaRepository implements RentalRepository {
         throw new BadRequestException(
           'La fecha final no puede ser anterior al inicio',
         );
+      if (data.commission) {
+        Object.assign(
+          patch,
+          resolveCommission(
+            {
+              commissionStatus:
+                current.commissionStatus === 'PAID' ? 'PAID' : 'PENDING',
+              commissionDueDate: current.commissionDueDate,
+              commissionPaidDate: current.commissionPaidDate,
+            },
+            data.commission,
+          ),
+        );
+      }
       if (data.tenantIds?.length) {
         const count = await tx.client.count({
           where: {

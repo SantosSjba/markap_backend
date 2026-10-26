@@ -28,6 +28,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { RentalDocumentsService } from '../../application/services/rental-documents.service';
+import type { RentalCommissionInput } from '../../application/use-cases/rentals/rental-commission-input';
 
 import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.guard';
 import {
@@ -47,6 +48,25 @@ import { UpdateRentalDto } from '../dtos/rentals/update-rental.dto';
 import { UpsertRentalFinancialConfigDto } from '../dtos/rentals/upsert-rental-financial-config.dto';
 
 type RentalFileField = 'contractFile' | 'deliveryActFile';
+
+/** Campos planos del formulario → cobro de la comisión (undefined si no vino ninguno). */
+function commissionInput(dto: {
+  commissionStatus?: 'PENDING' | 'PAID';
+  commissionDueDate?: string | null;
+  commissionPaidDate?: string | null;
+}): RentalCommissionInput | undefined {
+  if (
+    dto.commissionStatus === undefined &&
+    dto.commissionDueDate === undefined &&
+    dto.commissionPaidDate === undefined
+  )
+    return undefined;
+  return {
+    status: dto.commissionStatus,
+    dueDate: dto.commissionDueDate,
+    paidDate: dto.commissionPaidDate,
+  };
+}
 
 @ApiTags('Rentals')
 @RequiresApplication('alquileres')
@@ -209,6 +229,7 @@ export class RentalsController {
       enableExpirationAlerts: dto.enableExpirationAlerts,
       enableCollectionAlerts: dto.enableCollectionAlerts,
       tenantIds,
+      commission: commissionInput(dto),
     });
 
     const contractFile = getFirstFile(files?.contractFile);
@@ -290,6 +311,7 @@ export class RentalsController {
       notes: dto.notes,
       enableExpirationAlerts: dto.enableExpirationAlerts ?? true,
       enableCollectionAlerts: dto.enableCollectionAlerts ?? true,
+      commission: commissionInput(dto),
     });
 
     const appSlug = dto.applicationSlug ?? 'alquileres';

@@ -4,6 +4,7 @@ import type {
   RentalListItem,
   RentalStats,
 } from '../entities/rental.entity';
+import type { RentalCommissionPatch } from '../utils/rental-commission.util';
 
 export type {
   Rental,
@@ -26,6 +27,7 @@ export interface CreateRentalData {
   notes?: string | null;
   enableExpirationAlerts?: boolean;
   enableCollectionAlerts?: boolean;
+  commission?: RentalCommissionPatch;
 }
 
 export interface ListRentalsFilters {
@@ -55,6 +57,7 @@ export interface UpdateRentalData {
   enableExpirationAlerts?: boolean;
   enableCollectionAlerts?: boolean;
   tenantIds?: string[];
+  commission?: RentalCommissionPatch;
 }
 
 export interface RentalRepository {

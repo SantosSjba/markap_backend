@@ -8,6 +8,10 @@ import type { ApplicationRepository } from '../../../../identity/domain/reposito
 import { APPLICATION_REPOSITORY } from '../../../../identity/domain/repositories/application.repository';
 import type { RentalRepository } from '../../../domain/repositories/rental.repository';
 import { RENTAL_REPOSITORY } from '../../../domain/repositories/rental.repository';
+import {
+  toRentalCommissionPatch,
+  type RentalCommissionInput,
+} from './rental-commission-input';
 
 export interface CreateRentalInput {
   applicationSlug?: string;
@@ -23,6 +27,7 @@ export interface CreateRentalInput {
   notes?: string | null;
   enableExpirationAlerts?: boolean;
   enableCollectionAlerts?: boolean;
+  commission?: RentalCommissionInput;
 }
 
 @Injectable()
@@ -72,6 +77,7 @@ export class CreateRentalUseCase {
       notes: input.notes?.trim() || null,
       enableExpirationAlerts: input.enableExpirationAlerts ?? true,
       enableCollectionAlerts: input.enableCollectionAlerts ?? true,
+      commission: toRentalCommissionPatch(input.commission),
     });
     return rental;
   }

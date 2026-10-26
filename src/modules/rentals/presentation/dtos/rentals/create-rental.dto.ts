@@ -6,6 +6,10 @@ import {
   optionalBooleanInput,
   primitiveText,
 } from '../../../../../shared/presentation/validation/input-schemas';
+import {
+  commissionDateInput,
+  commissionStatusInput,
+} from './rental-commission.schema';
 
 export class CreateRentalDto {
   static readonly isZodDto = true;
@@ -79,6 +83,9 @@ export class CreateRentalDto {
       .nullish(),
     enableExpirationAlerts: optionalBooleanInput,
     enableCollectionAlerts: optionalBooleanInput,
+    commissionStatus: commissionStatusInput,
+    commissionDueDate: commissionDateInput,
+    commissionPaidDate: commissionDateInput,
   });
 
   @ApiPropertyOptional({ default: 'alquileres' })
@@ -129,4 +136,23 @@ export class CreateRentalDto {
     default: true,
   })
   enableCollectionAlerts?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Cobro de la comisión (ingreso)',
+    enum: ['PENDING', 'PAID'],
+    default: 'PENDING',
+  })
+  commissionStatus?: 'PENDING' | 'PAID';
+
+  @ApiPropertyOptional({
+    description: 'Fecha estimada de cobro de la comisión (YYYY-MM-DD)',
+    nullable: true,
+  })
+  commissionDueDate?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Fecha efectiva de cobro (obligatoria si está PAID)',
+    nullable: true,
+  })
+  commissionPaidDate?: string | null;
 }

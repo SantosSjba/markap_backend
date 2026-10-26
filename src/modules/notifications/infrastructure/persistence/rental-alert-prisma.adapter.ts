@@ -72,4 +72,15 @@ export class RentalAlertPrismaAdapter extends RentalAlertQueryPort {
       take: 200,
     });
   }
+  async wasRentalAlertSentSince(type: string, rentalId: string, since: Date) {
+    const found = await this.prisma.notification.findFirst({
+      where: {
+        type,
+        createdAt: { gte: since },
+        data: { path: ['rentalId'], equals: rentalId },
+      },
+      select: { id: true },
+    });
+    return found != null;
+  }
 }

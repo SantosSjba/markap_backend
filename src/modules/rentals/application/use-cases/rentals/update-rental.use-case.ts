@@ -10,6 +10,10 @@ import type {
 } from '../../../domain/repositories/rental.repository';
 
 import { RENTAL_REPOSITORY } from '../../../domain/repositories/rental.repository';
+import {
+  toRentalCommissionPatch,
+  type RentalCommissionInput,
+} from './rental-commission-input';
 
 export interface UpdateRentalInput {
   id: string;
@@ -24,6 +28,7 @@ export interface UpdateRentalInput {
   enableExpirationAlerts?: boolean;
   enableCollectionAlerts?: boolean;
   tenantIds?: string[];
+  commission?: RentalCommissionInput;
 }
 
 @Injectable()
@@ -62,6 +67,9 @@ export class UpdateRentalUseCase {
     }
     if (input.tenantIds !== undefined) {
       data.tenantIds = input.tenantIds;
+    }
+    if (input.commission) {
+      data.commission = toRentalCommissionPatch(input.commission);
     }
     return this.rentalRepository.update(input.id, data);
   }
