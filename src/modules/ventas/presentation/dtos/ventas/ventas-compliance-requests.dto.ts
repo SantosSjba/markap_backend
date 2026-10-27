@@ -204,11 +204,21 @@ export class UpsertComplianceChecklistDto {
     ),
     alcabalaApplicable: optionalValue(booleanInput),
     alcabalaAmount: optionalValue(numericInput),
+    alcabalaCurrency: optionalValue(
+      z.string({
+        error: 'El campo «moneda de la alcabala» debe ser un texto.',
+      }),
+    ),
     alcabalaPaidAt: optionalValue(
       z.string({ error: 'El campo «alcabalaPaidAt» debe ser un texto.' }),
     ),
     rent2Applicable: optionalValue(booleanInput),
     rent2Amount: optionalValue(numericInput),
+    rent2Currency: optionalValue(
+      z.string({
+        error: 'El campo «moneda de la renta 2da» debe ser un texto.',
+      }),
+    ),
     rent2PaidAt: optionalValue(
       z.string({ error: 'El campo «rent2PaidAt» debe ser un texto.' }),
     ),
@@ -216,6 +226,10 @@ export class UpsertComplianceChecklistDto {
     bankedPaymentVerified: optionalValue(booleanInput),
     paymentMethod: optionalValue(
       z.string({ error: 'El campo «método de pago» debe ser un texto.' }),
+    ),
+    paymentAmount: optionalValue(numericInput),
+    paymentCurrency: optionalValue(
+      z.string({ error: 'El campo «moneda del pago» debe ser un texto.' }),
     ),
     bankOperationNumber: optionalValue(
       z.string({ error: 'El campo «bankOperationNumber» debe ser un texto.' }),
@@ -282,11 +296,15 @@ export class UpsertComplianceChecklistDto {
 
   alcabalaAmount?: number | null;
 
+  alcabalaCurrency?: string | null;
+
   alcabalaPaidAt?: string | null;
 
   rent2Applicable?: boolean;
 
   rent2Amount?: number | null;
+
+  rent2Currency?: string | null;
 
   rent2PaidAt?: string | null;
 
@@ -295,6 +313,10 @@ export class UpsertComplianceChecklistDto {
   bankedPaymentVerified?: boolean;
 
   paymentMethod?: string | null;
+
+  paymentAmount?: number | null;
+
+  paymentCurrency?: string | null;
 
   bankOperationNumber?: string | null;
 

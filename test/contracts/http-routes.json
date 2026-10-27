@@ -7422,7 +7422,8 @@
       "ApiQuery({ name: 'acquisitionCost', required: false })",
       "ApiQuery({ name: 'alcabalaApplicable', required: false })",
       "ApiQuery({ name: 'rent2Applicable', required: false })",
-      "ApiQuery({ name: 'uit', required: false })"
+      "ApiQuery({ name: 'uit', required: false })",
+      "ApiQuery({ name: 'exchangeRate', required: false })"
     ]
   },
   {

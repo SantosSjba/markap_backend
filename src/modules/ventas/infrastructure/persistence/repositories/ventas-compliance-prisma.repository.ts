@@ -128,6 +128,18 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
         ...(data.paymentMethod !== undefined && {
           paymentMethod: data.paymentMethod,
         }),
+        ...(data.paymentAmount !== undefined && {
+          paymentAmount: data.paymentAmount,
+        }),
+        ...(data.paymentCurrency !== undefined && {
+          paymentCurrency: data.paymentCurrency,
+        }),
+        ...(data.alcabalaCurrency !== undefined && {
+          alcabalaCurrency: data.alcabalaCurrency,
+        }),
+        ...(data.rent2Currency !== undefined && {
+          rent2Currency: data.rent2Currency,
+        }),
         ...(data.bankOperationNumber !== undefined && {
           bankOperationNumber: data.bankOperationNumber,
         }),
@@ -218,6 +230,18 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
         }),
         ...(data.paymentMethod !== undefined && {
           paymentMethod: data.paymentMethod,
+        }),
+        ...(data.paymentAmount !== undefined && {
+          paymentAmount: data.paymentAmount,
+        }),
+        ...(data.paymentCurrency !== undefined && {
+          paymentCurrency: data.paymentCurrency,
+        }),
+        ...(data.alcabalaCurrency !== undefined && {
+          alcabalaCurrency: data.alcabalaCurrency,
+        }),
+        ...(data.rent2Currency !== undefined && {
+          rent2Currency: data.rent2Currency,
         }),
         ...(data.bankOperationNumber !== undefined && {
           bankOperationNumber: data.bankOperationNumber,
@@ -321,6 +345,11 @@ export class VentasCompliancePrismaRepository implements VentasComplianceReposit
     if (checklist.bankedPaymentRequired) {
       if (!checklist.bankedPaymentVerified) {
         missing.push('Falta validación de bancarización');
+      }
+      if (checklist.paymentMethod === 'CASH') {
+        missing.push(
+          'El pago en efectivo no cumple la bancarización: registre un medio bancario',
+        );
       }
       if (!checklist.bankOperationNumber) {
         missing.push('Falta número de operación bancaria');

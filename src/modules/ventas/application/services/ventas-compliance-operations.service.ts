@@ -11,6 +11,10 @@ import type { PropertyRepository } from '../../../properties/domain/repositories
 import { PROPERTY_REPOSITORY } from '../../../properties/domain/repositories/property.repository';
 import type { VentasComplianceRepository } from '../../domain/repositories/ventas-compliance.repository';
 import { VENTAS_COMPLIANCE_REPOSITORY } from '../../domain/repositories/ventas-compliance.repository';
+import type { VentasSalesRepository } from '../../domain/repositories/ventas-sales.repository';
+import { VENTAS_SALES_REPOSITORY } from '../../domain/repositories/ventas-sales.repository';
+import { BusinessReferencePort } from '../../../../shared/application/ports/business-reference.port';
+import { assertActiveSaleCurrency } from '../validators/sale-currency.validator';
 
 const VENTAS_SLUG = 'ventas';
 const ALLOWED_SUNARP_STATUS = new Set([
@@ -55,7 +59,47 @@ export class VentasComplianceOperationsService {
     private readonly clientRepository: ClientRepository,
     private readonly notificationsService: NotificationsService,
     private readonly genArchivo: FileStoragePort,
+    @Inject(VENTAS_SALES_REPOSITORY)
+    private readonly ventasSales: VentasSalesRepository,
+    private readonly references: BusinessReferencePort,
   ) {}
+
+  /**
+   * Medio de pago y banco vienen del catálogo «Bancos y medios de pago» (se guarda el código).
+   * Un valor de texto anterior al catálogo se acepta solo si no cambió.
+   */
+  private async assertFinancingChannelCode(
+    value: string | null | undefined,
+    categories: readonly string[],
+    current: string | null | undefined,
+    fieldLabel: string,
+  ): Promise<string | null | undefined> {
+    if (value === undefined) return undefined;
+    const code = value?.trim() ?? '';
+    if (!code) return null;
+    if (code === (current ?? '')) return code;
+    const channels = (await this.ventasSales.listSaleFinancingChannels()) as {
+      code: string;
+      category: string;
+    }[];
+    const ok = channels.some(
+      (c) => c.code === code && categories.includes(c.category),
+    );
+    if (!ok) {
+      throw new BadRequestException(
+        `${fieldLabel} no válido: elija una opción del catálogo de bancos y medios de pago.`,
+      );
+    }
+    return code;
+  }
+
+  private async optionalCurrency(
+    code: string | null | undefined,
+  ): Promise<string | undefined> {
+    if (code === undefined || code === null || !String(code).trim())
+      return undefined;
+    return assertActiveSaleCurrency(this.references, code);
+  }
 
   private async resolveVentasApplicationId(
     applicationSlug?: string,
@@ -134,13 +178,17 @@ export class VentasComplianceOperationsService {
       sunarpObservationNotes?: string | null;
       alcabalaApplicable?: boolean;
       alcabalaAmount?: number | null;
+      alcabalaCurrency?: string | null;
       alcabalaPaidAt?: string | null;
       rent2Applicable?: boolean;
       rent2Amount?: number | null;
+      rent2Currency?: string | null;
       rent2PaidAt?: string | null;
       bankedPaymentRequired?: boolean;
       bankedPaymentVerified?: boolean;
       paymentMethod?: string | null;
+      paymentAmount?: number | null;
+      paymentCurrency?: string | null;
       bankOperationNumber?: string | null;
       bankName?: string | null;
       bankAccountHolder?: string | null;
@@ -200,10 +248,44 @@ export class VentasComplianceOperationsService {
       );
     }
 
+    const current = (await this.compliance.getChecklist(
+      applicationId,
+      body.propertyId,
+      body.buyerClientId,
+    )) as { paymentMethod: string | null; bankName: string | null } | null;
+    const paymentMethod = await this.assertFinancingChannelCode(
+      body.paymentMethod,
+      ['PAYMENT_METHOD', 'OWN_FUNDS', 'OTHER'],
+      current?.paymentMethod,
+      'Método de pago',
+    );
+    const bankName = await this.assertFinancingChannelCode(
+      body.bankName,
+      ['BANK'],
+      current?.bankName,
+      'Banco',
+    );
+    if (
+      body.paymentAmount != null &&
+      (!Number.isFinite(Number(body.paymentAmount)) ||
+        Number(body.paymentAmount) < 0)
+    ) {
+      throw new BadRequestException('El monto pagado no es válido.');
+    }
+
     return this.compliance.upsertChecklist({
       applicationId,
       propertyId: body.propertyId,
       buyerClientId: body.buyerClientId,
+      alcabalaCurrency: await this.optionalCurrency(body.alcabalaCurrency),
+      rent2Currency: await this.optionalCurrency(body.rent2Currency),
+      paymentAmount:
+        body.paymentAmount === undefined
+          ? undefined
+          : body.paymentAmount === null
+            ? null
+            : Number(body.paymentAmount),
+      paymentCurrency: await this.optionalCurrency(body.paymentCurrency),
       titleStudyChecked: body.titleStudyChecked,
       criChecked: body.criChecked,
       noLiensChecked: body.noLiensChecked,
@@ -224,9 +306,9 @@ export class VentasComplianceOperationsService {
       rent2PaidAt: parseDateOrNull(body.rent2PaidAt),
       bankedPaymentRequired: body.bankedPaymentRequired,
       bankedPaymentVerified: body.bankedPaymentVerified,
-      paymentMethod: body.paymentMethod,
-      bankOperationNumber: body.bankOperationNumber,
-      bankName: body.bankName,
+      paymentMethod,
+      bankOperationNumber: body.bankOperationNumber?.trim() || null,
+      bankName,
       bankAccountHolder: body.bankAccountHolder,
       paymentEvidencePath: body.paymentEvidencePath,
       paymentEvidenceArchivoId: body.paymentEvidenceArchivoId,
@@ -370,15 +452,24 @@ export class VentasComplianceOperationsService {
     alcabalaApplicable?: boolean;
     rent2Applicable?: boolean;
     uit?: number;
+    /** Soles por unidad de la moneda de la venta (1 si la venta es en PEN) */
+    exchangeRate?: number;
   }) {
     if (!Number.isFinite(body.salePrice) || body.salePrice <= 0) {
       throw new BadRequestException('salePrice debe ser mayor que cero.');
     }
+    // Los tributos se liquidan en soles: precio y costo se convierten con el tipo de cambio
+    const rate =
+      body.exchangeRate &&
+      Number.isFinite(body.exchangeRate) &&
+      body.exchangeRate > 0
+        ? body.exchangeRate
+        : 1;
     const uit = body.uit && body.uit > 0 ? body.uit : 5500;
-    const salePrice = body.salePrice;
+    const salePrice = round2(body.salePrice * rate);
     const acquisitionCost =
       body.acquisitionCost && body.acquisitionCost > 0
-        ? body.acquisitionCost
+        ? round2(body.acquisitionCost * rate)
         : 0;
     const alcabalaApplicable = body.alcabalaApplicable !== false;
     const rent2Applicable = body.rent2Applicable === true;
@@ -392,6 +483,8 @@ export class VentasComplianceOperationsService {
     const rent2Amount = rent2Applicable ? round2(capitalGain * 0.05) : 0;
 
     return {
+      currency: 'PEN',
+      exchangeRate: rate,
       salePrice,
       acquisitionCost,
       uit,

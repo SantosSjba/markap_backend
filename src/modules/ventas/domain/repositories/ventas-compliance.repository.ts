@@ -16,13 +16,17 @@ export interface SaleComplianceChecklistUpsertData {
   sunarpObservationNotes?: string | null;
   alcabalaApplicable?: boolean;
   alcabalaAmount?: number | null;
+  alcabalaCurrency?: string;
   alcabalaPaidAt?: Date | null;
   rent2Applicable?: boolean;
   rent2Amount?: number | null;
+  rent2Currency?: string;
   rent2PaidAt?: Date | null;
   bankedPaymentRequired?: boolean;
   bankedPaymentVerified?: boolean;
   paymentMethod?: string | null;
+  paymentAmount?: number | null;
+  paymentCurrency?: string;
   bankOperationNumber?: string | null;
   bankName?: string | null;
   bankAccountHolder?: string | null;

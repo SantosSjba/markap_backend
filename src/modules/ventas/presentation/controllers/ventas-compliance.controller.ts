@@ -136,14 +136,18 @@ export class VentasComplianceController {
   @ApiQuery({ name: 'alcabalaApplicable', required: false })
   @ApiQuery({ name: 'rent2Applicable', required: false })
   @ApiQuery({ name: 'uit', required: false })
+  @ApiQuery({ name: 'exchangeRate', required: false })
   taxPreview(
     @Query('salePrice') salePrice: string,
     @Query('acquisitionCost') acquisitionCost?: string,
     @Query('alcabalaApplicable') alcabalaApplicable?: string,
     @Query('rent2Applicable') rent2Applicable?: string,
     @Query('uit') uit?: string,
+    @Query('exchangeRate') exchangeRate?: string,
   ) {
     return this.compliance.getTaxPreview({
+      exchangeRate:
+        exchangeRate !== undefined ? Number(exchangeRate) : undefined,
       salePrice: Number(salePrice),
       acquisitionCost:
         acquisitionCost !== undefined ? Number(acquisitionCost) : undefined,
