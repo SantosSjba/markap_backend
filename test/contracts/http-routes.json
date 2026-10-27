@@ -7510,7 +7510,7 @@
     "method": "bootstrap",
     "decorators": [
       "Get('bootstrap')",
-      "ApiOperation({\n    summary:\n      'Parametrización Ventas: pipeline, numeración de procesos, tipos de propiedad (catálogo)',\n  })",
+      "ApiOperation({\n    summary: 'Parametrización Ventas: etapas del pipeline',\n  })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -7539,10 +7539,42 @@
       "UseGuards(JwtAuthGuard)",
       "ApiBearerAuth('JWT-auth')"
     ],
-    "method": "patchNumbering",
+    "method": "listFinancingChannels",
     "decorators": [
-      "Patch('numbering/sale-process')",
-      "ApiOperation({\n    summary:\n      'Ajustar prefijo y/o último correlativo de códigos de proceso (VNT-PRC-####)',\n  })",
+      "Get('financing-channels')",
+      "ApiOperation({\n    summary: 'Bancos y medios de pago (incluye inactivos y su uso)',\n  })",
+      "ApiQuery({ name: 'applicationSlug', required: false })"
+    ]
+  },
+  {
+    "controller": "VentasConfigController",
+    "classDecorators": [
+      "ApiTags('Ventas — Configuración')",
+      "RequiresApplication('ventas')",
+      "Controller('ventas-config')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "createFinancingChannel",
+    "decorators": [
+      "Post('financing-channels')",
+      "ApiOperation({ summary: 'Agregar banco o medio de pago' })",
+      "ApiQuery({ name: 'applicationSlug', required: false })"
+    ]
+  },
+  {
+    "controller": "VentasConfigController",
+    "classDecorators": [
+      "ApiTags('Ventas — Configuración')",
+      "RequiresApplication('ventas')",
+      "Controller('ventas-config')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "updateFinancingChannel",
+    "decorators": [
+      "Patch('financing-channels/:id')",
+      "ApiOperation({\n    summary: 'Editar, activar o desactivar un banco o medio de pago',\n  })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -7563,6 +7595,7 @@
       "ApiQuery({ name: 'page', required: false })",
       "ApiQuery({ name: 'limit', required: false })",
       "ApiQuery({ name: 'buyerClientId', required: false })",
+      "ApiQuery({ name: 'saleClosingId', required: false })",
       "ApiQuery({\n    name: 'kind',\n    required: false,\n    enum: ['DOWN_PAYMENT', 'INSTALLMENT'],\n  })",
       "ApiQuery({\n    name: 'displayStatus',\n    required: false,\n    enum: ['PENDING', 'PAID', 'OVERDUE'],\n  })"
     ]
@@ -7611,12 +7644,14 @@
     "method": "listCommissions",
     "decorators": [
       "Get('commissions')",
-      "ApiOperation({ summary: 'Comisiones por cierre' })",
+      "ApiOperation({ summary: 'Comisiones de los procesos de venta' })",
       "ApiQuery({ name: 'applicationSlug', required: false })",
       "ApiQuery({ name: 'page', required: false })",
       "ApiQuery({ name: 'limit', required: false })",
-      "ApiQuery({\n    name: 'status',\n    required: false,\n    enum: ['PENDING', 'PARTIAL', 'PAID'],\n  })",
-      "ApiQuery({ name: 'agentId', required: false })"
+      "ApiQuery({\n    name: 'status',\n    required: false,\n    enum: ['PENDING', 'PARTIAL', 'PAID', 'CANCELLED'],\n  })",
+      "ApiQuery({ name: 'agentId', required: false })",
+      "ApiQuery({ name: 'search', required: false })",
+      "ApiQuery({ name: 'currency', required: false })"
     ]
   },
   {
@@ -7632,6 +7667,22 @@
     "decorators": [
       "Patch('commissions/:id/mark-paid')",
       "ApiOperation({ summary: 'Marcar comisión como pagada (todas las partes)' })",
+      "ApiQuery({ name: 'applicationSlug', required: false })"
+    ]
+  },
+  {
+    "controller": "VentasFinanzasController",
+    "classDecorators": [
+      "ApiTags('Ventas — Finanzas')",
+      "RequiresApplication('ventas')",
+      "Controller('ventas-finanzas')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "updateCommission",
+    "decorators": [
+      "Patch('commissions/:id')",
+      "ApiOperation({\n    summary:\n      'Editar el % o monto fijo pactado de una comisión (respeta cuotas pagadas y registra el motivo)',\n  })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -7752,6 +7803,22 @@
     ]
   },
   {
+    "controller": "VentasFinanzasController",
+    "classDecorators": [
+      "ApiTags('Ventas — Finanzas')",
+      "RequiresApplication('ventas')",
+      "Controller('ventas-finanzas')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "commissionStats",
+    "decorators": [
+      "Get('commissions/stats')",
+      "ApiOperation({ summary: 'Resumen de comisiones por estado y por moneda' })",
+      "ApiQuery({ name: 'applicationSlug', required: false })"
+    ]
+  },
+  {
     "controller": "VentasReportsController",
     "classDecorators": [
       "ApiTags('Ventas — Reportes')",
@@ -7822,6 +7889,25 @@
       "ApiQuery({ name: 'applicationSlug', required: false })",
       "ApiQuery({ name: 'startDate', required: false })",
       "ApiQuery({ name: 'endDate', required: false })"
+    ]
+  },
+  {
+    "controller": "VentasReportsController",
+    "classDecorators": [
+      "ApiTags('Ventas — Reportes')",
+      "RequiresApplication('ventas')",
+      "Controller('ventas-reports')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "summary",
+    "decorators": [
+      "Get('summary/:kind')",
+      "ApiOperation({\n    summary:\n      'Resumen por moneda para Reportes: ventas, asesores, conversión o flujo financiero',\n  })",
+      "ApiQuery({ name: 'applicationSlug', required: false })",
+      "ApiQuery({ name: 'startDate', required: false, description: 'YYYY-MM-DD' })",
+      "ApiQuery({ name: 'endDate', required: false, description: 'YYYY-MM-DD' })",
+      "ApiQuery({ name: 'granularity', required: false, enum: ['month', 'year'] })"
     ]
   },
   {
@@ -7988,7 +8074,8 @@
       "ApiQuery({ name: 'applicationSlug', required: false })",
       "ApiQuery({ name: 'page', required: false })",
       "ApiQuery({ name: 'limit', required: false })",
-      "ApiQuery({ name: 'status', required: false })"
+      "ApiQuery({ name: 'status', required: false })",
+      "ApiQuery({ name: 'search', required: false })"
     ]
   },
   {
@@ -8091,6 +8178,38 @@
       "ApiOperation({ summary: 'Adjuntar contrato generado al cierre' })",
       "ApiConsumes('multipart/form-data')",
       "UseInterceptors(FileInterceptor('file'))",
+      "ApiQuery({ name: 'applicationSlug', required: false })"
+    ]
+  },
+  {
+    "controller": "VentasSalesController",
+    "classDecorators": [
+      "ApiTags('Ventas — CRM')",
+      "RequiresApplication('ventas')",
+      "Controller('ventas-sales')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "getProcessStats",
+    "decorators": [
+      "Get('processes/stats')",
+      "ApiOperation({\n    summary: 'Resumen de procesos de venta (tarjetas del listado)',\n  })",
+      "ApiQuery({ name: 'applicationSlug', required: false })"
+    ]
+  },
+  {
+    "controller": "VentasSalesController",
+    "classDecorators": [
+      "ApiTags('Ventas — CRM')",
+      "RequiresApplication('ventas')",
+      "Controller('ventas-sales')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "getSeparationStats",
+    "decorators": [
+      "Get('separations/stats')",
+      "ApiOperation({ summary: 'Resumen de separaciones (tarjetas del listado)' })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },

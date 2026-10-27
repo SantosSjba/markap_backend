@@ -137,7 +137,7 @@ export function assertPaymentPartsMatchNet(
   const sum = roundMoney(parts.reduce((s, p) => s + p.amount, 0));
   if (Math.abs(sum - net) > 0.02) {
     throw new BadRequestException(
-      `Las partes de pago deben sumar el neto a pagar (S/ ${net}). Suma actual: S/ ${sum}.`,
+      `Las partes de pago deben sumar el neto a pagar (${net}). Suma actual: ${sum}.`,
     );
   }
 }
@@ -192,6 +192,77 @@ export async function scaleCommissionPaymentPartsToNet(
   for (let i = 0; i < parts.length; i++) {
     await tx.saleCommissionPaymentPart.update({
       where: { id: parts[i].id },
+      data: { amount: scaled[i] },
+    });
+  }
+}
+
+/**
+ * Ajusta las cuotas al nuevo neto sin tocar las ya pagadas: el saldo (neto − pagado)
+ * se reparte entre las pendientes en su proporción; si no quedan pendientes y el saldo
+ * es positivo se agrega una cuota de ajuste. Falla si lo pagado supera el nuevo neto.
+ */
+export async function rebalanceCommissionPartsToNet(
+  tx: Prisma.TransactionClient,
+  commissionId: string,
+  newNet: number,
+): Promise<void> {
+  const parts = await tx.saleCommissionPaymentPart.findMany({
+    where: { saleCommissionId: commissionId },
+    orderBy: { partNumber: 'asc' },
+  });
+  const paid = parts.filter((p) => p.status === 'PAID');
+  if (!paid.length) {
+    await scaleCommissionPaymentPartsToNet(tx, commissionId, newNet);
+    return;
+  }
+
+  const paidSum = roundMoney(paid.reduce((s, p) => s + p.amount, 0));
+  const remaining = roundMoney(newNet - paidSum);
+  if (remaining < -0.01) {
+    throw new BadRequestException(
+      `Ya se pagaron ${paidSum} de esta comisión; el nuevo neto (${newNet}) no puede ser menor a lo pagado.`,
+    );
+  }
+
+  const pending = parts.filter((p) => p.status !== 'PAID');
+  if (!pending.length) {
+    if (remaining > 0.01) {
+      const lastNumber = parts[parts.length - 1]?.partNumber ?? 0;
+      await tx.saleCommissionPaymentPart.create({
+        data: {
+          saleCommissionId: commissionId,
+          partNumber: lastNumber + 1,
+          label: 'Ajuste de comisión',
+          amount: remaining,
+          status: 'PENDING',
+        },
+      });
+    }
+    return;
+  }
+
+  if (remaining <= 0.01) {
+    // Lo pagado ya cubre el neto: las cuotas pendientes sobran
+    await tx.saleCommissionPaymentPart.deleteMany({
+      where: { id: { in: pending.map((p) => p.id) } },
+    });
+    return;
+  }
+
+  const target = remaining;
+  const oldSum = pending.reduce((s, p) => s + p.amount, 0);
+  const scaled = pending.map((p) =>
+    roundMoney(
+      oldSum > 0 ? (p.amount / oldSum) * target : target / pending.length,
+    ),
+  );
+  const diff = roundMoney(target - scaled.reduce((s, v) => s + v, 0));
+  if (diff !== 0)
+    scaled[scaled.length - 1] = roundMoney(scaled[scaled.length - 1] + diff);
+  for (let i = 0; i < pending.length; i++) {
+    await tx.saleCommissionPaymentPart.update({
+      where: { id: pending[i].id },
       data: { amount: scaled[i] },
     });
   }

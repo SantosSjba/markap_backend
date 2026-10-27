@@ -127,4 +127,66 @@ export class VentasConfigPrismaRepository implements VentasConfigRepository {
       });
     }
   }
+
+  async listFinancingChannels() {
+    const rows = await this.prisma.saleFinancingChannel.findMany({
+      orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        category: true,
+        code: true,
+        name: true,
+        sortOrder: true,
+        isActive: true,
+        _count: { select: { saleProcesses: true } },
+      },
+    });
+    return rows.map(({ _count, ...r }) => ({
+      ...r,
+      usage: _count.saleProcesses,
+    }));
+  }
+
+  async findFinancingChannelCodes(prefix: string) {
+    const rows = await this.prisma.saleFinancingChannel.findMany({
+      where: { code: { startsWith: prefix } },
+      select: { code: true },
+    });
+    return rows.map((r) => r.code);
+  }
+
+  async createFinancingChannel(data: {
+    category: string;
+    code: string;
+    name: string;
+    sortOrder: number;
+  }) {
+    const row = await this.prisma.saleFinancingChannel.create({
+      data: { ...data, isActive: true },
+    });
+    return { ...row, usage: 0 };
+  }
+
+  async updateFinancingChannel(
+    id: string,
+    data: {
+      category?: string;
+      name?: string;
+      isActive?: boolean;
+      sortOrder?: number;
+    },
+  ) {
+    const exists = await this.prisma.saleFinancingChannel.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!exists) return null;
+    const row = await this.prisma.saleFinancingChannel.update({
+      where: { id },
+      data,
+      include: { _count: { select: { saleProcesses: true } } },
+    });
+    const { _count, ...rest } = row;
+    return { ...rest, usage: _count.saleProcesses };
+  }
 }

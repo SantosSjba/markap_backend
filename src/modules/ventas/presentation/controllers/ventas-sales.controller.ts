@@ -97,6 +97,15 @@ export class VentasSalesController {
     return this.ventasSales.createProcess(applicationSlug, body);
   }
 
+  @Get('processes/stats')
+  @ApiOperation({
+    summary: 'Resumen de procesos de venta (tarjetas del listado)',
+  })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async getProcessStats(@Query('applicationSlug') applicationSlug?: string) {
+    return this.ventasSales.getProcessStats(applicationSlug);
+  }
+
   @Get('processes/:id')
   @ApiOperation({
     summary: 'Detalle proceso (notas, actividades, recordatorios)',
@@ -171,18 +180,28 @@ export class VentasSalesController {
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'search', required: false })
   async listSeparations(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('status') status?: string,
+    @Query('search') search?: string,
   ) {
     return this.ventasSales.listSeparations({
       applicationSlug: applicationSlug ?? 'ventas',
       page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
       limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       status: status as never,
+      search: search?.trim() || undefined,
     });
+  }
+
+  @Get('separations/stats')
+  @ApiOperation({ summary: 'Resumen de separaciones (tarjetas del listado)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async getSeparationStats(@Query('applicationSlug') applicationSlug?: string) {
+    return this.ventasSales.getSeparationStats(applicationSlug);
   }
 
   @Post('separations')

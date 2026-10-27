@@ -1,3 +1,7 @@
+import {
+  dateOnlyYear,
+  todayDateOnlyLima,
+} from '../../../../shared/domain/utils/peru-date.util';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { BusinessReferencePort } from '../../../../shared/application/ports/business-reference.port';
 import { EntityNotFoundException } from '../../../../shared/domain/exceptions/domain.exception';
@@ -10,6 +14,13 @@ import { APPLICATION_REPOSITORY } from '../../../identity/domain/repositories/ap
 import type { PropertyRepository } from '../../../properties/domain/repositories/property.repository';
 import { PROPERTY_REPOSITORY } from '../../../properties/domain/repositories/property.repository';
 import type { VentasComplianceRepository } from '../../domain/repositories/ventas-compliance.repository';
+import type { VentasConfigRepository } from '../../domain/repositories/ventas-config.repository';
+import { VENTAS_CONFIG_REPOSITORY } from '../../domain/repositories/ventas-config.repository';
+import {
+  STAGE_REQUIRED_DOCUMENT,
+  evaluateStageChange,
+  missingStageDocuments,
+} from '../../domain/utils/pipeline-stage-rules.util';
 import { VENTAS_COMPLIANCE_REPOSITORY } from '../../domain/repositories/ventas-compliance.repository';
 import type { VentasFinanzasRepository } from '../../domain/repositories/ventas-finanzas.repository';
 import { VENTAS_FINANZAS_REPOSITORY } from '../../domain/repositories/ventas-finanzas.repository';
@@ -26,7 +37,6 @@ import {
   type VentasSeparationStatus,
 } from '../../domain/repositories/ventas-sales.repository';
 
-import { isForwardPipelineStage } from '../../../../shared/utils/pipeline-stage.util';
 import {
   assertPaymentPartsMatchNet,
   assertValidDeductibleType,
@@ -37,6 +47,7 @@ import {
   type SaleCommissionPaymentPartInput,
 } from '../../../../shared/utils/sale-commission.util';
 import { mapSaleProcessDetail } from '../mappers/ventas-sale-process.mapper';
+import { assertActiveSaleCurrency } from '../validators/sale-currency.validator';
 import { assertActiveSaleFinancingChannel } from '../validators/sale-financing-channel.validator';
 
 const VENTAS_SLUG = 'ventas';
@@ -76,6 +87,8 @@ export class VentasSalesOperationsService {
     private readonly ventasFinanzas: VentasFinanzasRepository,
     @Inject(VENTAS_COMPLIANCE_REPOSITORY)
     private readonly ventasCompliance: VentasComplianceRepository,
+    @Inject(VENTAS_CONFIG_REPOSITORY)
+    private readonly ventasConfig: VentasConfigRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
     @Inject(PROPERTY_REPOSITORY)
@@ -116,6 +129,36 @@ export class VentasSalesOperationsService {
     }
   }
 
+  /** Etapas activas del pipeline en su orden configurado */
+  private async activeStageOrder(applicationId: string): Promise<string[]> {
+    const stages = await this.ventasConfig.listPipelineStages(applicationId);
+    const active = stages
+      .filter((st) => st.isActive && isVentasPipelineStage(st.code))
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((st) => st.code);
+    return active.length ? active : [...VENTAS_PIPELINE_STAGES];
+  }
+
+  /** Tipos de documento ya cargados en Cumplimiento legal para la operación */
+  private async uploadedDocTypes(
+    applicationId: string,
+    propertyId: string,
+    buyerClientId: string,
+  ): Promise<Set<string>> {
+    const docs = (await this.ventasCompliance.listDocuments(
+      applicationId,
+      propertyId,
+      buyerClientId,
+    )) as { docType: string }[];
+    return new Set(docs.map((d) => d.docType.toUpperCase()));
+  }
+
+  async getProcessStats(applicationSlug?: string) {
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
+    return this.ventasSales.getSaleProcessStats(applicationId);
+  }
+
   async listProcesses(f: ListSaleProcessesFilters) {
     assertVentasApp(f.applicationSlug);
     return this.ventasSales.listSaleProcesses({
@@ -140,6 +183,7 @@ export class VentasSalesOperationsService {
         calculationType: 'PERCENT' | 'FIXED';
         percent?: number | null;
         fixedAmount?: number | null;
+        currency?: string | null;
         paymentParts?: SaleCommissionPaymentPartInput[];
         deductibles?: SaleCommissionDeductibleInput[];
       }[];
@@ -172,6 +216,11 @@ export class VentasSalesOperationsService {
     if (!property || property.applicationId !== applicationId) {
       throw new EntityNotFoundException('Property', body.propertyId);
     }
+    if (property.listingStatus === 'SOLD') {
+      throw new BadRequestException(
+        'El inmueble ya está vendido; no se puede iniciar un proceso de venta sobre él.',
+      );
+    }
     const ownerIds = Array.from(
       new Set(
         [property.ownerId, ...(property.owners?.map((o) => o.id) ?? [])].filter(
@@ -200,11 +249,31 @@ export class VentasSalesOperationsService {
       }
     }
 
-    let stage: VentasPipelineStage = 'SEPARATION';
-    if (body.pipelineStage) {
-      if (!isVentasPipelineStage(body.pipelineStage)) {
+    const order = await this.activeStageOrder(applicationId);
+    let stage = order[0] as VentasPipelineStage;
+    if (body.pipelineStage && body.pipelineStage !== stage) {
+      if (
+        !isVentasPipelineStage(body.pipelineStage) ||
+        !order.includes(body.pipelineStage)
+      ) {
         throw new BadRequestException(
-          `Etapa inválida. Use: ${VENTAS_PIPELINE_STAGES.join(', ')}`,
+          `Etapa inválida. Use: ${order.join(', ')}`,
+        );
+      }
+      // Empezar más adelante solo si los documentos de las etapas previas ya existen
+      const missing = missingStageDocuments(
+        stage,
+        body.pipelineStage,
+        order,
+        await this.uploadedDocTypes(
+          applicationId,
+          body.propertyId,
+          body.buyerClientId,
+        ),
+      );
+      if (missing.length) {
+        throw new BadRequestException(
+          `Para iniciar en esa etapa falta cargar en Cumplimiento legal: ${missing.join(', ')}.`,
         );
       }
       stage = body.pipelineStage;
@@ -222,6 +291,7 @@ export class VentasSalesOperationsService {
       agentId: string;
       calculationType: 'PERCENT' | 'FIXED';
       amount: number;
+      currency: string;
       percentApplied: number | null;
       paymentParts: {
         partNumber: number;
@@ -256,6 +326,11 @@ export class VentasSalesOperationsService {
         row.calculationType === 'FIXED' ? 'FIXED' : 'PERCENT';
       let amount = 0;
       let percentApplied: number | null = null;
+      // En % la comisión sale del precio, así que va en su moneda; el monto fijo puede ir en otra
+      const currency =
+        calculationType === 'FIXED' && row.currency
+          ? await assertActiveSaleCurrency(this.references, row.currency)
+          : property.saleCurrency;
 
       if (calculationType === 'FIXED') {
         if (row.fixedAmount == null || row.fixedAmount < 0) {
@@ -305,6 +380,7 @@ export class VentasSalesOperationsService {
         agentId: row.agentId,
         calculationType,
         amount,
+        currency,
         percentApplied,
         paymentParts,
         deductibles,
@@ -322,7 +398,11 @@ export class VentasSalesOperationsService {
       }
     }
 
-    const code = await this.ventasSales.nextProcessCode(applicationId);
+    const code = await this.ventasSales.nextProcessCode(
+      applicationId,
+      property.code,
+      dateOnlyYear(todayDateOnlyLima()),
+    );
     return this.ventasSales.createSaleProcess({
       applicationId,
       code,
@@ -368,6 +448,8 @@ export class VentasSalesOperationsService {
       title?: string | null;
       financingChannelId?: string | null;
       lostReason?: string | null;
+      /** Obligatorio para retroceder de etapa */
+      stageChangeReason?: string | null;
     },
   ) {
     const applicationId =
@@ -382,6 +464,7 @@ export class VentasSalesOperationsService {
       status: 'ACTIVE' | 'WON' | 'LOST';
       pipelineStage: string;
       propertyId: string;
+      buyerClientId: string;
     };
 
     if (body.agentId) {
@@ -432,19 +515,63 @@ export class VentasSalesOperationsService {
 
     const patch: Parameters<VentasSalesRepository['updateSaleProcess']>[2] = {};
 
-    if (body.pipelineStage !== undefined) {
-      if (!isVentasPipelineStage(body.pipelineStage)) {
-        throw new BadRequestException(
-          `Etapa inválida: ${VENTAS_PIPELINE_STAGES.join(', ')}`,
-        );
-      }
+    let stageActivity: { title: string; description: string } | null = null;
+    if (
+      body.pipelineStage !== undefined &&
+      body.pipelineStage !== cur.pipelineStage
+    ) {
+      const order = await this.activeStageOrder(applicationId);
       if (
-        cur.status === 'ACTIVE' &&
-        !isForwardPipelineStage(cur.pipelineStage, body.pipelineStage)
+        !isVentasPipelineStage(body.pipelineStage) ||
+        !order.includes(body.pipelineStage)
       ) {
-        throw new BadRequestException(
-          'No se puede retroceder de etapa. Si la venta no continúa, registre la venta como caída.',
-        );
+        throw new BadRequestException(`Etapa inválida: ${order.join(', ')}`);
+      }
+      const stageLabel = async (code: string) =>
+        (await this.ventasConfig.listPipelineStages(applicationId)).find(
+          (st) => st.code === code,
+        )?.label ?? code;
+      const change = evaluateStageChange(
+        cur.pipelineStage,
+        body.pipelineStage,
+        order,
+        await this.uploadedDocTypes(
+          applicationId,
+          cur.propertyId,
+          cur.buyerClientId,
+        ),
+      );
+      const fromLabel = await stageLabel(cur.pipelineStage);
+      const toLabel = await stageLabel(body.pipelineStage);
+      if (change.kind === 'forward') {
+        if (change.skipsStages) {
+          throw new BadRequestException(
+            'Se avanza una etapa a la vez: complete la etapa siguiente antes de pasar a las demás.',
+          );
+        }
+        if (change.missingDocuments.length) {
+          throw new BadRequestException(
+            `Para pasar a «${toLabel}» cargue antes en Cumplimiento legal: ${change.missingDocuments.join(', ')}.`,
+          );
+        }
+        const doc = STAGE_REQUIRED_DOCUMENT[body.pipelineStage];
+        stageActivity = {
+          title: `Avance a «${toLabel}»`,
+          description: doc
+            ? `De «${fromLabel}» a «${toLabel}» con ${doc.label} cargado.`
+            : `De «${fromLabel}» a «${toLabel}».`,
+        };
+      } else if (change.kind === 'backward') {
+        const reason = body.stageChangeReason?.trim() ?? '';
+        if (reason.length < 5) {
+          throw new BadRequestException(
+            'Indique el motivo para retroceder de etapa (mínimo 5 caracteres).',
+          );
+        }
+        stageActivity = {
+          title: `Retroceso a «${toLabel}»`,
+          description: `De «${fromLabel}» a «${toLabel}». Motivo: ${reason}`,
+        };
       }
       patch.pipelineStage = body.pipelineStage;
     }
@@ -508,7 +635,12 @@ export class VentasSalesOperationsService {
     }
 
     if (Object.keys(patch).length > 0) {
-      await this.ventasSales.updateSaleProcess(id, applicationId, patch);
+      await this.ventasSales.updateSaleProcess(
+        id,
+        applicationId,
+        patch,
+        stageActivity ?? undefined,
+      );
     }
 
     const detail = await this.ventasSales.getSaleProcessById(id, applicationId);
@@ -603,6 +735,12 @@ export class VentasSalesOperationsService {
     });
   }
 
+  async getSeparationStats(applicationSlug?: string) {
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
+    return this.ventasSales.getSaleSeparationStats(applicationId);
+  }
+
   async createSeparation(
     applicationSlug: string | undefined,
     body: {
@@ -648,19 +786,54 @@ export class VentasSalesOperationsService {
       );
     }
 
-    if (body.saleProcessId) {
+    // Vínculo con el proceso: el indicado debe ser del mismo inmueble y comprador;
+    // sin indicarlo, se enlaza el proceso activo de ese inmueble en el que participa el comprador.
+    let saleProcessId: string | null = body.saleProcessId ?? null;
+    if (saleProcessId) {
       const p = (await this.ventasSales.getSaleProcessById(
-        body.saleProcessId,
+        saleProcessId,
         applicationId,
-      )) as { status: string } | null;
-      if (!p)
-        throw new EntityNotFoundException('SaleProcess', body.saleProcessId);
+      )) as {
+        status: string;
+        propertyId: string;
+        buyerClientId: string;
+        buyers?: { buyerClientId: string }[];
+      } | null;
+      if (!p) throw new EntityNotFoundException('SaleProcess', saleProcessId);
       if (p.status !== 'ACTIVE') {
         throw new BadRequestException(
           'Solo se puede separar sobre un proceso de venta activo.',
         );
       }
+      if (p.propertyId !== body.propertyId) {
+        throw new BadRequestException(
+          'El proceso de venta elegido es de otro inmueble.',
+        );
+      }
+      const processBuyerIds = new Set([
+        p.buyerClientId,
+        ...(p.buyers ?? []).map((b) => b.buyerClientId),
+      ]);
+      if (!processBuyerIds.has(body.buyerClientId)) {
+        throw new BadRequestException(
+          'El comprador no participa en el proceso de venta elegido.',
+        );
+      }
+    } else {
+      saleProcessId =
+        (
+          await this.ventasSales.findActiveProcessForSeparation(
+            applicationId,
+            body.propertyId,
+            body.buyerClientId,
+          )
+        )?.id ?? null;
     }
+
+    const currency = await assertActiveSaleCurrency(
+      this.references,
+      body.currency ?? property.saleCurrency,
+    );
 
     if (body.amount <= 0) {
       throw new BadRequestException(
@@ -670,11 +843,11 @@ export class VentasSalesOperationsService {
 
     const created = await this.ventasSales.createSaleSeparation({
       applicationId,
-      saleProcessId: body.saleProcessId ?? null,
+      saleProcessId,
       propertyId: body.propertyId,
       buyerClientId: body.buyerClientId,
       amount: body.amount,
-      currency: body.currency ?? 'PEN',
+      currency,
       separationDate: parseValidDateOrThrow(
         body.separationDate,
         'Fecha de separación',
@@ -709,6 +882,21 @@ export class VentasSalesOperationsService {
       propertyId: string;
       status: VentasSeparationStatus;
     };
+
+    if (body.status === 'CLOSED' && current.status !== 'CLOSED') {
+      throw new BadRequestException(
+        'La separación se cierra al registrar el cierre de la venta, no manualmente.',
+      );
+    }
+    if (
+      current.status === 'CLOSED' &&
+      body.status &&
+      body.status !== 'CLOSED'
+    ) {
+      throw new BadRequestException(
+        'La separación ya terminó en un cierre de venta y no se puede cambiar.',
+      );
+    }
 
     if (body.status === 'ACTIVE' && current.status !== 'ACTIVE') {
       const activeCount =
@@ -889,13 +1077,19 @@ export class VentasSalesOperationsService {
       )) as {
         propertyId: string;
         buyerClientId: string;
+        buyers?: { buyerClientId: string }[];
         status: string;
       } | null;
       if (!proc)
         throw new EntityNotFoundException('SaleProcess', body.saleProcessId);
+      // El cierre puede firmarlo cualquiera de los compradores del proceso
+      const processBuyerIds = new Set([
+        proc.buyerClientId,
+        ...(proc.buyers ?? []).map((b) => b.buyerClientId),
+      ]);
       if (
         proc.propertyId !== body.propertyId ||
-        proc.buyerClientId !== body.buyerClientId
+        !processBuyerIds.has(body.buyerClientId)
       ) {
         throw new BadRequestException(
           'El proceso no coincide con propiedad ni comprador del cierre.',
@@ -906,6 +1100,41 @@ export class VentasSalesOperationsService {
           'Solo se puede cerrar un proceso de venta activo. Las ventas caídas o ya ganadas no admiten cierre.',
         );
       }
+    }
+
+    // Cierre desde el proceso: su separación activa (si la hay) se cierra con la venta
+    let saleSeparationId = body.saleSeparationId ?? null;
+    if (!saleSeparationId && body.saleProcessId) {
+      const procSeps = (
+        (await this.ventasSales.getSaleProcessById(
+          body.saleProcessId,
+          applicationId,
+        )) as {
+          separations?: { id: string; status: string; buyerClientId: string }[];
+        } | null
+      )?.separations;
+      saleSeparationId =
+        procSeps?.find(
+          (s) =>
+            s.status === 'ACTIVE' && s.buyerClientId === body.buyerClientId,
+        )?.id ?? null;
+    }
+
+    // Una separación vigente de otro comprador reserva el inmueble: no se puede vender a un tercero
+    const activeSeparations =
+      await this.ventasSales.listActiveSeparationsOnProperty(
+        body.propertyId,
+        applicationId,
+      );
+    for (const sep of activeSeparations) {
+      if (sep.id === saleSeparationId) continue;
+      if (sep.buyerClientId === body.buyerClientId && !saleSeparationId) {
+        saleSeparationId = sep.id;
+        continue;
+      }
+      throw new BadRequestException(
+        'El inmueble tiene una separación activa de otro comprador. Márquela como vencida antes de registrar este cierre.',
+      );
     }
 
     const processCommissionCount = body.saleProcessId
@@ -976,7 +1205,7 @@ export class VentasSalesOperationsService {
     const created = await this.ventasSales.createSaleClosingWithSideEffects({
       applicationId,
       saleProcessId: body.saleProcessId ?? null,
-      saleSeparationId: body.saleSeparationId ?? null,
+      saleSeparationId,
       propertyId: body.propertyId,
       buyerClientId: body.buyerClientId,
       agentId: body.agentId ?? null,

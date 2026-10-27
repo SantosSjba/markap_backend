@@ -128,3 +128,28 @@ export class CreateBuyerPaymentDto {
 
   notes?: string | null;
 }
+
+export class UpdateCommissionDto {
+  static readonly isZodDto = true;
+  static readonly schema: z.ZodType = z.strictObject({
+    calculationType: z.enum(['PERCENT', 'FIXED'], {
+      error: 'El campo «tipo de cálculo» debe ser PERCENT o FIXED.',
+    }),
+    percent: optionalValue(numericInput),
+    fixedAmount: optionalValue(numericInput),
+    reason: z.preprocess(
+      primitiveText,
+      z
+        .string({ error: 'El campo «motivo» debe ser un texto.' })
+        .refine(isProvided, { error: 'El campo «motivo» es obligatorio.' }),
+    ),
+  });
+
+  calculationType!: 'PERCENT' | 'FIXED';
+
+  percent?: number | null;
+
+  fixedAmount?: number | null;
+
+  reason!: string;
+}

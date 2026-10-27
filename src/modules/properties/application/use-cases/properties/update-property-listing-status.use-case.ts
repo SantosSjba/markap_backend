@@ -8,6 +8,9 @@ import type { PropertyRepository } from '../../../domain/repositories/property.r
 import { APPLICATION_REPOSITORY } from '../../../../identity/domain/repositories/application.repository';
 import { RENTAL_REPOSITORY } from '../../../../rentals/domain/repositories/rental.repository';
 import { PROPERTY_REPOSITORY } from '../../../domain/repositories/property.repository';
+import type { VentasSalesRepository } from '../../../../ventas/domain/repositories/ventas-sales.repository';
+import { VENTAS_SALES_REPOSITORY } from '../../../../ventas/domain/repositories/ventas-sales.repository';
+import { assertVentasListingChangeAllowed } from '../../../../ventas/application/validators/sales-usage.validator';
 
 const VENTAS_LISTING = new Set(['AVAILABLE', 'RESERVED', 'SOLD']);
 const ALQUILERES_LISTING_MODAL = new Set(['RENTED', 'EXPIRING', 'MAINTENANCE']);
@@ -21,6 +24,8 @@ export class UpdatePropertyListingStatusUseCase {
     private readonly rentalRepository: RentalRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
+    @Inject(VENTAS_SALES_REPOSITORY)
+    private readonly ventasSales: VentasSalesRepository,
   ) {}
 
   async execute(
@@ -54,6 +59,13 @@ export class UpdatePropertyListingStatusUseCase {
           'En Ventas el estado debe ser Disponible (AVAILABLE), Separada (RESERVED) o Vendida (SOLD).',
         );
       }
+      assertVentasListingChangeAllowed(
+        await this.ventasSales.getSalesUsage(property.applicationId, {
+          propertyId,
+        }),
+        property.listingStatus ?? 'AVAILABLE',
+        listingStatus,
+      );
       return this.propertyRepository.update({
         id: propertyId,
         listingStatus,

@@ -17,6 +17,14 @@ import type {
 
 import { APPLICATION_REPOSITORY } from '../../../../identity/domain/repositories/application.repository';
 import { PROPERTY_REPOSITORY } from '../../../domain/repositories/property.repository';
+import type { RentalRepository } from '../../../../rentals/domain/repositories/rental.repository';
+import { RENTAL_REPOSITORY } from '../../../../rentals/domain/repositories/rental.repository';
+import type { VentasSalesRepository } from '../../../../ventas/domain/repositories/ventas-sales.repository';
+import { VENTAS_SALES_REPOSITORY } from '../../../../ventas/domain/repositories/ventas-sales.repository';
+import {
+  assertPropertyCurrencyChangeAllowed,
+  assertVentasListingChangeAllowed,
+} from '../../../../ventas/application/validators/sales-usage.validator';
 
 const VENTAS_LISTING = new Set(['AVAILABLE', 'RESERVED', 'SOLD']);
 const ALQUILERES_LISTING = new Set([
@@ -34,6 +42,10 @@ export class UpdatePropertyUseCase {
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
     private readonly references: BusinessReferencePort,
+    @Inject(VENTAS_SALES_REPOSITORY)
+    private readonly ventasSales: VentasSalesRepository,
+    @Inject(RENTAL_REPOSITORY)
+    private readonly rentalRepository: RentalRepository,
   ) {}
 
   async execute(
@@ -44,28 +56,35 @@ export class UpdatePropertyUseCase {
     if (!existing) {
       throw new NotFoundException(`Propiedad con id ${data.id} no encontrada`);
     }
+    const app = await this.applicationRepository.findById(
+      existing.applicationId,
+    );
     if (expectedApplicationSlug?.trim()) {
-      const app = await this.applicationRepository.findById(
-        existing.applicationId,
-      );
       if (!app || app.slug !== expectedApplicationSlug.trim()) {
         throw new NotFoundException(
           `Propiedad con id ${data.id} no encontrada`,
         );
       }
     }
+    const isVentas = app?.slug === 'ventas';
+    const salesUsage = isVentas
+      ? await this.ventasSales.getSalesUsage(existing.applicationId, {
+          propertyId: data.id,
+        })
+      : null;
     if (data.listingStatus !== undefined && data.listingStatus !== null) {
-      const app = await this.applicationRepository.findById(
-        existing.applicationId,
-      );
-      const slug = app?.slug ?? '';
       const ls = data.listingStatus;
-      if (slug === 'ventas') {
+      if (isVentas) {
         if (!VENTAS_LISTING.has(ls)) {
           throw new BadRequestException(
             'En Ventas el estado comercial debe ser AVAILABLE, RESERVED o SOLD.',
           );
         }
+        assertVentasListingChangeAllowed(
+          salesUsage!,
+          existing.listingStatus ?? 'AVAILABLE',
+          ls,
+        );
       } else if (!ALQUILERES_LISTING.has(ls)) {
         throw new BadRequestException(
           'Estado de listado no válido para esta aplicación.',
@@ -88,6 +107,9 @@ export class UpdatePropertyUseCase {
         this.references,
         data.saleCurrency,
       );
+      if (salesUsage && saleCurrency !== existing.saleCurrency) {
+        assertPropertyCurrencyChangeAllowed(salesUsage);
+      }
     }
 
     let rentCurrency: string | undefined;
@@ -96,6 +118,16 @@ export class UpdatePropertyUseCase {
         this.references,
         data.rentCurrency,
       );
+      // El contrato vigente fija la moneda del alquiler y de sus cuotas
+      if (
+        !isVentas &&
+        rentCurrency !== existing.rentCurrency &&
+        (await this.rentalRepository.countActiveByPropertyId(data.id)) > 0
+      ) {
+        throw new BadRequestException(
+          'La propiedad tiene un contrato vigente: cambie la moneda desde el contrato de alquiler.',
+        );
+      }
     }
 
     let ownerPatch: Pick<UpdatePropertyData, 'ownerId' | 'ownerClientIds'> = {};
@@ -115,7 +147,7 @@ export class UpdatePropertyUseCase {
       ownerPatch = { ownerId: ownerClientIds[0], ownerClientIds };
     }
 
-    return this.propertyRepository.update({
+    const updated = await this.propertyRepository.update({
       ...data,
       ...ownerPatch,
       ...(saleCurrency !== undefined ? { saleCurrency } : {}),
@@ -124,5 +156,13 @@ export class UpdatePropertyUseCase {
         ? { locationCustom }
         : {}),
     });
+    // Precio, moneda o propietarios alimentan los procesos de venta en curso
+    if (salesUsage && salesUsage.activeProcesses > 0) {
+      await this.ventasSales.syncActiveProcessesWithProperty(
+        data.id,
+        existing.applicationId,
+      );
+    }
+    return updated;
   }
 }

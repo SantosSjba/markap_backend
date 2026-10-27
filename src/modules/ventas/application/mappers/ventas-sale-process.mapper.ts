@@ -98,6 +98,7 @@ function mapCommissionRow(c: Record<string, unknown>) {
     id: c.id,
     amount,
     ...enrichment,
+    currency: (c.currency as string | undefined) ?? 'PEN',
     calculationType: c.calculationType as string,
     percentApplied: c.percentApplied != null ? Number(c.percentApplied) : null,
     status: c.status,

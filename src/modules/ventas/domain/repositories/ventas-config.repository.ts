@@ -42,4 +42,34 @@ export interface VentasConfigRepository {
   ensureDefaults(applicationId: string): Promise<void>;
 
   listActivePropertyTypes(): Promise<VentasPropertyTypeCatalogItem[]>;
+
+  /** Catálogo de bancos y medios de pago (incluye inactivos) */
+  listFinancingChannels(): Promise<VentasFinancingChannel[]>;
+  findFinancingChannelCodes(prefix: string): Promise<string[]>;
+  createFinancingChannel(data: {
+    category: string;
+    code: string;
+    name: string;
+    sortOrder: number;
+  }): Promise<VentasFinancingChannel>;
+  updateFinancingChannel(
+    id: string,
+    data: {
+      category?: string;
+      name?: string;
+      isActive?: boolean;
+      sortOrder?: number;
+    },
+  ): Promise<VentasFinancingChannel | null>;
+}
+
+export interface VentasFinancingChannel {
+  id: string;
+  category: string;
+  code: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+  /** Procesos que lo usan */
+  usage: number;
 }

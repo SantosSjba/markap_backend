@@ -41,6 +41,8 @@ export interface ListSaleSeparationsFilters {
   page: number;
   limit: number;
   status?: VentasSeparationStatus;
+  /** Comprador, inmueble o código de proceso */
+  search?: string;
 }
 
 export interface ListSaleClosingsFilters {
@@ -51,8 +53,38 @@ export interface ListSaleClosingsFilters {
 
 export const VENTAS_SALES_REPOSITORY = Symbol('VentasSalesRepository');
 
+/** Qué operaciones de Ventas dependen de un inmueble, cliente o asesor. */
+export interface VentasSalesUsage {
+  activeProcesses: number;
+  activeSeparations: number;
+  closings: number;
+  /** Comisiones pendientes o pagadas en parte (solo para asesores) */
+  openCommissions: number;
+  /** Cuotas de comisión ya pagadas en procesos activos (solo para inmuebles) */
+  paidCommissionPartsOnActive: number;
+}
+
 export interface VentasSalesRepository {
-  nextProcessCode(applicationId: string): Promise<string>;
+  getSalesUsage(
+    applicationId: string,
+    ref: { propertyId?: string; clientId?: string; agentId?: string },
+  ): Promise<VentasSalesUsage>;
+
+  /**
+   * Tras editar el inmueble, alinea sus procesos activos: propietarios y comisiones en %
+   * aún sin cierre (monto según el nuevo precio y moneda del precio).
+   */
+  syncActiveProcessesWithProperty(
+    propertyId: string,
+    applicationId: string,
+  ): Promise<void>;
+
+  /** `VENTA-<año>-<código del inmueble>` sin repetir */
+  nextProcessCode(
+    applicationId: string,
+    propertyCode: string,
+    year: number,
+  ): Promise<string>;
 
   createSaleProcess(data: {
     applicationId: string;
@@ -69,6 +101,7 @@ export interface VentasSalesRepository {
       agentId: string;
       calculationType: 'PERCENT' | 'FIXED';
       amount: number;
+      currency: string;
       percentApplied?: number | null;
       paymentParts?: {
         partNumber: number;
@@ -93,6 +126,9 @@ export interface VentasSalesRepository {
     filters: ListSaleProcessesFilters,
   ): Promise<{ data: unknown[]; total: number }>;
 
+  /** Resumen de procesos para las tarjetas del listado */
+  getSaleProcessStats(applicationId: string): Promise<SaleProcessStats>;
+
   getSaleProcessById(id: string, applicationId: string): Promise<unknown>;
 
   /** Rellena vínculos de propietario si el proceso se creó sin ellos (legacy). */
@@ -113,6 +149,8 @@ export interface VentasSalesRepository {
       closedAt?: Date | null;
       lostReason?: string | null;
     },
+    /** Constancia en el seguimiento (p. ej. cambio de etapa), en la misma transacción */
+    activity?: { title: string; description: string },
   ): Promise<unknown>;
 
   /** Anula comisiones del proceso (venta caída). */
@@ -189,6 +227,21 @@ export interface VentasSalesRepository {
 
   getSaleSeparationById(id: string, applicationId: string): Promise<unknown>;
 
+  /** Resumen de separaciones para las tarjetas del listado */
+  getSaleSeparationStats(applicationId: string): Promise<SaleSeparationStats>;
+
+  /** Proceso activo del inmueble en el que participa el comprador (para vincular la separación) */
+  findActiveProcessForSeparation(
+    applicationId: string,
+    propertyId: string,
+    buyerClientId: string,
+  ): Promise<{ id: string } | null>;
+
+  listActiveSeparationsOnProperty(
+    propertyId: string,
+    applicationId: string,
+  ): Promise<{ id: string; buyerClientId: string }[]>;
+
   countActiveSeparationsOnProperty(
     propertyId: string,
     applicationId: string,
@@ -237,4 +290,27 @@ export interface VentasSalesRepository {
     commissionAmount: number;
     commissionPercent?: number | null;
   }): Promise<{ closingId: string; commissionId: string } | null>;
+}
+
+export interface SaleProcessStats {
+  total: number;
+  active: number;
+  won: number;
+  lost: number;
+  /** Procesos creados en el mes en curso */
+  createdThisMonth: number;
+  /** Procesos activos por etapa del pipeline */
+  activeByStage: Record<string, number>;
+  /** Precio de lista de los inmuebles en procesos activos, por moneda (no se suman entre sí) */
+  activeValueByCurrency: { currency: string; amount: number; count: number }[];
+}
+
+export interface SaleSeparationStats {
+  active: number;
+  expired: number;
+  closed: number;
+  /** Activas cuya fecha de vencimiento ya pasó o vence en los próximos 7 días */
+  expiringSoon: number;
+  /** Monto de separaciones activas por moneda */
+  activeAmountByCurrency: { currency: string; amount: number }[];
 }

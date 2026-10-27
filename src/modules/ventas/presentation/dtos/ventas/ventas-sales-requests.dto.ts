@@ -72,6 +72,9 @@ export class ProcessCommissionDto {
       }),
     percent: optionalValue(numericInput),
     fixedAmount: optionalValue(numericInput),
+    currency: optionalValue(
+      z.string({ error: 'El campo «moneda» debe ser un texto.' }),
+    ),
     paymentParts: optionalValue(
       z.array(
         z.lazy(() => CommissionPaymentPartDto.schema),
@@ -93,6 +96,9 @@ export class ProcessCommissionDto {
   percent?: number | null;
 
   fixedAmount?: number | null;
+
+  /** Moneda del monto fijo; en % se usa la del precio del inmueble */
+  currency?: string | null;
 
   paymentParts?: CommissionPaymentPartDto[];
 
@@ -360,9 +366,17 @@ export class UpdateSaleProcessDto {
     lostReason: optionalValue(
       z.string({ error: 'El campo «lostReason» debe ser un texto.' }),
     ),
+    stageChangeReason: optionalValue(
+      z.string({
+        error: 'El campo «motivo del cambio de etapa» debe ser un texto.',
+      }),
+    ),
   });
 
   pipelineStage?: string;
+
+  /** Obligatorio para retroceder de etapa */
+  stageChangeReason?: string | null;
 
   status?: 'ACTIVE' | 'WON' | 'LOST';
 

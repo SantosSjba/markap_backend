@@ -14,6 +14,8 @@ import { APPLICATION_REPOSITORY } from '../../../../identity/domain/repositories
 import { PROPERTY_REPOSITORY } from '../../../../properties/domain/repositories/property.repository';
 import { AGENT_REPOSITORY } from '../../../domain/repositories/agent.repository';
 import { CLIENT_REPOSITORY } from '../../../domain/repositories/client.repository';
+import type { VentasSalesRepository } from '../../../../ventas/domain/repositories/ventas-sales.repository';
+import { VENTAS_SALES_REPOSITORY } from '../../../../ventas/domain/repositories/ventas-sales.repository';
 
 @Injectable()
 export class UpdateClientUseCase {
@@ -26,6 +28,8 @@ export class UpdateClientUseCase {
     private readonly applicationRepository: ApplicationRepository,
     @Inject(PROPERTY_REPOSITORY)
     private readonly propertyRepository: PropertyRepository,
+    @Inject(VENTAS_SALES_REPOSITORY)
+    private readonly ventasSales: VentasSalesRepository,
   ) {}
 
   async execute(
@@ -71,6 +75,22 @@ export class UpdateClientUseCase {
       if (props > 0) {
         throw new BadRequestException(
           'No se puede cambiar a comprador / lead mientras el cliente siga como titular de propiedades en inventario.',
+        );
+      }
+    }
+
+    if (
+      isVentas &&
+      data.clientType === 'OWNER' &&
+      existing.clientType === 'BUYER'
+    ) {
+      const usage = await this.ventasSales.getSalesUsage(
+        existing.applicationId,
+        { clientId: id },
+      );
+      if (usage.activeProcesses > 0 || usage.activeSeparations > 0) {
+        throw new BadRequestException(
+          'No se puede cambiar a propietario mientras el cliente sea comprador en procesos de venta o separaciones activas.',
         );
       }
     }

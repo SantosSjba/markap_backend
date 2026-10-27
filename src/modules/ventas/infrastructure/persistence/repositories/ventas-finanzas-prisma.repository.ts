@@ -4,10 +4,13 @@ import { PrismaService } from '../../../../../shared/infrastructure/database/pri
 import {
   computeNetPayable,
   mapCommissionEnrichment,
-  scaleCommissionPaymentPartsToNet,
+  rebalanceCommissionPartsToNet,
+  roundMoney,
   syncSaleCommissionStatus,
 } from '../../../../../shared/utils/sale-commission.util';
 import type {
+  CommissionCurrencyTotals,
+  CommissionStats,
   ListBuyerPaymentsFilters,
   ListCommissionsFilters,
   ListDocCostsFilters,
@@ -23,17 +26,28 @@ const commissionListInclude = {
       id: true,
       finalPrice: true,
       closedAt: true,
+      paymentType: true,
       buyer: { select: { id: true, fullName: true } },
-      property: { select: { id: true, code: true, addressLine: true } },
+      property: {
+        select: { id: true, code: true, addressLine: true, saleCurrency: true },
+      },
     },
   },
   saleProcess: {
     select: {
       id: true,
       code: true,
+      title: true,
       status: true,
+      pipelineStage: true,
       property: {
-        select: { id: true, code: true, addressLine: true, salePrice: true },
+        select: {
+          id: true,
+          code: true,
+          addressLine: true,
+          salePrice: true,
+          saleCurrency: true,
+        },
       },
       buyer: { select: { id: true, fullName: true } },
     },
@@ -138,6 +152,7 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       };
     }
 
+    if (filters.saleClosingId) where.saleClosingId = filters.saleClosingId;
     if (filters.kind) where.kind = filters.kind;
 
     const today = startOfTodayLima();
@@ -161,7 +176,14 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
               finalPrice: true,
               closedAt: true,
               buyer: { select: { id: true, fullName: true } },
-              property: { select: { id: true, code: true, addressLine: true } },
+              property: {
+                select: {
+                  id: true,
+                  code: true,
+                  addressLine: true,
+                  saleCurrency: true,
+                },
+              },
             },
           },
         },
@@ -235,7 +257,14 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
             finalPrice: true,
             closedAt: true,
             buyer: { select: { id: true, fullName: true } },
-            property: { select: { id: true, code: true, addressLine: true } },
+            property: {
+              select: {
+                id: true,
+                code: true,
+                addressLine: true,
+                saleCurrency: true,
+              },
+            },
           },
         },
       },
@@ -257,6 +286,21 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
     const where: Record<string, unknown> = { applicationId: app.id };
     if (filters.status) where.status = filters.status;
     if (filters.agentId) where.agentId = filters.agentId;
+    if (filters.currency) where.currency = filters.currency;
+    const q = filters.search?.trim();
+    if (q) {
+      const contains = { contains: q, mode: 'insensitive' as const };
+      where.OR = [
+        { agent: { fullName: contains } },
+        { saleProcess: { code: contains } },
+        { saleProcess: { title: contains } },
+        { saleProcess: { property: { code: contains } } },
+        { saleProcess: { property: { addressLine: contains } } },
+        { saleProcess: { buyer: { fullName: contains } } },
+        { closing: { property: { code: contains } } },
+        { closing: { buyer: { fullName: contains } } },
+      ];
+    }
 
     const [rows, total] = await Promise.all([
       this.prisma.saleCommission.findMany({
@@ -272,6 +316,81 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
     return {
       data: (rows as Record<string, unknown>[]).map(enrichCommissionRow),
       total,
+    };
+  }
+
+  async getCommissionStats(applicationSlug: string): Promise<CommissionStats> {
+    const empty: CommissionStats = {
+      total: 0,
+      byStatus: { PENDING: 0, PARTIAL: 0, PAID: 0, CANCELLED: 0 },
+      agentsWithPending: 0,
+      byCurrency: [],
+    };
+    const app = await this.prisma.application.findUnique({
+      where: { slug: applicationSlug },
+    });
+    if (!app) return empty;
+
+    const rows = await this.prisma.saleCommission.findMany({
+      where: { applicationId: app.id },
+      select: {
+        agentId: true,
+        amount: true,
+        currency: true,
+        status: true,
+        deductibles: { select: { amount: true } },
+        paymentParts: { select: { amount: true, status: true } },
+      },
+    });
+
+    const byCurrency = new Map<string, CommissionCurrencyTotals>();
+    const pendingAgents = new Set<string>();
+    for (const r of rows) {
+      const status = r.status as keyof CommissionStats['byStatus'];
+      if (status in empty.byStatus) empty.byStatus[status] += 1;
+      if (r.status === 'CANCELLED') continue;
+
+      const { netPayable } = mapCommissionEnrichment({
+        amount: Number(r.amount),
+        deductibles: r.deductibles.map((d) => ({ amount: Number(d.amount) })),
+      });
+      const paid =
+        r.status === 'PAID'
+          ? netPayable
+          : Math.min(
+              netPayable,
+              r.paymentParts
+                .filter((p) => p.status === 'PAID')
+                .reduce((acc, p) => acc + Number(p.amount), 0),
+            );
+      const t = byCurrency.get(r.currency) ?? {
+        currency: r.currency,
+        count: 0,
+        netTotal: 0,
+        paidNet: 0,
+        pendingNet: 0,
+      };
+      t.count += 1;
+      t.netTotal += netPayable;
+      t.paidNet += paid;
+      t.pendingNet += Math.max(0, netPayable - paid);
+      byCurrency.set(r.currency, t);
+      if (netPayable - paid > 0) pendingAgents.add(r.agentId);
+    }
+
+    const round = (n: number) => Math.round(n * 100) / 100;
+    return {
+      ...empty,
+      total: rows.length,
+      agentsWithPending: pendingAgents.size,
+      byCurrency: [...byCurrency.values()]
+        .map((t) => ({
+          ...t,
+          netTotal: round(t.netTotal),
+          paidNet: round(t.paidNet),
+          pendingNet: round(t.pendingNet),
+        }))
+        .sort((a, b) => b.netTotal - a.netTotal),
     };
   }
 
@@ -440,7 +559,8 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
         where: { id: commissionId },
         data: { amount, percentApplied: pct },
       });
-      await scaleCommissionPaymentPartsToNet(tx, commissionId, net);
+      await rebalanceCommissionPartsToNet(tx, commissionId, net);
+      await syncSaleCommissionStatus(tx, commissionId);
     });
 
     const updated = await this.prisma.saleCommission.findFirst({
@@ -448,6 +568,181 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       include: commissionListInclude,
     });
     return updated ? enrichCommissionRow(updated) : null;
+  }
+
+  async updateCommissionTerms(
+    commissionId: string,
+    applicationId: string,
+    data: {
+      calculationType: 'PERCENT' | 'FIXED';
+      percent: number | null;
+      fixedAmount: number | null;
+      reason: string;
+    },
+  ): Promise<unknown> {
+    const row = await this.prisma.saleCommission.findFirst({
+      where: { id: commissionId, applicationId },
+      include: {
+        closing: { select: { finalPrice: true } },
+        saleProcess: {
+          select: {
+            id: true,
+            status: true,
+            property: { select: { salePrice: true } },
+          },
+        },
+        deductibles: true,
+        paymentParts: { select: { id: true } },
+      },
+    });
+    if (!row) return null;
+    if (row.status === 'CANCELLED') {
+      throw new BadRequestException(
+        'La comisión está anulada; no se puede modificar.',
+      );
+    }
+    if (row.saleProcess?.status === 'LOST') {
+      throw new BadRequestException(
+        'La venta está caída; la comisión ya no aplica.',
+      );
+    }
+
+    let amount: number;
+    let percentApplied: number | null = null;
+    if (data.calculationType === 'PERCENT') {
+      // Base: precio final si ya hay cierre; si no, el precio publicado del inmueble
+      const basePrice =
+        row.closing?.finalPrice ??
+        (row.saleProcess?.property?.salePrice != null
+          ? Number(row.saleProcess.property.salePrice)
+          : null);
+      if (basePrice == null || basePrice <= 0) {
+        throw new BadRequestException(
+          'El inmueble no tiene precio de venta; registre un monto fijo o actualice el precio.',
+        );
+      }
+      percentApplied = data.percent;
+      amount = roundMoney(basePrice * ((data.percent ?? 0) / 100));
+    } else {
+      amount = roundMoney(data.fixedAmount ?? 0);
+    }
+
+    const net = computeNetPayable(amount, row.deductibles);
+    const previous = mapCommissionEnrichment({
+      amount: row.amount,
+      deductibles: row.deductibles,
+    });
+    const describe = (type: string, pct: number | null, gross: number) =>
+      type === 'PERCENT' && pct != null
+        ? `${pct} % (${gross} ${row.currency})`
+        : `monto fijo ${gross} ${row.currency}`;
+
+    await this.prisma.$transaction(async (tx) => {
+      // Comisión pagada sin cuotas: el pago previo queda como cuota pagada
+      if (!row.paymentParts.length && row.status === 'PAID') {
+        await tx.saleCommissionPaymentPart.create({
+          data: {
+            saleCommissionId: row.id,
+            partNumber: 1,
+            amount: previous.netPayable,
+            status: 'PAID',
+            paidAt: row.paidAt ?? new Date(),
+          },
+        });
+      }
+      await tx.saleCommission.update({
+        where: { id: row.id },
+        data: {
+          calculationType: data.calculationType,
+          amount,
+          percentApplied,
+        },
+      });
+      const partCount = await tx.saleCommissionPaymentPart.count({
+        where: { saleCommissionId: row.id },
+      });
+      if (partCount === 0) {
+        await tx.saleCommissionPaymentPart.create({
+          data: {
+            saleCommissionId: row.id,
+            partNumber: 1,
+            amount: net,
+            status: 'PENDING',
+          },
+        });
+      } else {
+        await rebalanceCommissionPartsToNet(tx, row.id, net);
+      }
+      await syncSaleCommissionStatus(tx, row.id);
+
+      if (row.saleProcess) {
+        const agent = await tx.agent.findUnique({
+          where: { id: row.agentId },
+          select: { fullName: true },
+        });
+        await tx.saleProcessActivity.create({
+          data: {
+            saleProcessId: row.saleProcess.id,
+            activityType: 'OTHER',
+            title: `Comisión modificada${agent ? ` — ${agent.fullName}` : ''}`,
+            description: `De ${describe(row.calculationType, row.percentApplied, row.amount)} a ${describe(data.calculationType, percentApplied, amount)}. Motivo: ${data.reason}`,
+            completedAt: new Date(),
+          },
+        });
+      }
+    });
+
+    const updated = await this.prisma.saleCommission.findFirst({
+      where: { id: commissionId },
+      include: commissionListInclude,
+    });
+    return updated ? enrichCommissionRow(updated) : null;
+  }
+
+  async getClosingPaymentCoverage(
+    saleClosingId: string,
+    applicationId: string,
+  ): Promise<{
+    currency: string;
+    finalPrice: number;
+    separationAmount: number;
+    scheduledPayments: number;
+  } | null> {
+    const closing = await this.prisma.saleClosing.findFirst({
+      where: { id: saleClosingId, applicationId },
+      select: {
+        finalPrice: true,
+        property: { select: { saleCurrency: true } },
+        separation: { select: { amount: true, currency: true } },
+        buyerPayments: { select: { amount: true, currency: true } },
+      },
+    });
+    if (!closing) return null;
+    const currency = closing.property.saleCurrency;
+    return {
+      currency,
+      finalPrice: closing.finalPrice,
+      separationAmount:
+        closing.separation?.currency === currency
+          ? closing.separation.amount
+          : 0,
+      scheduledPayments: roundMoney(
+        closing.buyerPayments
+          .filter((p) => p.currency === currency)
+          .reduce((s, p) => s + p.amount, 0),
+      ),
+    };
+  }
+
+  async getClosingCurrency(
+    saleClosingId: string,
+    applicationId: string,
+  ): Promise<string | null> {
+    const closing = await this.prisma.saleClosing.findFirst({
+      where: { id: saleClosingId, applicationId },
+      select: { property: { select: { saleCurrency: true } } },
+    });
+    return closing?.property.saleCurrency ?? null;
   }
 
   async listDocumentationCosts(
@@ -473,7 +768,9 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
               id: true,
               finalPrice: true,
               buyer: { select: { id: true, fullName: true } },
-              property: { select: { id: true, code: true } },
+              property: {
+                select: { id: true, code: true, saleCurrency: true },
+              },
             },
           },
         },
@@ -519,40 +816,113 @@ export class VentasFinanzasPrismaRepository implements VentasFinanzasRepository 
       where: { id: closingId, applicationId },
       include: {
         commissions: { include: { deductibles: true } },
+        documentationCosts: { select: { amount: true, currency: true } },
+        buyerPayments: {
+          select: { amount: true, currency: true, status: true },
+        },
+        separation: { select: { amount: true, currency: true } },
         buyer: { select: { id: true, fullName: true } },
-        property: { select: { id: true, code: true } },
+        property: { select: { id: true, code: true, saleCurrency: true } },
       },
     });
     if (!closing) return null;
 
+    // Solo se restan importes en la moneda de la venta; el resto se informa aparte
+    const currency = closing.property.saleCurrency;
     const activeCommissions = closing.commissions.filter(
       (c) => c.status !== 'CANCELLED',
     );
-    const commissionGross = activeCommissions.reduce((s, c) => s + c.amount, 0);
-    const commissionDeductiblesTotal = activeCommissions.reduce(
-      (s, c) => s + c.deductibles.reduce((ds, d) => ds + d.amount, 0),
-      0,
+    const sameCurrency = activeCommissions.filter(
+      (c) => c.currency === currency,
+    );
+    const commissionGross = roundMoney(
+      sameCurrency.reduce((s, c) => s + c.amount, 0),
+    );
+    const commissionDeductiblesTotal = roundMoney(
+      sameCurrency.reduce(
+        (s, c) => s + c.deductibles.reduce((ds, d) => ds + d.amount, 0),
+        0,
+      ),
     );
     const commissionNetPayable = Math.max(
       0,
-      commissionGross - commissionDeductiblesTotal,
+      roundMoney(commissionGross - commissionDeductiblesTotal),
     );
-    const netEstimated = closing.finalPrice - commissionNetPayable;
+    const documentationCostsTotal = roundMoney(
+      closing.documentationCosts
+        .filter((d) => d.currency === currency)
+        .reduce((s, d) => s + d.amount, 0),
+    );
+    const otherCurrencies = new Map<
+      string,
+      { commissions: number; documentationCosts: number }
+    >();
+    for (const c of activeCommissions) {
+      if (c.currency === currency) continue;
+      const acc = otherCurrencies.get(c.currency) ?? {
+        commissions: 0,
+        documentationCosts: 0,
+      };
+      acc.commissions += computeNetPayable(c.amount, c.deductibles);
+      otherCurrencies.set(c.currency, acc);
+    }
+    for (const d of closing.documentationCosts) {
+      if (d.currency === currency) continue;
+      const acc = otherCurrencies.get(d.currency) ?? {
+        commissions: 0,
+        documentationCosts: 0,
+      };
+      acc.documentationCosts += d.amount;
+      otherCurrencies.set(d.currency, acc);
+    }
+    const netEstimated = roundMoney(
+      closing.finalPrice - commissionNetPayable - documentationCostsTotal,
+    );
     const allPaid =
       activeCommissions.length > 0 &&
       activeCommissions.every((c) => c.status === 'PAID');
     const anyPartial = activeCommissions.some((c) => c.status === 'PARTIAL');
 
+    // Cobranza al comprador en la moneda de la venta (la separación va a cuenta del precio)
+    const payments = closing.buyerPayments.filter(
+      (p) => p.currency === currency,
+    );
+    const separationAmount =
+      closing.separation?.currency === currency ? closing.separation.amount : 0;
+    const buyerPaymentsScheduled = roundMoney(
+      payments.reduce((s, p) => s + p.amount, 0),
+    );
+    const buyerPaymentsPaid = roundMoney(
+      payments
+        .filter((p) => p.status === 'PAID')
+        .reduce((s, p) => s + p.amount, 0),
+    );
+
     return {
       closingId: closing.id,
+      currency,
+      separationAmount,
+      buyerPaymentsScheduled,
+      buyerPaymentsPaid,
+      balanceToSchedule: Math.max(
+        0,
+        roundMoney(
+          closing.finalPrice - separationAmount - buyerPaymentsScheduled,
+        ),
+      ),
       finalPrice: closing.finalPrice,
       buyer: closing.buyer,
-      property: closing.property,
-      documentationCostsTotal: 0,
+      property: { id: closing.property.id, code: closing.property.code },
+      documentationCostsTotal,
       commissionDeductiblesTotal,
       commissionGross,
       commissionNetPayable,
       commissionAmount: commissionNetPayable,
+      otherCurrencies: [...otherCurrencies.entries()].map(([cur, v]) => ({
+        currency: cur,
+        commissions: roundMoney(v.commissions),
+        documentationCosts: roundMoney(v.documentationCosts),
+      })),
       commissionStatus: activeCommissions.length
         ? allPaid
           ? 'PAID'

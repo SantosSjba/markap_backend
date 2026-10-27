@@ -12,6 +12,13 @@ import {
 } from '../../../domain/entities/ventas-reports.entity';
 import type { VentasReportsRepository } from '../../../domain/repositories/ventas-reports.repository';
 import { periodLabel } from '../mappers/ventas-reports-prisma.mapper';
+import type { VentasSummaryGranularity } from '../../../domain/entities/ventas-reports-summary.types';
+import {
+  buildAgentsSummary,
+  buildConversionSummary,
+  buildFinancialSummary,
+  buildSalesSummary,
+} from './ventas-reports-summary.prisma';
 
 @Injectable()
 export class VentasReportsPrismaRepository implements VentasReportsRepository {
@@ -256,5 +263,30 @@ export class VentasReportsPrismaRepository implements VentasReportsRepository {
       commissionsPendingAmount,
       estimatedNetAfterCosts,
     );
+  }
+
+  getSalesSummary(
+    range: VentasReportsDateRange,
+    granularity: VentasSummaryGranularity,
+  ) {
+    return buildSalesSummary(this.prisma, range, granularity);
+  }
+
+  getAgentsSummary(range: VentasReportsDateRange) {
+    return buildAgentsSummary(this.prisma, range);
+  }
+
+  getConversionSummary(
+    range: VentasReportsDateRange,
+    granularity: VentasSummaryGranularity,
+  ) {
+    return buildConversionSummary(this.prisma, range, granularity);
+  }
+
+  getFinancialSummary(
+    range: VentasReportsDateRange,
+    granularity: VentasSummaryGranularity,
+  ) {
+    return buildFinancialSummary(this.prisma, range, granularity);
   }
 }

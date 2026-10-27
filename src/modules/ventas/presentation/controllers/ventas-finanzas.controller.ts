@@ -23,6 +23,7 @@ import {
   CreateBuyerPaymentDto,
   CreateDocumentationCostDto,
   MarkPaidDto,
+  UpdateCommissionDto,
   UpsertAgentCommissionProfileDto,
 } from '../dtos/ventas/ventas-finanzas-requests.dto';
 
@@ -42,6 +43,7 @@ export class VentasFinanzasController {
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'buyerClientId', required: false })
+  @ApiQuery({ name: 'saleClosingId', required: false })
   @ApiQuery({
     name: 'kind',
     required: false,
@@ -59,12 +61,14 @@ export class VentasFinanzasController {
     @Query('buyerClientId') buyerClientId?: string,
     @Query('kind') kind?: string,
     @Query('displayStatus') displayStatus?: 'PENDING' | 'PAID' | 'OVERDUE',
+    @Query('saleClosingId') saleClosingId?: string,
   ) {
     return this.finanzas.listBuyerPayments({
       applicationSlug: applicationSlug ?? 'ventas',
       page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
       limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       buyerClientId: buyerClientId?.trim() || undefined,
+      saleClosingId: saleClosingId?.trim() || undefined,
       kind: kind as never,
       displayStatus,
     });
@@ -92,23 +96,34 @@ export class VentasFinanzasController {
     return this.finanzas.markBuyerPaymentPaid(id, applicationSlug, body);
   }
 
+  @Get('commissions/stats')
+  @ApiOperation({ summary: 'Resumen de comisiones por estado y por moneda' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async commissionStats(@Query('applicationSlug') applicationSlug?: string) {
+    return this.finanzas.getCommissionStats(applicationSlug);
+  }
+
   @Get('commissions')
-  @ApiOperation({ summary: 'Comisiones por cierre' })
+  @ApiOperation({ summary: 'Comisiones de los procesos de venta' })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({
     name: 'status',
     required: false,
-    enum: ['PENDING', 'PARTIAL', 'PAID'],
+    enum: ['PENDING', 'PARTIAL', 'PAID', 'CANCELLED'],
   })
   @ApiQuery({ name: 'agentId', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'currency', required: false })
   async listCommissions(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Query('status') status?: 'PENDING' | 'PARTIAL' | 'PAID',
+    @Query('status') status?: 'PENDING' | 'PARTIAL' | 'PAID' | 'CANCELLED',
     @Query('agentId') agentId?: string,
+    @Query('search') search?: string,
+    @Query('currency') currency?: string,
   ) {
     return this.finanzas.listCommissions({
       applicationSlug: applicationSlug ?? 'ventas',
@@ -116,6 +131,8 @@ export class VentasFinanzasController {
       limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       status,
       agentId: agentId?.trim() || undefined,
+      search: search?.trim().slice(0, 100) || undefined,
+      currency: currency?.trim().toUpperCase() || undefined,
     });
   }
 
@@ -128,6 +145,20 @@ export class VentasFinanzasController {
     @Body() body?: MarkPaidDto,
   ) {
     return this.finanzas.markCommissionPaid(id, applicationSlug, body);
+  }
+
+  @Patch('commissions/:id')
+  @ApiOperation({
+    summary:
+      'Editar el % o monto fijo pactado de una comisión (respeta cuotas pagadas y registra el motivo)',
+  })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async updateCommission(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body() body: UpdateCommissionDto,
+  ) {
+    return this.finanzas.updateCommission(id, applicationSlug, body);
   }
 
   @Patch('commission-payment-parts/:partId/mark-paid')

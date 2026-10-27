@@ -9,6 +9,9 @@ import { APPLICATION_REPOSITORY } from '../../../../identity/domain/repositories
 import { PROPERTY_REPOSITORY } from '../../../../properties/domain/repositories/property.repository';
 import { RENTAL_REPOSITORY } from '../../../../rentals/domain/repositories/rental.repository';
 import { CLIENT_REPOSITORY } from '../../../domain/repositories/client.repository';
+import type { VentasSalesRepository } from '../../../../ventas/domain/repositories/ventas-sales.repository';
+import { VENTAS_SALES_REPOSITORY } from '../../../../ventas/domain/repositories/ventas-sales.repository';
+import { assertClientDeletableForVentas } from '../../../../ventas/application/validators/sales-usage.validator';
 
 @Injectable()
 export class DeleteClientUseCase {
@@ -21,6 +24,8 @@ export class DeleteClientUseCase {
     private readonly applicationRepository: ApplicationRepository,
     @Inject(PROPERTY_REPOSITORY)
     private readonly propertyRepository: PropertyRepository,
+    @Inject(VENTAS_SALES_REPOSITORY)
+    private readonly ventasSales: VentasSalesRepository,
   ) {}
 
   /**
@@ -41,6 +46,13 @@ export class DeleteClientUseCase {
     }
 
     const isVentasApp = app?.slug === 'ventas';
+    if (isVentasApp) {
+      assertClientDeletableForVentas(
+        await this.ventasSales.getSalesUsage(client.applicationId, {
+          clientId: id,
+        }),
+      );
+    }
     if (isVentasApp && client.clientType === 'OWNER') {
       const props = await this.propertyRepository.countActiveByOwnerId(
         id,

@@ -43,41 +43,11 @@ export class VentasConfigOperationsService {
     return app.id;
   }
 
-  private formatNumbering(row: { prefix: string; lastNumber: number } | null) {
-    if (!row) {
-      return {
-        saleProcess: {
-          prefix: 'VNT-PRC',
-          lastNumber: 0,
-          nextPreview: 'VNT-PRC-0001',
-        },
-      };
-    }
-    const next = row.lastNumber + 1;
-    return {
-      saleProcess: {
-        prefix: row.prefix,
-        lastNumber: row.lastNumber,
-        nextPreview: `${row.prefix}-${String(next).padStart(4, '0')}`,
-      },
-    };
-  }
-
   async bootstrap(applicationSlug?: string) {
     const applicationId = await this.resolveApplicationId(applicationSlug);
     await this.config.ensureDefaults(applicationId);
-
-    const [pipelineStages, saleProcessSeries, propertyTypes] =
-      await Promise.all([
-        this.config.listPipelineStages(applicationId),
-        this.config.getNumberingSeries(applicationId, 'SALE_PROCESS'),
-        this.config.listActivePropertyTypes(),
-      ]);
-
     return {
-      pipelineStages,
-      numbering: this.formatNumbering(saleProcessSeries),
-      propertyTypes,
+      pipelineStages: await this.config.listPipelineStages(applicationId),
     };
   }
 
@@ -118,29 +88,88 @@ export class VentasConfigOperationsService {
     return this.config.listPipelineStages(applicationId);
   }
 
-  async patchNumbering(
+  // ── Bancos y medios de pago ──
+
+  async listFinancingChannels(applicationSlug?: string) {
+    await this.resolveApplicationId(applicationSlug);
+    return this.config.listFinancingChannels();
+  }
+
+  async createFinancingChannel(
     applicationSlug: string | undefined,
-    body: { prefix?: string; lastNumber?: number },
+    body: { category: string; name: string },
   ) {
-    const applicationId = await this.resolveApplicationId(applicationSlug);
-    await this.config.ensureDefaults(applicationId);
-    if (body.prefix !== undefined && !body.prefix.trim()) {
-      throw new BadRequestException('El prefijo no puede estar vacío.');
+    await this.resolveApplicationId(applicationSlug);
+    const name = body.name.trim();
+    const all = await this.config.listFinancingChannels();
+    if (
+      all.some(
+        (c) =>
+          c.name.trim().toLocaleLowerCase('es-PE') ===
+          name.toLocaleLowerCase('es-PE'),
+      )
+    ) {
+      throw new BadRequestException(`Ya existe «${name}» en el catálogo.`);
     }
-    if (body.lastNumber !== undefined && body.lastNumber < 0) {
-      throw new BadRequestException('lastNumber no puede ser negativo.');
+    // Código técnico: categoría + nombre sin tildes (BANK_BCP, PAYMENT_METHOD_YAPE…)
+    const slug = name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 40);
+    const base = `${body.category}_${slug || 'CANAL'}`;
+    const used = new Set(await this.config.findFinancingChannelCodes(base));
+    let code = base;
+    for (let n = 2; used.has(code); n++) code = `${base}_${n}`;
+    const sortOrder =
+      Math.max(
+        -1,
+        ...all
+          .filter((c) => c.category === body.category)
+          .map((c) => c.sortOrder),
+      ) + 1;
+    return this.config.createFinancingChannel({
+      category: body.category,
+      code,
+      name,
+      sortOrder,
+    });
+  }
+
+  async updateFinancingChannel(
+    applicationSlug: string | undefined,
+    id: string,
+    body: {
+      category?: string;
+      name?: string;
+      isActive?: boolean;
+      sortOrder?: number;
+    },
+  ) {
+    await this.resolveApplicationId(applicationSlug);
+    const name = body.name?.trim();
+    if (name) {
+      const all = await this.config.listFinancingChannels();
+      if (
+        all.some(
+          (c) =>
+            c.id !== id &&
+            c.name.trim().toLocaleLowerCase('es-PE') ===
+              name.toLocaleLowerCase('es-PE'),
+        )
+      ) {
+        throw new BadRequestException(`Ya existe «${name}» en el catálogo.`);
+      }
     }
-    if (body.prefix === undefined && body.lastNumber === undefined) {
-      throw new BadRequestException('Envíe prefix y/o lastNumber.');
-    }
-    const updated = await this.config.updateNumberingSeries(
-      applicationId,
-      'SALE_PROCESS',
-      {
-        ...(body.prefix !== undefined && { prefix: body.prefix }),
-        ...(body.lastNumber !== undefined && { lastNumber: body.lastNumber }),
-      },
-    );
-    return this.formatNumbering(updated);
+    const row = await this.config.updateFinancingChannel(id, {
+      ...(body.category !== undefined && { category: body.category }),
+      ...(name !== undefined && { name }),
+      ...(body.isActive !== undefined && { isActive: body.isActive }),
+      ...(body.sortOrder !== undefined && { sortOrder: body.sortOrder }),
+    });
+    if (!row) throw new EntityNotFoundException('SaleFinancingChannel', id);
+    return row;
   }
 }

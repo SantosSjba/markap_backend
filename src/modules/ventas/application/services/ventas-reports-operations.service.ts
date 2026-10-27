@@ -144,4 +144,23 @@ export class VentasReportsOperationsService {
       endDate: end,
     });
   }
+
+  /** Resúmenes por moneda de la pantalla Reportes (granularidad: mes o año) */
+  async summary(
+    kind: 'sales' | 'agents' | 'conversion' | 'financial',
+    applicationSlug: string | undefined,
+    startDate?: string,
+    endDate?: string,
+    granularity?: string,
+  ) {
+    const applicationId = await this.resolveApplicationId(applicationSlug);
+    const { start, end } = parseRange(startDate, endDate);
+    const range = { applicationId, startDate: start, endDate: end };
+    const g = granularity === 'year' ? 'year' : 'month';
+    if (kind === 'sales') return this.reports.getSalesSummary(range, g);
+    if (kind === 'agents') return this.reports.getAgentsSummary(range);
+    if (kind === 'conversion')
+      return this.reports.getConversionSummary(range, g);
+    return this.reports.getFinancialSummary(range, g);
+  }
 }

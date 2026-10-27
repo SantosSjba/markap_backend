@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BusinessReferencePort } from '../../../../shared/application/ports/business-reference.port';
 import { EntityNotFoundException } from '../../../../shared/domain/exceptions/domain.exception';
 import type { AgentRepository } from '../../../crm/domain/repositories/agent.repository';
 import { AGENT_REPOSITORY } from '../../../crm/domain/repositories/agent.repository';
@@ -15,6 +16,8 @@ import {
   type VentasDocCostType,
   type VentasFinanzasRepository,
 } from '../../domain/repositories/ventas-finanzas.repository';
+import { roundMoney } from '../../../../shared/utils/sale-commission.util';
+import { assertActiveSaleCurrency } from '../validators/sale-currency.validator';
 
 const VENTAS_SLUG = 'ventas';
 
@@ -51,6 +54,7 @@ export class VentasFinanzasOperationsService {
     private readonly applicationRepository: ApplicationRepository,
     @Inject(AGENT_REPOSITORY)
     private readonly agentRepository: AgentRepository,
+    private readonly references: BusinessReferencePort,
   ) {}
 
   private async resolveVentasApplicationId(
@@ -60,6 +64,21 @@ export class VentasFinanzasOperationsService {
     const app = await this.applicationRepository.findBySlug(VENTAS_SLUG);
     if (!app) throw new EntityNotFoundException('Application', VENTAS_SLUG);
     return app.id;
+  }
+
+  /** Sin moneda indicada se usa la de la venta (no se asume PEN en ventas en dólares). */
+  private async resolveClosingCurrency(
+    saleClosingId: string,
+    applicationId: string,
+    requested?: string | null,
+  ): Promise<string> {
+    const saleCurrency = await this.finanzas.getClosingCurrency(
+      saleClosingId,
+      applicationId,
+    );
+    const code = requested?.trim().toUpperCase();
+    if (!code) return saleCurrency ?? 'PEN';
+    return assertActiveSaleCurrency(this.references, code);
   }
 
   async listBuyerPayments(f: ListBuyerPaymentsFilters) {
@@ -101,12 +120,41 @@ export class VentasFinanzasOperationsService {
     if (!ok)
       throw new EntityNotFoundException('SaleClosing', body.saleClosingId);
 
+    const currency = await this.resolveClosingCurrency(
+      body.saleClosingId,
+      applicationId,
+      body.currency,
+    );
+    // Separación + pagos programados no pueden superar el precio final de la venta
+    const coverage = await this.finanzas.getClosingPaymentCoverage(
+      body.saleClosingId,
+      applicationId,
+    );
+    // Inicial y cuotas forman parte del precio: van en la moneda de la venta
+    if (coverage && coverage.currency !== currency) {
+      throw new BadRequestException(
+        `Los pagos del comprador van en la moneda de la venta (${coverage.currency}).`,
+      );
+    }
+    if (coverage) {
+      const balance = roundMoney(
+        coverage.finalPrice -
+          coverage.separationAmount -
+          coverage.scheduledPayments,
+      );
+      if (body.amount > balance + 0.01) {
+        throw new BadRequestException(
+          `El pago supera el saldo por programar de la venta (${Math.max(0, balance)} ${currency}).`,
+        );
+      }
+    }
+
     return this.finanzas.createBuyerPayment({
       applicationId,
       saleClosingId: body.saleClosingId,
       kind: body.kind,
       amount: body.amount,
-      currency: body.currency?.trim() || 'PEN',
+      currency,
       dueDate: parseValidDateOrThrow(body.dueDate, 'Fecha de vencimiento'),
       notes: body.notes ?? null,
     });
@@ -136,6 +184,11 @@ export class VentasFinanzasOperationsService {
       ...f,
       applicationSlug: VENTAS_SLUG,
     });
+  }
+
+  async getCommissionStats(applicationSlug: string | undefined) {
+    assertVentasApp(applicationSlug ?? VENTAS_SLUG);
+    return this.finanzas.getCommissionStats(VENTAS_SLUG);
   }
 
   async markCommissionPaid(
@@ -187,6 +240,57 @@ export class VentasFinanzasOperationsService {
         'No se pudo recalcular: comisión inexistente o sin perfil de % para el asesor.',
       );
     }
+    return row;
+  }
+
+  async updateCommission(
+    id: string,
+    applicationSlug: string | undefined,
+    body: {
+      calculationType: 'PERCENT' | 'FIXED';
+      percent?: number | string | null;
+      fixedAmount?: number | string | null;
+      reason: string;
+    },
+  ) {
+    const applicationId =
+      await this.resolveVentasApplicationId(applicationSlug);
+    const reason = body.reason?.trim() ?? '';
+    if (reason.length < 5) {
+      throw new BadRequestException(
+        'Indique el motivo del cambio de comisión (mínimo 5 caracteres).',
+      );
+    }
+    const toNumber = (v: number | string | null | undefined) =>
+      v == null || v === '' ? null : Number(String(v).replace(',', '.'));
+    const percent = toNumber(body.percent);
+    const fixedAmount = toNumber(body.fixedAmount);
+    if (body.calculationType === 'PERCENT') {
+      if (
+        percent == null ||
+        !Number.isFinite(percent) ||
+        percent < 0 ||
+        percent > 100
+      ) {
+        throw new BadRequestException(
+          'El porcentaje de comisión debe estar entre 0 y 100.',
+        );
+      }
+    } else if (
+      fixedAmount == null ||
+      !Number.isFinite(fixedAmount) ||
+      fixedAmount < 0
+    ) {
+      throw new BadRequestException('Indique un monto fijo válido.');
+    }
+
+    const row = await this.finanzas.updateCommissionTerms(id, applicationId, {
+      calculationType: body.calculationType,
+      percent: body.calculationType === 'PERCENT' ? percent : null,
+      fixedAmount: body.calculationType === 'FIXED' ? fixedAmount : null,
+      reason,
+    });
+    if (!row) throw new EntityNotFoundException('SaleCommission', id);
     return row;
   }
 
@@ -259,7 +363,11 @@ export class VentasFinanzasOperationsService {
       saleClosingId: body.saleClosingId,
       costType: body.costType,
       amount: body.amount,
-      currency: body.currency?.trim() || 'PEN',
+      currency: await this.resolveClosingCurrency(
+        body.saleClosingId,
+        applicationId,
+        body.currency,
+      ),
       description: body.description ?? null,
       expenseDate: body.expenseDate
         ? parseValidDateOrThrow(body.expenseDate, 'Fecha de gasto')

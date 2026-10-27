@@ -242,6 +242,8 @@ model SaleCommission {
   /// PERCENT | FIXED
   calculationType String    @default("PERCENT") @map("calculation_type")
   amount          Float
+  /// Moneda de la comisión, sus deducibles y cuotas (en % = moneda del precio del inmueble)
+  currency        String    @default("PEN")
   /// Porcentaje (0–100) cuando calculationType = PERCENT
   percentApplied  Float?    @map("percent_applied")
   /// PENDING | PARTIAL | PAID | CANCELLED (proceso caído o anulado)

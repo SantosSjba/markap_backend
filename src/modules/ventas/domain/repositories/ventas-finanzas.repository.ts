@@ -13,6 +13,8 @@ export interface ListBuyerPaymentsFilters {
   page: number;
   limit: number;
   buyerClientId?: string;
+  /** Pagos de un cierre concreto (ficha del proceso) */
+  saleClosingId?: string;
   kind?: VentasBuyerPaymentKind;
   /** PENDING | PAID | OVERDUE (vencido y aún PENDING) */
   displayStatus?: 'PENDING' | 'PAID' | 'OVERDUE';
@@ -22,8 +24,33 @@ export interface ListCommissionsFilters {
   applicationSlug: string;
   page: number;
   limit: number;
-  status?: 'PENDING' | 'PARTIAL' | 'PAID';
+  status?: 'PENDING' | 'PARTIAL' | 'PAID' | 'CANCELLED';
   agentId?: string;
+  /** Código de proceso o inmueble, comprador o asesor */
+  search?: string;
+  currency?: string;
+}
+
+/** Totales de comisiones de una moneda (nunca se suman monedas distintas) */
+export interface CommissionCurrencyTotals {
+  currency: string;
+  count: number;
+  netTotal: number;
+  paidNet: number;
+  pendingNet: number;
+}
+
+export interface CommissionStats {
+  total: number;
+  byStatus: {
+    PENDING: number;
+    PARTIAL: number;
+    PAID: number;
+    CANCELLED: number;
+  };
+  /** Asesores con algo pendiente de cobro */
+  agentsWithPending: number;
+  byCurrency: CommissionCurrencyTotals[];
 }
 
 export interface ListDocCostsFilters {
@@ -74,6 +101,8 @@ export interface VentasFinanzasRepository {
     filters: ListCommissionsFilters,
   ): Promise<{ data: unknown[]; total: number }>;
 
+  getCommissionStats(applicationSlug: string): Promise<CommissionStats>;
+
   markCommissionPaid(
     id: string,
     applicationId: string,
@@ -90,6 +119,38 @@ export interface VentasFinanzasRepository {
     commissionId: string,
     applicationId: string,
   ): Promise<unknown>;
+
+  /** Cambia el % o el monto fijo pactado; respeta cuotas pagadas y deja constancia en el proceso. */
+  updateCommissionTerms(
+    commissionId: string,
+    applicationId: string,
+    data: {
+      calculationType: 'PERCENT' | 'FIXED';
+      percent: number | null;
+      fixedAmount: number | null;
+      reason: string;
+    },
+  ): Promise<unknown>;
+
+  /**
+   * Cuánto del precio final ya está cubierto, en la moneda de la venta:
+   * separación aplicada y pagos del comprador programados.
+   */
+  getClosingPaymentCoverage(
+    saleClosingId: string,
+    applicationId: string,
+  ): Promise<{
+    currency: string;
+    finalPrice: number;
+    separationAmount: number;
+    scheduledPayments: number;
+  } | null>;
+
+  /** Moneda de la venta de un cierre (moneda de precio del inmueble). */
+  getClosingCurrency(
+    saleClosingId: string,
+    applicationId: string,
+  ): Promise<string | null>;
 
   listDocumentationCosts(
     filters: ListDocCostsFilters,

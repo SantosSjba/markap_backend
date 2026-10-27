@@ -12,6 +12,9 @@ import type { PropertyRepository } from '../../../domain/repositories/property.r
 import { APPLICATION_REPOSITORY } from '../../../../identity/domain/repositories/application.repository';
 import { RENTAL_REPOSITORY } from '../../../../rentals/domain/repositories/rental.repository';
 import { PROPERTY_REPOSITORY } from '../../../domain/repositories/property.repository';
+import type { VentasSalesRepository } from '../../../../ventas/domain/repositories/ventas-sales.repository';
+import { VENTAS_SALES_REPOSITORY } from '../../../../ventas/domain/repositories/ventas-sales.repository';
+import { assertPropertyDeletableForVentas } from '../../../../ventas/application/validators/sales-usage.validator';
 
 @Injectable()
 export class DeletePropertyUseCase {
@@ -22,6 +25,8 @@ export class DeletePropertyUseCase {
     private readonly rentalRepository: RentalRepository,
     @Inject(APPLICATION_REPOSITORY)
     private readonly applicationRepository: ApplicationRepository,
+    @Inject(VENTAS_SALES_REPOSITORY)
+    private readonly ventasSales: VentasSalesRepository,
   ) {}
 
   /**
@@ -44,7 +49,13 @@ export class DeletePropertyUseCase {
     }
 
     const isVentasInventory = app?.slug === 'ventas';
-    if (!isVentasInventory) {
+    if (isVentasInventory) {
+      assertPropertyDeletableForVentas(
+        await this.ventasSales.getSalesUsage(property.applicationId, {
+          propertyId: id,
+        }),
+      );
+    } else {
       const activeRentals =
         await this.rentalRepository.countActiveByPropertyId(id);
       if (activeRentals > 0) {

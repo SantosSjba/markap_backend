@@ -468,15 +468,43 @@ export class RentalPrismaRepository implements RentalRepository {
         include: { property: { select: { rentCurrency: true } } },
       });
       if (!current) throw new NotFoundException('Contrato no encontrado');
-      if (data.currency != null && data.currency !== current.currency) {
-        assertSameCurrencyAsProperty(
-          data.currency,
-          current.property.rentCurrency,
-        );
-        // La distribución financiera acompaña a la moneda del contrato
+      const currencyChanged =
+        data.currency != null && data.currency !== current.currency;
+      if (currencyChanged) {
+        const partial = await tx.payment.count({
+          where: { rentalId: id, status: 'PARTIAL' },
+        });
+        if (partial > 0)
+          throw new BadRequestException(
+            'No se puede cambiar la moneda: hay cuotas con pagos parciales en la moneda actual.',
+          );
+        // La distribución financiera y la ficha de la propiedad acompañan a la moneda del contrato
         await tx.rentalFinancialConfig.updateMany({
           where: { rentalId: id },
           data: { currency: data.currency },
+        });
+        if (current.property.rentCurrency !== data.currency) {
+          await tx.property.update({
+            where: { id: current.propertyId },
+            data: { rentCurrency: data.currency },
+          });
+        }
+      }
+      // Las cuotas aún sin pago toman la moneda y el monto vigentes del contrato
+      const amountChanged =
+        data.monthlyAmount != null &&
+        data.monthlyAmount !== current.monthlyAmount;
+      if (currencyChanged || amountChanged) {
+        await tx.payment.updateMany({
+          where: {
+            rentalId: id,
+            status: { in: ['PENDING', 'OVERDUE'] },
+            paidAmount: null,
+          },
+          data: {
+            ...(currencyChanged && { currency: data.currency }),
+            ...(amountChanged && { amount: data.monthlyAmount }),
+          },
         });
       }
       const startDate = data.startDate ?? current.startDate;

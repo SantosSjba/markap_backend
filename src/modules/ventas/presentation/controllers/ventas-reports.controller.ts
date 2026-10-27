@@ -1,5 +1,12 @@
 import { RequiresApplication } from '../../../../shared/presentation/decorators/application-access.decorators';
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseEnumPipe,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -94,6 +101,35 @@ export class VentasReportsController {
       applicationSlug,
       startDate,
       endDate,
+    );
+  }
+
+  @Get('summary/:kind')
+  @ApiOperation({
+    summary:
+      'Resumen por moneda para Reportes: ventas, asesores, conversión o flujo financiero',
+  })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'startDate', required: false, description: 'YYYY-MM-DD' })
+  @ApiQuery({ name: 'endDate', required: false, description: 'YYYY-MM-DD' })
+  @ApiQuery({ name: 'granularity', required: false, enum: ['month', 'year'] })
+  async summary(
+    @Param(
+      'kind',
+      new ParseEnumPipe(['sales', 'agents', 'conversion', 'financial']),
+    )
+    kind: 'sales' | 'agents' | 'conversion' | 'financial',
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('granularity') granularity?: string,
+  ) {
+    return this.ventasReports.summary(
+      kind,
+      applicationSlug,
+      startDate,
+      endDate,
+      granularity,
     );
   }
 }

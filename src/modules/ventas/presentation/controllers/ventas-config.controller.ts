@@ -3,7 +3,9 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
+  Post,
   Put,
   Query,
   UseGuards,
@@ -14,10 +16,11 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { PipelineStagesDto } from '../../../../shared/presentation/dtos/configuracion/module-config-requests.dto';
 import {
-  PipelineStagesDto,
-  ProjectNumberingDto,
-} from '../../../../shared/presentation/dtos/configuracion/module-config-requests.dto';
+  CreateFinancingChannelDto,
+  UpdateFinancingChannelDto,
+} from '../dtos/ventas/ventas-config-requests.dto';
 import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.guard';
 import { VentasConfigOperationsService } from '../../application/services/ventas-config-operations.service';
 
@@ -31,8 +34,7 @@ export class VentasConfigController {
 
   @Get('bootstrap')
   @ApiOperation({
-    summary:
-      'Parametrización Ventas: pipeline, numeración de procesos, tipos de propiedad (catálogo)',
+    summary: 'Parametrización Ventas: etapas del pipeline',
   })
   @ApiQuery({ name: 'applicationSlug', required: false })
   async bootstrap(@Query('applicationSlug') applicationSlug?: string) {
@@ -51,16 +53,37 @@ export class VentasConfigController {
     return this.ventasConfig.replacePipelineStages(applicationSlug, body);
   }
 
-  @Patch('numbering/sale-process')
+  @Get('financing-channels')
   @ApiOperation({
-    summary:
-      'Ajustar prefijo y/o último correlativo de códigos de proceso (VNT-PRC-####)',
+    summary: 'Bancos y medios de pago (incluye inactivos y su uso)',
   })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  async patchNumbering(
-    @Query('applicationSlug') applicationSlug: string | undefined,
-    @Body() body: ProjectNumberingDto,
+  async listFinancingChannels(
+    @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.ventasConfig.patchNumbering(applicationSlug, body);
+    return this.ventasConfig.listFinancingChannels(applicationSlug);
+  }
+
+  @Post('financing-channels')
+  @ApiOperation({ summary: 'Agregar banco o medio de pago' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async createFinancingChannel(
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body() body: CreateFinancingChannelDto,
+  ) {
+    return this.ventasConfig.createFinancingChannel(applicationSlug, body);
+  }
+
+  @Patch('financing-channels/:id')
+  @ApiOperation({
+    summary: 'Editar, activar o desactivar un banco o medio de pago',
+  })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async updateFinancingChannel(
+    @Param('id') id: string,
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Body() body: UpdateFinancingChannelDto,
+  ) {
+    return this.ventasConfig.updateFinancingChannel(applicationSlug, id, body);
   }
 }
