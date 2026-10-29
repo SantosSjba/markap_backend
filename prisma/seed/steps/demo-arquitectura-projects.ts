@@ -105,6 +105,7 @@ export async function seedArquitecturaProjects(
         email: 'valeria.soto@estudio-arq-demo.ejemplo.com',
         phone: '987223311',
         isActive: true,
+        roles: ['DESIGNER'],
       },
     });
     logger.info({ event: 'seed.progress' }, '   ✅ Diseñadora exterior');
@@ -127,6 +128,7 @@ export async function seedArquitecturaProjects(
         email: 'diego.rios@arq-jr-demo.ejemplo.com',
         phone: '987334422',
         isActive: true,
+        roles: ['ARCHITECT_JR'],
       },
     });
     logger.info({ event: 'seed.progress' }, '   ✅ Arquitecto Jr exterior');
@@ -149,6 +151,7 @@ export async function seedArquitecturaProjects(
         email: 'elena.vargas@arq-sr-demo.ejemplo.com',
         phone: '987445533',
         isActive: true,
+        roles: ['ARCHITECT_SR'],
       },
     });
     logger.info({ event: 'seed.progress' }, '   ✅ Arquitecto Sr exterior');
@@ -171,6 +174,7 @@ export async function seedArquitecturaProjects(
         email: 'miguel.cruz@obra-demo.ejemplo.com',
         phone: '987556644',
         isActive: true,
+        roles: ['SUPERVISOR'],
       },
     });
     logger.info(
@@ -196,6 +200,7 @@ export async function seedArquitecturaProjects(
         email: 'andrea.flores@comercial-arq-demo.ejemplo.com',
         phone: '987667755',
         isActive: true,
+        roles: ['COMMERCIAL'],
       },
     });
     logger.info({ event: 'seed.progress' }, '   ✅ Asesora comercial exterior');

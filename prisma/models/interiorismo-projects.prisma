@@ -1,32 +1,41 @@
 /// Proyectos de diseño interior (aplicación interiorismo)
 
 model InteriorProject {
-  id            String @id @default(uuid())
-  applicationId String @map("application_id")
-  /// Código único por aplicación (ej. INT-PRY-001)
-  code          String @map("code")
-  name          String @map("name")
-  clientId      String @map("client_id")
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  /// Código descriptivo único por aplicación (ej. PROYECTO-2026-DISEÑO-CAYMA-TORRES)
+  code          String  @map("code")
+  /// Código anterior al formato descriptivo (ej. INT-PRY-0001)
+  legacyCode    String? @map("legacy_code")
+  name          String  @map("name")
+  clientId      String  @map("client_id")
   /// REMODELING | INTERIOR_DESIGN | IMPLEMENTATION | FURNITURE
-  projectType   String @map("project_type")
+  projectType   String  @map("project_type")
   /// DESIGN | QUOTE | APPROVED | IN_PROGRESS | FINISHED | CANCELLED
-  status        String @map("status")
+  status        String  @map("status")
 
-  addressLine       String?   @map("address_line") @db.Text
-  city              String?   @map("city")
+  addressLine        String?   @map("address_line") @db.Text
+  city               String?   @map("city")
+  /// Distrito del ubigeo (alimenta el código del proyecto)
+  districtId         String?   @map("district_id")
   /// I | II | III — nivel de intervención (Excel)
-  interventionLevel String?   @map("intervention_level")
+  interventionLevel  String?   @map("intervention_level")
   /// Ej. "30 DÍAS HÁBILES"
-  executionTimeNote String?   @map("execution_time_note") @db.Text
-  currency          String    @default("PEN") @map("currency")
+  executionTimeNote  String?   @map("execution_time_note") @db.Text
+  /// PEN | USD | EUR
+  currency           String    @default("PEN") @map("currency")
+  /// Tipo de cambio de referencia a soles (ej. 3.50 por US$)
+  exchangeRate       Decimal?  @map("exchange_rate") @db.Decimal(12, 4)
   /// Utilidad por defecto sobre costo presupuestado (Excel: 20%)
-  defaultUtilityPct Decimal   @default(20) @map("default_utility_pct") @db.Decimal(8, 2)
-  defaultIgvPct     Decimal   @default(18) @map("default_igv_pct") @db.Decimal(8, 2)
-  areaSqm           Decimal?  @map("area_sqm") @db.Decimal(12, 2)
-  levelsCount       Int?      @map("levels_count")
-  environmentsNote  String?   @map("environments_note") @db.Text
-  startDate         DateTime? @map("start_date") @db.Date
-  estimatedEndDate  DateTime? @map("estimated_end_date") @db.Date
+  defaultUtilityPct  Decimal   @default(20) @map("default_utility_pct") @db.Decimal(8, 2)
+  /// Gastos generales por defecto (Excel PRIZE: 1%)
+  defaultOverheadPct Decimal   @default(0) @map("default_overhead_pct") @db.Decimal(8, 2)
+  defaultIgvPct      Decimal   @default(18) @map("default_igv_pct") @db.Decimal(8, 2)
+  areaSqm            Decimal?  @map("area_sqm") @db.Decimal(12, 2)
+  levelsCount        Int?      @map("levels_count")
+  environmentsNote   String?   @map("environments_note") @db.Text
+  startDate          DateTime? @map("start_date") @db.Date
+  estimatedEndDate   DateTime? @map("estimated_end_date") @db.Date
 
   designerAgentId    String? @map("designer_agent_id")
   architectJrAgentId String? @map("architect_jr_agent_id")
@@ -47,13 +56,14 @@ model InteriorProject {
 
   application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   client           Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  district         District?   @relation(fields: [districtId], references: [id], onDelete: SetNull)
   designerAgent    Agent?      @relation("InteriorProjectDesigner", fields: [designerAgentId], references: [id], onDelete: SetNull)
   architectJrAgent Agent?      @relation("InteriorProjectArchitectJr", fields: [architectJrAgentId], references: [id], onDelete: SetNull)
   architectSrAgent Agent?      @relation("InteriorProjectArchitectSr", fields: [architectSrAgentId], references: [id], onDelete: SetNull)
   supervisorAgent  Agent?      @relation("InteriorProjectSupervisor", fields: [supervisorAgentId], references: [id], onDelete: SetNull)
   commercialAgent  Agent?      @relation("InteriorProjectCommercial", fields: [commercialAgentId], references: [id], onDelete: SetNull)
 
-  budgetSections         InteriorProjectSection[]
+  budgets                InteriorBudget[]
   materials              InteriorProjectMaterial[]
   documents              InteriorProjectDocument[]
   payments               InteriorProjectPayment[]
@@ -72,6 +82,7 @@ model InteriorProject {
   @@unique([applicationId, code])
   @@index([applicationId])
   @@index([clientId])
+  @@index([districtId])
   @@index([status])
   @@index([projectType])
   @@index([deletedAt])
@@ -129,6 +140,10 @@ model InteriorProjectPayment {
   concept        String   @map("concept") @db.Text
   /// ABONO | PAGO_FINAL | SALDO | OTHER
   paymentType    String   @default("OTHER") @map("payment_type")
+  /// PEN | USD | EUR; null = moneda del presupuesto (cobros anteriores)
+  currency       String?  @map("currency")
+  /// Tipo de cambio del día (soles por unidad de moneda extranjera)
+  exchangeRate   Decimal? @map("exchange_rate") @db.Decimal(12, 4)
   /// PENDING | PAID | CANCELLED
   status         String   @map("status")
   scheduleItemId String?  @map("schedule_item_id")

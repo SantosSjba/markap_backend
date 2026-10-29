@@ -5,6 +5,7 @@ import { Phone } from '../../../../../shared/domain/value-objects/phone.value-ob
 import type { ApplicationRepository } from '../../../../identity/domain/repositories/application.repository';
 import { APPLICATION_REPOSITORY } from '../../../../identity/domain/repositories/application.repository';
 import type {
+  AgentProjectRole,
   AgentRepository,
   CreateAgentData,
 } from '../../../domain/repositories/agent.repository';
@@ -20,6 +21,7 @@ export interface CreateAgentInput {
   phone?: string | null;
   documentTypeId?: string | null;
   documentNumber?: string | null;
+  roles?: AgentProjectRole[];
 }
 
 @Injectable()
@@ -58,6 +60,7 @@ export class CreateAgentUseCase {
         : null,
       documentTypeId: input.documentTypeId ?? null,
       documentNumber: input.documentNumber ?? null,
+      roles: [...new Set(input.roles ?? [])],
     };
     return this.agentRepository.create(data);
   }

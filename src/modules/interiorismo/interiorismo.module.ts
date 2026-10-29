@@ -15,6 +15,7 @@ import {
   GetInteriorCatalogMaterialByIdUseCase,
   ListInteriorCatalogMaterialsUseCase,
   UpdateInteriorCatalogMaterialUseCase,
+  GetInteriorCatalogMaterialStatsUseCase,
 } from './application/use-cases/interior-catalog-materials/interior-catalog-materials.use-cases';
 import {
   CreateInteriorExecutionActualCostUseCase,
@@ -22,6 +23,9 @@ import {
   CreateInteriorExecutionIncidentUseCase,
   CreateInteriorExecutionTaskUseCase,
   DeleteInteriorExecutionActualCostUseCase,
+  CreateInteriorExecutionMilestoneUseCase,
+  UpdateInteriorExecutionMilestoneUseCase,
+  DeleteInteriorExecutionMilestoneUseCase,
   DeleteInteriorExecutionEvidenceUseCase,
   DeleteInteriorExecutionTaskUseCase,
   GetInteriorExecutionOverviewUseCase,
@@ -47,6 +51,7 @@ import {
   RecordInteriorMaterialPurchaseUseCase,
   UnlinkInteriorSupplierCatalogMaterialUseCase,
   UpdateInteriorMaterialSupplierUseCase,
+  GetInteriorMaterialSupplierStatsUseCase,
 } from './application/use-cases/interior-material-suppliers/interior-material-suppliers.use-cases';
 import {
   DeleteInteriorProjectBudgetAttachmentUseCase,
@@ -56,27 +61,40 @@ import {
 import { DuplicateInteriorProjectBudgetSnapshotUseCase } from './application/use-cases/interior-project-budget/duplicate-budget-snapshot.use-case';
 import { ImportInteriorProjectBudgetFromExcelUseCase } from './application/use-cases/interior-project-budget/import-budget-from-excel.use-case';
 import {
-  CreateInteriorLineItemSupplierPaymentUseCase,
-  CreateInteriorProjectBudgetLineItemUseCase,
-  CreateInteriorProjectBudgetSectionUseCase,
-  DeleteInteriorLineItemSupplierPaymentUseCase,
-  DeleteInteriorProjectBudgetLineItemUseCase,
-  DeleteInteriorProjectBudgetSectionUseCase,
+  ActivateInteriorBudgetVersionUseCase,
+  CreateInteriorBudgetRowsUseCase,
+  CreateInteriorBudgetSupplierPaymentUseCase,
+  DeleteInteriorBudgetRowUseCase,
+  DeleteInteriorBudgetSupplierPaymentUseCase,
   GetInteriorProjectBudgetUseCase,
   GetInteriorProjectSettlementUseCase,
-  UpdateInteriorProjectBudgetLineItemUseCase,
-  UpdateInteriorProjectBudgetSectionUseCase,
+  MoveInteriorBudgetRowUseCase,
+  UpdateInteriorBudgetHeaderUseCase,
+  UpdateInteriorBudgetRowUseCase,
 } from './application/use-cases/interior-project-budget/project-budget.use-cases';
+import { ExportInteriorProjectBudgetExcelUseCase } from './application/use-cases/interior-project-budget/export-budget-excel.use-case';
+import { InteriorBudgetSpreadsheetPort } from './application/ports/interior-budget-spreadsheet.port';
+import { InteriorBudgetSpreadsheetAdapter } from './infrastructure/spreadsheets/interior-budget-spreadsheet.adapter';
 import { RenderInteriorProjectBudgetHtmlUseCase } from './application/use-cases/interior-project-budget/render-interior-project-budget-html.use-case';
 import { SyncInteriorProjectBudgetFromExecutionUseCase } from './application/use-cases/interior-project-budget/sync-budget-from-execution.use-case';
 import { CreateInteriorProjectDocumentUseCase } from './application/use-cases/interior-project-documents/create-interior-project-document.use-case';
 import { DeleteInteriorProjectDocumentUseCase } from './application/use-cases/interior-project-documents/delete-interior-project-document.use-case';
+import { GetInteriorProjectDocumentStatsUseCase } from './application/use-cases/interior-project-documents/get-interior-project-document-stats.use-case';
 import { ListInteriorProjectDocumentsUseCase } from './application/use-cases/interior-project-documents/list-interior-project-documents.use-case';
 import { UpdateInteriorProjectDocumentUseCase } from './application/use-cases/interior-project-documents/update-interior-project-document.use-case';
 import { CreateInteriorProjectUseCase } from './application/use-cases/interior-projects/create-interior-project.use-case';
 import { GetInteriorProjectByIdUseCase } from './application/use-cases/interior-projects/get-interior-project-by-id.use-case';
 import { ListInteriorProjectsUseCase } from './application/use-cases/interior-projects/list-interior-projects.use-case';
 import { UpdateInteriorProjectUseCase } from './application/use-cases/interior-projects/update-interior-project.use-case';
+import {
+  CreateInteriorProjectActivityUseCase,
+  DeleteInteriorProjectActivityUseCase,
+} from './application/use-cases/interior-projects/interior-project-activities.use-cases';
+import {
+  ListInteriorClientPaymentsUseCase,
+  SummarizeInteriorClientProjectsUseCase,
+} from './application/use-cases/interior-projects/interior-client-projects.use-cases';
+import { GetInteriorProjectStatsUseCase } from './application/use-cases/interior-projects/get-interior-project-stats.use-case';
 import { GetInteriorReportsDashboardUseCase } from './application/use-cases/interior-reports/get-interior-reports-dashboard.use-case';
 import { InteriorismoCalendarController } from './presentation/controllers/interiorismo-calendar.controller';
 import { InteriorismoCatalogMaterialsController } from './presentation/controllers/interiorismo-catalog-materials.controller';
@@ -108,16 +126,26 @@ import { InteriorismoReportsController } from './presentation/controllers/interi
     GetInteriorProjectByIdUseCase,
     CreateInteriorProjectUseCase,
     UpdateInteriorProjectUseCase,
+    CreateInteriorProjectActivityUseCase,
+    DeleteInteriorProjectActivityUseCase,
+    GetInteriorProjectStatsUseCase,
+    SummarizeInteriorClientProjectsUseCase,
+    ListInteriorClientPaymentsUseCase,
     GetInteriorProjectBudgetUseCase,
     GetInteriorProjectSettlementUseCase,
-    CreateInteriorProjectBudgetSectionUseCase,
-    UpdateInteriorProjectBudgetSectionUseCase,
-    DeleteInteriorProjectBudgetSectionUseCase,
-    CreateInteriorProjectBudgetLineItemUseCase,
-    UpdateInteriorProjectBudgetLineItemUseCase,
-    DeleteInteriorProjectBudgetLineItemUseCase,
-    CreateInteriorLineItemSupplierPaymentUseCase,
-    DeleteInteriorLineItemSupplierPaymentUseCase,
+    UpdateInteriorBudgetHeaderUseCase,
+    CreateInteriorBudgetRowsUseCase,
+    UpdateInteriorBudgetRowUseCase,
+    MoveInteriorBudgetRowUseCase,
+    DeleteInteriorBudgetRowUseCase,
+    CreateInteriorBudgetSupplierPaymentUseCase,
+    DeleteInteriorBudgetSupplierPaymentUseCase,
+    ActivateInteriorBudgetVersionUseCase,
+    ExportInteriorProjectBudgetExcelUseCase,
+    {
+      provide: InteriorBudgetSpreadsheetPort,
+      useClass: InteriorBudgetSpreadsheetAdapter,
+    },
     RenderInteriorProjectBudgetHtmlUseCase,
     DuplicateInteriorProjectBudgetSnapshotUseCase,
     SyncInteriorProjectBudgetFromExecutionUseCase,
@@ -130,6 +158,7 @@ import { InteriorismoReportsController } from './presentation/controllers/interi
     CreateInteriorCatalogMaterialUseCase,
     UpdateInteriorCatalogMaterialUseCase,
     DeleteInteriorCatalogMaterialUseCase,
+    GetInteriorCatalogMaterialStatsUseCase,
     ListInteriorMaterialSuppliersUseCase,
     GetInteriorMaterialSupplierByIdUseCase,
     CreateInteriorMaterialSupplierUseCase,
@@ -138,6 +167,7 @@ import { InteriorismoReportsController } from './presentation/controllers/interi
     LinkInteriorSupplierCatalogMaterialUseCase,
     UnlinkInteriorSupplierCatalogMaterialUseCase,
     RecordInteriorMaterialPurchaseUseCase,
+    GetInteriorMaterialSupplierStatsUseCase,
     GetInteriorExecutionOverviewUseCase,
     CreateInteriorExecutionTaskUseCase,
     UpdateInteriorExecutionTaskUseCase,
@@ -148,6 +178,9 @@ import { InteriorismoReportsController } from './presentation/controllers/interi
     UpdateInteriorExecutionIncidentUseCase,
     CreateInteriorExecutionActualCostUseCase,
     DeleteInteriorExecutionActualCostUseCase,
+    CreateInteriorExecutionMilestoneUseCase,
+    UpdateInteriorExecutionMilestoneUseCase,
+    DeleteInteriorExecutionMilestoneUseCase,
     PatchInteriorExecutionProgressUseCase,
     GetInteriorFinanceOverviewUseCase,
     CreateInteriorFinanceScheduleUseCase,
@@ -161,6 +194,7 @@ import { InteriorismoReportsController } from './presentation/controllers/interi
     UpdateInteriorCalendarEventUseCase,
     DeleteInteriorCalendarEventUseCase,
     ListInteriorProjectDocumentsUseCase,
+    GetInteriorProjectDocumentStatsUseCase,
     CreateInteriorProjectDocumentUseCase,
     UpdateInteriorProjectDocumentUseCase,
     DeleteInteriorProjectDocumentUseCase,

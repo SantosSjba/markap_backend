@@ -28,27 +28,33 @@ import {
 } from '@nestjs/swagger';
 import { FileStoragePort } from '../../../../shared/application/ports/file-storage.port';
 import { EvidenceUploadDto } from '../../../../shared/presentation/dtos/uploads/upload-requests.dto';
+import { parseDateOnly } from '../../../../shared/domain/utils/peru-date.util';
 import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.guard';
 import type { UploadedFile as MulterUploadedFile } from '../../../../shared/types/uploaded-file.types';
 import {
   CreateInteriorExecutionActualCostUseCase,
   CreateInteriorExecutionEvidenceUseCase,
   CreateInteriorExecutionIncidentUseCase,
+  CreateInteriorExecutionMilestoneUseCase,
   CreateInteriorExecutionTaskUseCase,
   DeleteInteriorExecutionActualCostUseCase,
   DeleteInteriorExecutionEvidenceUseCase,
+  DeleteInteriorExecutionMilestoneUseCase,
   DeleteInteriorExecutionTaskUseCase,
   GetInteriorExecutionOverviewUseCase,
   PatchInteriorExecutionProgressUseCase,
   UpdateInteriorExecutionIncidentUseCase,
+  UpdateInteriorExecutionMilestoneUseCase,
   UpdateInteriorExecutionTaskUseCase,
 } from '../../application/use-cases/interior-execution/interior-execution.use-cases';
 import { CreateInteriorExecutionActualCostDto } from '../dtos/interiorismo-execution/create-execution-actual-cost.dto';
 import { CreateInteriorExecutionEvidenceDto } from '../dtos/interiorismo-execution/create-execution-evidence.dto';
 import { CreateInteriorExecutionIncidentDto } from '../dtos/interiorismo-execution/create-execution-incident.dto';
+import { CreateInteriorExecutionMilestoneDto } from '../dtos/interiorismo-execution/create-execution-milestone.dto';
 import { CreateInteriorExecutionTaskDto } from '../dtos/interiorismo-execution/create-execution-task.dto';
 import { PatchInteriorExecutionProgressDto } from '../dtos/interiorismo-execution/patch-execution-progress.dto';
 import { UpdateInteriorExecutionIncidentDto } from '../dtos/interiorismo-execution/update-execution-incident.dto';
+import { UpdateInteriorExecutionMilestoneDto } from '../dtos/interiorismo-execution/update-execution-milestone.dto';
 import { UpdateInteriorExecutionTaskDto } from '../dtos/interiorismo-execution/update-execution-task.dto';
 
 function parseIsoDate(s?: string | null): Date | null | undefined {
@@ -76,6 +82,9 @@ export class InteriorismoExecutionController {
     private readonly createCostUc: CreateInteriorExecutionActualCostUseCase,
     private readonly deleteCostUc: DeleteInteriorExecutionActualCostUseCase,
     private readonly patchProgressUc: PatchInteriorExecutionProgressUseCase,
+    private readonly createMilestoneUc: CreateInteriorExecutionMilestoneUseCase,
+    private readonly updateMilestoneUc: UpdateInteriorExecutionMilestoneUseCase,
+    private readonly deleteMilestoneUc: DeleteInteriorExecutionMilestoneUseCase,
     private readonly genArchivo: FileStoragePort,
   ) {}
 
@@ -372,6 +381,63 @@ export class InteriorismoExecutionController {
     await this.deleteCostUc.execute(
       projectId,
       costId,
+      applicationSlug ?? 'interiorismo',
+    );
+  }
+
+  @Post('projects/:projectId/milestones')
+  @ApiOperation({ summary: 'Crear hito del cronograma' })
+  async createMilestone(
+    @Param('projectId') projectId: string,
+    @Body() dto: CreateInteriorExecutionMilestoneDto,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.createMilestoneUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+      { title: dto.title, plannedDate: parseDateOnly(dto.plannedDate) },
+    );
+  }
+
+  @Patch('projects/:projectId/milestones/:milestoneId')
+  @ApiOperation({ summary: 'Editar, cumplir o reabrir un hito' })
+  async updateMilestone(
+    @Param('projectId') projectId: string,
+    @Param('milestoneId') milestoneId: string,
+    @Body() dto: UpdateInteriorExecutionMilestoneDto,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.updateMilestoneUc.execute(
+      projectId,
+      milestoneId,
+      applicationSlug ?? 'interiorismo',
+      {
+        title: dto.title,
+        plannedDate:
+          dto.plannedDate !== undefined
+            ? parseDateOnly(dto.plannedDate)
+            : undefined,
+        completedAt:
+          dto.completed === undefined
+            ? undefined
+            : dto.completed
+              ? new Date()
+              : null,
+      },
+    );
+  }
+
+  @Delete('projects/:projectId/milestones/:milestoneId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiResponse({ status: 204 })
+  async deleteMilestone(
+    @Param('projectId') projectId: string,
+    @Param('milestoneId') milestoneId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    await this.deleteMilestoneUc.execute(
+      projectId,
+      milestoneId,
       applicationSlug ?? 'interiorismo',
     );
   }

@@ -2,12 +2,14 @@ export type InteriorCalendarFeedSource =
   | 'MANUAL'
   | 'MILESTONE'
   | 'EXECUTION_TASK'
-  | 'FINANCE_SCHEDULE';
+  | 'FINANCE_SCHEDULE'
+  /** Inicio y entrega estimada del proyecto */
+  | 'PROJECT';
 
 export interface InteriorCalendarFeedItemDto {
   id: string;
   source: InteriorCalendarFeedSource;
-  /** Manual: MEETING | VISIT | INSTALLATION | DEADLINE | TEAM_BLOCK. Derivados: MILESTONE | TASK_* | FINANCE_DUE */
+  /** Manual: MEETING | VISIT | INSTALLATION | DEADLINE | TEAM_BLOCK. Derivados: MILESTONE | TASK_* | FINANCE_DUE | PROJECT_START | PROJECT_END */
   eventType: string;
   title: string;
   description: string | null;
@@ -29,6 +31,7 @@ export interface InteriorCalendarFeedFilters {
   from: Date;
   to: Date;
   projectId?: string;
+  /** Eventos asignados a la persona y lo derivado de los proyectos donde integra el equipo */
   agentId?: string;
 }
 

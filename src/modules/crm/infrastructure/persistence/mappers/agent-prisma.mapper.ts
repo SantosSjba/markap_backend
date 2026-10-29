@@ -1,6 +1,7 @@
 import {
   Agent,
   AgentListItem,
+  type AgentProjectRole,
   type AgentType,
 } from '../../../domain/entities/agent.entity';
 
@@ -14,6 +15,7 @@ type AgentBaseRow = {
   phone: string | null;
   documentTypeId: string | null;
   documentNumber: string | null;
+  roles: string[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -36,6 +38,7 @@ export class AgentPrismaMapper {
       row.phone,
       row.documentTypeId,
       row.documentNumber,
+      row.roles as AgentProjectRole[],
       row.isActive,
       row.createdAt,
       row.updatedAt,
@@ -63,6 +66,7 @@ export class AgentPrismaMapper {
       row.phone,
       row.documentTypeId,
       row.documentNumber,
+      row.roles as AgentProjectRole[],
       row.isActive,
       row.createdAt,
       row.updatedAt,

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { todayDateOnlyLima } from '../../../../../shared/domain/utils/peru-date.util';
 import { PrismaService } from '../../../../../shared/infrastructure/database/prisma/prisma.service';
 import type {
   CreateInteriorMaterialSupplierPayload,
@@ -7,6 +8,8 @@ import type {
   InteriorMaterialSupplierRepository,
   InteriorSupplierCatalogLinkDto,
   InteriorSupplierDetail,
+  InteriorSupplierProjectItemDto,
+  InteriorSupplierStats,
   ListInteriorMaterialSuppliersFilters,
   ListInteriorMaterialSuppliersResult,
   RecordInteriorMaterialPurchasePayload,
@@ -30,6 +33,7 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     quantity: Prisma.Decimal;
     unitPrice: Prisma.Decimal;
     totalAmount: Prisma.Decimal;
+    currency: string;
     invoiceRef: string | null;
     notes: string | null;
     catalogMaterial: { code: string; name: string } | null;
@@ -43,6 +47,7 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
       quantity: num(row.quantity) ?? 0,
       unitPrice: num(row.unitPrice) ?? 0,
       totalAmount: num(row.totalAmount) ?? 0,
+      currency: row.currency,
       invoiceRef: row.invoiceRef,
       notes: row.notes,
     };
@@ -64,6 +69,40 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
       supplierSku: row.supplierSku,
       notes: row.notes,
     };
+  }
+
+  /** Partidas de presupuestos activos con este proveedor (lo comprado en proyectos) */
+  private async loadProjectItems(
+    supplierId: string,
+  ): Promise<InteriorSupplierProjectItemDto[]> {
+    const rows = await this.prisma.interiorBudgetRow.findMany({
+      where: { supplierId, kind: 'ITEM', budget: { isActive: true } },
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        supplierPayments: { select: { amount: true } },
+        budget: {
+          select: {
+            currency: true,
+            project: { select: { id: true, code: true, name: true } },
+          },
+        },
+      },
+    });
+    return rows.map((r) => ({
+      rowId: r.id,
+      description: r.description,
+      status: r.status,
+      cost:
+        r.directCost != null
+          ? num(r.directCost)
+          : r.quantity != null && r.unitPrice != null
+            ? Math.round(Number(r.quantity) * Number(r.unitPrice) * 100) / 100
+            : null,
+      actualCost: num(r.actualCost),
+      paid: r.supplierPayments.reduce((s, p) => s + (num(p.amount) ?? 0), 0),
+      currency: r.budget.currency,
+      project: r.budget.project,
+    }));
   }
 
   private async loadDetail(id: string): Promise<InteriorSupplierDetail | null> {
@@ -102,6 +141,7 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
           catalogMaterial: p.catalogMaterial,
         }),
       ),
+      projectItems: await this.loadProjectItems(row.id),
       updatedAt: row.updatedAt.toISOString(),
     };
   }
@@ -136,7 +176,19 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     const [rows, total] = await Promise.all([
       this.prisma.interiorMaterialSupplier.findMany({
         where,
-        include: { _count: { select: { catalogLinks: true } } },
+        include: {
+          _count: {
+            select: {
+              catalogLinks: true,
+              budgetRows: { where: { budget: { isActive: true } } },
+            },
+          },
+          purchases: {
+            orderBy: { purchasedAt: 'desc' },
+            take: 1,
+            select: { purchasedAt: true },
+          },
+        },
         orderBy: { updatedAt: 'desc' },
         skip: (filters.page - 1) * filters.limit,
         take: filters.limit,
@@ -153,6 +205,8 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
         phone: r.phone,
         email: r.email,
         linkedMaterialsCount: r._count.catalogLinks,
+        projectItemsCount: r._count.budgetRows,
+        lastPurchaseAt: r.purchases[0]?.purchasedAt.toISOString() ?? null,
         updatedAt: r.updatedAt.toISOString(),
       })),
       total,
@@ -165,49 +219,14 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     id: string,
     applicationSlug?: string,
   ): Promise<InteriorSupplierDetail | null> {
-    const row = await this.prisma.interiorMaterialSupplier.findUnique({
-      where: { id },
-      include: {
-        application: { select: { slug: true } },
-        catalogLinks: {
-          include: {
-            catalogMaterial: {
-              select: { code: true, name: true, category: true },
-            },
-          },
-          orderBy: { id: 'asc' },
-        },
-        purchases: {
-          include: {
-            catalogMaterial: { select: { code: true, name: true } },
-          },
-          orderBy: { purchasedAt: 'desc' },
-        },
-      },
-    });
-    if (!row) return null;
-    if (
-      applicationSlug?.trim() &&
-      row.application.slug !== applicationSlug.trim()
-    )
-      return null;
-
-    return {
-      id: row.id,
-      companyName: row.companyName,
-      ruc: row.ruc,
-      contactName: row.contactName,
-      phone: row.phone,
-      email: row.email,
-      catalogLinks: row.catalogLinks.map((l) => this.mapLink(l)),
-      purchases: row.purchases.map((p) =>
-        this.mapPurchase({
-          ...p,
-          catalogMaterial: p.catalogMaterial,
-        }),
-      ),
-      updatedAt: row.updatedAt.toISOString(),
-    };
+    if (applicationSlug?.trim()) {
+      const scoped = await this.prisma.interiorMaterialSupplier.findFirst({
+        where: { id, application: { slug: applicationSlug.trim() } },
+        select: { id: true },
+      });
+      if (!scoped) return null;
+    }
+    return this.loadDetail(id);
   }
 
   async create(
@@ -330,6 +349,7 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
         quantity: qty,
         unitPrice: unit,
         totalAmount,
+        currency: payload.currency || 'PEN',
         invoiceRef: payload.invoiceRef?.trim() || null,
         notes: payload.notes?.trim() || null,
       },
@@ -338,5 +358,41 @@ export class InteriorMaterialSupplierPrismaRepository implements InteriorMateria
     const detail = await this.loadDetail(supplierId);
     if (!detail) throw new Error('No se pudo cargar la compra registrada.');
     return detail;
+  }
+
+  async stats(applicationSlug: string): Promise<InteriorSupplierStats> {
+    const where = { application: { slug: applicationSlug } };
+    // Primer día del mes en Lima (UTC−5)
+    const monthStart = new Date(
+      `${todayDateOnlyLima().slice(0, 7)}-01T05:00:00.000Z`,
+    );
+    const [total, withMaterials, withProjects, purchases] = await Promise.all([
+      this.prisma.interiorMaterialSupplier.count({ where }),
+      this.prisma.interiorMaterialSupplier.count({
+        where: { ...where, catalogLinks: { some: {} } },
+      }),
+      this.prisma.interiorMaterialSupplier.count({
+        where: {
+          ...where,
+          budgetRows: { some: { budget: { isActive: true } } },
+        },
+      }),
+      this.prisma.interiorMaterialPurchase.groupBy({
+        by: ['currency'],
+        where: { supplier: where, purchasedAt: { gte: monthStart } },
+        _sum: { totalAmount: true },
+      }),
+    ]);
+    return {
+      total,
+      withMaterials,
+      withProjects,
+      purchasedThisMonth: purchases
+        .map((p) => ({
+          currency: p.currency,
+          amount: num(p._sum.totalAmount) ?? 0,
+        }))
+        .sort((a, b) => b.amount - a.amount),
+    };
   }
 }

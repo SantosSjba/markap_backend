@@ -10,9 +10,11 @@ import {
   type CreateInteriorExecutionActualCostPayload,
   type CreateInteriorExecutionEvidencePayload,
   type CreateInteriorExecutionIncidentPayload,
+  type CreateInteriorExecutionMilestonePayload,
   type CreateInteriorExecutionTaskPayload,
   type InteriorExecutionRepository,
   type UpdateInteriorExecutionIncidentPayload,
+  type UpdateInteriorExecutionMilestonePayload,
   type UpdateInteriorExecutionTaskPayload,
 } from '../../../domain/repositories/interior-execution.repository';
 
@@ -323,5 +325,64 @@ export class PatchInteriorExecutionProgressUseCase {
     return this.updateProject.execute(projectId, applicationSlug ?? SLUG_DFLT, {
       progressPct,
     });
+  }
+}
+
+@Injectable()
+export class CreateInteriorExecutionMilestoneUseCase {
+  constructor(
+    @Inject(INTERIOR_EXECUTION_REPOSITORY)
+    private readonly repo: InteriorExecutionRepository,
+  ) {}
+
+  async execute(
+    projectId: string,
+    applicationSlug: string | undefined,
+    payload: CreateInteriorExecutionMilestonePayload,
+  ) {
+    await assertProject(this.repo, projectId, applicationSlug);
+    return this.repo.createMilestone(projectId, payload);
+  }
+}
+
+@Injectable()
+export class UpdateInteriorExecutionMilestoneUseCase {
+  constructor(
+    @Inject(INTERIOR_EXECUTION_REPOSITORY)
+    private readonly repo: InteriorExecutionRepository,
+  ) {}
+
+  async execute(
+    projectId: string,
+    milestoneId: string,
+    applicationSlug: string | undefined,
+    payload: UpdateInteriorExecutionMilestonePayload,
+  ) {
+    await assertProject(this.repo, projectId, applicationSlug);
+    const row = await this.repo.updateMilestone(
+      projectId,
+      milestoneId,
+      payload,
+    );
+    if (!row) throw new NotFoundException('Hito no encontrado');
+    return row;
+  }
+}
+
+@Injectable()
+export class DeleteInteriorExecutionMilestoneUseCase {
+  constructor(
+    @Inject(INTERIOR_EXECUTION_REPOSITORY)
+    private readonly repo: InteriorExecutionRepository,
+  ) {}
+
+  async execute(
+    projectId: string,
+    milestoneId: string,
+    applicationSlug: string | undefined,
+  ) {
+    await assertProject(this.repo, projectId, applicationSlug);
+    const ok = await this.repo.deleteMilestone(projectId, milestoneId);
+    if (!ok) throw new NotFoundException('Hito no encontrado');
   }
 }

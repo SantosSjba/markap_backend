@@ -22,7 +22,7 @@ export class InteriorismoReportsController {
   @Get('dashboard')
   @ApiOperation({
     summary:
-      'Dashboard consolidado (ventas/cobranzas, conversión, rentabilidad, productividad, costos, KPIs)',
+      'Dashboard y reportes de proyectos, cobranzas y proveedores por moneda',
   })
   @ApiQuery({
     name: 'applicationSlug',
@@ -32,12 +32,12 @@ export class InteriorismoReportsController {
   @ApiQuery({
     name: 'startDate',
     required: false,
-    description: 'YYYY-MM-DD (UTC)',
+    description: 'YYYY-MM-DD (hora de Lima)',
   })
   @ApiQuery({
     name: 'endDate',
     required: false,
-    description: 'YYYY-MM-DD (UTC)',
+    description: 'YYYY-MM-DD (hora de Lima)',
   })
   async dashboard(
     @Query('applicationSlug') applicationSlug?: string,

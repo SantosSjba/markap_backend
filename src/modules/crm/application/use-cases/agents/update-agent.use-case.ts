@@ -56,6 +56,7 @@ export class UpdateAgentUseCase {
             : Phone.create(String(data.phone)).value,
       documentTypeId: data.documentTypeId,
       documentNumber: data.documentNumber,
+      roles: data.roles === undefined ? undefined : [...new Set(data.roles)],
       isActive: data.isActive,
     });
   }

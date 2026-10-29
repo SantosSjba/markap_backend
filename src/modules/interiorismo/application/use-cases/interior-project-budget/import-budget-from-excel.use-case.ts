@@ -1,37 +1,45 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { BudgetSpreadsheetPort } from '../../../../../shared/application/ports/budget-spreadsheet.port';
-import type { InteriorProjectBudgetRepository } from '../../../domain/repositories/interior-project-budget.repository';
-import { INTERIOR_PROJECT_BUDGET_REPOSITORY } from '../../../domain/repositories/interior-project-budget.repository';
+import { InteriorBudgetSpreadsheetPort } from '../../ports/interior-budget-spreadsheet.port';
+import {
+  INTERIOR_PROJECT_BUDGET_REPOSITORY,
+  type InteriorProjectBudgetRepository,
+} from '../../../domain/repositories/interior-project-budget.repository';
 
+/**
+ * Importa un Excel de presupuesto (formato Markap Spaces o PRIZE) al presupuesto activo.
+ * `replace` borra las filas actuales; si no, las importadas se agregan al final.
+ */
 @Injectable()
 export class ImportInteriorProjectBudgetFromExcelUseCase {
   constructor(
-    private readonly spreadsheet: BudgetSpreadsheetPort,
+    private readonly spreadsheet: InteriorBudgetSpreadsheetPort,
     @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
     private readonly repo: InteriorProjectBudgetRepository,
   ) {}
 
-  execute(
+  async execute(
     projectId: string,
-    file: { buffer: Buffer; originalname?: string; mimetype?: string },
+    file: { buffer: Buffer; originalname?: string },
     options: { replace?: boolean } = {},
     applicationSlug = 'interiorismo',
   ) {
-    if (!file.buffer?.length) {
+    if (!file.buffer?.length)
       throw new BadRequestException('Archivo Excel vacío');
-    }
     const parsed = this.spreadsheet.parse(file.buffer);
-    return this.repo
-      .importBudgetSections(
-        projectId,
-        parsed.sections,
-        options.replace ?? false,
-        applicationSlug,
-      )
-      .then((result) => ({
-        ...result,
+    const result = await this.repo.importRows(
+      projectId,
+      parsed.budget,
+      options.replace ?? false,
+      applicationSlug,
+    );
+    return {
+      ...result,
+      import: {
         sheetName: parsed.sheetName,
+        format: parsed.format,
+        warnings: parsed.warnings,
         sourceFileName: file.originalname ?? null,
-      }));
+      },
+    };
   }
 }

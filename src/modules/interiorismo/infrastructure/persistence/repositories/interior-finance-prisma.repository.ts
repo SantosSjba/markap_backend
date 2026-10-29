@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { formatDateOnly } from '../../../../../shared/domain/utils/peru-date.util';
-import { getProjectBudgetPriceTotal } from '../../../../../shared/infrastructure/database/prisma/helpers/project-budget-query.helper';
+import { getInteriorBudgetTotal } from '../helpers/interior-budget-total.helper';
 import {
   Atomic,
   PrismaService,
@@ -130,23 +130,23 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     });
     if (!project || project.application.slug !== slug) return null;
 
-    const [schedules, payments, costs, budgetPriceTotal, sectionCount] =
-      await Promise.all([
-        this.prisma.interiorFinanceIncomeSchedule.findMany({
-          where: { projectId },
-          orderBy: [{ sortOrder: 'asc' }, { dueDate: 'asc' }],
-        }),
-        this.prisma.interiorProjectPayment.findMany({
-          where: { projectId },
-          orderBy: { paidAt: 'desc' },
-        }),
-        this.prisma.interiorExecutionActualCost.findMany({
-          where: { projectId },
-          orderBy: { occurredAt: 'desc' },
-        }),
-        getProjectBudgetPriceTotal(this.prisma, projectId),
-        this.prisma.interiorProjectSection.count({ where: { projectId } }),
-      ]);
+    const [schedules, payments, costs, budgetSummary] = await Promise.all([
+      this.prisma.interiorFinanceIncomeSchedule.findMany({
+        where: { projectId },
+        orderBy: [{ sortOrder: 'asc' }, { dueDate: 'asc' }],
+      }),
+      this.prisma.interiorProjectPayment.findMany({
+        where: { projectId },
+        orderBy: { paidAt: 'desc' },
+      }),
+      this.prisma.interiorExecutionActualCost.findMany({
+        where: { projectId },
+        orderBy: { occurredAt: 'desc' },
+      }),
+      getInteriorBudgetTotal(this.prisma, projectId),
+    ]);
+    const budgetPriceTotal = budgetSummary.total;
+    const sectionCount = budgetSummary.rowCount;
 
     const schedulePaidMap = new Map<string, number>();
     const groupedPaid = await this.prisma.interiorProjectPayment.groupBy({
@@ -184,6 +184,8 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       paymentType: p.paymentType ?? 'OTHER',
       status: p.status,
       scheduleItemId: p.scheduleItemId,
+      currency: p.currency ?? null,
+      exchangeRate: p.exchangeRate != null ? num(p.exchangeRate) : null,
     }));
 
     const expenseLines: InteriorFinanceExpenseLineDto[] = costs.map((c) => ({
@@ -428,6 +430,11 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
         paymentType: payload.paymentType?.trim() || 'OTHER',
         status: payload.status.trim(),
         scheduleItemId,
+        currency: payload.currency || null,
+        exchangeRate:
+          payload.exchangeRate != null
+            ? new Prisma.Decimal(payload.exchangeRate)
+            : null,
       },
     });
 
@@ -441,6 +448,8 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       paymentType: row.paymentType ?? 'OTHER',
       status: row.status,
       scheduleItemId: row.scheduleItemId,
+      currency: row.currency ?? null,
+      exchangeRate: row.exchangeRate != null ? num(row.exchangeRate) : null,
     };
   }
 
@@ -482,6 +491,14 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
     if (payload.paymentType !== undefined)
       patch.paymentType = payload.paymentType.trim();
     if (payload.status !== undefined) patch.status = payload.status.trim();
+    if (payload.currency !== undefined)
+      patch.currency = payload.currency || null;
+    if (payload.exchangeRate !== undefined) {
+      patch.exchangeRate =
+        payload.exchangeRate === null
+          ? null
+          : new Prisma.Decimal(payload.exchangeRate);
+    }
     if (payload.scheduleItemId !== undefined) {
       patch.scheduleItem = scheduleItemId
         ? { connect: { id: scheduleItemId } }
@@ -511,6 +528,9 @@ export class InteriorFinancePrismaRepository implements InteriorFinanceRepositor
       paymentType: updated.paymentType ?? 'OTHER',
       status: updated.status,
       scheduleItemId: updated.scheduleItemId,
+      currency: updated.currency ?? null,
+      exchangeRate:
+        updated.exchangeRate != null ? num(updated.exchangeRate) : null,
     };
   }
 

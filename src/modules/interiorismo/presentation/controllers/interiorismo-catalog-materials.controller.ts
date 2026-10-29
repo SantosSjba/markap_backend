@@ -37,6 +37,7 @@ import {
   GetInteriorCatalogMaterialByIdUseCase,
   ListInteriorCatalogMaterialsUseCase,
   UpdateInteriorCatalogMaterialUseCase,
+  GetInteriorCatalogMaterialStatsUseCase,
 } from '../../application/use-cases/interior-catalog-materials/interior-catalog-materials.use-cases';
 import { CreateInteriorCatalogMaterialDto } from '../dtos/interiorismo-catalog-materials/create-catalog-material.dto';
 import { UpdateInteriorCatalogMaterialDto } from '../dtos/interiorismo-catalog-materials/update-catalog-material.dto';
@@ -53,6 +54,7 @@ export class InteriorismoCatalogMaterialsController {
     private readonly createUc: CreateInteriorCatalogMaterialUseCase,
     private readonly updateUc: UpdateInteriorCatalogMaterialUseCase,
     private readonly deleteUc: DeleteInteriorCatalogMaterialUseCase,
+    private readonly statsUc: GetInteriorCatalogMaterialStatsUseCase,
     private readonly genArchivo: FileStoragePort,
   ) {}
 
@@ -63,12 +65,14 @@ export class InteriorismoCatalogMaterialsController {
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'category', required: false })
+  @ApiQuery({ name: 'stock', required: false, description: 'OUT = sin stock' })
   async list(
     @Query('applicationSlug') applicationSlug?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('category') category?: string,
+    @Query('stock') stock?: string,
   ) {
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'interiorismo',
@@ -76,7 +80,15 @@ export class InteriorismoCatalogMaterialsController {
       limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       search: search?.trim() || undefined,
       category: category?.trim() || undefined,
+      stock: stock === 'OUT' ? 'OUT' : undefined,
     });
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Indicadores del catálogo de materiales' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async stats(@Query('applicationSlug') applicationSlug?: string) {
+    return this.statsUc.execute(applicationSlug ?? 'interiorismo');
   }
 
   @Post('upload')
@@ -152,6 +164,8 @@ export class InteriorismoCatalogMaterialsController {
       brand: dto.brand,
       unit: dto.unit,
       price: dto.price,
+      currency: dto.currency ?? 'PEN',
+      description: dto.description ?? null,
       stock: dto.stock,
       technicalSheetUrl: dto.technicalSheetUrl ?? null,
       imageUrls: dto.imageUrls,
@@ -175,7 +189,10 @@ export class InteriorismoCatalogMaterialsController {
     @Body() dto: UpdateInteriorCatalogMaterialDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateUc.execute(id, applicationSlug ?? 'interiorismo', dto);
+    return this.updateUc.execute(id, applicationSlug ?? 'interiorismo', {
+      ...dto,
+      currency: dto.currency ?? undefined,
+    });
   }
 
   @Delete(':id')

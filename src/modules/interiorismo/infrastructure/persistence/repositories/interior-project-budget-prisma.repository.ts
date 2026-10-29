@@ -1,29 +1,34 @@
+import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import {
-  computeEmergencyUtility,
-  computeLineItemPricing,
-  computeLineItemPurchase,
-  computeProjectSettlement,
-} from '../../../../../shared/domain/budgets/project-budget-calculations';
 import { formatDateOnly } from '../../../../../shared/domain/utils/peru-date.util';
+import { computeProjectSettlement } from '../../../domain/budget/project-settlement.calculator';
 import { PrismaService } from '../../../../../shared/infrastructure/database/prisma/prisma.service';
+import {
+  computeBudgetSheet,
+  round2,
+  type BudgetIgvMode,
+  type BudgetMarginMode,
+  type BudgetRowKind,
+} from '../../../domain/budget/budget-sheet.calculator';
 import type {
-  CreateLineItemSupplierPaymentPayload,
-  CreateProjectBudgetLineItemPayload,
-  CreateProjectBudgetSectionPayload,
+  BudgetRowFields,
+  BudgetRowPosition,
+  BudgetRowStatus,
+  BudgetSheetDto,
+  BudgetStatus,
+  ImportedBudget,
+  ImportedBudgetRow,
   InteriorProjectBudgetRepository,
-  ProjectBudgetDetailDto,
-  ProjectBudgetLineItemDto,
-  ProjectBudgetSectionDto,
   ProjectSettlementDto,
-  UpdateProjectBudgetLineItemPayload,
-  UpdateProjectBudgetSectionPayload,
+  UpdateBudgetHeaderPayload,
 } from '../../../domain/repositories/interior-project-budget.repository';
+
+type Tx = Prisma.TransactionClient;
 
 function num(v: unknown): number {
   if (v === null || v === undefined) return 0;
@@ -37,550 +42,678 @@ function numOrNull(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function dec(v: number | null | undefined): Prisma.Decimal | null | undefined {
+  if (v === undefined) return undefined;
+  return v === null ? null : new Prisma.Decimal(v);
+}
+
+const text = (v: string | null | undefined) =>
+  v === undefined ? undefined : v?.trim() || null;
+
+/** Campos de fila → columnas Prisma (solo los enviados) */
+function rowData(f: BudgetRowFields) {
+  return {
+    kind: f.kind,
+    code: text(f.code),
+    description: f.description === undefined ? undefined : f.description.trim(),
+    unit: text(f.unit),
+    quantity: dec(f.quantity),
+    unitPrice: dec(f.unitPrice),
+    directCost: dec(f.directCost),
+    actualCost: dec(f.actualCost),
+    utilityPctOverride: dec(f.utilityPctOverride),
+    hasIgv: f.hasIgv,
+    supplierId: f.supplierId === undefined ? undefined : f.supplierId || null,
+    supplierName: text(f.supplierName),
+    status: f.status,
+    note: text(f.note),
+  };
+}
+
 @Injectable()
 export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBudgetRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  // ── Alcance ──
 
   private async assertProject(
     projectId: string,
     applicationSlug = 'interiorismo',
   ) {
-    const app = await this.prisma.application.findUnique({
-      where: { slug: applicationSlug },
-    });
-    if (!app) throw new NotFoundException('Aplicación no encontrada');
     const project = await this.prisma.interiorProject.findFirst({
-      where: { id: projectId, applicationId: app.id, deletedAt: null },
+      where: {
+        id: projectId,
+        deletedAt: null,
+        application: { slug: applicationSlug },
+      },
     });
     if (!project) throw new NotFoundException('Proyecto no encontrado');
     return project;
   }
 
-  private mapLineItem(
-    row: {
-      id: string;
-      sectionId: string;
-      sortOrder: number;
-      description: string;
-      budgetedCost: Prisma.Decimal;
-      hasIgv: boolean;
-      actualPurchaseCost: Prisma.Decimal | null;
-      supplierName: string | null;
-      supplierId: string | null;
-      supplierPayments: Array<{
-        id: string;
-        paymentNumber: number;
-        amount: Prisma.Decimal;
-        paidAt: Date;
-      }>;
-    },
-    utilityPct: number,
-    igvPct: number,
-  ): ProjectBudgetLineItemDto {
-    const pricing = computeLineItemPricing({
-      budgetedCost: num(row.budgetedCost),
-      hasIgv: row.hasIgv,
-      utilityPct,
-      igvPct,
-    });
-    const purchase = computeLineItemPurchase({
-      actualPurchaseCost: numOrNull(row.actualPurchaseCost),
-      supplierPayments: row.supplierPayments.map((p) => ({
-        amount: num(p.amount),
-      })),
-    });
-    return {
-      id: row.id,
-      sectionId: row.sectionId,
-      sortOrder: row.sortOrder,
-      description: row.description,
-      budgetedCost: num(row.budgetedCost),
-      hasIgv: row.hasIgv,
-      actualPurchaseCost: numOrNull(row.actualPurchaseCost),
-      supplierName: row.supplierName,
-      supplierId: row.supplierId,
-      utilityAmount: pricing.utilityAmount,
-      totalBeforeIgv: pricing.totalBeforeIgv,
-      igvAmount: pricing.igvAmount,
-      price: pricing.price,
-      emergencyUtilityAmount: computeEmergencyUtility(
-        num(row.budgetedCost),
-        numOrNull(row.actualPurchaseCost),
-      ),
-      totalSupplierPayments: purchase.totalSupplierPayments,
-      supplierBalance: purchase.supplierBalance,
-      supplierPayments: row.supplierPayments.map((p) => ({
-        id: p.id,
-        paymentNumber: p.paymentNumber,
-        amount: num(p.amount),
-        paidAt: formatDateOnly(p.paidAt),
-      })),
-    };
-  }
-
-  private async loadBudget(
+  /** Presupuesto activo del proyecto; si no existe se crea la v1 con los valores del proyecto */
+  private async activeBudgetId(
     projectId: string,
     applicationSlug?: string,
-  ): Promise<ProjectBudgetDetailDto | null> {
+  ): Promise<string> {
     const project = await this.assertProject(projectId, applicationSlug);
-    const utilityPct = num(project.defaultUtilityPct);
-    const igvPct = num(project.defaultIgvPct);
-
-    const sections = await this.prisma.interiorProjectSection.findMany({
+    const active = await this.prisma.interiorBudget.findFirst({
+      where: { projectId, isActive: true },
+      select: { id: true },
+    });
+    if (active) return active.id;
+    const last = await this.prisma.interiorBudget.findFirst({
       where: { projectId },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { version: 'desc' },
+      select: { id: true },
+    });
+    if (last) {
+      await this.prisma.interiorBudget.update({
+        where: { id: last.id },
+        data: { isActive: true },
+      });
+      return last.id;
+    }
+    const created = await this.prisma.interiorBudget.create({
+      data: {
+        projectId,
+        version: 1,
+        isActive: true,
+        currency: project.currency,
+        exchangeRate: project.exchangeRate,
+        utilityPct: project.defaultUtilityPct,
+        overheadPct: project.defaultOverheadPct,
+        igvPct: project.defaultIgvPct,
+        marginMode: num(project.defaultOverheadPct) > 0 ? 'GLOBAL' : 'PER_LINE',
+      },
+    });
+    return created.id;
+  }
+
+  private async findRow(budgetId: string, rowId: string) {
+    const row = await this.prisma.interiorBudgetRow.findFirst({
+      where: { id: rowId, budgetId },
+    });
+    if (!row) throw new NotFoundException('Fila del presupuesto no encontrada');
+    return row;
+  }
+
+  private async assertParent(budgetId: string, parentId: string | null) {
+    if (!parentId) return;
+    const parent = await this.findRow(budgetId, parentId);
+    if (parent.kind !== 'GROUP') {
+      throw new BadRequestException('Solo un grupo puede contener filas');
+    }
+  }
+
+  // ── Hoja ──
+
+  private async buildSheet(budgetId: string): Promise<BudgetSheetDto> {
+    const budget = await this.prisma.interiorBudget.findUniqueOrThrow({
+      where: { id: budgetId },
       include: {
-        lineItems: {
-          orderBy: { sortOrder: 'asc' },
-          include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
+        project: {
+          select: { id: true, code: true, name: true, currency: true },
         },
+        rows: { include: { supplierPayments: { orderBy: { paidAt: 'asc' } } } },
+      },
+    });
+    const versions = await this.prisma.interiorBudget.findMany({
+      where: { projectId: budget.projectId },
+      orderBy: { version: 'asc' },
+      select: {
+        id: true,
+        version: true,
+        isActive: true,
+        status: true,
+        createdAt: true,
       },
     });
 
-    let budgetedCostTotal = 0;
-    let utilityTotal = 0;
-    let igvTotal = 0;
-    let priceTotal = 0;
-    let actualPurchaseCostTotal = 0;
-
-    const mappedSections: ProjectBudgetSectionDto[] = sections.map(
-      (section) => {
-        const lineItems = section.lineItems.map((item) =>
-          this.mapLineItem(item, utilityPct, igvPct),
-        );
-        const sectionTotal = lineItems.reduce(
-          (sum, item) => sum + item.price,
-          0,
-        );
-        for (const item of lineItems) {
-          budgetedCostTotal += item.budgetedCost;
-          utilityTotal += item.utilityAmount;
-          igvTotal += item.igvAmount;
-          priceTotal += item.price;
-          if (item.actualPurchaseCost != null)
-            actualPurchaseCostTotal += item.actualPurchaseCost;
-        }
-        return {
-          id: section.id,
-          name: section.name,
-          sortOrder: section.sortOrder,
-          lineItems,
-          sectionTotal: Math.round(sectionTotal * 100) / 100,
-        };
-      },
+    const header = {
+      currency: budget.currency,
+      exchangeRate: numOrNull(budget.exchangeRate),
+      marginMode: budget.marginMode as BudgetMarginMode,
+      utilityPct: num(budget.utilityPct),
+      overheadPct: num(budget.overheadPct),
+      igvMode: budget.igvMode as BudgetIgvMode,
+      igvPct: num(budget.igvPct),
+    };
+    const byId = new Map(budget.rows.map((r) => [r.id, r]));
+    const sheet = computeBudgetSheet(
+      header,
+      budget.rows.map((r) => ({
+        id: r.id,
+        parentId: r.parentId,
+        sortOrder: r.sortOrder,
+        kind: r.kind as BudgetRowKind,
+        code: r.code,
+        description: r.description,
+        unit: r.unit,
+        quantity: numOrNull(r.quantity),
+        unitPrice: numOrNull(r.unitPrice),
+        directCost: numOrNull(r.directCost),
+        actualCost: numOrNull(r.actualCost),
+        utilityPctOverride: numOrNull(r.utilityPctOverride),
+        hasIgv: r.hasIgv,
+        supplierPaymentsTotal: round2(
+          r.supplierPayments.reduce((s, p) => s + num(p.amount), 0),
+        ),
+      })),
     );
 
     return {
-      projectId: project.id,
-      projectCode: project.code,
-      projectName: project.name,
-      city: project.city,
-      interventionLevel: project.interventionLevel,
-      executionTimeNote: project.executionTimeNote,
-      currency: project.currency,
-      defaultUtilityPct: utilityPct,
-      defaultIgvPct: igvPct,
-      sections: mappedSections,
-      totals: {
-        budgetedCostTotal: Math.round(budgetedCostTotal * 100) / 100,
-        utilityTotal: Math.round(utilityTotal * 100) / 100,
-        igvTotal: Math.round(igvTotal * 100) / 100,
-        priceTotal: Math.round(priceTotal * 100) / 100,
-        actualPurchaseCostTotal:
-          Math.round(actualPurchaseCostTotal * 100) / 100,
+      project: budget.project,
+      budget: {
+        id: budget.id,
+        projectId: budget.projectId,
+        version: budget.version,
+        isActive: budget.isActive,
+        number: budget.number,
+        issuedAt: budget.issuedAt ? formatDateOnly(budget.issuedAt) : null,
+        executionTerm: budget.executionTerm,
+        executedBy: budget.executedBy,
+        status: budget.status as BudgetStatus,
+        ...header,
+        exchangeRateDate: budget.exchangeRateDate
+          ? formatDateOnly(budget.exchangeRateDate)
+          : null,
+        terms: budget.terms,
+        visibleColumns: Array.isArray(budget.visibleColumns)
+          ? (budget.visibleColumns as string[])
+          : null,
       },
+      versions: versions.map((v) => ({
+        ...v,
+        status: v.status as BudgetStatus,
+        createdAt: v.createdAt.toISOString(),
+      })),
+      rows: sheet.rows.map((r) => {
+        const raw = byId.get(r.id)!;
+        return {
+          ...r,
+          manualCode: raw.code,
+          status: raw.status as BudgetRowStatus,
+          note: raw.note,
+          supplierId: raw.supplierId,
+          supplierName: raw.supplierName,
+          supplierPayments: raw.supplierPayments.map((p) => ({
+            id: p.id,
+            amount: num(p.amount),
+            paidAt: formatDateOnly(p.paidAt),
+            note: p.note,
+          })),
+        };
+      }),
+      totals: sheet.totals,
     };
   }
 
-  async getBudget(
-    projectId: string,
-    applicationSlug?: string,
-  ): Promise<ProjectBudgetDetailDto | null> {
-    return this.loadBudget(projectId, applicationSlug);
+  async getSheet(projectId: string, applicationSlug?: string) {
+    return this.buildSheet(
+      await this.activeBudgetId(projectId, applicationSlug),
+    );
   }
 
   async getSettlement(
     projectId: string,
     applicationSlug?: string,
-  ): Promise<ProjectSettlementDto | null> {
-    const budget = await this.loadBudget(projectId, applicationSlug);
-    if (!budget) return null;
-
+  ): Promise<ProjectSettlementDto> {
+    const sheet = await this.getSheet(projectId, applicationSlug);
     const payments = await this.prisma.interiorProjectPayment.findMany({
       where: { projectId },
-      orderBy: { paidAt: 'asc' },
+      select: {
+        amount: true,
+        currency: true,
+        exchangeRate: true,
+        paymentType: true,
+        status: true,
+      },
     });
-
-    const lineItemPrices = budget.sections.flatMap((s) =>
-      s.lineItems.map((i) => i.price),
-    );
-    const lineItemActualCosts = budget.sections.flatMap((s) =>
-      s.lineItems.map((i) => i.actualPurchaseCost),
-    );
-
-    const settlement = computeProjectSettlement({
-      lineItemPrices,
-      lineItemActualCosts,
-      clientPayments: payments.map((p) => ({
+    return computeProjectSettlement(
+      {
+        ...sheet.totals,
+        supplierBalance: sheet.rows
+          .filter(
+            (r) =>
+              r.kind === 'ITEM' &&
+              (r.supplierId ||
+                r.supplierName?.trim() ||
+                r.supplierPaymentsTotal > 0),
+          )
+          .reduce((sum, r) => sum + Math.max(0, r.supplierBalance ?? 0), 0),
+      },
+      {
+        currency: sheet.budget.currency,
+        exchangeRate: sheet.budget.exchangeRate,
+      },
+      payments.map((p) => ({
         amount: num(p.amount),
+        currency: p.currency,
+        exchangeRate: numOrNull(p.exchangeRate),
         paymentType: p.paymentType,
         status: p.status,
       })),
-    });
-
-    const totalSupplierPayments = budget.sections
-      .flatMap((s) => s.lineItems)
-      .reduce((sum, item) => sum + item.totalSupplierPayments, 0);
-
-    return {
-      ...settlement,
-      igvTotal: budget.totals.igvTotal,
-      totalSupplierPayments: Math.round(totalSupplierPayments * 100) / 100,
-    };
-  }
-
-  async createSection(
-    projectId: string,
-    payload: CreateProjectBudgetSectionPayload,
-    applicationSlug?: string,
-  ): Promise<ProjectBudgetSectionDto> {
-    await this.assertProject(projectId, applicationSlug);
-    const maxOrder = await this.prisma.interiorProjectSection.aggregate({
-      where: { projectId },
-      _max: { sortOrder: true },
-    });
-    const section = await this.prisma.interiorProjectSection.create({
-      data: {
-        projectId,
-        name: payload.name.trim(),
-        sortOrder: payload.sortOrder ?? (maxOrder._max.sortOrder ?? -1) + 1,
-      },
-      include: {
-        lineItems: { include: { supplierPayments: true } },
-      },
-    });
-    return {
-      id: section.id,
-      name: section.name,
-      sortOrder: section.sortOrder,
-      lineItems: [],
-      sectionTotal: 0,
-    };
-  }
-
-  async updateSection(
-    projectId: string,
-    sectionId: string,
-    payload: UpdateProjectBudgetSectionPayload,
-    applicationSlug?: string,
-  ): Promise<ProjectBudgetSectionDto> {
-    const project = await this.assertProject(projectId, applicationSlug);
-    const section = await this.prisma.interiorProjectSection.findFirst({
-      where: { id: sectionId, projectId },
-      include: {
-        lineItems: {
-          include: { supplierPayments: true },
-          orderBy: { sortOrder: 'asc' },
-        },
-      },
-    });
-    if (!section) throw new NotFoundException('Sección no encontrada');
-
-    const updated = await this.prisma.interiorProjectSection.update({
-      where: { id: sectionId },
-      data: {
-        ...(payload.name !== undefined ? { name: payload.name.trim() } : {}),
-        ...(payload.sortOrder !== undefined
-          ? { sortOrder: payload.sortOrder }
-          : {}),
-      },
-      include: {
-        lineItems: {
-          orderBy: { sortOrder: 'asc' },
-          include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
-        },
-      },
-    });
-
-    const utilityPct = num(project.defaultUtilityPct);
-    const igvPct = num(project.defaultIgvPct);
-    const lineItems = updated.lineItems.map((item) =>
-      this.mapLineItem(item, utilityPct, igvPct),
-    );
-    return {
-      id: updated.id,
-      name: updated.name,
-      sortOrder: updated.sortOrder,
-      lineItems,
-      sectionTotal:
-        Math.round(lineItems.reduce((s, i) => s + i.price, 0) * 100) / 100,
-    };
-  }
-
-  async deleteSection(
-    projectId: string,
-    sectionId: string,
-    applicationSlug?: string,
-  ): Promise<void> {
-    await this.assertProject(projectId, applicationSlug);
-    const section = await this.prisma.interiorProjectSection.findFirst({
-      where: { id: sectionId, projectId },
-    });
-    if (!section) throw new NotFoundException('Sección no encontrada');
-    await this.prisma.interiorProjectSection.delete({
-      where: { id: sectionId },
-    });
-  }
-
-  async createLineItem(
-    projectId: string,
-    payload: CreateProjectBudgetLineItemPayload,
-    applicationSlug?: string,
-  ): Promise<ProjectBudgetLineItemDto> {
-    const project = await this.assertProject(projectId, applicationSlug);
-    const section = await this.prisma.interiorProjectSection.findFirst({
-      where: { id: payload.sectionId, projectId },
-    });
-    if (!section) throw new NotFoundException('Sección no encontrada');
-
-    const maxOrder = await this.prisma.interiorProjectLineItem.aggregate({
-      where: { sectionId: payload.sectionId },
-      _max: { sortOrder: true },
-    });
-
-    const row = await this.prisma.interiorProjectLineItem.create({
-      data: {
-        sectionId: payload.sectionId,
-        sortOrder: payload.sortOrder ?? (maxOrder._max.sortOrder ?? -1) + 1,
-        description: payload.description.trim(),
-        budgetedCost: new Prisma.Decimal(payload.budgetedCost),
-        hasIgv: payload.hasIgv ?? false,
-        actualPurchaseCost:
-          payload.actualPurchaseCost != null
-            ? new Prisma.Decimal(payload.actualPurchaseCost)
-            : null,
-        supplierName: payload.supplierName?.trim() || null,
-        supplierId: payload.supplierId ?? null,
-      },
-      include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
-    });
-
-    return this.mapLineItem(
-      row,
-      num(project.defaultUtilityPct),
-      num(project.defaultIgvPct),
     );
   }
 
-  async updateLineItem(
+  async updateHeader(
     projectId: string,
-    lineItemId: string,
-    payload: UpdateProjectBudgetLineItemPayload,
+    p: UpdateBudgetHeaderPayload,
     applicationSlug?: string,
-  ): Promise<ProjectBudgetLineItemDto> {
-    const project = await this.assertProject(projectId, applicationSlug);
-    const existing = await this.prisma.interiorProjectLineItem.findFirst({
-      where: { id: lineItemId, section: { projectId } },
+  ) {
+    const budgetId = await this.activeBudgetId(projectId, applicationSlug);
+    await this.prisma.interiorBudget.update({
+      where: { id: budgetId },
+      data: {
+        number: text(p.number),
+        issuedAt: p.issuedAt,
+        executionTerm: text(p.executionTerm),
+        executedBy: text(p.executedBy),
+        status: p.status,
+        currency: p.currency,
+        exchangeRate: dec(p.exchangeRate),
+        exchangeRateDate: p.exchangeRateDate,
+        marginMode: p.marginMode,
+        utilityPct: dec(p.utilityPct) ?? undefined,
+        overheadPct: dec(p.overheadPct) ?? undefined,
+        igvMode: p.igvMode,
+        igvPct: dec(p.igvPct) ?? undefined,
+        terms: text(p.terms),
+        visibleColumns:
+          p.visibleColumns === undefined
+            ? undefined
+            : p.visibleColumns === null
+              ? Prisma.DbNull
+              : p.visibleColumns,
+      },
     });
-    if (!existing) throw new NotFoundException('Partida no encontrada');
+    return this.buildSheet(budgetId);
+  }
 
-    let resolvedSupplierName: string | null | undefined;
-    if (payload.supplierId !== undefined) {
-      if (payload.supplierId === null) {
-        resolvedSupplierName =
-          payload.supplierName !== undefined
-            ? payload.supplierName?.trim() || null
-            : undefined;
-      } else {
-        const supplier = await this.prisma.interiorMaterialSupplier.findUnique({
-          where: { id: payload.supplierId },
+  // ── Filas ──
+
+  /** Renumera los hermanos de `parentId` con el orden dado */
+  private async renumber(tx: Tx, ids: string[]) {
+    await Promise.all(
+      ids.map((id, i) =>
+        tx.interiorBudgetRow.update({ where: { id }, data: { sortOrder: i } }),
+      ),
+    );
+  }
+
+  private async siblingIds(tx: Tx, budgetId: string, parentId: string | null) {
+    const rows = await tx.interiorBudgetRow.findMany({
+      where: { budgetId, parentId },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      select: { id: true },
+    });
+    return rows.map((r) => r.id);
+  }
+
+  async createRows(
+    projectId: string,
+    position: BudgetRowPosition,
+    rows: BudgetRowFields[],
+    applicationSlug?: string,
+  ) {
+    const budgetId = await this.activeBudgetId(projectId, applicationSlug);
+    await this.assertParent(budgetId, position.parentId);
+    if (!rows.length)
+      throw new BadRequestException('No hay filas para agregar');
+
+    const createdRowIds = rows.map(() => randomUUID());
+    await this.prisma.$transaction(async (tx) => {
+      const siblings = await this.siblingIds(tx, budgetId, position.parentId);
+      const afterIdx = position.afterRowId
+        ? siblings.indexOf(position.afterRowId)
+        : siblings.length - 1;
+      if (position.afterRowId && afterIdx < 0) {
+        throw new BadRequestException(
+          'La fila de referencia no está en ese grupo',
+        );
+      }
+      for (const [i, fields] of rows.entries()) {
+        await tx.interiorBudgetRow.create({
+          data: {
+            ...rowData(fields),
+            id: createdRowIds[i],
+            budgetId,
+            parentId: position.parentId,
+            kind: fields.kind ?? 'ITEM',
+            description: fields.description?.trim() ?? '',
+          },
         });
-        if (!supplier) throw new NotFoundException('Proveedor no encontrado');
-        resolvedSupplierName = supplier.companyName;
+      }
+      siblings.splice(afterIdx + 1, 0, ...createdRowIds);
+      await this.renumber(tx, siblings);
+    });
+    return { ...(await this.buildSheet(budgetId)), createdRowIds };
+  }
+
+  async updateRow(
+    projectId: string,
+    rowId: string,
+    payload: BudgetRowFields,
+    applicationSlug?: string,
+  ) {
+    const budgetId = await this.activeBudgetId(projectId, applicationSlug);
+    const row = await this.findRow(budgetId, rowId);
+    if (payload.kind && payload.kind !== 'GROUP' && row.kind === 'GROUP') {
+      const kids = await this.prisma.interiorBudgetRow.count({
+        where: { parentId: rowId },
+      });
+      if (kids) {
+        throw new BadRequestException(
+          'El grupo tiene filas dentro; muévalas antes de convertirlo',
+        );
       }
     }
+    if (payload.supplierId) {
+      const supplier = await this.prisma.interiorMaterialSupplier.findUnique({
+        where: { id: payload.supplierId },
+        select: { companyName: true },
+      });
+      if (!supplier) throw new BadRequestException('Proveedor no válido');
+      payload = { ...payload, supplierName: supplier.companyName };
+    }
+    await this.prisma.interiorBudgetRow.update({
+      where: { id: rowId },
+      data: rowData(payload),
+    });
+    return this.buildSheet(budgetId);
+  }
 
-    const row = await this.prisma.interiorProjectLineItem.update({
-      where: { id: lineItemId },
+  async moveRow(
+    projectId: string,
+    rowId: string,
+    target: { parentId: string | null; index: number },
+    applicationSlug?: string,
+  ) {
+    const budgetId = await this.activeBudgetId(projectId, applicationSlug);
+    const row = await this.findRow(budgetId, rowId);
+    await this.assertParent(budgetId, target.parentId);
+
+    // No se puede meter un grupo dentro de sí mismo ni de sus descendientes
+    for (let id = target.parentId; id; ) {
+      if (id === rowId) {
+        throw new BadRequestException(
+          'Un grupo no puede ir dentro de sí mismo',
+        );
+      }
+      id = (await this.findRow(budgetId, id)).parentId;
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const oldSiblings = (
+        await this.siblingIds(tx, budgetId, row.parentId)
+      ).filter((id) => id !== rowId);
+      await tx.interiorBudgetRow.update({
+        where: { id: rowId },
+        data: { parentId: target.parentId },
+      });
+      const newSiblings =
+        row.parentId === target.parentId
+          ? oldSiblings
+          : (await this.siblingIds(tx, budgetId, target.parentId)).filter(
+              (id) => id !== rowId,
+            );
+      const index = Math.max(0, Math.min(target.index, newSiblings.length));
+      newSiblings.splice(index, 0, rowId);
+      await this.renumber(tx, newSiblings);
+      if (row.parentId !== target.parentId)
+        await this.renumber(tx, oldSiblings);
+    });
+    return this.buildSheet(budgetId);
+  }
+
+  async deleteRow(projectId: string, rowId: string, applicationSlug?: string) {
+    const budgetId = await this.activeBudgetId(projectId, applicationSlug);
+    const row = await this.findRow(budgetId, rowId);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.interiorBudgetRow.delete({ where: { id: rowId } });
+      await this.renumber(
+        tx,
+        await this.siblingIds(tx, budgetId, row.parentId),
+      );
+    });
+    return this.buildSheet(budgetId);
+  }
+
+  async addSupplierPayment(
+    projectId: string,
+    rowId: string,
+    payload: { amount: number; paidAt: Date; note?: string | null },
+    applicationSlug?: string,
+  ) {
+    const budgetId = await this.activeBudgetId(projectId, applicationSlug);
+    const row = await this.findRow(budgetId, rowId);
+    if (row.kind !== 'ITEM') {
+      throw new BadRequestException('Solo las partidas reciben abonos');
+    }
+    await this.prisma.interiorBudgetRowSupplierPayment.create({
       data: {
-        ...(payload.description !== undefined
-          ? { description: payload.description.trim() }
-          : {}),
-        ...(payload.sortOrder !== undefined
-          ? { sortOrder: payload.sortOrder }
-          : {}),
-        ...(payload.budgetedCost !== undefined
-          ? { budgetedCost: new Prisma.Decimal(payload.budgetedCost) }
-          : {}),
-        ...(payload.hasIgv !== undefined ? { hasIgv: payload.hasIgv } : {}),
-        ...(payload.actualPurchaseCost !== undefined
-          ? {
-              actualPurchaseCost:
-                payload.actualPurchaseCost == null
-                  ? null
-                  : new Prisma.Decimal(payload.actualPurchaseCost),
-            }
-          : {}),
-        ...(resolvedSupplierName !== undefined
-          ? { supplierName: resolvedSupplierName }
-          : payload.supplierName !== undefined
-            ? { supplierName: payload.supplierName?.trim() || null }
-            : {}),
-        ...(payload.supplierId !== undefined
-          ? { supplierId: payload.supplierId }
-          : {}),
-      },
-      include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
-    });
-
-    return this.mapLineItem(
-      row,
-      num(project.defaultUtilityPct),
-      num(project.defaultIgvPct),
-    );
-  }
-
-  async deleteLineItem(
-    projectId: string,
-    lineItemId: string,
-    applicationSlug?: string,
-  ): Promise<void> {
-    await this.assertProject(projectId, applicationSlug);
-    const existing = await this.prisma.interiorProjectLineItem.findFirst({
-      where: { id: lineItemId, section: { projectId } },
-    });
-    if (!existing) throw new NotFoundException('Partida no encontrada');
-    await this.prisma.interiorProjectLineItem.delete({
-      where: { id: lineItemId },
-    });
-  }
-
-  async createSupplierPayment(
-    projectId: string,
-    payload: CreateLineItemSupplierPaymentPayload,
-    applicationSlug?: string,
-  ): Promise<ProjectBudgetLineItemDto> {
-    const project = await this.assertProject(projectId, applicationSlug);
-    const lineItem = await this.prisma.interiorProjectLineItem.findFirst({
-      where: { id: payload.lineItemId, section: { projectId } },
-    });
-    if (!lineItem) throw new NotFoundException('Partida no encontrada');
-
-    await this.prisma.interiorLineItemSupplierPayment.upsert({
-      where: {
-        lineItemId_paymentNumber: {
-          lineItemId: payload.lineItemId,
-          paymentNumber: payload.paymentNumber,
-        },
-      },
-      create: {
-        lineItemId: payload.lineItemId,
-        paymentNumber: payload.paymentNumber,
+        rowId,
         amount: new Prisma.Decimal(payload.amount),
         paidAt: payload.paidAt,
-      },
-      update: {
-        amount: new Prisma.Decimal(payload.amount),
-        paidAt: payload.paidAt,
+        note: text(payload.note) ?? null,
       },
     });
-
-    const row = await this.prisma.interiorProjectLineItem.findUniqueOrThrow({
-      where: { id: payload.lineItemId },
-      include: { supplierPayments: { orderBy: { paymentNumber: 'asc' } } },
-    });
-    return this.mapLineItem(
-      row,
-      num(project.defaultUtilityPct),
-      num(project.defaultIgvPct),
-    );
+    return this.buildSheet(budgetId);
   }
 
   async deleteSupplierPayment(
     projectId: string,
     paymentId: string,
     applicationSlug?: string,
-  ): Promise<void> {
-    await this.assertProject(projectId, applicationSlug);
-    const payment = await this.prisma.interiorLineItemSupplierPayment.findFirst(
-      {
-        where: { id: paymentId, lineItem: { section: { projectId } } },
-      },
-    );
+  ) {
+    const budgetId = await this.activeBudgetId(projectId, applicationSlug);
+    const payment =
+      await this.prisma.interiorBudgetRowSupplierPayment.findFirst({
+        where: { id: paymentId, row: { budgetId } },
+      });
     if (!payment) throw new NotFoundException('Abono no encontrado');
-    await this.prisma.interiorLineItemSupplierPayment.delete({
+    await this.prisma.interiorBudgetRowSupplierPayment.delete({
       where: { id: paymentId },
     });
+    return this.buildSheet(budgetId);
   }
 
-  async duplicateBudgetSnapshot(projectId: string, applicationSlug?: string) {
-    await this.assertProject(projectId, applicationSlug);
+  // ── Versiones ──
 
-    const sections = await this.prisma.interiorProjectSection.findMany({
-      where: { projectId },
-      orderBy: { sortOrder: 'asc' },
-      include: { lineItems: { orderBy: { sortOrder: 'asc' } } },
+  async duplicateActive(projectId: string, applicationSlug?: string) {
+    const budgetId = await this.activeBudgetId(projectId, applicationSlug);
+    const source = await this.prisma.interiorBudget.findUniqueOrThrow({
+      where: { id: budgetId },
+      include: { rows: { include: { supplierPayments: true } } },
     });
-    if (sections.length === 0) {
-      throw new BadRequestException('No hay secciones para duplicar');
-    }
-
-    const maxOrder = await this.prisma.interiorProjectSection.aggregate({
+    const last = await this.prisma.interiorBudget.findFirst({
       where: { projectId },
-      _max: { sortOrder: true },
+      orderBy: { version: 'desc' },
+      select: { version: true },
     });
-    const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
-    let nextOrder = (maxOrder._max.sortOrder ?? -1) + 1;
-    let lineItemsCreated = 0;
+    const newId = randomUUID();
+    const idMap = new Map(source.rows.map((r) => [r.id, randomUUID()]));
 
     await this.prisma.$transaction(async (tx) => {
-      for (const section of sections) {
-        const created = await tx.interiorProjectSection.create({
+      await tx.interiorBudget.updateMany({
+        where: { projectId },
+        data: { isActive: false },
+      });
+      await tx.interiorBudget.create({
+        data: {
+          id: newId,
+          projectId,
+          version: (last?.version ?? 0) + 1,
+          isActive: true,
+          status: 'DRAFT',
+          number: source.number,
+          issuedAt: source.issuedAt,
+          executionTerm: source.executionTerm,
+          executedBy: source.executedBy,
+          currency: source.currency,
+          exchangeRate: source.exchangeRate,
+          exchangeRateDate: source.exchangeRateDate,
+          marginMode: source.marginMode,
+          utilityPct: source.utilityPct,
+          overheadPct: source.overheadPct,
+          igvMode: source.igvMode,
+          igvPct: source.igvPct,
+          terms: source.terms,
+          visibleColumns: source.visibleColumns ?? Prisma.DbNull,
+        },
+      });
+      // Padres antes que hijos: se crean sin padre y luego se enlazan
+      for (const r of source.rows) {
+        await tx.interiorBudgetRow.create({
           data: {
-            projectId,
-            name: `${section.name} — copia ${stamp}`,
-            sortOrder: nextOrder++,
+            id: idMap.get(r.id)!,
+            budgetId: newId,
+            parentId: null,
+            sortOrder: r.sortOrder,
+            kind: r.kind,
+            code: r.code,
+            description: r.description,
+            unit: r.unit,
+            quantity: r.quantity,
+            unitPrice: r.unitPrice,
+            directCost: r.directCost,
+            actualCost: r.actualCost,
+            utilityPctOverride: r.utilityPctOverride,
+            hasIgv: r.hasIgv,
+            supplierId: r.supplierId,
+            supplierName: r.supplierName,
+            status: r.status,
+            note: r.note,
           },
         });
-
-        for (const item of section.lineItems) {
-          await tx.interiorProjectLineItem.create({
+        for (const p of r.supplierPayments) {
+          await tx.interiorBudgetRowSupplierPayment.create({
             data: {
-              sectionId: created.id,
-              sortOrder: item.sortOrder,
-              description: item.description,
-              budgetedCost: item.budgetedCost,
-              hasIgv: item.hasIgv,
+              rowId: idMap.get(r.id)!,
+              amount: p.amount,
+              paidAt: p.paidAt,
+              note: p.note,
             },
           });
-          lineItemsCreated++;
         }
       }
+      for (const r of source.rows.filter((x) => x.parentId)) {
+        await tx.interiorBudgetRow.update({
+          where: { id: idMap.get(r.id)! },
+          data: { parentId: idMap.get(r.parentId!) ?? null },
+        });
+      }
     });
+    return this.buildSheet(newId);
+  }
 
-    const budget = await this.loadBudget(projectId, applicationSlug);
-    if (!budget) throw new NotFoundException('Presupuesto no encontrado');
+  async activateVersion(
+    projectId: string,
+    budgetId: string,
+    applicationSlug?: string,
+  ) {
+    await this.assertProject(projectId, applicationSlug);
+    const target = await this.prisma.interiorBudget.findFirst({
+      where: { id: budgetId, projectId },
+    });
+    if (!target) throw new NotFoundException('Versión no encontrada');
+    await this.prisma.$transaction([
+      this.prisma.interiorBudget.updateMany({
+        where: { projectId },
+        data: { isActive: false },
+      }),
+      this.prisma.interiorBudget.update({
+        where: { id: budgetId },
+        data: { isActive: true },
+      }),
+    ]);
+    return this.buildSheet(budgetId);
+  }
 
-    return {
-      sectionsCreated: sections.length,
-      lineItemsCreated,
-      budget,
-    };
+  // ── Importación / sincronización ──
+
+  async importRows(
+    projectId: string,
+    imported: ImportedBudget,
+    replace: boolean,
+    applicationSlug?: string,
+  ) {
+    const budgetId = await this.activeBudgetId(projectId, applicationSlug);
+    let rowsCreated = 0;
+    await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.interiorBudgetRow.count({
+        where: { budgetId },
+      });
+      if (replace) {
+        await tx.interiorBudgetRow.deleteMany({
+          where: { budgetId, parentId: null },
+        });
+      }
+      // La cabecera del Excel se aplica al reemplazar o si el presupuesto estaba vacío
+      if (replace || existing === 0) {
+        const h = imported.header;
+        await tx.interiorBudget.update({
+          where: { id: budgetId },
+          data: {
+            number: text(h.number),
+            issuedAt: h.issuedAt,
+            executionTerm: text(h.executionTerm),
+            executedBy: text(h.executedBy),
+            exchangeRate: dec(h.exchangeRate),
+            marginMode: h.marginMode,
+            utilityPct: dec(h.utilityPct) ?? undefined,
+            overheadPct: dec(h.overheadPct) ?? undefined,
+            igvMode: h.igvMode,
+            igvPct: dec(h.igvPct) ?? undefined,
+          },
+        });
+      }
+      let rootOrder = replace
+        ? 0
+        : await tx.interiorBudgetRow.count({
+            where: { budgetId, parentId: null },
+          });
+      const insert = async (
+        list: ImportedBudgetRow[],
+        parentId: string | null,
+        start: number,
+      ) => {
+        for (const [i, r] of list.entries()) {
+          const id = randomUUID();
+          const { children, ...fields } = r;
+          await tx.interiorBudgetRow.create({
+            data: {
+              ...rowData(fields),
+              id,
+              budgetId,
+              parentId,
+              sortOrder: start + i,
+              kind: r.kind,
+              description: r.description.trim(),
+            },
+          });
+          rowsCreated++;
+          if (children?.length) await insert(children, id, 0);
+        }
+      };
+      await insert(imported.rows, null, rootOrder);
+      rootOrder += imported.rows.length;
+    });
+    return { ...(await this.buildSheet(budgetId)), rowsCreated };
   }
 
   async syncActualCostsFromExecution(
     projectId: string,
     applicationSlug?: string,
   ) {
-    await this.assertProject(projectId, applicationSlug);
-
+    const budgetId = await this.activeBudgetId(projectId, applicationSlug);
     const costs = await this.prisma.interiorExecutionActualCost.findMany({
       where: {
         projectId,
         costCategory: { in: ['MATERIAL', 'EXPENSE', 'TRANSPORT'] },
       },
     });
-
     const amountByConcept = new Map<string, number>();
     const displayByConcept = new Map<string, string>();
     for (const cost of costs) {
@@ -593,117 +726,49 @@ export class InteriorProjectBudgetPrismaRepository implements InteriorProjectBud
       if (!displayByConcept.has(key))
         displayByConcept.set(key, cost.concept.trim());
     }
-
-    const lineItems = await this.prisma.interiorProjectLineItem.findMany({
-      where: { section: { projectId } },
+    const items = await this.prisma.interiorBudgetRow.findMany({
+      where: { budgetId, kind: 'ITEM' },
+      select: { id: true, description: true },
     });
-
-    const matchedKeys = new Set<string>();
-    let updatedLineItems = 0;
-
+    const matched = new Set<string>();
+    let updatedRows = 0;
     await this.prisma.$transaction(async (tx) => {
-      for (const item of lineItems) {
+      for (const item of items) {
         const key = item.description.trim().toLowerCase();
         const amount = amountByConcept.get(key);
         if (amount == null) continue;
-
-        await tx.interiorProjectLineItem.update({
+        await tx.interiorBudgetRow.update({
           where: { id: item.id },
-          data: { actualPurchaseCost: new Prisma.Decimal(amount) },
+          data: { actualCost: new Prisma.Decimal(round2(amount)) },
         });
-        matchedKeys.add(key);
-        updatedLineItems++;
+        matched.add(key);
+        updatedRows++;
       }
     });
-
-    const unmatchedConcepts = [...amountByConcept.keys()]
-      .filter((key) => !matchedKeys.has(key))
-      .map((key) => displayByConcept.get(key) ?? key);
-
-    const budget = await this.loadBudget(projectId, applicationSlug);
-    if (!budget) throw new NotFoundException('Presupuesto no encontrado');
-
-    return { updatedLineItems, unmatchedConcepts, budget };
+    return {
+      updatedRows,
+      unmatchedConcepts: [...amountByConcept.keys()]
+        .filter((k) => !matched.has(k))
+        .map((k) => displayByConcept.get(k) ?? k),
+      sheet: await this.buildSheet(budgetId),
+    };
   }
 
-  async assertProjectExists(
-    projectId: string,
-    applicationSlug?: string,
-  ): Promise<void> {
+  async assertProjectExists(projectId: string, applicationSlug?: string) {
     await this.assertProject(projectId, applicationSlug);
   }
 
-  async assertLineItemBelongsToProject(
+  async assertRowBelongsToProject(
     projectId: string,
-    lineItemId: string,
-    applicationSlug?: string,
-  ): Promise<void> {
-    await this.assertProject(projectId, applicationSlug);
-    const lineItem = await this.prisma.interiorProjectLineItem.findFirst({
-      where: { id: lineItemId, section: { projectId } },
-    });
-    if (!lineItem) throw new NotFoundException('Partida no encontrada');
-  }
-
-  async importBudgetSections(
-    projectId: string,
-    sections: Array<{
-      name: string;
-      lineItems: Array<{
-        description: string;
-        budgetedCost: number;
-        hasIgv?: boolean;
-      }>;
-    }>,
-    replace: boolean,
+    rowId: string,
     applicationSlug?: string,
   ) {
     await this.assertProject(projectId, applicationSlug);
-
-    if (replace) {
-      await this.prisma.interiorProjectSection.deleteMany({
-        where: { projectId },
-      });
-    }
-
-    const maxOrder = await this.prisma.interiorProjectSection.aggregate({
-      where: { projectId },
-      _max: { sortOrder: true },
+    const row = await this.prisma.interiorBudgetRow.findFirst({
+      where: { id: rowId, budget: { projectId } },
+      select: { id: true },
     });
-    let nextOrder = (maxOrder._max.sortOrder ?? -1) + 1;
-    let sectionsCreated = 0;
-    let lineItemsCreated = 0;
-
-    await this.prisma.$transaction(async (tx) => {
-      for (const section of sections) {
-        const created = await tx.interiorProjectSection.create({
-          data: {
-            projectId,
-            name: section.name.trim(),
-            sortOrder: nextOrder++,
-          },
-        });
-        sectionsCreated++;
-
-        let itemOrder = 0;
-        for (const item of section.lineItems) {
-          await tx.interiorProjectLineItem.create({
-            data: {
-              sectionId: created.id,
-              sortOrder: itemOrder++,
-              description: item.description.trim(),
-              budgetedCost: new Prisma.Decimal(item.budgetedCost),
-              hasIgv: item.hasIgv ?? false,
-            },
-          });
-          lineItemsCreated++;
-        }
-      }
-    });
-
-    const budget = await this.loadBudget(projectId, applicationSlug);
-    if (!budget) throw new NotFoundException('Presupuesto no encontrado');
-
-    return { sectionsCreated, lineItemsCreated, budget };
+    if (!row)
+      throw new NotFoundException('Partida no encontrada en el proyecto');
   }
 }

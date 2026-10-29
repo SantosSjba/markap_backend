@@ -16,8 +16,10 @@ export interface InteriorCatalogMaterialListItem {
   brand: string;
   unit: string;
   price: number;
+  currency: string;
   stock: number;
   imageCount: number;
+  suppliersCount: number;
   updatedAt: string;
 }
 
@@ -29,10 +31,42 @@ export interface InteriorCatalogMaterialDetail {
   brand: string;
   unit: string;
   price: number;
+  currency: string;
+  description: string | null;
   stock: number;
   technicalSheetUrl: string | null;
   images: InteriorCatalogMaterialImageDto[];
+  suppliers: InteriorCatalogMaterialSupplierDto[];
+  purchases: InteriorCatalogMaterialPurchaseDto[];
   updatedAt: string;
+}
+
+export interface InteriorCatalogMaterialSupplierDto {
+  linkId: string;
+  supplierId: string;
+  companyName: string;
+  ruc: string;
+  supplierSku: string | null;
+}
+
+export interface InteriorCatalogMaterialPurchaseDto {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  purchasedAt: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  currency: string;
+  invoiceRef: string | null;
+}
+
+export interface InteriorCatalogMaterialStats {
+  total: number;
+  /** Categorías usadas (para el filtro) */
+  categories: string[];
+  outOfStock: number;
+  withoutSupplier: number;
 }
 
 export interface CreateInteriorCatalogMaterialPayload {
@@ -42,6 +76,8 @@ export interface CreateInteriorCatalogMaterialPayload {
   brand: string;
   unit: string;
   price: number;
+  currency?: string;
+  description?: string | null;
   stock?: number;
   technicalSheetUrl?: string | null;
   imageUrls?: string[];
@@ -53,6 +89,8 @@ export interface UpdateInteriorCatalogMaterialPayload {
   brand?: string;
   unit?: string;
   price?: number;
+  currency?: string;
+  description?: string | null;
   stock?: number;
   technicalSheetUrl?: string | null;
   /** Si se envía, reemplaza todas las imágenes por orden */
@@ -65,6 +103,8 @@ export interface ListInteriorCatalogMaterialsFilters {
   limit: number;
   search?: string;
   category?: string;
+  /** `OUT` = sin stock */
+  stock?: 'OUT';
 }
 
 export interface ListInteriorCatalogMaterialsResult {
@@ -91,4 +131,5 @@ export interface InteriorCatalogMaterialRepository {
     payload: UpdateInteriorCatalogMaterialPayload,
   ): Promise<InteriorCatalogMaterialDetail>;
   delete(id: string): Promise<void>;
+  stats(applicationSlug: string): Promise<InteriorCatalogMaterialStats>;
 }

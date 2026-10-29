@@ -1,69 +1,70 @@
-/** Rango de fechas para reportes interiorismo (YYYY-MM-DD). */
-export type InteriorReportsDateRange = {
-  startDate: string;
-  endDate: string;
+export type InteriorReportsDateRange = { startDate: string; endDate: string };
+export type ReportMoney = { currency: string; amount: number };
+export type ReportProject = {
+  id: string;
+  code: string;
+  name: string;
+  status: string;
+  createdDate: string;
+  currency: string;
+  budget: number;
+  actualCost: number;
+  paid: number;
+  pending: number;
+  utility: number;
+  marginPct: number | null;
+  unconverted: ReportMoney[];
 };
-
-export type InteriorReportsVentasDto = {
-  cobranzasPeriodo: number;
-  pagosRegistradosPeriodo: number;
-  proyectosConCobroEnPeriodo: number;
-  carteraPendienteCuotas: number;
+export type ReportCollection = {
+  id: string;
+  projectId: string;
+  projectCode: string;
+  concept: string;
+  date: string;
+  currency: string;
+  amount: number;
 };
-
-export type InteriorReportsConversionDto = {
-  proyectosPorEstado: { status: string; count: number }[];
-  proyectosNuevosPeriodo: number;
-  proyectosFinalizadosPeriodo: number;
-  presupuestosAprobadosPeriodo: number;
-  presupuestosRechazadosPeriodo: number;
-  presupuestosEnviadosSnapshot: number;
-  tasaCierrePresupuestoPct: number | null;
+export type ReportSupplier = {
+  key: string;
+  supplierId: string | null;
+  name: string;
+  currency: string;
+  actualCost: number;
+  paid: number;
+  balance: number;
+  catalogPurchases: number;
 };
-
-export type InteriorReportsRentabilidadDto = {
-  volumenPresupuestosAprobadosPeriodo: number;
-  costosEjecucionPeriodo: number;
-  comprasMaterialesPeriodo: number;
-  margenBrutoEstimado: number;
-  margenBrutoPct: number | null;
-};
-
-export type InteriorReportsProductividadDto = {
-  tareasTotales: number;
-  tareasCompletadasSnapshot: number;
-  tareasCompletadasPeriodo: number;
-  pctAvanceTareas: number | null;
-  evidenciasPeriodo: number;
-  incidenciasAbiertas: number;
-  progresoPromedioProyectosPct: number | null;
-};
-
-export type InteriorReportsCostosCategoriaDto = {
-  category: string;
-  total: number;
-};
-
-export type InteriorReportsCostosDto = {
-  ejecucionPorCategoria: InteriorReportsCostosCategoriaDto[];
-  comprasProveedoresPeriodo: number;
-  totalCostosPeriodo: number;
-};
-
-export type InteriorReportsKpisDto = {
-  proyectosActivos: number;
-  proyectosEnEjecucion: number;
-  clientesTotales: number;
-  presupuestosBorrador: number;
-};
-
 export type InteriorReportsDashboardDto = {
   applicationSlug: string;
   range: InteriorReportsDateRange;
-  ventas: InteriorReportsVentasDto;
-  conversion: InteriorReportsConversionDto;
-  rentabilidad: InteriorReportsRentabilidadDto;
-  productividad: InteriorReportsProductividadDto;
-  costos: InteriorReportsCostosDto;
-  kpis: InteriorReportsKpisDto;
+  projects: ReportProject[];
+  profitability: ReportProject[];
+  collections: ReportCollection[];
+  suppliers: ReportSupplier[];
+  monthly: { key: string; projects: number; collections: ReportMoney[] }[];
+  totals: {
+    budget: ReportMoney[];
+    actualCost: ReportMoney[];
+    collected: ReportMoney[];
+    pending: ReportMoney[];
+    supplierBalance: ReportMoney[];
+    catalogPurchases: ReportMoney[];
+  };
+  stages: { status: string; count: number }[];
+  kpis: {
+    activeProjects: number;
+    inExecution: number;
+    clients: number;
+    quotation: number;
+    newProjects: number;
+    tasks: number;
+    completedTasks: number;
+    openIncidents: number;
+  };
+  alerts: {
+    overdueProjects: number;
+    pendingProjects: number;
+    unpaidSuppliers: number;
+    unconvertedPayments: number;
+  };
 };

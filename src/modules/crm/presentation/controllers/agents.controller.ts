@@ -23,6 +23,10 @@ import {
 import { JwtAuthGuard } from '../../../../shared/presentation/guards/jwt-auth.guard';
 import { parseIntegerQuery } from '../../../../shared/utils/parse-integer-query.util';
 import { AGENT_PORT, type AgentPort } from '../../application/ports/agent.port';
+import {
+  AGENT_PROJECT_ROLES,
+  type AgentProjectRole,
+} from '../../domain/entities/agent.entity';
 import { CreateAgentDto } from '../dtos/agents/create-agent.dto';
 import { UpdateAgentDto } from '../dtos/agents/update-agent.dto';
 
@@ -51,6 +55,12 @@ export class AgentsController {
   })
   @ApiQuery({ name: 'type', required: false, enum: ['INTERNAL', 'EXTERNAL'] })
   @ApiQuery({
+    name: 'role',
+    required: false,
+    enum: AGENT_PROJECT_ROLES,
+    description: 'Solo integrantes con esa función en proyectos',
+  })
+  @ApiQuery({
     name: 'isActive',
     required: false,
     description: 'Filtrar por activos (true/false)',
@@ -63,6 +73,7 @@ export class AgentsController {
     @Query('search') search?: string,
     @Query('type') type?: 'INTERNAL' | 'EXTERNAL',
     @Query('isActive') isActive?: string,
+    @Query('role') role?: string,
   ) {
     return this.agent.listAgents({
       applicationSlug: applicationSlug ?? 'alquileres',
@@ -70,6 +81,9 @@ export class AgentsController {
       limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
       type,
+      role: AGENT_PROJECT_ROLES.includes(role as AgentProjectRole)
+        ? (role as AgentProjectRole)
+        : undefined,
       isActive:
         isActive === 'true' ? true : isActive === 'false' ? false : undefined,
     });
@@ -89,6 +103,7 @@ export class AgentsController {
       phone: dto.phone,
       documentTypeId: dto.documentTypeId,
       documentNumber: dto.documentNumber,
+      roles: dto.roles ?? undefined,
     });
   }
 
@@ -133,6 +148,7 @@ export class AgentsController {
         phone: dto.phone,
         documentTypeId: dto.documentTypeId,
         documentNumber: dto.documentNumber,
+        roles: dto.roles ?? undefined,
         isActive: dto.isActive,
       },
       applicationSlug,

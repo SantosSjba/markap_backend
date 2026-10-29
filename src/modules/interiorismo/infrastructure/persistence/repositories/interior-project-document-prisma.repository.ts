@@ -5,10 +5,19 @@ import type {
   CreateInteriorProjectDocumentData,
   InteriorProjectDocumentListItem,
   InteriorProjectDocumentRepository,
+  InteriorProjectDocumentStats,
   ListInteriorProjectDocumentsFilters,
   ListInteriorProjectDocumentsResult,
   UpdateInteriorProjectDocumentData,
 } from '../../../domain/repositories/interior-project-document.repository';
+import { INTERIOR_DOCUMENT_TYPES } from '../../../domain/repositories/interior-project-document.repository';
+
+const DOCUMENT_INCLUDE = {
+  project: { select: { code: true, name: true } },
+  archivo: {
+    select: { originalFileName: true, mimeType: true, sizeBytes: true },
+  },
+} satisfies Prisma.InteriorProjectDocumentInclude;
 
 @Injectable()
 export class InteriorProjectDocumentPrismaRepository implements InteriorProjectDocumentRepository {
@@ -22,8 +31,12 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
       title: string;
       fileUrl: string | null;
       archivoId: string | null;
-
       createdAt: Date;
+      archivo?: {
+        originalFileName: string;
+        mimeType: string | null;
+        sizeBytes: number | null;
+      } | null;
     },
     project: { code: string; name: string },
   ): InteriorProjectDocumentListItem {
@@ -36,6 +49,9 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
       title: doc.title,
       fileUrl: doc.fileUrl,
       archivoId: doc.archivoId,
+      fileName: doc.archivo?.originalFileName ?? null,
+      mimeType: doc.archivo?.mimeType ?? null,
+      sizeBytes: doc.archivo?.sizeBytes ?? null,
       createdAt: doc.createdAt.toISOString(),
     };
   }
@@ -57,8 +73,8 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
           deletedAt: null,
         },
       },
-      { docType: filters.docType },
     ];
+    if (filters.docType) andParts.push({ docType: filters.docType });
 
     if (filters.projectId?.trim()) {
       andParts.push({ projectId: filters.projectId.trim() });
@@ -80,9 +96,7 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
     const [rows, total] = await Promise.all([
       this.prisma.interiorProjectDocument.findMany({
         where,
-        include: {
-          project: { select: { code: true, name: true } },
-        },
+        include: DOCUMENT_INCLUDE,
         orderBy: { createdAt: 'desc' },
         skip: (filters.page - 1) * filters.limit,
         take: filters.limit,
@@ -117,6 +131,7 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
     if (!project) return null;
 
     const row = await this.prisma.interiorProjectDocument.create({
+      include: DOCUMENT_INCLUDE,
       data: {
         projectId: project.id,
         docType: data.docType,
@@ -160,12 +175,34 @@ export class InteriorProjectDocumentPrismaRepository implements InteriorProjectD
     const row = await this.prisma.interiorProjectDocument.update({
       where: { id },
       data: patch,
-      include: {
-        project: { select: { code: true, name: true } },
-      },
+      include: DOCUMENT_INCLUDE,
     });
 
     return this.mapRow(row, row.project);
+  }
+
+  async stats(
+    applicationSlug: string,
+    projectId?: string,
+  ): Promise<InteriorProjectDocumentStats> {
+    const groups = await this.prisma.interiorProjectDocument.groupBy({
+      by: ['docType'],
+      where: {
+        project: { application: { slug: applicationSlug }, deletedAt: null },
+        ...(projectId ? { projectId } : {}),
+      },
+      _count: { _all: true },
+    });
+    const byType = Object.fromEntries(
+      INTERIOR_DOCUMENT_TYPES.map((t) => [t, 0]),
+    ) as InteriorProjectDocumentStats['byType'];
+    let total = 0;
+    for (const g of groups) {
+      total += g._count._all;
+      if (g.docType in byType)
+        byType[g.docType as keyof typeof byType] = g._count._all;
+    }
+    return { total, byType };
   }
 
   async delete(id: string, applicationSlug: string): Promise<boolean> {

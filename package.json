@@ -28,7 +28,7 @@
     "prisma:migrate:prod-safe": "ts-node prisma/scripts/apply-prod-safe-migrations.ts",
     "prisma:seed": "prisma db seed",
     "prisma:seed:prod": "ts-node prisma/seed-prod.ts",
-    "prisma:migrate:interior-budgets": "ts-node -r tsconfig-paths/register prisma/scripts/migrate-interior-budgets-to-project-budget.ts",
+    "prisma:migrate:interior-project-codes": "ts-node -r tsconfig-paths/register prisma/scripts/migrate-interior-project-codes.ts",
     "prisma:seed:ubigeo-other": "ts-node prisma/scripts/seed-ubigeo-other.ts",
     "seed:produccion": "ts-node prisma/scripts/seed-produccion-demo.ts",
     "postinstall": "prisma generate",

@@ -99,15 +99,36 @@ export class InteriorCalendarPrismaRepository implements InteriorCalendarReposit
     const from = startOfDayUtc(filters.from);
     const to = endOfDayUtc(filters.to);
 
+    // Lo derivado (hitos, tareas, cobros, fechas) solo de proyectos vigentes; con filtro de
+    // persona, de los proyectos donde integra el equipo.
+    const agentId = filters.agentId?.trim();
     const projectWhere: Prisma.InteriorProjectWhereInput = {
       applicationId: app.id,
       deletedAt: null,
+      status: { not: 'CANCELLED' },
       ...(filters.projectId?.trim() ? { id: filters.projectId.trim() } : {}),
+      ...(agentId
+        ? {
+            OR: [
+              { designerAgentId: agentId },
+              { architectJrAgentId: agentId },
+              { architectSrAgentId: agentId },
+              { supervisorAgentId: agentId },
+              { commercialAgentId: agentId },
+            ],
+          }
+        : {}),
     };
 
     const projectIdsRow = await this.prisma.interiorProject.findMany({
       where: projectWhere,
-      select: { id: true, code: true, name: true },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        startDate: true,
+        estimatedEndDate: true,
+      },
     });
     const projectIds = projectIdsRow.map((p) => p.id);
     const projMap = new Map(projectIdsRow.map((p) => [p.id, p]));
@@ -123,44 +144,55 @@ export class InteriorCalendarPrismaRepository implements InteriorCalendarReposit
         : {}),
     };
 
-    const [manualRows, milestones, tasks, financeRows] = await Promise.all([
-      this.prisma.interiorCalendarEvent.findMany({
-        where: manualWhere,
-        include: {
-          project: { select: { code: true, name: true } },
-          assignedAgent: { select: { id: true, fullName: true } },
-        },
-        orderBy: { startsAt: 'asc' },
-      }),
-      projectIds.length === 0
-        ? []
-        : this.prisma.interiorProjectMilestone.findMany({
-            where: {
-              projectId: { in: projectIds },
-              plannedDate: { gte: from, lte: to },
-            },
-          }),
-      projectIds.length === 0
-        ? []
-        : this.prisma.interiorExecutionTask.findMany({
-            where: {
-              projectId: { in: projectIds },
-              OR: [
-                { plannedStart: { not: null } },
-                { plannedEnd: { not: null } },
-              ],
-            },
-          }),
-      projectIds.length === 0
-        ? []
-        : this.prisma.interiorFinanceIncomeSchedule.findMany({
-            where: {
-              projectId: { in: projectIds },
-              dueDate: { gte: from, lte: to },
-              status: { in: ['PENDING', 'PARTIAL'] },
-            },
-          }),
-    ]);
+    const [manualRows, milestones, tasks, financeRows, pendingPayments] =
+      await Promise.all([
+        this.prisma.interiorCalendarEvent.findMany({
+          where: manualWhere,
+          include: {
+            project: { select: { code: true, name: true } },
+            assignedAgent: { select: { id: true, fullName: true } },
+          },
+          orderBy: { startsAt: 'asc' },
+        }),
+        projectIds.length === 0
+          ? []
+          : this.prisma.interiorProjectMilestone.findMany({
+              where: {
+                projectId: { in: projectIds },
+                plannedDate: { gte: from, lte: to },
+              },
+            }),
+        projectIds.length === 0
+          ? []
+          : this.prisma.interiorExecutionTask.findMany({
+              where: {
+                projectId: { in: projectIds },
+                OR: [
+                  { plannedStart: { not: null } },
+                  { plannedEnd: { not: null } },
+                ],
+              },
+            }),
+        projectIds.length === 0
+          ? []
+          : this.prisma.interiorFinanceIncomeSchedule.findMany({
+              where: {
+                projectId: { in: projectIds },
+                dueDate: { gte: from, lte: to },
+                status: { in: ['PENDING', 'PARTIAL'] },
+              },
+            }),
+        // Cobros «Programado» registrados en Liquidación
+        projectIds.length === 0
+          ? []
+          : this.prisma.interiorProjectPayment.findMany({
+              where: {
+                projectId: { in: projectIds },
+                status: 'PENDING',
+                paidAt: { gte: from, lte: to },
+              },
+            }),
+      ]);
 
     const out: InteriorCalendarFeedItemDto[] = [];
 
@@ -238,7 +270,69 @@ export class InteriorCalendarPrismaRepository implements InteriorCalendarReposit
       });
     }
 
+    for (const pay of pendingPayments) {
+      const p = projMap.get(pay.projectId);
+      const currency = pay.currency ?? 'PEN';
+      out.push({
+        id: `py:${pay.id}`,
+        source: 'FINANCE_SCHEDULE',
+        eventType: 'FINANCE_DUE',
+        title: `Cobro: ${pay.concept}`,
+        description: `${currency} ${Number(pay.amount).toFixed(2)} · programado`,
+        location: null,
+        startsAt: iso(startOfDayLima(pay.paidAt)),
+        endsAt: null,
+        allDay: true,
+        projectId: pay.projectId,
+        projectCode: p?.code ?? null,
+        projectName: p?.name ?? null,
+        assignedAgentId: null,
+        assignedAgentName: null,
+        readOnly: true,
+        executionPhase: null,
+      });
+    }
+
+    // Un cobro programado que ya viene de un ítem del cronograma no se duplica
+    const scheduledByPayment = new Set<string>();
+    for (const pay of pendingPayments) {
+      if (pay.scheduleItemId) scheduledByPayment.add(pay.scheduleItemId);
+    }
+
+    for (const p of projectIdsRow) {
+      const dates = [
+        { date: p.startDate, type: 'PROJECT_START', label: 'Inicio' },
+        {
+          date: p.estimatedEndDate,
+          type: 'PROJECT_END',
+          label: 'Entrega estimada',
+        },
+      ];
+      for (const d of dates) {
+        if (!d.date || d.date < from || d.date > to) continue;
+        out.push({
+          id: `pj:${d.type}:${p.id}`,
+          source: 'PROJECT',
+          eventType: d.type,
+          title: `${d.label}: ${p.name}`,
+          description: null,
+          location: null,
+          startsAt: iso(startOfDayLima(d.date)),
+          endsAt: null,
+          allDay: true,
+          projectId: p.id,
+          projectCode: p.code,
+          projectName: p.name,
+          assignedAgentId: null,
+          assignedAgentName: null,
+          readOnly: true,
+          executionPhase: null,
+        });
+      }
+    }
+
     for (const f of financeRows) {
+      if (scheduledByPayment.has(f.id)) continue;
       const p = projMap.get(f.projectId);
       out.push({
         id: `fn:${f.id}`,

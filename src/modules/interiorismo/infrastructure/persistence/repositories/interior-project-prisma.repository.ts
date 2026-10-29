@@ -2,9 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../../shared/infrastructure/database/prisma/prisma.service';
 import type {
+  CreateInteriorProjectActivityData,
   CreateInteriorProjectData,
   InteriorProjectDetail,
+  InteriorClientPaymentDto,
+  InteriorClientProjectsSummary,
+  InteriorProjectDistrictRef,
   InteriorProjectRepository,
+  InteriorProjectStatsRow,
   ListInteriorProjectsFilters,
   ListInteriorProjectsResult,
   UpdateInteriorProjectData,
@@ -14,6 +19,45 @@ import { formatDateOnly } from '../../../../../shared/domain/utils/peru-date.uti
 import { INTERIOR_PROJECT_ACTIVE_STATUS_CODES } from '../../../domain/constants/interior-project-stages.constants';
 
 const IN_PROGRESS_STATUSES = [...INTERIOR_PROJECT_ACTIVE_STATUS_CODES] as const;
+
+const DISTRICT_INCLUDE = {
+  select: {
+    id: true,
+    name: true,
+    provinceId: true,
+    province: { select: { departmentId: true } },
+  },
+} as const;
+
+type DistrictRow = {
+  id: string;
+  name: string;
+  provinceId: string;
+  province: { departmentId: string };
+} | null;
+
+function mapDistrict(d: DistrictRow): InteriorProjectDistrictRef | null {
+  return d
+    ? {
+        id: d.id,
+        name: d.name,
+        provinceId: d.provinceId,
+        departmentId: d.province.departmentId,
+      }
+    : null;
+}
+
+/** Cobrado en la moneda del proyecto (los cobros en otra moneda se ven en la liquidación) */
+function sumPaid(
+  payments: { amount: unknown; status: string; currency: string | null }[],
+  currency: string,
+): number {
+  return payments
+    .filter(
+      (p) => p.status === 'PAID' && (!p.currency || p.currency === currency),
+    )
+    .reduce((acc, p) => acc + (num(p.amount) ?? 0), 0);
+}
 
 function num(v: unknown): number | null {
   if (v === null || v === undefined) return null;
@@ -48,12 +92,29 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
     if (filters.status) {
       andParts.push({ status: filters.status });
     }
+    if (filters.projectType) {
+      andParts.push({ projectType: filters.projectType });
+    }
+    if (filters.agentId?.trim()) {
+      const agentId = filters.agentId.trim();
+      andParts.push({
+        OR: [
+          { designerAgentId: agentId },
+          { architectJrAgentId: agentId },
+          { architectSrAgentId: agentId },
+          { supervisorAgentId: agentId },
+          { commercialAgentId: agentId },
+        ],
+      });
+    }
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       andParts.push({
         OR: [
           { code: { contains: q, mode: 'insensitive' } },
+          { legacyCode: { contains: q, mode: 'insensitive' } },
           { name: { contains: q, mode: 'insensitive' } },
+          { client: { fullName: { contains: q, mode: 'insensitive' } } },
         ],
       });
     }
@@ -67,6 +128,8 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
           client: {
             select: { id: true, fullName: true, documentNumber: true },
           },
+          district: DISTRICT_INCLUDE,
+          payments: { select: { amount: true, status: true, currency: true } },
         },
         orderBy: { updatedAt: 'desc' },
         skip: (filters.page - 1) * filters.limit,
@@ -83,9 +146,15 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         projectType: r.projectType as InteriorProjectDetail['projectType'],
         status: r.status as InteriorProjectDetail['status'],
         progressPct: num(r.progressPct) ?? 0,
+        interventionLevel: r.interventionLevel ?? null,
+        currency: r.currency ?? 'PEN',
+        estimatedBudget: num(r.estimatedBudget),
+        paidTotal: sumPaid(r.payments, r.currency ?? 'PEN'),
+        startDate: r.startDate ? formatDateOnly(r.startDate) : null,
         estimatedEndDate: r.estimatedEndDate
           ? formatDateOnly(r.estimatedEndDate)
           : null,
+        district: mapDistrict(r.district),
         client: {
           id: r.client.id,
           fullName: r.client.fullName,
@@ -120,6 +189,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         architectSrAgent: { select: { id: true, fullName: true } },
         supervisorAgent: { select: { id: true, fullName: true } },
         commercialAgent: { select: { id: true, fullName: true } },
+        district: DISTRICT_INCLUDE,
         materials: { orderBy: { createdAt: 'desc' } },
         documents: { orderBy: { createdAt: 'desc' } },
         payments: { orderBy: { paidAt: 'desc' } },
@@ -157,6 +227,15 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
           data.defaultIgvPct != null
             ? new Prisma.Decimal(data.defaultIgvPct)
             : undefined,
+        defaultOverheadPct:
+          data.defaultOverheadPct != null
+            ? new Prisma.Decimal(data.defaultOverheadPct)
+            : undefined,
+        exchangeRate:
+          data.exchangeRate != null
+            ? new Prisma.Decimal(data.exchangeRate)
+            : null,
+        districtId: data.districtId || null,
         areaSqm: data.areaSqm ?? null,
         levelsCount: data.levelsCount ?? null,
         environmentsNote: data.environmentsNote?.trim() || null,
@@ -178,11 +257,41 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
     return detail;
   }
 
+  async createActivity(
+    projectId: string,
+    data: CreateInteriorProjectActivityData,
+  ): Promise<void> {
+    await this.prisma.interiorProjectActivity.create({
+      data: {
+        projectId,
+        activityType: data.activityType,
+        title: data.title.trim(),
+        description: data.description?.trim() || null,
+        occurredAt: data.occurredAt,
+      },
+    });
+  }
+
+  async deleteManualActivity(
+    projectId: string,
+    activityId: string,
+  ): Promise<boolean> {
+    const { count } = await this.prisma.interiorProjectActivity.deleteMany({
+      where: {
+        id: activityId,
+        projectId,
+        activityType: { not: 'STATUS_CHANGE' },
+      },
+    });
+    return count > 0;
+  }
+
   async update(
     id: string,
     data: UpdateInteriorProjectData,
   ): Promise<InteriorProjectDetail> {
     const patch: Prisma.InteriorProjectUncheckedUpdateInput = {};
+    if (data.code !== undefined) patch.code = data.code.trim();
     if (data.name !== undefined) patch.name = data.name.trim();
     if (data.clientId !== undefined) patch.clientId = data.clientId;
     if (data.projectType !== undefined) patch.projectType = data.projectType;
@@ -210,6 +319,19 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
           ? new Prisma.Decimal(18)
           : new Prisma.Decimal(data.defaultIgvPct);
     }
+    if (data.defaultOverheadPct !== undefined) {
+      patch.defaultOverheadPct = new Prisma.Decimal(
+        data.defaultOverheadPct ?? 0,
+      );
+    }
+    if (data.exchangeRate !== undefined) {
+      patch.exchangeRate =
+        data.exchangeRate === null
+          ? null
+          : new Prisma.Decimal(data.exchangeRate);
+    }
+    if (data.districtId !== undefined)
+      patch.districtId = data.districtId || null;
     if (data.areaSqm !== undefined) {
       patch.areaSqm =
         data.areaSqm === null ? null : new Prisma.Decimal(data.areaSqm);
@@ -262,6 +384,92 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
     return detail;
   }
 
+  async listCodesWithPrefix(
+    applicationId: string,
+    prefix: string,
+  ): Promise<string[]> {
+    const rows = await this.prisma.interiorProject.findMany({
+      where: { applicationId, code: { startsWith: prefix } },
+      select: { code: true },
+    });
+    return rows.map((r) => r.code);
+  }
+
+  async summarizeByClients(
+    applicationSlug: string,
+    clientIds: string[],
+  ): Promise<InteriorClientProjectsSummary[]> {
+    if (!clientIds.length) return [];
+    const rows = await this.prisma.interiorProject.findMany({
+      where: {
+        application: { slug: applicationSlug },
+        deletedAt: null,
+        clientId: { in: clientIds },
+      },
+      select: { clientId: true, status: true },
+    });
+    const active = new Set<string>(IN_PROGRESS_STATUSES);
+    return clientIds.map((clientId) => {
+      const own = rows.filter((r) => r.clientId === clientId);
+      return {
+        clientId,
+        total: own.length,
+        active: own.filter((r) => active.has(r.status)).length,
+      };
+    });
+  }
+
+  async findClientPayments(
+    applicationSlug: string,
+    clientId: string,
+  ): Promise<InteriorClientPaymentDto[]> {
+    const rows = await this.prisma.interiorProjectPayment.findMany({
+      where: {
+        project: {
+          clientId,
+          deletedAt: null,
+          application: { slug: applicationSlug },
+        },
+      },
+      orderBy: { paidAt: 'desc' },
+      include: {
+        project: {
+          select: { id: true, code: true, name: true, currency: true },
+        },
+      },
+    });
+    return rows.map((p) => ({
+      id: p.id,
+      paidAt: p.paidAt.toISOString(),
+      amount: num(p.amount) ?? 0,
+      currency: p.currency ?? p.project.currency ?? 'PEN',
+      concept: p.concept,
+      paymentType: p.paymentType ?? 'OTHER',
+      status: p.status,
+      project: { id: p.project.id, code: p.project.code, name: p.project.name },
+    }));
+  }
+
+  async findStatsRows(
+    applicationSlug: string,
+  ): Promise<InteriorProjectStatsRow[]> {
+    const rows = await this.prisma.interiorProject.findMany({
+      where: { application: { slug: applicationSlug }, deletedAt: null },
+      select: {
+        status: true,
+        currency: true,
+        estimatedBudget: true,
+        createdAt: true,
+      },
+    });
+    return rows.map((r) => ({
+      status: r.status,
+      currency: r.currency ?? 'PEN',
+      estimatedBudget: num(r.estimatedBudget),
+      createdAt: r.createdAt,
+    }));
+  }
+
   private mapDetail(
     row: Prisma.InteriorProjectGetPayload<{
       include: {
@@ -271,6 +479,7 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         architectSrAgent: { select: { id: true; fullName: true } };
         supervisorAgent: { select: { id: true; fullName: true } };
         commercialAgent: { select: { id: true; fullName: true } };
+        district: typeof DISTRICT_INCLUDE;
         materials: true;
         documents: true;
         payments: true;
@@ -286,25 +495,31 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       projectType: row.projectType as InteriorProjectDetail['projectType'],
       status: row.status as InteriorProjectDetail['status'],
       progressPct: num(row.progressPct) ?? 0,
+      interventionLevel: row.interventionLevel ?? null,
+      currency: row.currency ?? 'PEN',
+      estimatedBudget: num(row.estimatedBudget),
+      paidTotal: sumPaid(row.payments ?? [], row.currency ?? 'PEN'),
+      startDate: row.startDate ? formatDateOnly(row.startDate) : null,
       estimatedEndDate: row.estimatedEndDate
         ? formatDateOnly(row.estimatedEndDate)
         : null,
+      district: mapDistrict(row.district),
       client: {
         id: row.client.id,
         fullName: row.client.fullName,
         documentNumber: row.client.documentNumber,
       },
+      legacyCode: row.legacyCode ?? null,
       addressLine: row.addressLine ?? null,
       city: row.city ?? null,
-      interventionLevel: row.interventionLevel ?? null,
       executionTimeNote: row.executionTimeNote ?? null,
-      currency: row.currency ?? 'PEN',
+      exchangeRate: num(row.exchangeRate),
       defaultUtilityPct: num(row.defaultUtilityPct) ?? 20,
+      defaultOverheadPct: num(row.defaultOverheadPct) ?? 0,
       defaultIgvPct: num(row.defaultIgvPct) ?? 18,
       areaSqm: num(row.areaSqm),
       levelsCount: row.levelsCount ?? null,
       environmentsNote: row.environmentsNote ?? null,
-      startDate: row.startDate ? formatDateOnly(row.startDate) : null,
       designerAgent: row.designerAgent
         ? { id: row.designerAgent.id, fullName: row.designerAgent.fullName }
         : null,
@@ -326,7 +541,6 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
       commercialAgent: row.commercialAgent
         ? { id: row.commercialAgent.id, fullName: row.commercialAgent.fullName }
         : null,
-      estimatedBudget: num(row.estimatedBudget),
       projectedCost: num(row.projectedCost),
       expectedMargin: num(row.expectedMargin),
       materials: (row.materials ?? []).map((m) => ({
@@ -351,6 +565,8 @@ export class InteriorProjectPrismaRepository implements InteriorProjectRepositor
         paymentType: p.paymentType ?? 'OTHER',
         status: p.status,
         scheduleItemId: p.scheduleItemId ?? null,
+        currency: p.currency ?? null,
+        exchangeRate: p.exchangeRate != null ? Number(p.exchangeRate) : null,
       })),
       activities: (row.activities ?? []).map((a) => ({
         id: a.id,

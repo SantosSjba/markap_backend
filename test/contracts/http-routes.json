@@ -4179,7 +4179,24 @@
       "ApiQuery({ name: 'page', required: false })",
       "ApiQuery({ name: 'limit', required: false })",
       "ApiQuery({ name: 'search', required: false })",
-      "ApiQuery({ name: 'category', required: false })"
+      "ApiQuery({ name: 'category', required: false })",
+      "ApiQuery({ name: 'stock', required: false, description: 'OUT = sin stock' })"
+    ]
+  },
+  {
+    "controller": "InteriorismoCatalogMaterialsController",
+    "classDecorators": [
+      "ApiTags('Interiorismo — Materiales (catálogo)')",
+      "RequiresApplication('interiorismo')",
+      "Controller('interiorismo-catalog-materials')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "stats",
+    "decorators": [
+      "Get('stats')",
+      "ApiOperation({ summary: 'Indicadores del catálogo de materiales' })",
+      "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
   {
@@ -4326,12 +4343,29 @@
       "Get()",
       "ApiOperation({ summary: 'Listar documentos por tipo y aplicación' })",
       "ApiQuery({ name: 'applicationSlug', required: false })",
-      "ApiQuery({ name: 'docType', required: true })",
+      "ApiQuery({\n    name: 'docType',\n    required: false,\n    description: 'Sin valor = todos los tipos',\n  })",
       "ApiQuery({ name: 'page', required: false })",
       "ApiQuery({ name: 'limit', required: false })",
       "ApiQuery({ name: 'search', required: false })",
       "ApiQuery({ name: 'projectId', required: false })",
       "ApiResponse({ status: 200 })"
+    ]
+  },
+  {
+    "controller": "InteriorismoDocumentsController",
+    "classDecorators": [
+      "ApiTags('Interiorismo — Documentos')",
+      "RequiresApplication('interiorismo')",
+      "Controller('interiorismo-documents')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "stats",
+    "decorators": [
+      "Get('stats')",
+      "ApiOperation({ summary: 'Cantidad de documentos por tipo' })",
+      "ApiQuery({ name: 'applicationSlug', required: false })",
+      "ApiQuery({ name: 'projectId', required: false })"
     ]
   },
   {
@@ -4589,6 +4623,52 @@
     ]
   },
   {
+    "controller": "InteriorismoExecutionController",
+    "classDecorators": [
+      "ApiTags('Interiorismo — Ejecución')",
+      "RequiresApplication('interiorismo')",
+      "Controller('interiorismo-execution')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "createMilestone",
+    "decorators": [
+      "Post('projects/:projectId/milestones')",
+      "ApiOperation({ summary: 'Crear hito del cronograma' })"
+    ]
+  },
+  {
+    "controller": "InteriorismoExecutionController",
+    "classDecorators": [
+      "ApiTags('Interiorismo — Ejecución')",
+      "RequiresApplication('interiorismo')",
+      "Controller('interiorismo-execution')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "updateMilestone",
+    "decorators": [
+      "Patch('projects/:projectId/milestones/:milestoneId')",
+      "ApiOperation({ summary: 'Editar, cumplir o reabrir un hito' })"
+    ]
+  },
+  {
+    "controller": "InteriorismoExecutionController",
+    "classDecorators": [
+      "ApiTags('Interiorismo — Ejecución')",
+      "RequiresApplication('interiorismo')",
+      "Controller('interiorismo-execution')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "deleteMilestone",
+    "decorators": [
+      "Delete('projects/:projectId/milestones/:milestoneId')",
+      "HttpCode(HttpStatus.NO_CONTENT)",
+      "ApiResponse({ status: 204 })"
+    ]
+  },
+  {
     "controller": "InteriorismoFinanceController",
     "classDecorators": [
       "ApiTags('Interiorismo — Finanzas')",
@@ -4713,6 +4793,22 @@
       "ApiQuery({ name: 'page', required: false })",
       "ApiQuery({ name: 'limit', required: false })",
       "ApiQuery({ name: 'search', required: false })"
+    ]
+  },
+  {
+    "controller": "InteriorismoMaterialSuppliersController",
+    "classDecorators": [
+      "ApiTags('Interiorismo — Materiales (proveedores)')",
+      "RequiresApplication('interiorismo')",
+      "Controller('interiorismo-material-suppliers')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "stats",
+    "decorators": [
+      "Get('stats')",
+      "ApiOperation({ summary: 'Indicadores de proveedores' })",
+      "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
   {
@@ -4855,7 +4951,7 @@
     "method": "getBudget",
     "decorators": [
       "Get(':projectId/budget')",
-      "ApiOperation({\n    summary: 'Presupuesto del proyecto (secciones + partidas + totales)',\n  })",
+      "ApiOperation({\n    summary:\n      'Hoja del presupuesto activo (filas en árbol con montos y totales)',\n  })",
       "ApiQuery({ name: 'applicationSlug', required: false })",
       "ApiResponse({ status: 200 })"
     ]
@@ -4925,7 +5021,7 @@
       "Post(':projectId/budget/import-excel')",
       "ApiOperation({ summary: 'Importar presupuesto desde Excel (.xlsx)' })",
       "ApiQuery({ name: 'applicationSlug', required: false })",
-      "ApiQuery({\n    name: 'replace',\n    required: false,\n    description: 'true = reemplaza secciones existentes',\n  })",
+      "ApiQuery({\n    name: 'replace',\n    required: false,\n    description: 'true = reemplaza las filas existentes',\n  })",
       "UseInterceptors(FileInterceptor('file'))"
     ]
   },
@@ -4988,10 +5084,11 @@
       "UseGuards(JwtAuthGuard)",
       "ApiBearerAuth('JWT-auth')"
     ],
-    "method": "createSection",
+    "method": "exportExcel",
     "decorators": [
-      "Post(':projectId/budget/sections')",
-      "ApiOperation({ summary: 'Crear sección de presupuesto' })",
+      "Get(':projectId/budget/export.xlsx')",
+      "ApiOperation({ summary: 'Descargar el presupuesto en Excel' })",
+      "ApiProduces(\n    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',\n  )",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -5004,10 +5101,10 @@
       "UseGuards(JwtAuthGuard)",
       "ApiBearerAuth('JWT-auth')"
     ],
-    "method": "updateSection",
+    "method": "updateHeader",
     "decorators": [
-      "Patch(':projectId/budget/sections/:sectionId')",
-      "ApiOperation({ summary: 'Actualizar sección' })",
+      "Patch(':projectId/budget')",
+      "ApiOperation({\n    summary: 'Actualizar cabecera (moneda, márgenes, IGV, columnas)',\n  })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -5020,10 +5117,10 @@
       "UseGuards(JwtAuthGuard)",
       "ApiBearerAuth('JWT-auth')"
     ],
-    "method": "deleteSection",
+    "method": "createRows",
     "decorators": [
-      "Delete(':projectId/budget/sections/:sectionId')",
-      "ApiOperation({ summary: 'Eliminar sección' })",
+      "Post(':projectId/budget/rows')",
+      "ApiOperation({ summary: 'Agregar filas (una o varias pegadas desde Excel)' })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -5036,10 +5133,10 @@
       "UseGuards(JwtAuthGuard)",
       "ApiBearerAuth('JWT-auth')"
     ],
-    "method": "createLineItem",
+    "method": "updateRow",
     "decorators": [
-      "Post(':projectId/budget/line-items')",
-      "ApiOperation({ summary: 'Crear partida' })",
+      "Patch(':projectId/budget/rows/:rowId')",
+      "ApiOperation({ summary: 'Editar celdas de una fila' })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -5052,10 +5149,10 @@
       "UseGuards(JwtAuthGuard)",
       "ApiBearerAuth('JWT-auth')"
     ],
-    "method": "updateLineItem",
+    "method": "moveRow",
     "decorators": [
-      "Patch(':projectId/budget/line-items/:lineItemId')",
-      "ApiOperation({ summary: 'Actualizar partida' })",
+      "Post(':projectId/budget/rows/:rowId/move')",
+      "ApiOperation({ summary: 'Mover, reordenar o (des)anidar una fila' })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -5068,10 +5165,10 @@
       "UseGuards(JwtAuthGuard)",
       "ApiBearerAuth('JWT-auth')"
     ],
-    "method": "deleteLineItem",
+    "method": "deleteRow",
     "decorators": [
-      "Delete(':projectId/budget/line-items/:lineItemId')",
-      "ApiOperation({ summary: 'Eliminar partida' })",
+      "Delete(':projectId/budget/rows/:rowId')",
+      "ApiOperation({ summary: 'Eliminar una fila (y las filas que contiene)' })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -5086,8 +5183,8 @@
     ],
     "method": "createSupplierPayment",
     "decorators": [
-      "Post(':projectId/budget/supplier-payments')",
-      "ApiOperation({ summary: 'Registrar abono a proveedor por partida' })",
+      "Post(':projectId/budget/rows/:rowId/supplier-payments')",
+      "ApiOperation({ summary: 'Registrar abono al proveedor de una partida' })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -5104,6 +5201,22 @@
     "decorators": [
       "Delete(':projectId/budget/supplier-payments/:paymentId')",
       "ApiOperation({ summary: 'Eliminar abono a proveedor' })",
+      "ApiQuery({ name: 'applicationSlug', required: false })"
+    ]
+  },
+  {
+    "controller": "InteriorismoProjectBudgetController",
+    "classDecorators": [
+      "ApiTags('Interiorismo — Presupuesto por proyecto')",
+      "RequiresApplication('interiorismo')",
+      "Controller('interiorismo-projects')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "activateVersion",
+    "decorators": [
+      "Post(':projectId/budget/versions/:budgetId/activate')",
+      "ApiOperation({ summary: 'Volver a una versión anterior del presupuesto' })",
       "ApiQuery({ name: 'applicationSlug', required: false })"
     ]
   },
@@ -5127,6 +5240,60 @@
       "ApiQuery({ name: 'status', required: false })",
       "ApiQuery({\n    name: 'inProgressOnly',\n    required: false,\n    description:\n      'true = DESIGN, QUOTE, APPROVED, IN_PROGRESS (proyectos activos)',\n  })",
       "ApiQuery({\n    name: 'clientId',\n    required: false,\n    description: 'Filtrar proyectos por cliente',\n  })",
+      "ApiQuery({ name: 'projectType', required: false })",
+      "ApiQuery({\n    name: 'agentId',\n    required: false,\n    description: 'Proyectos donde el agente es responsable (cualquier rol)',\n  })",
+      "ApiResponse({ status: 200 })"
+    ]
+  },
+  {
+    "controller": "InteriorismoProjectsController",
+    "classDecorators": [
+      "ApiTags('Interiorismo — Proyectos')",
+      "RequiresApplication('interiorismo')",
+      "Controller('interiorismo-projects')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "stats",
+    "decorators": [
+      "Get('stats')",
+      "ApiOperation({ summary: 'Indicadores del listado de proyectos' })",
+      "ApiQuery({ name: 'applicationSlug', required: false })",
+      "ApiResponse({ status: 200 })"
+    ]
+  },
+  {
+    "controller": "InteriorismoProjectsController",
+    "classDecorators": [
+      "ApiTags('Interiorismo — Proyectos')",
+      "RequiresApplication('interiorismo')",
+      "Controller('interiorismo-projects')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "clientsSummary",
+    "decorators": [
+      "Get('clients/summary')",
+      "ApiOperation({ summary: 'Proyectos por cliente (total y activos)' })",
+      "ApiQuery({\n    name: 'clientIds',\n    required: true,\n    description: 'ids separados por coma',\n  })",
+      "ApiQuery({ name: 'applicationSlug', required: false })",
+      "ApiResponse({ status: 200 })"
+    ]
+  },
+  {
+    "controller": "InteriorismoProjectsController",
+    "classDecorators": [
+      "ApiTags('Interiorismo — Proyectos')",
+      "RequiresApplication('interiorismo')",
+      "Controller('interiorismo-projects')",
+      "UseGuards(JwtAuthGuard)",
+      "ApiBearerAuth('JWT-auth')"
+    ],
+    "method": "clientPayments",
+    "decorators": [
+      "Get('clients/:clientId/payments')",
+      "ApiOperation({ summary: 'Cobros de un cliente en todos sus proyectos' })",
+      "ApiQuery({ name: 'applicationSlug', required: false })",
       "ApiResponse({ status: 200 })"
     ]
   },
@@ -5192,10 +5359,10 @@
     "method": "dashboard",
     "decorators": [
       "Get('dashboard')",
-      "ApiOperation({\n    summary:\n      'Dashboard consolidado (ventas/cobranzas, conversión, rentabilidad, productividad, costos, KPIs)',\n  })",
+      "ApiOperation({\n    summary:\n      'Dashboard y reportes de proyectos, cobranzas y proveedores por moneda',\n  })",
       "ApiQuery({\n    name: 'applicationSlug',\n    required: false,\n    description: 'Por defecto interiorismo',\n  })",
-      "ApiQuery({\n    name: 'startDate',\n    required: false,\n    description: 'YYYY-MM-DD (UTC)',\n  })",
-      "ApiQuery({\n    name: 'endDate',\n    required: false,\n    description: 'YYYY-MM-DD (UTC)',\n  })"
+      "ApiQuery({\n    name: 'startDate',\n    required: false,\n    description: 'YYYY-MM-DD (hora de Lima)',\n  })",
+      "ApiQuery({\n    name: 'endDate',\n    required: false,\n    description: 'YYYY-MM-DD (hora de Lima)',\n  })"
     ]
   },
   {

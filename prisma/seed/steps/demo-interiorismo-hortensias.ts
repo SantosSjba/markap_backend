@@ -8,6 +8,7 @@ import {
   INTERIORISMO_APPLICATION_SLUG,
   SAMPLE_INTERIOR_RESIDENTIAL_CLIENT,
 } from '../data';
+import { seedInteriorBudget } from './interiorismo-budget-seed.helper';
 import type { SeedDb } from '../types';
 import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
 const logger = createScriptLogger('Script:demo-interiorismo-hortensias');
@@ -39,7 +40,13 @@ export async function seedInteriorismoHortensiasProject(
   }
 
   const exists = await prisma.interiorProject.findFirst({
-    where: { applicationId: interiorAppId, code: HORTENSIAS_PROJECT_CODE },
+    where: {
+      applicationId: interiorAppId,
+      OR: [
+        { code: HORTENSIAS_PROJECT_CODE },
+        { legacyCode: HORTENSIAS_PROJECT_CODE },
+      ],
+    },
   });
   if (exists) {
     logger.info(
@@ -66,25 +73,6 @@ export async function seedInteriorismoHortensiasProject(
       defaultIgvPct: new Prisma.Decimal(18),
       startDate: new Date('2026-01-15'),
       progressPct: new Prisma.Decimal(35),
-      budgetSections: {
-        create: HORTENSIAS_BUDGET_SECTIONS.map((section) => ({
-          name: section.name,
-          sortOrder: section.sortOrder,
-          lineItems: {
-            create: section.items.map((item) => ({
-              sortOrder: item.sortOrder,
-              description: item.description,
-              budgetedCost: new Prisma.Decimal(item.budgetedCost),
-              hasIgv: item.hasIgv ?? false,
-              actualPurchaseCost:
-                item.actualPurchaseCost != null
-                  ? new Prisma.Decimal(item.actualPurchaseCost)
-                  : null,
-              supplierName: item.supplierName ?? null,
-            })),
-          },
-        })),
-      },
       payments: {
         create: {
           paidAt: new Date('2026-01-20'),
@@ -96,6 +84,21 @@ export async function seedInteriorismoHortensiasProject(
       },
     },
   });
+
+  await seedInteriorBudget(
+    prisma,
+    project.id,
+    HORTENSIAS_BUDGET_SECTIONS.map((section) => ({
+      name: section.name,
+      items: section.items.map((item) => ({
+        description: item.description,
+        directCost: item.budgetedCost,
+        hasIgv: item.hasIgv ?? false,
+        actualCost: item.actualPurchaseCost ?? null,
+        supplierName: item.supplierName ?? null,
+      })),
+    })),
+  );
 
   logger.info(
     { event: 'seed.progress' },

@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { formatDateOnly } from '../../../../../shared/domain/utils/peru-date.util';
-import { getProjectBudgetPriceTotal } from '../../../../../shared/infrastructure/database/prisma/helpers/project-budget-query.helper';
+import { getInteriorBudgetTotal } from '../helpers/interior-budget-total.helper';
 import { PrismaService } from '../../../../../shared/infrastructure/database/prisma/prisma.service';
 import type {
   CreateInteriorExecutionActualCostPayload,
   CreateInteriorExecutionEvidencePayload,
   CreateInteriorExecutionIncidentPayload,
+  CreateInteriorExecutionMilestonePayload,
   CreateInteriorExecutionTaskPayload,
   InteriorExecutionActualCostDto,
   InteriorExecutionEvidenceDto,
@@ -16,6 +17,7 @@ import type {
   InteriorExecutionRepository,
   InteriorExecutionTaskDto,
   UpdateInteriorExecutionIncidentPayload,
+  UpdateInteriorExecutionMilestonePayload,
   UpdateInteriorExecutionTaskPayload,
 } from '../../../domain/repositories/interior-execution.repository';
 
@@ -112,7 +114,7 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
     });
     if (!project || project.application.slug !== slug) return null;
 
-    const [tasks, evidences, incidents, costs, budgetPriceTotal, sectionCount] =
+    const [tasks, evidences, incidents, costs, budgetSummary] =
       await Promise.all([
         this.prisma.interiorExecutionTask.findMany({ where: { projectId } }),
         this.prisma.interiorExecutionEvidence.findMany({
@@ -128,9 +130,10 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
           orderBy: { occurredAt: 'desc' },
           include: { catalogMaterial: { select: { code: true, name: true } } },
         }),
-        getProjectBudgetPriceTotal(this.prisma, projectId),
-        this.prisma.interiorProjectSection.count({ where: { projectId } }),
+        getInteriorBudgetTotal(this.prisma, projectId),
       ]);
+    const budgetPriceTotal = budgetSummary.total;
+    const sectionCount = budgetSummary.rowCount;
 
     const budgetGrand = sectionCount > 0 ? budgetPriceTotal : null;
     const ref =
@@ -424,6 +427,55 @@ export class InteriorExecutionPrismaRepository implements InteriorExecutionRepos
   async deleteActualCost(projectId: string, costId: string): Promise<boolean> {
     const r = await this.prisma.interiorExecutionActualCost.deleteMany({
       where: { id: costId, projectId },
+    });
+    return r.count > 0;
+  }
+
+  async createMilestone(
+    projectId: string,
+    payload: CreateInteriorExecutionMilestonePayload,
+  ): Promise<InteriorExecutionMilestoneDto> {
+    const row = await this.prisma.interiorProjectMilestone.create({
+      data: {
+        projectId,
+        title: payload.title.trim(),
+        plannedDate: payload.plannedDate,
+      },
+    });
+    return mapMilestone(row);
+  }
+
+  async updateMilestone(
+    projectId: string,
+    milestoneId: string,
+    payload: UpdateInteriorExecutionMilestonePayload,
+  ): Promise<InteriorExecutionMilestoneDto | null> {
+    const existing = await this.prisma.interiorProjectMilestone.findFirst({
+      where: { id: milestoneId, projectId },
+      select: { id: true },
+    });
+    if (!existing) return null;
+    const row = await this.prisma.interiorProjectMilestone.update({
+      where: { id: milestoneId },
+      data: {
+        ...(payload.title !== undefined ? { title: payload.title.trim() } : {}),
+        ...(payload.plannedDate !== undefined
+          ? { plannedDate: payload.plannedDate }
+          : {}),
+        ...(payload.completedAt !== undefined
+          ? { completedAt: payload.completedAt }
+          : {}),
+      },
+    });
+    return mapMilestone(row);
+  }
+
+  async deleteMilestone(
+    projectId: string,
+    milestoneId: string,
+  ): Promise<boolean> {
+    const r = await this.prisma.interiorProjectMilestone.deleteMany({
+      where: { id: milestoneId, projectId },
     });
     return r.count > 0;
   }

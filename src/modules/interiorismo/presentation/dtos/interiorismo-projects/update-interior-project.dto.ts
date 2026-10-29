@@ -19,6 +19,14 @@ const PROJECT_STATUSES = [...INTERIOR_PROJECT_STATUS_CODES] as const;
 export class UpdateInteriorProjectDto {
   static readonly isZodDto = true;
   static readonly schema: z.ZodType = z.strictObject({
+    code: z
+      .preprocess(
+        primitiveText,
+        z
+          .string({ error: 'El campo «código» debe ser un texto.' })
+          .max(80, { error: 'El campo «código» es demasiado largo.' }),
+      )
+      .optional(),
     name: z
       .preprocess(
         primitiveText,
@@ -60,7 +68,7 @@ export class UpdateInteriorProjectDto {
     currency: z
       .preprocess(
         primitiveText,
-        z.enum(['PEN', 'USD'], {
+        z.enum(['PEN', 'USD', 'EUR'], {
           error: 'El campo «moneda» no es una opción permitida.',
         }),
       )
@@ -78,6 +86,23 @@ export class UpdateInteriorProjectDto {
       .min(0, {
         error: 'El campo «defaultIgvPct» es menor que el mínimo permitido.',
       })
+      .nullish(),
+    defaultOverheadPct: z
+      .number({
+        error: 'El campo «gastos generales %» debe ser un número válido.',
+      })
+      .min(0, {
+        error:
+          'El campo «gastos generales %» es menor que el mínimo permitido.',
+      })
+      .nullish(),
+    exchangeRate: z
+      .number({ error: 'El campo «tipo de cambio» debe ser un número válido.' })
+      .positive({ error: 'El campo «tipo de cambio» debe ser mayor que cero.' })
+      .nullish(),
+    districtId: z
+      .string({ error: 'El campo «distrito» no es válido.' })
+      .max(40, { error: 'El campo «distrito» no es válido.' })
       .nullish(),
     areaSqm: z
       .number({ error: 'El campo «área (m²)» debe ser un número válido.' })
@@ -145,6 +170,11 @@ export class UpdateInteriorProjectDto {
       .nullish(),
   });
 
+  @ApiPropertyOptional({
+    description: 'Código regenerado (se agrega sufijo si existe)',
+  })
+  code?: string;
+
   @ApiPropertyOptional()
   name?: string;
 
@@ -169,7 +199,7 @@ export class UpdateInteriorProjectDto {
   @ApiPropertyOptional({ example: '30 DÍAS HÁBILES' })
   executionTimeNote?: string | null;
 
-  @ApiPropertyOptional({ enum: ['PEN', 'USD'] })
+  @ApiPropertyOptional({ enum: ['PEN', 'USD', 'EUR'] })
   currency?: string;
 
   @ApiPropertyOptional()
@@ -177,6 +207,21 @@ export class UpdateInteriorProjectDto {
 
   @ApiPropertyOptional()
   defaultIgvPct?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Gastos generales por defecto %',
+    example: 1,
+  })
+  defaultOverheadPct?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Tipo de cambio de referencia a soles',
+    example: 3.5,
+  })
+  exchangeRate?: number | null;
+
+  @ApiPropertyOptional({ description: 'Distrito del ubigeo' })
+  districtId?: string | null;
 
   @ApiPropertyOptional()
   areaSqm?: number | null;

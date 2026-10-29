@@ -52,6 +52,18 @@ export class UpdateInteriorCatalogMaterialDto {
         z.number({ error: 'El campo «stock» debe ser un número válido.' }),
       )
       .nullish(),
+    currency: z
+      .preprocess(
+        primitiveText,
+        z.enum(['PEN', 'USD', 'EUR'], {
+          error: 'El campo «moneda» no es una opción permitida.',
+        }),
+      )
+      .nullish(),
+    description: z
+      .string({ error: 'El campo «descripción» debe ser un texto.' })
+      .max(2000, { error: 'El campo «descripción» es demasiado largo.' })
+      .nullish(),
     technicalSheetUrl: z
       .string({ error: 'El campo «technicalSheetUrl» debe ser un texto.' })
       .nullish(),
@@ -88,4 +100,10 @@ export class UpdateInteriorCatalogMaterialDto {
     description: 'Si se envía, reemplaza todas las imágenes',
   })
   imageUrls?: string[];
+
+  @ApiPropertyOptional({ enum: ['PEN', 'USD', 'EUR'], default: 'PEN' })
+  currency?: string | null;
+
+  @ApiPropertyOptional()
+  description?: string | null;
 }

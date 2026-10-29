@@ -5,10 +5,25 @@ import type {
   CreateInteriorCatalogMaterialPayload,
   InteriorCatalogMaterialDetail,
   InteriorCatalogMaterialRepository,
+  InteriorCatalogMaterialStats,
   ListInteriorCatalogMaterialsFilters,
   ListInteriorCatalogMaterialsResult,
   UpdateInteriorCatalogMaterialPayload,
 } from '../../../domain/repositories/interior-catalog-material.repository';
+
+const DETAIL_INCLUDE = {
+  images: { orderBy: { sortOrder: 'asc' } },
+  supplierLinks: {
+    include: {
+      supplier: { select: { id: true, companyName: true, ruc: true } },
+    },
+  },
+  purchases: {
+    orderBy: { purchasedAt: 'desc' },
+    take: 50,
+    include: { supplier: { select: { id: true, companyName: true } } },
+  },
+} satisfies Prisma.InteriorCatalogMaterialInclude;
 
 function num(v: unknown): number | null {
   if (v === null || v === undefined) return null;
@@ -20,19 +35,11 @@ function num(v: unknown): number | null {
 export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogMaterialRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private mapDetail(row: {
-    id: string;
-    code: string;
-    name: string;
-    category: string;
-    brand: string;
-    unit: string;
-    price: Prisma.Decimal;
-    stock: Prisma.Decimal;
-    technicalSheetUrl: string | null;
-    updatedAt: Date;
-    images: { id: string; sortOrder: number; url: string }[];
-  }): InteriorCatalogMaterialDetail {
+  private mapDetail(
+    row: Prisma.InteriorCatalogMaterialGetPayload<{
+      include: typeof DETAIL_INCLUDE;
+    }>,
+  ): InteriorCatalogMaterialDetail {
     return {
       id: row.id,
       code: row.code,
@@ -41,8 +48,28 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
       brand: row.brand,
       unit: row.unit,
       price: num(row.price) ?? 0,
+      currency: row.currency,
+      description: row.description,
       stock: num(row.stock) ?? 0,
       technicalSheetUrl: row.technicalSheetUrl,
+      suppliers: row.supplierLinks.map((l) => ({
+        linkId: l.id,
+        supplierId: l.supplier.id,
+        companyName: l.supplier.companyName,
+        ruc: l.supplier.ruc,
+        supplierSku: l.supplierSku,
+      })),
+      purchases: row.purchases.map((p) => ({
+        id: p.id,
+        supplierId: p.supplier.id,
+        supplierName: p.supplier.companyName,
+        purchasedAt: p.purchasedAt.toISOString(),
+        quantity: num(p.quantity) ?? 0,
+        unitPrice: num(p.unitPrice) ?? 0,
+        totalAmount: num(p.totalAmount) ?? 0,
+        currency: p.currency,
+        invoiceRef: p.invoiceRef,
+      })),
       images: row.images.map((im) => ({
         id: im.id,
         sortOrder: im.sortOrder,
@@ -70,6 +97,7 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
         category: { equals: filters.category.trim(), mode: 'insensitive' },
       });
     }
+    if (filters.stock === 'OUT') andParts.push({ stock: { lte: 0 } });
     if (filters.search?.trim()) {
       const q = filters.search.trim();
       andParts.push({
@@ -87,7 +115,7 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
     const [rows, total] = await Promise.all([
       this.prisma.interiorCatalogMaterial.findMany({
         where,
-        include: { _count: { select: { images: true } } },
+        include: { _count: { select: { images: true, supplierLinks: true } } },
         orderBy: { updatedAt: 'desc' },
         skip: (filters.page - 1) * filters.limit,
         take: filters.limit,
@@ -104,8 +132,10 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
         brand: r.brand,
         unit: r.unit,
         price: num(r.price) ?? 0,
+        currency: r.currency,
         stock: num(r.stock) ?? 0,
         imageCount: r._count.images,
+        suppliersCount: r._count.supplierLinks,
         updatedAt: r.updatedAt.toISOString(),
       })),
       total,
@@ -120,10 +150,7 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
   ): Promise<InteriorCatalogMaterialDetail | null> {
     const row = await this.prisma.interiorCatalogMaterial.findUnique({
       where: { id },
-      include: {
-        images: { orderBy: { sortOrder: 'asc' } },
-        application: { select: { slug: true } },
-      },
+      include: { ...DETAIL_INCLUDE, application: { select: { slug: true } } },
     });
     if (!row) return null;
     if (
@@ -148,6 +175,8 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
         brand: payload.brand.trim(),
         unit: payload.unit.trim(),
         price: new Prisma.Decimal(payload.price),
+        currency: payload.currency || 'PEN',
+        description: payload.description?.trim() || null,
         stock: new Prisma.Decimal(payload.stock ?? 0),
         technicalSheetUrl: payload.technicalSheetUrl?.trim() || null,
         images:
@@ -160,7 +189,7 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
               }
             : undefined,
       },
-      include: { images: { orderBy: { sortOrder: 'asc' } } },
+      include: DETAIL_INCLUDE,
     });
     return this.mapDetail(row);
   }
@@ -177,6 +206,9 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
     if (payload.unit !== undefined) patch.unit = payload.unit.trim();
     if (payload.price !== undefined)
       patch.price = new Prisma.Decimal(payload.price);
+    if (payload.currency !== undefined) patch.currency = payload.currency;
+    if (payload.description !== undefined)
+      patch.description = payload.description?.trim() || null;
     if (payload.stock !== undefined)
       patch.stock = new Prisma.Decimal(payload.stock);
     if (payload.technicalSheetUrl !== undefined) {
@@ -208,6 +240,31 @@ export class InteriorCatalogMaterialPrismaRepository implements InteriorCatalogM
     const detail = await this.findById(id);
     if (!detail) throw new Error('Material no encontrado.');
     return detail;
+  }
+
+  async stats(applicationSlug: string): Promise<InteriorCatalogMaterialStats> {
+    const where = { application: { slug: applicationSlug } };
+    const [total, outOfStock, withoutSupplier, categories] = await Promise.all([
+      this.prisma.interiorCatalogMaterial.count({ where }),
+      this.prisma.interiorCatalogMaterial.count({
+        where: { ...where, stock: { lte: 0 } },
+      }),
+      this.prisma.interiorCatalogMaterial.count({
+        where: { ...where, supplierLinks: { none: {} } },
+      }),
+      this.prisma.interiorCatalogMaterial.findMany({
+        where,
+        distinct: ['category'],
+        select: { category: true },
+        orderBy: { category: 'asc' },
+      }),
+    ]);
+    return {
+      total,
+      outOfStock,
+      withoutSupplier,
+      categories: categories.map((c) => c.category),
+    };
   }
 
   async delete(id: string): Promise<void> {

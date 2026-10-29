@@ -1,200 +1,212 @@
+import type {
+  BudgetIgvMode,
+  BudgetMarginMode,
+  BudgetRowKind,
+  BudgetSheetTotals,
+  ComputedBudgetRow,
+} from '../budget/budget-sheet.calculator';
+
 export const INTERIOR_PROJECT_BUDGET_REPOSITORY = Symbol(
   'InteriorProjectBudgetRepository',
 );
 
-export interface ProjectBudgetLineItemDto {
-  id: string;
-  sectionId: string;
-  sortOrder: number;
-  description: string;
-  budgetedCost: number;
-  hasIgv: boolean;
-  actualPurchaseCost: number | null;
-  supplierName: string | null;
-  supplierId: string | null;
-  utilityAmount: number;
-  totalBeforeIgv: number;
-  igvAmount: number;
-  price: number;
-  emergencyUtilityAmount: number | null;
-  totalSupplierPayments: number;
-  supplierBalance: number | null;
-  supplierPayments: Array<{
-    id: string;
-    paymentNumber: number;
-    amount: number;
-    paidAt: string;
-  }>;
-}
+export type BudgetStatus = 'DRAFT' | 'SENT' | 'APPROVED';
+export type BudgetRowStatus = 'PENDING' | 'QUOTED' | 'PURCHASED' | 'GIFT';
 
-export interface ProjectBudgetSectionDto {
+export interface BudgetHeaderDto {
   id: string;
-  name: string;
-  sortOrder: number;
-  lineItems: ProjectBudgetLineItemDto[];
-  sectionTotal: number;
-}
-
-export interface ProjectBudgetDetailDto {
   projectId: string;
-  projectCode: string;
-  projectName: string;
-  city: string | null;
-  interventionLevel: string | null;
-  executionTimeNote: string | null;
+  version: number;
+  isActive: boolean;
+  number: string | null;
+  issuedAt: string | null;
+  executionTerm: string | null;
+  executedBy: string | null;
+  status: BudgetStatus;
   currency: string;
-  defaultUtilityPct: number;
-  defaultIgvPct: number;
-  sections: ProjectBudgetSectionDto[];
-  totals: {
-    budgetedCostTotal: number;
-    utilityTotal: number;
-    igvTotal: number;
-    priceTotal: number;
-    actualPurchaseCostTotal: number;
-  };
+  exchangeRate: number | null;
+  exchangeRateDate: string | null;
+  marginMode: BudgetMarginMode;
+  utilityPct: number;
+  overheadPct: number;
+  igvMode: BudgetIgvMode;
+  igvPct: number;
+  terms: string | null;
+  /** Claves de columnas visibles en el editor; null = las predeterminadas */
+  visibleColumns: string[] | null;
 }
 
-export interface ProjectSettlementDto {
-  budgetTotal: number;
-  igvTotal: number;
-  totalActualCost: number;
-  totalSupplierPayments: number;
-  depositsOnAccount: number;
-  totalClientPaid: number;
-  pendingToCollect: number;
-  milestoneUtility: number;
-}
-
-export interface CreateProjectBudgetSectionPayload {
-  name: string;
-  sortOrder?: number;
-}
-
-export interface UpdateProjectBudgetSectionPayload {
-  name?: string;
-  sortOrder?: number;
-}
-
-export interface CreateProjectBudgetLineItemPayload {
-  sectionId: string;
-  description: string;
-  sortOrder?: number;
-  budgetedCost: number;
-  hasIgv?: boolean;
-  actualPurchaseCost?: number | null;
-  supplierName?: string | null;
-  supplierId?: string | null;
-}
-
-export interface UpdateProjectBudgetLineItemPayload {
-  description?: string;
-  sortOrder?: number;
-  budgetedCost?: number;
-  hasIgv?: boolean;
-  actualPurchaseCost?: number | null;
-  supplierName?: string | null;
-  supplierId?: string | null;
-}
-
-export interface CreateLineItemSupplierPaymentPayload {
-  lineItemId: string;
-  paymentNumber: number;
+export interface BudgetSupplierPaymentDto {
+  id: string;
   amount: number;
-  paidAt: Date;
+  paidAt: string;
+  note: string | null;
+}
+
+export interface BudgetSheetRowDto extends ComputedBudgetRow {
+  /** Código escrito a mano (el mostrado está en `code`) */
+  manualCode: string | null;
+  status: BudgetRowStatus;
+  note: string | null;
+  supplierId: string | null;
+  supplierName: string | null;
+  supplierPayments: BudgetSupplierPaymentDto[];
+}
+
+export interface BudgetVersionDto {
+  id: string;
+  version: number;
+  isActive: boolean;
+  status: BudgetStatus;
+  createdAt: string;
+}
+
+export interface BudgetSheetDto {
+  project: { id: string; code: string; name: string; currency: string };
+  budget: BudgetHeaderDto;
+  versions: BudgetVersionDto[];
+  /** Filas en orden de lectura, con montos calculados */
+  rows: BudgetSheetRowDto[];
+  totals: BudgetSheetTotals;
+}
+
+export type { ProjectSettlementResult as ProjectSettlementDto } from '../budget/project-settlement.calculator';
+import type { ProjectSettlementResult } from '../budget/project-settlement.calculator';
+
+export interface UpdateBudgetHeaderPayload {
+  number?: string | null;
+  issuedAt?: Date | null;
+  executionTerm?: string | null;
+  executedBy?: string | null;
+  status?: BudgetStatus;
+  currency?: string;
+  exchangeRate?: number | null;
+  exchangeRateDate?: Date | null;
+  marginMode?: BudgetMarginMode;
+  utilityPct?: number;
+  overheadPct?: number;
+  igvMode?: BudgetIgvMode;
+  igvPct?: number;
+  terms?: string | null;
+  visibleColumns?: string[] | null;
+}
+
+/** Campos editables de una fila (las celdas de la hoja) */
+export interface BudgetRowFields {
+  kind?: BudgetRowKind;
+  code?: string | null;
+  description?: string;
+  unit?: string | null;
+  quantity?: number | null;
+  unitPrice?: number | null;
+  directCost?: number | null;
+  actualCost?: number | null;
+  utilityPctOverride?: number | null;
+  hasIgv?: boolean;
+  supplierId?: string | null;
+  supplierName?: string | null;
+  status?: BudgetRowStatus;
+  note?: string | null;
+}
+
+/** Dónde insertar: dentro de `parentId` (null = raíz), justo después de `afterRowId` (null = al final) */
+export interface BudgetRowPosition {
+  parentId: string | null;
+  afterRowId: string | null;
+}
+
+/** Fila importada de Excel (árbol) */
+export interface ImportedBudgetRow extends BudgetRowFields {
+  kind: BudgetRowKind;
+  description: string;
+  children?: ImportedBudgetRow[];
+}
+
+export interface ImportedBudget {
+  header: UpdateBudgetHeaderPayload;
+  rows: ImportedBudgetRow[];
 }
 
 export interface InteriorProjectBudgetRepository {
-  getBudget(
+  /** Hoja del presupuesto activo (crea la v1 vacía con los valores por defecto del proyecto) */
+  getSheet(
     projectId: string,
     applicationSlug?: string,
-  ): Promise<ProjectBudgetDetailDto | null>;
+  ): Promise<BudgetSheetDto>;
   getSettlement(
     projectId: string,
     applicationSlug?: string,
-  ): Promise<ProjectSettlementDto | null>;
-  createSection(
+  ): Promise<ProjectSettlementResult>;
+  updateHeader(
     projectId: string,
-    payload: CreateProjectBudgetSectionPayload,
+    payload: UpdateBudgetHeaderPayload,
     applicationSlug?: string,
-  ): Promise<ProjectBudgetSectionDto>;
-  updateSection(
+  ): Promise<BudgetSheetDto>;
+  createRows(
     projectId: string,
-    sectionId: string,
-    payload: UpdateProjectBudgetSectionPayload,
+    position: BudgetRowPosition,
+    rows: BudgetRowFields[],
     applicationSlug?: string,
-  ): Promise<ProjectBudgetSectionDto>;
-  deleteSection(
+  ): Promise<BudgetSheetDto & { createdRowIds: string[] }>;
+  updateRow(
     projectId: string,
-    sectionId: string,
+    rowId: string,
+    payload: BudgetRowFields,
     applicationSlug?: string,
-  ): Promise<void>;
-  createLineItem(
+  ): Promise<BudgetSheetDto>;
+  moveRow(
     projectId: string,
-    payload: CreateProjectBudgetLineItemPayload,
+    rowId: string,
+    target: { parentId: string | null; index: number },
     applicationSlug?: string,
-  ): Promise<ProjectBudgetLineItemDto>;
-  updateLineItem(
+  ): Promise<BudgetSheetDto>;
+  deleteRow(
     projectId: string,
-    lineItemId: string,
-    payload: UpdateProjectBudgetLineItemPayload,
+    rowId: string,
     applicationSlug?: string,
-  ): Promise<ProjectBudgetLineItemDto>;
-  deleteLineItem(
+  ): Promise<BudgetSheetDto>;
+  addSupplierPayment(
     projectId: string,
-    lineItemId: string,
+    rowId: string,
+    payload: { amount: number; paidAt: Date; note?: string | null },
     applicationSlug?: string,
-  ): Promise<void>;
-  createSupplierPayment(
-    projectId: string,
-    payload: CreateLineItemSupplierPaymentPayload,
-    applicationSlug?: string,
-  ): Promise<ProjectBudgetLineItemDto>;
+  ): Promise<BudgetSheetDto>;
   deleteSupplierPayment(
     projectId: string,
     paymentId: string,
     applicationSlug?: string,
-  ): Promise<void>;
-  duplicateBudgetSnapshot(
+  ): Promise<BudgetSheetDto>;
+  /** Copia el presupuesto activo como nueva versión activa */
+  duplicateActive(
     projectId: string,
     applicationSlug?: string,
-  ): Promise<{
-    sectionsCreated: number;
-    lineItemsCreated: number;
-    budget: ProjectBudgetDetailDto;
-  }>;
+  ): Promise<BudgetSheetDto>;
+  activateVersion(
+    projectId: string,
+    budgetId: string,
+    applicationSlug?: string,
+  ): Promise<BudgetSheetDto>;
+  importRows(
+    projectId: string,
+    imported: ImportedBudget,
+    replace: boolean,
+    applicationSlug?: string,
+  ): Promise<BudgetSheetDto & { rowsCreated: number }>;
   syncActualCostsFromExecution(
     projectId: string,
     applicationSlug?: string,
   ): Promise<{
-    updatedLineItems: number;
+    updatedRows: number;
     unmatchedConcepts: string[];
-    budget: ProjectBudgetDetailDto;
+    sheet: BudgetSheetDto;
   }>;
   assertProjectExists(
     projectId: string,
     applicationSlug?: string,
   ): Promise<void>;
-  assertLineItemBelongsToProject(
+  assertRowBelongsToProject(
     projectId: string,
-    lineItemId: string,
+    rowId: string,
     applicationSlug?: string,
   ): Promise<void>;
-  importBudgetSections(
-    projectId: string,
-    sections: Array<{
-      name: string;
-      lineItems: Array<{
-        description: string;
-        budgetedCost: number;
-        hasIgv?: boolean;
-      }>;
-    }>,
-    replace: boolean,
-    applicationSlug?: string,
-  ): Promise<{
-    sectionsCreated: number;
-    lineItemsCreated: number;
-    budget: ProjectBudgetDetailDto;
-  }>;
 }

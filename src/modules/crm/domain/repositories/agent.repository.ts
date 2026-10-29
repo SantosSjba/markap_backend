@@ -1,6 +1,16 @@
-import type { Agent, AgentListItem, AgentType } from '../entities/agent.entity';
+import type {
+  Agent,
+  AgentListItem,
+  AgentProjectRole,
+  AgentType,
+} from '../entities/agent.entity';
 
-export type { Agent, AgentListItem, AgentType } from '../entities/agent.entity';
+export type {
+  Agent,
+  AgentListItem,
+  AgentProjectRole,
+  AgentType,
+} from '../entities/agent.entity';
 
 export interface CreateAgentData {
   applicationId: string;
@@ -11,6 +21,7 @@ export interface CreateAgentData {
   phone?: string | null;
   documentTypeId?: string | null;
   documentNumber?: string | null;
+  roles?: AgentProjectRole[];
 }
 
 export interface UpdateAgentData {
@@ -21,6 +32,7 @@ export interface UpdateAgentData {
   phone?: string | null;
   documentTypeId?: string | null;
   documentNumber?: string | null;
+  roles?: AgentProjectRole[];
   isActive?: boolean;
 }
 
@@ -30,6 +42,8 @@ export interface ListAgentsFilters {
   limit: number;
   search?: string;
   type?: AgentType;
+  /** Solo integrantes que cubren esta función */
+  role?: AgentProjectRole;
   isActive?: boolean;
 }
 

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { z } from 'zod';
 import {
+  primitiveText,
   isoDateInput,
   numericValue,
 } from '../../../../../shared/presentation/validation/input-schemas';
@@ -31,6 +32,14 @@ export class RecordInteriorMaterialPurchaseDto {
           error: 'El campo «precio unitario» es menor que el mínimo permitido.',
         }),
     ),
+    currency: z
+      .preprocess(
+        primitiveText,
+        z.enum(['PEN', 'USD', 'EUR'], {
+          error: 'El campo «moneda» no es una opción permitida.',
+        }),
+      )
+      .nullish(),
     invoiceRef: z
       .string({ error: 'El campo «invoiceRef» debe ser un texto.' })
       .nullish(),
@@ -50,6 +59,9 @@ export class RecordInteriorMaterialPurchaseDto {
 
   @ApiProperty()
   unitPrice!: number;
+
+  @ApiPropertyOptional({ enum: ['PEN', 'USD', 'EUR'], default: 'PEN' })
+  currency?: string | null;
 
   @ApiPropertyOptional()
   invoiceRef?: string | null;

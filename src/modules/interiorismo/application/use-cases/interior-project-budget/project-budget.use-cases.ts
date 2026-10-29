@@ -1,72 +1,103 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import type { InteriorProjectBudgetRepository } from '../../../domain/repositories/interior-project-budget.repository';
-import { INTERIOR_PROJECT_BUDGET_REPOSITORY } from '../../../domain/repositories/interior-project-budget.repository';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  INTERIOR_PROJECT_BUDGET_REPOSITORY,
+  type BudgetRowFields,
+  type BudgetRowPosition,
+  type InteriorProjectBudgetRepository,
+  type UpdateBudgetHeaderPayload,
+} from '../../../domain/repositories/interior-project-budget.repository';
 
-@Injectable()
-export class GetInteriorProjectBudgetUseCase {
+/**
+ * Casos de uso del presupuesto tipo hoja. Toda mutación devuelve la hoja completa recalculada
+ * (códigos, subtotales y totales), así el editor no repite reglas de cálculo.
+ */
+
+abstract class BudgetUseCase {
   constructor(
     @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
-    private readonly repo: InteriorProjectBudgetRepository,
+    protected readonly repo: InteriorProjectBudgetRepository,
   ) {}
+}
 
+@Injectable()
+export class GetInteriorProjectBudgetUseCase extends BudgetUseCase {
   execute(projectId: string, applicationSlug = 'interiorismo') {
-    return this.repo.getBudget(projectId, applicationSlug).then((budget) => {
-      if (!budget) throw new NotFoundException('Presupuesto no encontrado');
-      return budget;
-    });
+    return this.repo.getSheet(projectId, applicationSlug);
   }
 }
 
 @Injectable()
-export class GetInteriorProjectSettlementUseCase {
-  constructor(
-    @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
-    private readonly repo: InteriorProjectBudgetRepository,
-  ) {}
-
+export class GetInteriorProjectSettlementUseCase extends BudgetUseCase {
   execute(projectId: string, applicationSlug = 'interiorismo') {
-    return this.repo
-      .getSettlement(projectId, applicationSlug)
-      .then((settlement) => {
-        if (!settlement)
-          throw new NotFoundException('Liquidación no disponible');
-        return settlement;
-      });
+    return this.repo.getSettlement(projectId, applicationSlug);
   }
 }
 
 @Injectable()
-export class CreateInteriorProjectBudgetSectionUseCase {
-  constructor(
-    @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
-    private readonly repo: InteriorProjectBudgetRepository,
-  ) {}
-
+export class UpdateInteriorBudgetHeaderUseCase extends BudgetUseCase {
   execute(
     projectId: string,
-    payload: { name: string; sortOrder?: number },
+    payload: UpdateBudgetHeaderPayload,
     applicationSlug = 'interiorismo',
   ) {
-    return this.repo.createSection(projectId, payload, applicationSlug);
+    return this.repo.updateHeader(projectId, payload, applicationSlug);
   }
 }
 
 @Injectable()
-export class UpdateInteriorProjectBudgetSectionUseCase {
-  constructor(
-    @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
-    private readonly repo: InteriorProjectBudgetRepository,
-  ) {}
-
+export class CreateInteriorBudgetRowsUseCase extends BudgetUseCase {
   execute(
     projectId: string,
-    sectionId: string,
-    payload: { name?: string; sortOrder?: number },
+    position: BudgetRowPosition,
+    rows: BudgetRowFields[],
     applicationSlug = 'interiorismo',
   ) {
-    return this.repo.updateSection(
+    return this.repo.createRows(projectId, position, rows, applicationSlug);
+  }
+}
+
+@Injectable()
+export class UpdateInteriorBudgetRowUseCase extends BudgetUseCase {
+  execute(
+    projectId: string,
+    rowId: string,
+    payload: BudgetRowFields,
+    applicationSlug = 'interiorismo',
+  ) {
+    return this.repo.updateRow(projectId, rowId, payload, applicationSlug);
+  }
+}
+
+@Injectable()
+export class MoveInteriorBudgetRowUseCase extends BudgetUseCase {
+  execute(
+    projectId: string,
+    rowId: string,
+    target: { parentId: string | null; index: number },
+    applicationSlug = 'interiorismo',
+  ) {
+    return this.repo.moveRow(projectId, rowId, target, applicationSlug);
+  }
+}
+
+@Injectable()
+export class DeleteInteriorBudgetRowUseCase extends BudgetUseCase {
+  execute(projectId: string, rowId: string, applicationSlug = 'interiorismo') {
+    return this.repo.deleteRow(projectId, rowId, applicationSlug);
+  }
+}
+
+@Injectable()
+export class CreateInteriorBudgetSupplierPaymentUseCase extends BudgetUseCase {
+  execute(
+    projectId: string,
+    rowId: string,
+    payload: { amount: number; paidAt: Date; note?: string | null },
+    applicationSlug = 'interiorismo',
+  ) {
+    return this.repo.addSupplierPayment(
       projectId,
-      sectionId,
+      rowId,
       payload,
       applicationSlug,
     );
@@ -74,120 +105,7 @@ export class UpdateInteriorProjectBudgetSectionUseCase {
 }
 
 @Injectable()
-export class DeleteInteriorProjectBudgetSectionUseCase {
-  constructor(
-    @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
-    private readonly repo: InteriorProjectBudgetRepository,
-  ) {}
-
-  execute(
-    projectId: string,
-    sectionId: string,
-    applicationSlug = 'interiorismo',
-  ) {
-    return this.repo.deleteSection(projectId, sectionId, applicationSlug);
-  }
-}
-
-@Injectable()
-export class CreateInteriorProjectBudgetLineItemUseCase {
-  constructor(
-    @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
-    private readonly repo: InteriorProjectBudgetRepository,
-  ) {}
-
-  execute(
-    projectId: string,
-    payload: {
-      sectionId: string;
-      description: string;
-      sortOrder?: number;
-      budgetedCost: number;
-      hasIgv?: boolean;
-      actualPurchaseCost?: number | null;
-      supplierName?: string | null;
-      supplierId?: string | null;
-    },
-    applicationSlug = 'interiorismo',
-  ) {
-    return this.repo.createLineItem(projectId, payload, applicationSlug);
-  }
-}
-
-@Injectable()
-export class UpdateInteriorProjectBudgetLineItemUseCase {
-  constructor(
-    @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
-    private readonly repo: InteriorProjectBudgetRepository,
-  ) {}
-
-  execute(
-    projectId: string,
-    lineItemId: string,
-    payload: {
-      description?: string;
-      sortOrder?: number;
-      budgetedCost?: number;
-      hasIgv?: boolean;
-      actualPurchaseCost?: number | null;
-      supplierName?: string | null;
-      supplierId?: string | null;
-    },
-    applicationSlug = 'interiorismo',
-  ) {
-    return this.repo.updateLineItem(
-      projectId,
-      lineItemId,
-      payload,
-      applicationSlug,
-    );
-  }
-}
-
-@Injectable()
-export class DeleteInteriorProjectBudgetLineItemUseCase {
-  constructor(
-    @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
-    private readonly repo: InteriorProjectBudgetRepository,
-  ) {}
-
-  execute(
-    projectId: string,
-    lineItemId: string,
-    applicationSlug = 'interiorismo',
-  ) {
-    return this.repo.deleteLineItem(projectId, lineItemId, applicationSlug);
-  }
-}
-
-@Injectable()
-export class CreateInteriorLineItemSupplierPaymentUseCase {
-  constructor(
-    @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
-    private readonly repo: InteriorProjectBudgetRepository,
-  ) {}
-
-  execute(
-    projectId: string,
-    payload: {
-      lineItemId: string;
-      paymentNumber: number;
-      amount: number;
-      paidAt: Date;
-    },
-    applicationSlug = 'interiorismo',
-  ) {
-    return this.repo.createSupplierPayment(projectId, payload, applicationSlug);
-  }
-}
-
-@Injectable()
-export class DeleteInteriorLineItemSupplierPaymentUseCase {
-  constructor(
-    @Inject(INTERIOR_PROJECT_BUDGET_REPOSITORY)
-    private readonly repo: InteriorProjectBudgetRepository,
-  ) {}
-
+export class DeleteInteriorBudgetSupplierPaymentUseCase extends BudgetUseCase {
   execute(
     projectId: string,
     paymentId: string,
@@ -201,12 +119,13 @@ export class DeleteInteriorLineItemSupplierPaymentUseCase {
   }
 }
 
-export {
-  DeleteInteriorProjectBudgetAttachmentUseCase,
-  ListInteriorProjectBudgetAttachmentsUseCase,
-  UploadInteriorProjectBudgetAttachmentUseCase,
-} from './budget-attachments.use-case';
-export { DuplicateInteriorProjectBudgetSnapshotUseCase } from './duplicate-budget-snapshot.use-case';
-export { ImportInteriorProjectBudgetFromExcelUseCase } from './import-budget-from-excel.use-case';
-export { RenderInteriorProjectBudgetHtmlUseCase } from './render-interior-project-budget-html.use-case';
-export { SyncInteriorProjectBudgetFromExecutionUseCase } from './sync-budget-from-execution.use-case';
+@Injectable()
+export class ActivateInteriorBudgetVersionUseCase extends BudgetUseCase {
+  execute(
+    projectId: string,
+    budgetId: string,
+    applicationSlug = 'interiorismo',
+  ) {
+    return this.repo.activateVersion(projectId, budgetId, applicationSlug);
+  }
+}

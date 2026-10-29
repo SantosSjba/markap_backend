@@ -13,6 +13,9 @@ model Agent {
   documentTypeId String? @map("document_type_id")
   documentNumber String? @map("document_number")
 
+  /// Funciones en proyectos de Interiorismo/Arquitectura (DESIGNER, ARCHITECT_JR, ARCHITECT_SR, SUPERVISOR, COMMERCIAL)
+  roles String[] @default([]) @map("roles")
+
   isActive Boolean @default(true) @map("is_active")
 
   createdAt DateTime  @default(now()) @map("created_at")

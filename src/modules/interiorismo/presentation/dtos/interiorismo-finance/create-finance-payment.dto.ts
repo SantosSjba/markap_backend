@@ -41,6 +41,18 @@ export class CreateInteriorFinancePaymentDto {
         }),
       )
       .nullish(),
+    currency: z
+      .preprocess(
+        primitiveText,
+        z.enum(['PEN', 'USD', 'EUR'], {
+          error: 'El campo «moneda» no es una opción permitida.',
+        }),
+      )
+      .nullish(),
+    exchangeRate: z
+      .number({ error: 'El campo «tipo de cambio» debe ser un número.' })
+      .positive({ error: 'El tipo de cambio debe ser mayor que cero.' })
+      .nullish(),
     scheduleItemId: z
       .string({ error: 'El campo «cuota» no es válido.' })
       .uuid({ error: 'El campo «cuota» no es válido.' })
@@ -64,4 +76,16 @@ export class CreateInteriorFinancePaymentDto {
 
   @ApiPropertyOptional({ description: 'Cuota programada (opcional)' })
   scheduleItemId?: string | null;
+
+  @ApiPropertyOptional({
+    enum: ['PEN', 'USD', 'EUR'],
+    description: 'Moneda del cobro (por defecto la del presupuesto)',
+  })
+  currency?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Tipo de cambio del día (soles por unidad)',
+    example: 3.75,
+  })
+  exchangeRate?: number | null;
 }

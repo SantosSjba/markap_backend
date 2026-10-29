@@ -25,7 +25,7 @@ export async function seedInteriorismoExecution(
   const proj = await prisma.interiorProject.findFirst({
     where: {
       applicationId: interiorAppId,
-      code: DEMO_PROJECT_CODE,
+      OR: [{ code: DEMO_PROJECT_CODE }, { legacyCode: DEMO_PROJECT_CODE }],
       deletedAt: null,
     },
   });

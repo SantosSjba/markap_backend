@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { seedInteriorBudget } from './interiorismo-budget-seed.helper';
 import { seedPrueba } from '../data';
 import type { SeedDb } from '../types';
 import { createScriptLogger } from '../../../src/shared/infrastructure/logging/script-logger';
@@ -87,36 +87,23 @@ const CORP_SECTIONS: DemoSection[] = [
   },
 ];
 
-async function seedProjectSections(
+function seedProjectSections(
   prisma: SeedDb,
   projectId: string,
   sections: DemoSection[],
-): Promise<void> {
-  const existing = await prisma.interiorProjectSection.count({
-    where: { projectId },
-  });
-  if (existing > 0) return;
-
-  for (const section of sections) {
-    const created = await prisma.interiorProjectSection.create({
-      data: {
-        projectId,
-        name: seedPrueba(section.name),
-        sortOrder: section.sortOrder,
-      },
-    });
-    for (const item of section.lineItems) {
-      await prisma.interiorProjectLineItem.create({
-        data: {
-          sectionId: created.id,
-          sortOrder: item.sortOrder,
-          description: seedPrueba(item.description),
-          budgetedCost: new Prisma.Decimal(item.budgetedCost),
-          hasIgv: item.hasIgv ?? true,
-        },
-      });
-    }
-  }
+) {
+  return seedInteriorBudget(
+    prisma,
+    projectId,
+    sections.map((section) => ({
+      name: seedPrueba(section.name),
+      items: section.lineItems.map((item) => ({
+        description: seedPrueba(item.description),
+        directCost: item.budgetedCost,
+        hasIgv: item.hasIgv ?? true,
+      })),
+    })),
+  );
 }
 
 export async function seedInteriorismoDemoProjectBudgets(

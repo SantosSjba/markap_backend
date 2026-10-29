@@ -29,6 +29,7 @@ export class AgentPrismaRepository implements AgentRepository {
         phone: data.phone?.trim() || null,
         documentTypeId: data.documentTypeId ?? null,
         documentNumber: data.documentNumber?.trim() || null,
+        roles: data.roles ?? [],
       },
     });
     return AgentPrismaMapper.toDomain(agent);
@@ -63,6 +64,7 @@ export class AgentPrismaRepository implements AgentRepository {
       deletedAt: null,
     };
     if (filters.type) where.type = filters.type;
+    if (filters.role) where.roles = { has: filters.role };
     if (filters.isActive !== undefined) where.isActive = filters.isActive;
     if (filters.search?.trim()) {
       const q = filters.search.trim();
@@ -118,6 +120,7 @@ export class AgentPrismaRepository implements AgentRepository {
         ...(data.documentNumber !== undefined && {
           documentNumber: data.documentNumber?.trim() || null,
         }),
+        ...(data.roles !== undefined && { roles: data.roles }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
       },
     });

@@ -221,3 +221,17 @@ export class RecordInteriorMaterialPurchaseUseCase {
     }
   }
 }
+
+/** Indicadores de proveedores: con materiales, con partidas en proyectos y compras del mes. */
+@Injectable()
+export class GetInteriorMaterialSupplierStatsUseCase {
+  constructor(
+    @Inject(INTERIOR_MATERIAL_SUPPLIER_REPOSITORY)
+    private readonly repo: InteriorMaterialSupplierRepository,
+  ) {}
+
+  execute(applicationSlug: string) {
+    assertInteriorismo(applicationSlug);
+    return this.repo.stats(SLUG);
+  }
+}

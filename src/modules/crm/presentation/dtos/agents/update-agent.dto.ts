@@ -4,6 +4,10 @@ import {
   booleanInput,
   primitiveText,
 } from '../../../../../shared/presentation/validation/input-schemas';
+import {
+  AGENT_PROJECT_ROLES,
+  type AgentProjectRole,
+} from '../../../domain/entities/agent.entity';
 
 export class UpdateAgentDto {
   static readonly isZodDto = true;
@@ -35,6 +39,14 @@ export class UpdateAgentDto {
       .string({ error: 'El campo «número de documento» debe ser un texto.' })
       .nullish(),
     isActive: booleanInput.nullish(),
+    roles: z
+      .array(
+        z.enum(AGENT_PROJECT_ROLES, {
+          error: 'El campo «funciones» no es válido.',
+        }),
+        { error: 'El campo «funciones» debe ser una lista.' },
+      )
+      .nullish(),
   });
 
   @ApiPropertyOptional({
@@ -60,6 +72,13 @@ export class UpdateAgentDto {
 
   @ApiPropertyOptional({ description: 'Número de documento' })
   documentNumber?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Funciones en proyectos de Interiorismo/Arquitectura',
+    enum: AGENT_PROJECT_ROLES,
+    isArray: true,
+  })
+  roles?: AgentProjectRole[] | null;
 
   @ApiPropertyOptional({ description: 'Activo' })
   isActive?: boolean;

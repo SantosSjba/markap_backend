@@ -1,16 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type {
-  InteriorProjectBudgetRepository,
-  ProjectBudgetDetailDto,
+import {
+  INTERIOR_PROJECT_BUDGET_REPOSITORY,
+  type InteriorProjectBudgetRepository,
 } from '../../../domain/repositories/interior-project-budget.repository';
-import { INTERIOR_PROJECT_BUDGET_REPOSITORY } from '../../../domain/repositories/interior-project-budget.repository';
 
-export interface DuplicateBudgetSnapshotResult {
-  sectionsCreated: number;
-  lineItemsCreated: number;
-  budget: ProjectBudgetDetailDto;
-}
-
+/** Copia el presupuesto activo (filas, costos reales y abonos) como nueva versión activa. */
 @Injectable()
 export class DuplicateInteriorProjectBudgetSnapshotUseCase {
   constructor(
@@ -18,10 +12,7 @@ export class DuplicateInteriorProjectBudgetSnapshotUseCase {
     private readonly repo: InteriorProjectBudgetRepository,
   ) {}
 
-  execute(
-    projectId: string,
-    applicationSlug = 'interiorismo',
-  ): Promise<DuplicateBudgetSnapshotResult> {
-    return this.repo.duplicateBudgetSnapshot(projectId, applicationSlug);
+  execute(projectId: string, applicationSlug = 'interiorismo') {
+    return this.repo.duplicateActive(projectId, applicationSlug);
   }
 }

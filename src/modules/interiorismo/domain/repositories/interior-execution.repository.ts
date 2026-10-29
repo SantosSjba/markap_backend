@@ -142,6 +142,17 @@ export interface CreateInteriorExecutionActualCostPayload {
   catalogMaterialId?: string | null;
 }
 
+export interface CreateInteriorExecutionMilestonePayload {
+  title: string;
+  plannedDate: Date;
+}
+
+export interface UpdateInteriorExecutionMilestonePayload {
+  title?: string;
+  plannedDate?: Date;
+  completedAt?: Date | null;
+}
+
 export interface InteriorExecutionRepository {
   ensureProjectScope(
     projectId: string,
@@ -180,4 +191,14 @@ export interface InteriorExecutionRepository {
     payload: CreateInteriorExecutionActualCostPayload,
   ): Promise<InteriorExecutionActualCostDto>;
   deleteActualCost(projectId: string, costId: string): Promise<boolean>;
+  createMilestone(
+    projectId: string,
+    payload: CreateInteriorExecutionMilestonePayload,
+  ): Promise<InteriorExecutionMilestoneDto>;
+  updateMilestone(
+    projectId: string,
+    milestoneId: string,
+    payload: UpdateInteriorExecutionMilestonePayload,
+  ): Promise<InteriorExecutionMilestoneDto | null>;
+  deleteMilestone(projectId: string, milestoneId: string): Promise<boolean>;
 }

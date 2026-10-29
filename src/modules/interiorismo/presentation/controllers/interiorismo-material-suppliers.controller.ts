@@ -31,6 +31,7 @@ import {
   RecordInteriorMaterialPurchaseUseCase,
   UnlinkInteriorSupplierCatalogMaterialUseCase,
   UpdateInteriorMaterialSupplierUseCase,
+  GetInteriorMaterialSupplierStatsUseCase,
 } from '../../application/use-cases/interior-material-suppliers/interior-material-suppliers.use-cases';
 import { CreateInteriorMaterialSupplierDto } from '../dtos/interiorismo-material-suppliers/create-material-supplier.dto';
 import { LinkSupplierCatalogMaterialDto } from '../dtos/interiorismo-material-suppliers/link-supplier-catalog.dto';
@@ -52,6 +53,7 @@ export class InteriorismoMaterialSuppliersController {
     private readonly linkUc: LinkInteriorSupplierCatalogMaterialUseCase,
     private readonly unlinkUc: UnlinkInteriorSupplierCatalogMaterialUseCase,
     private readonly purchaseUc: RecordInteriorMaterialPurchaseUseCase,
+    private readonly statsUc: GetInteriorMaterialSupplierStatsUseCase,
   ) {}
 
   @Get()
@@ -72,6 +74,13 @@ export class InteriorismoMaterialSuppliersController {
       limit: Math.min(100, Math.max(1, parseIntegerQuery(limit, 20, 1, 100))),
       search: search?.trim() || undefined,
     });
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Indicadores de proveedores' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  async stats(@Query('applicationSlug') applicationSlug?: string) {
+    return this.statsUc.execute(applicationSlug ?? 'interiorismo');
   }
 
   @Post()
@@ -168,6 +177,7 @@ export class InteriorismoMaterialSuppliersController {
         purchasedAt,
         quantity: dto.quantity,
         unitPrice: dto.unitPrice,
+        currency: dto.currency ?? 'PEN',
         invoiceRef: dto.invoiceRef ?? null,
         notes: dto.notes ?? null,
       },

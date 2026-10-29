@@ -31,6 +31,7 @@ import type { UploadedFile as MulterUploadedFile } from '../../../../shared/type
 import { parseIntegerQuery } from '../../../../shared/utils/parse-integer-query.util';
 import { CreateInteriorProjectDocumentUseCase } from '../../application/use-cases/interior-project-documents/create-interior-project-document.use-case';
 import { DeleteInteriorProjectDocumentUseCase } from '../../application/use-cases/interior-project-documents/delete-interior-project-document.use-case';
+import { GetInteriorProjectDocumentStatsUseCase } from '../../application/use-cases/interior-project-documents/get-interior-project-document-stats.use-case';
 import { ListInteriorProjectDocumentsUseCase } from '../../application/use-cases/interior-project-documents/list-interior-project-documents.use-case';
 import { UpdateInteriorProjectDocumentUseCase } from '../../application/use-cases/interior-project-documents/update-interior-project-document.use-case';
 import {
@@ -52,6 +53,7 @@ export class InteriorismoDocumentsController {
     private readonly updateUc: UpdateInteriorProjectDocumentUseCase,
     private readonly deleteUc: DeleteInteriorProjectDocumentUseCase,
     private readonly genArchivo: FileStoragePort,
+    private readonly statsUc: GetInteriorProjectDocumentStatsUseCase,
   ) {}
 
   private parseDocType(raw?: string): InteriorDocumentType {
@@ -84,7 +86,11 @@ export class InteriorismoDocumentsController {
   @Get()
   @ApiOperation({ summary: 'Listar documentos por tipo y aplicación' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  @ApiQuery({ name: 'docType', required: true })
+  @ApiQuery({
+    name: 'docType',
+    required: false,
+    description: 'Sin valor = todos los tipos',
+  })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'search', required: false })
@@ -100,7 +106,7 @@ export class InteriorismoDocumentsController {
   ) {
     const result = await this.listUc.execute({
       applicationSlug: applicationSlug ?? 'interiorismo',
-      docType: this.parseDocType(docType),
+      docType: docType?.trim() ? this.parseDocType(docType) : undefined,
       page: Math.max(1, parseIntegerQuery(page, 1, 1, 1000000)),
       limit: Math.min(50, Math.max(1, parseIntegerQuery(limit, 10, 1, 100))),
       search: search?.trim() || undefined,
@@ -112,6 +118,20 @@ export class InteriorismoDocumentsController {
         result.data.map((row) => this.withDownloadUrl(row)),
       ),
     };
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Cantidad de documentos por tipo' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiQuery({ name: 'projectId', required: false })
+  stats(
+    @Query('applicationSlug') applicationSlug?: string,
+    @Query('projectId') projectId?: string,
+  ) {
+    return this.statsUc.execute(
+      applicationSlug ?? 'interiorismo',
+      projectId?.trim() || undefined,
+    );
   }
 
   @Post('upload')

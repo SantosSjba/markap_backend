@@ -2,6 +2,7 @@ import { RequiresApplication } from '../../../../shared/presentation/decorators/
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -22,8 +23,21 @@ import { CreateInteriorProjectUseCase } from '../../application/use-cases/interi
 import { GetInteriorProjectByIdUseCase } from '../../application/use-cases/interior-projects/get-interior-project-by-id.use-case';
 import { ListInteriorProjectsUseCase } from '../../application/use-cases/interior-projects/list-interior-projects.use-case';
 import { UpdateInteriorProjectUseCase } from '../../application/use-cases/interior-projects/update-interior-project.use-case';
-import type { InteriorProjectStatus } from '../../domain/repositories/interior-project.repository';
+import {
+  ListInteriorClientPaymentsUseCase,
+  SummarizeInteriorClientProjectsUseCase,
+} from '../../application/use-cases/interior-projects/interior-client-projects.use-cases';
+import { GetInteriorProjectStatsUseCase } from '../../application/use-cases/interior-projects/get-interior-project-stats.use-case';
+import type {
+  InteriorProjectStatus,
+  InteriorProjectType,
+} from '../../domain/repositories/interior-project.repository';
+import {
+  CreateInteriorProjectActivityUseCase,
+  DeleteInteriorProjectActivityUseCase,
+} from '../../application/use-cases/interior-projects/interior-project-activities.use-cases';
 import { CreateInteriorProjectDto } from '../dtos/interiorismo-projects/create-interior-project.dto';
+import { CreateInteriorProjectActivityDto } from '../dtos/interiorismo-projects/create-interior-project-activity.dto';
 import { UpdateInteriorProjectDto } from '../dtos/interiorismo-projects/update-interior-project.dto';
 
 @ApiTags('Interiorismo — Proyectos')
@@ -37,6 +51,11 @@ export class InteriorismoProjectsController {
     private readonly getByIdUc: GetInteriorProjectByIdUseCase,
     private readonly createUc: CreateInteriorProjectUseCase,
     private readonly updateUc: UpdateInteriorProjectUseCase,
+    private readonly statsUc: GetInteriorProjectStatsUseCase,
+    private readonly clientSummaryUc: SummarizeInteriorClientProjectsUseCase,
+    private readonly clientPaymentsUc: ListInteriorClientPaymentsUseCase,
+    private readonly createActivityUc: CreateInteriorProjectActivityUseCase,
+    private readonly deleteActivityUc: DeleteInteriorProjectActivityUseCase,
   ) {}
 
   private parseDate(s?: string | null): Date | null {
@@ -63,6 +82,12 @@ export class InteriorismoProjectsController {
     required: false,
     description: 'Filtrar proyectos por cliente',
   })
+  @ApiQuery({ name: 'projectType', required: false })
+  @ApiQuery({
+    name: 'agentId',
+    required: false,
+    description: 'Proyectos donde el agente es responsable (cualquier rol)',
+  })
   @ApiResponse({ status: 200 })
   async list(
     @Query('applicationSlug') applicationSlug?: string,
@@ -72,6 +97,8 @@ export class InteriorismoProjectsController {
     @Query('status') status?: InteriorProjectStatus,
     @Query('inProgressOnly') inProgressOnly?: string,
     @Query('clientId') clientId?: string,
+    @Query('projectType') projectType?: InteriorProjectType,
+    @Query('agentId') agentId?: string,
   ) {
     return this.listUc.execute({
       applicationSlug: applicationSlug ?? 'interiorismo',
@@ -81,7 +108,50 @@ export class InteriorismoProjectsController {
       status,
       inProgressOnly: inProgressOnly === 'true',
       clientId: clientId?.trim() || undefined,
+      projectType: projectType || undefined,
+      agentId: agentId?.trim() || undefined,
     });
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Indicadores del listado de proyectos' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 200 })
+  async stats(@Query('applicationSlug') applicationSlug?: string) {
+    return this.statsUc.execute(applicationSlug ?? 'interiorismo');
+  }
+
+  @Get('clients/summary')
+  @ApiOperation({ summary: 'Proyectos por cliente (total y activos)' })
+  @ApiQuery({
+    name: 'clientIds',
+    required: true,
+    description: 'ids separados por coma',
+  })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 200 })
+  clientsSummary(
+    @Query('clientIds') clientIds?: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.clientSummaryUc.execute(
+      applicationSlug ?? 'interiorismo',
+      (clientIds ?? '').split(','),
+    );
+  }
+
+  @Get('clients/:clientId/payments')
+  @ApiOperation({ summary: 'Cobros de un cliente en todos sus proyectos' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 200 })
+  clientPayments(
+    @Param('clientId') clientId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.clientPaymentsUc.execute(
+      applicationSlug ?? 'interiorismo',
+      clientId,
+    );
   }
 
   @Get(':id')
@@ -113,6 +183,9 @@ export class InteriorismoProjectsController {
       currency: dto.currency ?? 'PEN',
       defaultUtilityPct: dto.defaultUtilityPct ?? null,
       defaultIgvPct: dto.defaultIgvPct ?? null,
+      defaultOverheadPct: dto.defaultOverheadPct ?? null,
+      exchangeRate: dto.exchangeRate ?? null,
+      districtId: dto.districtId ?? null,
       areaSqm: dto.areaSqm ?? null,
       levelsCount: dto.levelsCount ?? null,
       environmentsNote: dto.environmentsNote,
@@ -130,6 +203,45 @@ export class InteriorismoProjectsController {
     });
   }
 
+  @Post(':id/activities')
+  @ApiOperation({
+    summary: 'Registrar actividad (nota, reunión, tarea u otra)',
+  })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 201, description: 'Proyecto con la actividad nueva' })
+  async createActivity(
+    @Param('id') id: string,
+    @Body() dto: CreateInteriorProjectActivityDto,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.createActivityUc.execute(
+      id,
+      applicationSlug ?? 'interiorismo',
+      {
+        activityType: dto.activityType,
+        title: dto.title,
+        description: dto.description ?? null,
+        occurredAt: new Date(dto.occurredAt),
+      },
+    );
+  }
+
+  @Delete(':id/activities/:activityId')
+  @ApiOperation({ summary: 'Eliminar actividad registrada a mano' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  @ApiResponse({ status: 200, description: 'Proyecto sin la actividad' })
+  async deleteActivity(
+    @Param('id') id: string,
+    @Param('activityId') activityId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.deleteActivityUc.execute(
+      id,
+      activityId,
+      applicationSlug ?? 'interiorismo',
+    );
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar proyecto' })
   @ApiQuery({ name: 'applicationSlug', required: false })
@@ -140,6 +252,7 @@ export class InteriorismoProjectsController {
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     return this.updateUc.execute(id, applicationSlug ?? 'interiorismo', {
+      code: dto.code,
       name: dto.name,
       clientId: dto.clientId,
       projectType: dto.projectType,
@@ -151,6 +264,9 @@ export class InteriorismoProjectsController {
       currency: dto.currency,
       defaultUtilityPct: dto.defaultUtilityPct ?? undefined,
       defaultIgvPct: dto.defaultIgvPct ?? undefined,
+      defaultOverheadPct: dto.defaultOverheadPct ?? undefined,
+      exchangeRate: dto.exchangeRate,
+      districtId: dto.districtId,
       areaSqm: dto.areaSqm ?? undefined,
       levelsCount: dto.levelsCount ?? undefined,
       environmentsNote: dto.environmentsNote,

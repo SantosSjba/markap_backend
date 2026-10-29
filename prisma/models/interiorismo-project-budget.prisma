@@ -1,72 +1,108 @@
-/// Presupuesto por proyecto (modelo Excel: sección → partida → abonos proveedor)
+/// Presupuesto tipo hoja por proyecto (modelo de los Excel de la clienta).
+/// Un presupuesto activo por proyecto; «duplicar» crea una nueva versión y deja la anterior.
 
-model InteriorProjectSection {
-  id        String @id @default(uuid())
-  projectId String @map("project_id")
-  name      String @map("name")
-  sortOrder Int    @default(0) @map("sort_order")
+model InteriorBudget {
+  id        String  @id @default(uuid())
+  projectId String  @map("project_id")
+  version   Int     @default(1) @map("version")
+  isActive  Boolean @default(true) @map("is_active")
+
+  /// Cabecera del Excel PRIZE: N° de presupuesto, plazo, quien ejecuta, fecha
+  number        String?   @map("number")
+  issuedAt      DateTime? @map("issued_at") @db.Date
+  executionTerm String?   @map("execution_term")
+  executedBy    String?   @map("executed_by")
+  /// DRAFT | SENT | APPROVED
+  status        String    @default("DRAFT") @map("status")
+
+  /// PEN | USD | EUR
+  currency         String    @default("PEN") @map("currency")
+  /// Soles por unidad de moneda extranjera (ej. 3.50 por US$)
+  exchangeRate     Decimal?  @map("exchange_rate") @db.Decimal(12, 4)
+  exchangeRateDate DateTime? @map("exchange_rate_date") @db.Date
+  /// PER_LINE (utilidad en cada partida) | GLOBAL (GG + utilidad al final)
+  marginMode       String    @default("PER_LINE") @map("margin_mode")
+  utilityPct       Decimal   @default(20) @map("utility_pct") @db.Decimal(8, 2)
+  overheadPct      Decimal   @default(0) @map("overhead_pct") @db.Decimal(8, 2)
+  /// PER_LINE | GLOBAL | NONE
+  igvMode          String    @default("PER_LINE") @map("igv_mode")
+  igvPct           Decimal   @default(18) @map("igv_pct") @db.Decimal(8, 2)
+  terms            String?   @map("terms") @db.Text
+  /// Columnas visibles del editor (lista de claves)
+  visibleColumns   Json?     @map("visible_columns")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  project   InteriorProject           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  lineItems InteriorProjectLineItem[]
+  project InteriorProject     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rows    InteriorBudgetRow[]
 
   createdBy String? @map("created_by")
   updatedBy String? @map("updated_by")
 
+  @@unique([projectId, version])
   @@index([projectId])
-  @@map("interior_project_sections")
+  @@map("interior_project_budgets")
 }
 
-model InteriorProjectLineItem {
-  id          String @id @default(uuid())
-  sectionId   String @map("section_id")
-  sortOrder   Int    @default(0) @map("sort_order")
-  description String @map("description") @db.Text
+model InteriorBudgetRow {
+  id          String  @id @default(uuid())
+  budgetId    String  @map("budget_id")
+  parentId    String? @map("parent_id")
+  sortOrder   Int     @default(0) @map("sort_order")
+  /// GROUP (nivel, ambiente, categoría, partida) | ITEM | NOTE
+  kind        String  @default("ITEM") @map("kind")
+  /// Código manual (ej. «A», «1.0.1»); vacío = automático según la posición
+  code        String? @map("code")
+  description String  @default("") @map("description") @db.Text
 
-  /// Costo presupuestado al cliente (columna "Costo" del Excel)
-  budgetedCost Decimal @default(0) @map("budgeted_cost") @db.Decimal(14, 2)
-  /// IGV selectivo por ítem (luminarias instaladas, etc.)
-  hasIgv       Boolean @default(false) @map("has_igv")
-
-  /// Gestión de compras (columnas internas)
-  actualPurchaseCost Decimal? @map("actual_purchase_cost") @db.Decimal(14, 2)
-  supplierName       String?  @map("supplier_name")
+  unit               String?  @map("unit")
+  quantity           Decimal? @map("quantity") @db.Decimal(14, 4)
+  unitPrice          Decimal? @map("unit_price") @db.Decimal(14, 4)
+  /// Costo escrito a mano: sobrescribe metrado × P.U. (como el «Parcial» manual del Excel)
+  directCost         Decimal? @map("direct_cost") @db.Decimal(14, 2)
+  actualCost         Decimal? @map("actual_cost") @db.Decimal(14, 2)
+  utilityPctOverride Decimal? @map("utility_pct_override") @db.Decimal(8, 2)
+  hasIgv             Boolean  @default(false) @map("has_igv")
   supplierId         String?  @map("supplier_id")
+  supplierName       String?  @map("supplier_name")
+  /// PENDING | QUOTED | PURCHASED | GIFT
+  status             String   @default("PENDING") @map("status")
+  note               String?  @map("note") @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  section          InteriorProjectSection            @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  materialSupplier InteriorMaterialSupplier?         @relation(fields: [supplierId], references: [id], onDelete: SetNull)
-  supplierPayments InteriorLineItemSupplierPayment[]
+  budget           InteriorBudget                     @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  parent           InteriorBudgetRow?                 @relation("InteriorBudgetRowTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children         InteriorBudgetRow[]                @relation("InteriorBudgetRowTree")
+  materialSupplier InteriorMaterialSupplier?          @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierPayments InteriorBudgetRowSupplierPayment[]
 
   createdBy String? @map("created_by")
   updatedBy String? @map("updated_by")
 
-  @@index([sectionId])
+  @@index([budgetId])
+  @@index([parentId])
   @@index([supplierId])
-  @@map("interior_project_line_items")
+  @@map("interior_project_budget_rows")
 }
 
-model InteriorLineItemSupplierPayment {
-  id            String   @id @default(uuid())
-  lineItemId    String   @map("line_item_id")
-  /// 1, 2, 3… (Excel permite hasta 3 abonos por partida)
-  paymentNumber Int      @map("payment_number")
-  amount        Decimal  @map("amount") @db.Decimal(14, 2)
-  paidAt        DateTime @map("paid_at") @db.Date
+model InteriorBudgetRowSupplierPayment {
+  id     String   @id @default(uuid())
+  rowId  String   @map("row_id")
+  amount Decimal  @map("amount") @db.Decimal(14, 2)
+  paidAt DateTime @map("paid_at") @db.Date
+  note   String?  @map("note")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  lineItem InteriorProjectLineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+  row InteriorBudgetRow @relation(fields: [rowId], references: [id], onDelete: Cascade)
 
   createdBy String? @map("created_by")
   updatedBy String? @map("updated_by")
 
-  @@unique([lineItemId, paymentNumber])
-  @@index([lineItemId])
-  @@map("interior_line_item_supplier_payments")
+  @@index([rowId])
+  @@map("interior_project_budget_row_payments")
 }

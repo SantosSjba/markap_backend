@@ -119,3 +119,17 @@ export class DeleteInteriorCatalogMaterialUseCase {
     await this.repo.delete(id);
   }
 }
+
+/** Indicadores del catálogo (total, sin stock, sin proveedor) y categorías para el filtro. */
+@Injectable()
+export class GetInteriorCatalogMaterialStatsUseCase {
+  constructor(
+    @Inject(INTERIOR_CATALOG_MATERIAL_REPOSITORY)
+    private readonly repo: InteriorCatalogMaterialRepository,
+  ) {}
+
+  execute(applicationSlug: string) {
+    assertInteriorismo(applicationSlug);
+    return this.repo.stats(SLUG);
+  }
+}

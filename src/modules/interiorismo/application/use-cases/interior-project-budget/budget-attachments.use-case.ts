@@ -49,7 +49,7 @@ export class UploadInteriorProjectBudgetAttachmentUseCase {
   ) {
     await this.repo.assertProjectExists(projectId, applicationSlug);
     if (payload.lineItemId) {
-      await this.repo.assertLineItemBelongsToProject(
+      await this.repo.assertRowBelongsToProject(
         projectId,
         payload.lineItemId,
         applicationSlug,

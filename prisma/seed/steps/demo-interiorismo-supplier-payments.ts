@@ -14,14 +14,21 @@ export async function seedHortensiasSupplierPayments(
   if (!interiorAppId) return;
 
   const project = await prisma.interiorProject.findFirst({
-    where: { applicationId: interiorAppId, code: HORTENSIAS_PROJECT_CODE },
+    where: {
+      applicationId: interiorAppId,
+      OR: [
+        { code: HORTENSIAS_PROJECT_CODE },
+        { legacyCode: HORTENSIAS_PROJECT_CODE },
+      ],
+    },
   });
   if (!project) return;
 
-  const lineItems = await prisma.interiorProjectLineItem.findMany({
+  const lineItems = await prisma.interiorBudgetRow.findMany({
     where: {
-      section: { projectId: project.id },
-      actualPurchaseCost: { not: null },
+      budget: { projectId: project.id, isActive: true },
+      kind: 'ITEM',
+      actualCost: { not: null },
     },
     orderBy: { sortOrder: 'asc' },
     take: 3,
@@ -30,17 +37,16 @@ export async function seedHortensiasSupplierPayments(
 
   let created = 0;
   for (const item of lineItems) {
-    const existing = await prisma.interiorLineItemSupplierPayment.count({
-      where: { lineItemId: item.id },
+    const existing = await prisma.interiorBudgetRowSupplierPayment.count({
+      where: { rowId: item.id },
     });
     if (existing > 0) continue;
 
-    const actual = Number(item.actualPurchaseCost ?? 0);
+    const actual = Number(item.actualCost ?? 0);
     const firstAmount = Math.round(actual * 0.5 * 100) / 100;
-    await prisma.interiorLineItemSupplierPayment.create({
+    await prisma.interiorBudgetRowSupplierPayment.create({
       data: {
-        lineItemId: item.id,
-        paymentNumber: 1,
+        rowId: item.id,
         amount: new Prisma.Decimal(firstAmount),
         paidAt: new Date('2026-01-25'),
       },

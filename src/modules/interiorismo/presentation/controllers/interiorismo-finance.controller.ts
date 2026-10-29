@@ -154,6 +154,8 @@ export class InteriorismoFinanceController {
         paymentType: dto.paymentType ?? 'OTHER',
         status: dto.status,
         scheduleItemId: dto.scheduleItemId ?? null,
+        currency: dto.currency ?? null,
+        exchangeRate: dto.exchangeRate ?? null,
       },
     );
   }
@@ -179,6 +181,8 @@ export class InteriorismoFinanceController {
         paymentType: dto.paymentType,
         status: dto.status,
         scheduleItemId: dto.scheduleItemId,
+        currency: dto.currency,
+        exchangeRate: dto.exchangeRate,
       },
     );
   }

@@ -104,6 +104,7 @@ export async function seedInteriorismoProjects(
         email: 'elena.rivas@studio-diseno.ejemplo.com',
         phone: '987223344',
         isActive: true,
+        roles: ['DESIGNER'],
       },
     });
     logger.info({ event: 'seed.progress' }, '   ✅ Diseñadora exterior');
@@ -126,6 +127,7 @@ export async function seedInteriorismoProjects(
         email: 'sofia.mendoza@arq-jr-demo.ejemplo.com',
         phone: '987334455',
         isActive: true,
+        roles: ['ARCHITECT_JR'],
       },
     });
     logger.info({ event: 'seed.progress' }, '   ✅ Arquitecto Jr exterior');
@@ -148,6 +150,7 @@ export async function seedInteriorismoProjects(
         email: 'marco.luna@arq-sr-demo.ejemplo.com',
         phone: '987445566',
         isActive: true,
+        roles: ['ARCHITECT_SR'],
       },
     });
     logger.info({ event: 'seed.progress' }, '   ✅ Arquitecto Sr exterior');
@@ -170,6 +173,7 @@ export async function seedInteriorismoProjects(
         email: 'juliana.costa@obra-demo.ejemplo.com',
         phone: '987778899',
         isActive: true,
+        roles: ['SUPERVISOR'],
       },
     });
     logger.info({ event: 'seed.progress' }, '   ✅ Supervisora exterior');
@@ -192,6 +196,7 @@ export async function seedInteriorismoProjects(
         email: 'pedro.salinas@comercial-demo.ejemplo.com',
         phone: '987990011',
         isActive: true,
+        roles: ['COMMERCIAL'],
       },
     });
     logger.info({ event: 'seed.progress' }, '   ✅ Asesor comercial exterior');
@@ -199,7 +204,11 @@ export async function seedInteriorismoProjects(
 
   const codeRemodel = 'INT-REM-LIM-001';
   let projRemodel = await prisma.interiorProject.findFirst({
-    where: { applicationId: interiorAppId, code: codeRemodel, deletedAt: null },
+    where: {
+      applicationId: interiorAppId,
+      OR: [{ code: codeRemodel }, { legacyCode: codeRemodel }],
+      deletedAt: null,
+    },
   });
 
   if (!projRemodel) {
@@ -251,7 +260,7 @@ export async function seedInteriorismoProjects(
               fileUrl: null,
             },
             {
-              docType: 'RENDER',
+              docType: 'RENDERIZADO',
               title: seedPrueba('Render living vista ventanal'),
               fileUrl: null,
             },
@@ -320,7 +329,11 @@ export async function seedInteriorismoProjects(
 
   const codeCorp = 'INT-DIS-LIM-002';
   let projCorp = await prisma.interiorProject.findFirst({
-    where: { applicationId: interiorAppId, code: codeCorp, deletedAt: null },
+    where: {
+      applicationId: interiorAppId,
+      OR: [{ code: codeCorp }, { legacyCode: codeCorp }],
+      deletedAt: null,
+    },
   });
 
   if (!projCorp) {

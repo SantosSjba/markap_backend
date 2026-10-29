@@ -9,6 +9,9 @@ model InteriorCatalogMaterial {
   brand             String  @map("brand")
   unit              String  @map("unit")
   price             Decimal @map("price") @db.Decimal(14, 2)
+  /// PEN | USD | EUR — moneda del precio de referencia
+  currency          String  @default("PEN") @map("currency")
+  description       String? @map("description") @db.Text
   stock             Decimal @default(0) @map("stock") @db.Decimal(14, 4)
   technicalSheetUrl String? @map("technical_sheet_url") @db.Text
 
@@ -59,10 +62,10 @@ model InteriorMaterialSupplier {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  application     Application                   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  catalogLinks    InteriorSupplierCatalogLink[]
-  purchases       InteriorMaterialPurchase[]
-  budgetLineItems InteriorProjectLineItem[]
+  application  Application                   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  catalogLinks InteriorSupplierCatalogLink[]
+  purchases    InteriorMaterialPurchase[]
+  budgetRows   InteriorBudgetRow[]
 
   createdBy String? @map("created_by")
   updatedBy String? @map("updated_by")
@@ -102,6 +105,8 @@ model InteriorMaterialPurchase {
   quantity          Decimal  @map("quantity") @db.Decimal(14, 4)
   unitPrice         Decimal  @map("unit_price") @db.Decimal(14, 4)
   totalAmount       Decimal  @map("total_amount") @db.Decimal(16, 2)
+  /// PEN | USD | EUR
+  currency          String   @default("PEN") @map("currency")
   invoiceRef        String?  @map("invoice_ref")
   notes             String?  @map("notes") @db.Text
 

@@ -36,9 +36,10 @@ model District {
   provinceId String @map("province_id")
   name       String
 
-  province   Province   @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-  addresses  Address[]
-  properties Property[]
+  province         Province          @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  addresses        Address[]
+  properties       Property[]
+  interiorProjects InteriorProject[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")

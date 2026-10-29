@@ -34,26 +34,27 @@ import {
 } from '../../application/use-cases/interior-project-budget/budget-attachments.use-case';
 import { DuplicateInteriorProjectBudgetSnapshotUseCase } from '../../application/use-cases/interior-project-budget/duplicate-budget-snapshot.use-case';
 import { ImportInteriorProjectBudgetFromExcelUseCase } from '../../application/use-cases/interior-project-budget/import-budget-from-excel.use-case';
+import { ExportInteriorProjectBudgetExcelUseCase } from '../../application/use-cases/interior-project-budget/export-budget-excel.use-case';
 import {
-  CreateInteriorLineItemSupplierPaymentUseCase,
-  CreateInteriorProjectBudgetLineItemUseCase,
-  CreateInteriorProjectBudgetSectionUseCase,
-  DeleteInteriorLineItemSupplierPaymentUseCase,
-  DeleteInteriorProjectBudgetLineItemUseCase,
-  DeleteInteriorProjectBudgetSectionUseCase,
+  ActivateInteriorBudgetVersionUseCase,
+  CreateInteriorBudgetRowsUseCase,
+  CreateInteriorBudgetSupplierPaymentUseCase,
+  DeleteInteriorBudgetRowUseCase,
+  DeleteInteriorBudgetSupplierPaymentUseCase,
   GetInteriorProjectBudgetUseCase,
   GetInteriorProjectSettlementUseCase,
-  UpdateInteriorProjectBudgetLineItemUseCase,
-  UpdateInteriorProjectBudgetSectionUseCase,
+  MoveInteriorBudgetRowUseCase,
+  UpdateInteriorBudgetHeaderUseCase,
+  UpdateInteriorBudgetRowUseCase,
 } from '../../application/use-cases/interior-project-budget/project-budget.use-cases';
 import { RenderInteriorProjectBudgetHtmlUseCase } from '../../application/use-cases/interior-project-budget/render-interior-project-budget-html.use-case';
 import { SyncInteriorProjectBudgetFromExecutionUseCase } from '../../application/use-cases/interior-project-budget/sync-budget-from-execution.use-case';
 import {
-  CreateLineItemSupplierPaymentDto,
-  CreateProjectBudgetLineItemDto,
-  CreateProjectBudgetSectionDto,
-  UpdateProjectBudgetLineItemDto,
-  UpdateProjectBudgetSectionDto,
+  CreateBudgetRowsDto,
+  CreateBudgetSupplierPaymentDto,
+  MoveBudgetRowDto,
+  UpdateBudgetHeaderDto,
+  UpdateBudgetRowDto,
 } from '../dtos/interiorismo-project-budget/project-budget.dto';
 
 @ApiTags('Interiorismo — Presupuesto por proyecto')
@@ -65,14 +66,15 @@ export class InteriorismoProjectBudgetController {
   constructor(
     private readonly getBudgetUc: GetInteriorProjectBudgetUseCase,
     private readonly getSettlementUc: GetInteriorProjectSettlementUseCase,
-    private readonly createSectionUc: CreateInteriorProjectBudgetSectionUseCase,
-    private readonly updateSectionUc: UpdateInteriorProjectBudgetSectionUseCase,
-    private readonly deleteSectionUc: DeleteInteriorProjectBudgetSectionUseCase,
-    private readonly createLineItemUc: CreateInteriorProjectBudgetLineItemUseCase,
-    private readonly updateLineItemUc: UpdateInteriorProjectBudgetLineItemUseCase,
-    private readonly deleteLineItemUc: DeleteInteriorProjectBudgetLineItemUseCase,
-    private readonly createSupplierPaymentUc: CreateInteriorLineItemSupplierPaymentUseCase,
-    private readonly deleteSupplierPaymentUc: DeleteInteriorLineItemSupplierPaymentUseCase,
+    private readonly updateHeaderUc: UpdateInteriorBudgetHeaderUseCase,
+    private readonly createRowsUc: CreateInteriorBudgetRowsUseCase,
+    private readonly updateRowUc: UpdateInteriorBudgetRowUseCase,
+    private readonly moveRowUc: MoveInteriorBudgetRowUseCase,
+    private readonly deleteRowUc: DeleteInteriorBudgetRowUseCase,
+    private readonly createSupplierPaymentUc: CreateInteriorBudgetSupplierPaymentUseCase,
+    private readonly deleteSupplierPaymentUc: DeleteInteriorBudgetSupplierPaymentUseCase,
+    private readonly activateVersionUc: ActivateInteriorBudgetVersionUseCase,
+    private readonly exportExcelUc: ExportInteriorProjectBudgetExcelUseCase,
     private readonly renderPdfHtmlUc: RenderInteriorProjectBudgetHtmlUseCase,
     private readonly duplicateSnapshotUc: DuplicateInteriorProjectBudgetSnapshotUseCase,
     private readonly syncFromExecutionUc: SyncInteriorProjectBudgetFromExecutionUseCase,
@@ -85,6 +87,11 @@ export class InteriorismoProjectBudgetController {
   private parseDate(s: string): Date {
     const d = new Date(s.trim());
     return Number.isNaN(d.getTime()) ? new Date() : d;
+  }
+
+  private optionalDate(s: string | null | undefined): Date | null | undefined {
+    if (s === undefined) return undefined;
+    return s ? this.parseDate(s) : null;
   }
 
   @Get(':projectId/budget/pdf')
@@ -108,7 +115,8 @@ export class InteriorismoProjectBudgetController {
 
   @Get(':projectId/budget')
   @ApiOperation({
-    summary: 'Presupuesto del proyecto (secciones + partidas + totales)',
+    summary:
+      'Hoja del presupuesto activo (filas en árbol con montos y totales)',
   })
   @ApiQuery({ name: 'applicationSlug', required: false })
   @ApiResponse({ status: 200 })
@@ -176,7 +184,7 @@ export class InteriorismoProjectBudgetController {
   @ApiQuery({
     name: 'replace',
     required: false,
-    description: 'true = reemplaza secciones existentes',
+    description: 'true = reemplaza las filas existentes',
   })
   @UseInterceptors(FileInterceptor('file'))
   importExcel(
@@ -248,115 +256,132 @@ export class InteriorismoProjectBudgetController {
     );
   }
 
-  @Post(':projectId/budget/sections')
-  @ApiOperation({ summary: 'Crear sección de presupuesto' })
+  @Get(':projectId/budget/export.xlsx')
+  @ApiOperation({ summary: 'Descargar el presupuesto en Excel' })
+  @ApiProduces(
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  )
   @ApiQuery({ name: 'applicationSlug', required: false })
-  createSection(
+  async exportExcel(
     @Param('projectId') projectId: string,
-    @Body() dto: CreateProjectBudgetSectionDto,
+    @Query('applicationSlug') applicationSlug: string | undefined,
+    @Res() res: Response,
+  ) {
+    const { fileName, buffer } = await this.exportExcelUc.execute(
+      projectId,
+      applicationSlug ?? 'interiorismo',
+    );
+    res
+      .type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      .attachment(fileName)
+      .send(buffer);
+  }
+
+  @Patch(':projectId/budget')
+  @ApiOperation({
+    summary: 'Actualizar cabecera (moneda, márgenes, IGV, columnas)',
+  })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  updateHeader(
+    @Param('projectId') projectId: string,
+    @Body() dto: UpdateBudgetHeaderDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.createSectionUc.execute(
+    return this.updateHeaderUc.execute(
       projectId,
+      {
+        ...dto,
+        utilityPct: dto.utilityPct ?? undefined,
+        overheadPct: dto.overheadPct ?? undefined,
+        igvPct: dto.igvPct ?? undefined,
+        issuedAt: this.optionalDate(dto.issuedAt),
+        exchangeRateDate: this.optionalDate(dto.exchangeRateDate),
+      },
+      applicationSlug ?? 'interiorismo',
+    );
+  }
+
+  @Post(':projectId/budget/rows')
+  @ApiOperation({ summary: 'Agregar filas (una o varias pegadas desde Excel)' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  createRows(
+    @Param('projectId') projectId: string,
+    @Body() dto: CreateBudgetRowsDto,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.createRowsUc.execute(
+      projectId,
+      { parentId: dto.parentId ?? null, afterRowId: dto.afterRowId ?? null },
+      dto.rows,
+      applicationSlug ?? 'interiorismo',
+    );
+  }
+
+  @Patch(':projectId/budget/rows/:rowId')
+  @ApiOperation({ summary: 'Editar celdas de una fila' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  updateRow(
+    @Param('projectId') projectId: string,
+    @Param('rowId') rowId: string,
+    @Body() dto: UpdateBudgetRowDto,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.updateRowUc.execute(
+      projectId,
+      rowId,
       dto,
       applicationSlug ?? 'interiorismo',
     );
   }
 
-  @Patch(':projectId/budget/sections/:sectionId')
-  @ApiOperation({ summary: 'Actualizar sección' })
+  @Post(':projectId/budget/rows/:rowId/move')
+  @ApiOperation({ summary: 'Mover, reordenar o (des)anidar una fila' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  updateSection(
+  moveRow(
     @Param('projectId') projectId: string,
-    @Param('sectionId') sectionId: string,
-    @Body() dto: UpdateProjectBudgetSectionDto,
+    @Param('rowId') rowId: string,
+    @Body() dto: MoveBudgetRowDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.updateSectionUc.execute(
+    return this.moveRowUc.execute(
       projectId,
-      sectionId,
-      dto,
+      rowId,
+      { parentId: dto.parentId ?? null, index: dto.index },
       applicationSlug ?? 'interiorismo',
     );
   }
 
-  @Delete(':projectId/budget/sections/:sectionId')
-  @ApiOperation({ summary: 'Eliminar sección' })
+  @Delete(':projectId/budget/rows/:rowId')
+  @ApiOperation({ summary: 'Eliminar una fila (y las filas que contiene)' })
   @ApiQuery({ name: 'applicationSlug', required: false })
-  deleteSection(
+  deleteRow(
     @Param('projectId') projectId: string,
-    @Param('sectionId') sectionId: string,
+    @Param('rowId') rowId: string,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
-    return this.deleteSectionUc.execute(
+    return this.deleteRowUc.execute(
       projectId,
-      sectionId,
+      rowId,
       applicationSlug ?? 'interiorismo',
     );
   }
 
-  @Post(':projectId/budget/line-items')
-  @ApiOperation({ summary: 'Crear partida' })
-  @ApiQuery({ name: 'applicationSlug', required: false })
-  createLineItem(
-    @Param('projectId') projectId: string,
-    @Body() dto: CreateProjectBudgetLineItemDto,
-    @Query('applicationSlug') applicationSlug?: string,
-  ) {
-    return this.createLineItemUc.execute(
-      projectId,
-      dto,
-      applicationSlug ?? 'interiorismo',
-    );
-  }
-
-  @Patch(':projectId/budget/line-items/:lineItemId')
-  @ApiOperation({ summary: 'Actualizar partida' })
-  @ApiQuery({ name: 'applicationSlug', required: false })
-  updateLineItem(
-    @Param('projectId') projectId: string,
-    @Param('lineItemId') lineItemId: string,
-    @Body() dto: UpdateProjectBudgetLineItemDto,
-    @Query('applicationSlug') applicationSlug?: string,
-  ) {
-    return this.updateLineItemUc.execute(
-      projectId,
-      lineItemId,
-      dto,
-      applicationSlug ?? 'interiorismo',
-    );
-  }
-
-  @Delete(':projectId/budget/line-items/:lineItemId')
-  @ApiOperation({ summary: 'Eliminar partida' })
-  @ApiQuery({ name: 'applicationSlug', required: false })
-  deleteLineItem(
-    @Param('projectId') projectId: string,
-    @Param('lineItemId') lineItemId: string,
-    @Query('applicationSlug') applicationSlug?: string,
-  ) {
-    return this.deleteLineItemUc.execute(
-      projectId,
-      lineItemId,
-      applicationSlug ?? 'interiorismo',
-    );
-  }
-
-  @Post(':projectId/budget/supplier-payments')
-  @ApiOperation({ summary: 'Registrar abono a proveedor por partida' })
+  @Post(':projectId/budget/rows/:rowId/supplier-payments')
+  @ApiOperation({ summary: 'Registrar abono al proveedor de una partida' })
   @ApiQuery({ name: 'applicationSlug', required: false })
   createSupplierPayment(
     @Param('projectId') projectId: string,
-    @Body() dto: CreateLineItemSupplierPaymentDto,
+    @Param('rowId') rowId: string,
+    @Body() dto: CreateBudgetSupplierPaymentDto,
     @Query('applicationSlug') applicationSlug?: string,
   ) {
     return this.createSupplierPaymentUc.execute(
       projectId,
+      rowId,
       {
-        lineItemId: dto.lineItemId,
-        paymentNumber: dto.paymentNumber,
         amount: dto.amount,
         paidAt: this.parseDate(dto.paidAt),
+        note: dto.note,
       },
       applicationSlug ?? 'interiorismo',
     );
@@ -373,6 +398,21 @@ export class InteriorismoProjectBudgetController {
     return this.deleteSupplierPaymentUc.execute(
       projectId,
       paymentId,
+      applicationSlug ?? 'interiorismo',
+    );
+  }
+
+  @Post(':projectId/budget/versions/:budgetId/activate')
+  @ApiOperation({ summary: 'Volver a una versión anterior del presupuesto' })
+  @ApiQuery({ name: 'applicationSlug', required: false })
+  activateVersion(
+    @Param('projectId') projectId: string,
+    @Param('budgetId') budgetId: string,
+    @Query('applicationSlug') applicationSlug?: string,
+  ) {
+    return this.activateVersionUc.execute(
+      projectId,
+      budgetId,
       applicationSlug ?? 'interiorismo',
     );
   }

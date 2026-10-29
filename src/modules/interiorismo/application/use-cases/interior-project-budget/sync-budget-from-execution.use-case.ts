@@ -1,16 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type {
-  InteriorProjectBudgetRepository,
-  ProjectBudgetDetailDto,
+import {
+  INTERIOR_PROJECT_BUDGET_REPOSITORY,
+  type InteriorProjectBudgetRepository,
 } from '../../../domain/repositories/interior-project-budget.repository';
-import { INTERIOR_PROJECT_BUDGET_REPOSITORY } from '../../../domain/repositories/interior-project-budget.repository';
 
-export interface SyncBudgetFromExecutionResult {
-  updatedLineItems: number;
-  unmatchedConcepts: string[];
-  budget: ProjectBudgetDetailDto;
-}
-
+/** Lleva a «costo real» los costos de Ejecución cuyo concepto coincide con la descripción. */
 @Injectable()
 export class SyncInteriorProjectBudgetFromExecutionUseCase {
   constructor(
@@ -18,10 +12,7 @@ export class SyncInteriorProjectBudgetFromExecutionUseCase {
     private readonly repo: InteriorProjectBudgetRepository,
   ) {}
 
-  execute(
-    projectId: string,
-    applicationSlug = 'interiorismo',
-  ): Promise<SyncBudgetFromExecutionResult> {
+  execute(projectId: string, applicationSlug = 'interiorismo') {
     return this.repo.syncActualCostsFromExecution(projectId, applicationSlug);
   }
 }

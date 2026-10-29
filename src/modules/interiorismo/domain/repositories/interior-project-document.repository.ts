@@ -18,13 +18,23 @@ export interface InteriorProjectDocumentListItem {
   title: string;
   fileUrl: string | null;
   archivoId: string | null;
+  /** Datos del archivo subido (null en documentos solo con enlace) */
+  fileName: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
   downloadUrl?: string | null;
   createdAt: string;
 }
 
+export interface InteriorProjectDocumentStats {
+  total: number;
+  byType: Record<InteriorDocumentType, number>;
+}
+
 export interface ListInteriorProjectDocumentsFilters {
   applicationSlug: string;
-  docType: InteriorDocumentType;
+  /** Sin tipo = todos */
+  docType?: InteriorDocumentType;
   page: number;
   limit: number;
   search?: string;
@@ -67,6 +77,10 @@ export interface InteriorProjectDocumentRepository {
     data: UpdateInteriorProjectDocumentData,
   ): Promise<InteriorProjectDocumentListItem | null>;
   delete(id: string, applicationSlug: string): Promise<boolean>;
+  stats(
+    applicationSlug: string,
+    projectId?: string,
+  ): Promise<InteriorProjectDocumentStats>;
 }
 
 export const INTERIOR_PROJECT_DOCUMENT_REPOSITORY = Symbol(
